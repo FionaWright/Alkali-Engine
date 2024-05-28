@@ -1,0 +1,34 @@
+#pragma once
+
+#include "Application.h"
+#include "ResourceManager.h"
+
+#include <string>
+
+using std::string;
+
+class Model
+{
+public:
+	Model();
+    ~Model();
+
+    void Init(string filepath);
+    void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize);
+
+    void SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData);
+    void SetupInputs(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t cbufferSize, const void* pCBufferData);
+    void Render(ComPtr<ID3D12GraphicsCommandList2> commandList);
+
+private:
+    ComPtr<ID3D12Resource> m_VertexBuffer;
+    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
+
+    ComPtr<ID3D12Resource> m_IndexBuffer;
+    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
+
+    ComPtr<ID3D12Resource> m_intermediateVertexBuffer;
+    ComPtr<ID3D12Resource> m_intermediateIndexBuffer;
+
+    size_t m_vertexCount, m_indexCount, m_vertexInputSize;
+};

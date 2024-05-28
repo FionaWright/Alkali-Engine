@@ -105,10 +105,12 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="HighResolutionClock.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -120,6 +122,8 @@
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Events.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="HighResolutionClock.h" />
