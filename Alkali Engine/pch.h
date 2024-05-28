@@ -22,7 +22,7 @@
 
 // Windows Runtime Library. Needed for Microsoft::WRL::ComPtr<> template class.
 #include <wrl.h>
-using namespace Microsoft::WRL;
+using Microsoft::WRL::ComPtr;
 
 // DirectX 12 specific headers.
 #include <d3d12.h>
@@ -30,6 +30,8 @@ using namespace Microsoft::WRL;
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h> 
+
+using namespace DirectX;
 
 // D3D12 extension library.
 #include "d3dx12.h"

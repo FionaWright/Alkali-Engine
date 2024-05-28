@@ -52,6 +52,15 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Batch.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -93,7 +102,18 @@
     <ClInclude Include="pch.h">
       <Filter>PCH</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Batch.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Alkali Engine.rc">

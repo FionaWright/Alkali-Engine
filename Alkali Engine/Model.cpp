@@ -42,16 +42,10 @@ void Model::SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const voi
 	ResourceManager::UploadCommittedResource(commandList, m_IndexBuffer, &m_intermediateIndexBuffer, m_indexCount, sizeof(WORD), iBufferData);
 }
 
-void Model::SetupInputs(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t cbufferSize, const void* pCBufferData)
+void Model::Render(ComPtr<ID3D12GraphicsCommandList2> commandList)
 {
 	commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
 	commandList->IASetIndexBuffer(&m_IndexBufferView);
 
-	// Update MVP matrix CBuffer
-	commandList->SetGraphicsRoot32BitConstants(0, cbufferSize / 4, pCBufferData, 0);
-}
-
-void Model::Render(ComPtr<ID3D12GraphicsCommandList2> commandList)
-{
 	commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 }

@@ -19,10 +19,6 @@ class CommandQueue;
 class Application
 {
 public:
-
-    /**
-    * Create the application singleton with the application instance handle.
-    */
     static void Create(HINSTANCE hInst);
 
     /**

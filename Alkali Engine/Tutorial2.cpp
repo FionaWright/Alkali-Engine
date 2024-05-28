@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "Tutorial2.h"
 
-using namespace DirectX;
-
 // Vertex data for a colored cube.
 struct VertexPosColor
 {
@@ -38,31 +36,39 @@ Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync
 	, m_FoV(45.0)
 	, m_ContentLoaded(false)
 {
+	m_batch = std::make_shared<Batch>();
+	m_goCube = std::make_shared<GameObject>();
+	m_modelCube = std::make_shared<Model>();
 }
 
 bool Tutorial2::LoadContent()
 {
+	HRESULT hresult;
+
 	auto device = Application::Get().GetDevice();
 	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetCommandList();
 
-	m_modelCube.Init(commandList, _countof(g_Vertices), _countof(g_Indicies), sizeof(VertexPosColor));
-	m_modelCube.SetBuffers(commandList, g_Vertices, g_Indicies);
+	m_modelCube->Init(commandList, _countof(g_Vertices), _countof(g_Indicies), sizeof(VertexPosColor));
+	m_modelCube->SetBuffers(commandList, g_Vertices, g_Indicies);
 
 	// Create the descriptor heap for the depth-stencil view.
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap)));
+	hresult = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
+	ThrowIfFailed(hresult);
 
 	// Load the vertex shader.
 	ComPtr<ID3DBlob> vertexShaderBlob;
-	ThrowIfFailed(D3DReadFileToBlob(L"Test_VS.cso", &vertexShaderBlob));
+	hresult = D3DReadFileToBlob(L"Test_VS.cso", &vertexShaderBlob);
+	ThrowIfFailed(hresult);
 
 	// Load the pixel shader.
 	ComPtr<ID3DBlob> pixelShaderBlob;
-	ThrowIfFailed(D3DReadFileToBlob(L"Test_PS.cso", &pixelShaderBlob));
+	hresult = D3DReadFileToBlob(L"Test_PS.cso", &pixelShaderBlob);
+	ThrowIfFailed(hresult);
 
 	// Create the vertex input layout
 	// Avoid this using structured buffers
@@ -97,12 +103,14 @@ bool Tutorial2::LoadContent()
 	// Serialize the root signature.
 	ComPtr<ID3DBlob> rootSignatureBlob;
 	ComPtr<ID3DBlob> errorBlob;
-	ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
-		featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
+	hresult = D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob);
+	ThrowIfFailed(hresult);
 
 	// Create the root signature.
-	ThrowIfFailed(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-		rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+	hresult = device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
+	ThrowIfFailed(hresult);
+
+	m_batch->Init(m_RootSignature);
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
 	rtvFormats.NumRenderTargets = 1;
@@ -134,6 +142,10 @@ bool Tutorial2::LoadContent()
 
 	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
 	commandQueue->WaitForFenceValue(fenceValue);
+
+	m_goCube->Init(m_modelCube, nullptr, m_PipelineState);
+
+	m_batch->AddGameObject(m_goCube.get());
 
 	m_ContentLoaded = true;
 
@@ -225,9 +237,8 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	}
 
 	// Update the model matrix.
-	float angle = static_cast<float>(e.TotalTime * 90.0);
-	const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-	m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+	float angle = static_cast<float>(e.TotalTime * 1.0);
+	m_goCube->SetRotation(0, angle, 0);
 
 	// Update the view matrix.
 	const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
@@ -288,19 +299,9 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 		ClearDepth(commandList, dsv);
 	}
 
-	commandList->SetPipelineState(m_PipelineState.Get());
-	commandList->SetGraphicsRootSignature(m_RootSignature.Get());
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	XMMATRIX viewProj = XMMatrixMultiply(m_ViewMatrix, m_ProjectionMatrix);
 
-	commandList->RSSetViewports(1, &m_Viewport);
-	commandList->RSSetScissorRects(1, &m_ScissorRect);
-	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-
-	XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-	mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
-	m_modelCube.SetupInputs(commandList, sizeof(XMMATRIX), &mvpMatrix);
-
-	m_modelCube.Render(commandList);
+	m_batch->Render(commandList, m_Viewport, m_ScissorRect, rtv, dsv, viewProj);
 
 	// Present
 	{
