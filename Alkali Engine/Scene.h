@@ -14,14 +14,14 @@
 
 class Window;
 
-class Game : public std::enable_shared_from_this<Game>
+class Scene : public std::enable_shared_from_this<Scene>
 {
 public:
     /**
      * Create the DirectX demo using the specified window dimensions.
      */
-    Game(const std::wstring& name, int width, int height, bool vSync);
-    virtual ~Game();
+    Scene(const std::wstring& name, int width, int height, bool vSync);
+    virtual ~Scene();
 
     /**
      *  Initialize the DirectX Runtime.

@@ -105,7 +105,7 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
-    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="HighResolutionClock.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Tutorial2.cpp" />
@@ -116,7 +116,7 @@
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Events.h" />
-    <ClInclude Include="Game.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="HighResolutionClock.h" />
     <ClInclude Include="Keycodes.h" />

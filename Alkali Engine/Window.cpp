@@ -154,7 +154,7 @@ void Window::ToggleFullscreen()
 }
 
 
-void Window::RegisterCallbacks(std::shared_ptr<Game> pGame)
+void Window::RegisterCallbacks(std::shared_ptr<Scene> pGame)
 {
     m_pGame = pGame;
 

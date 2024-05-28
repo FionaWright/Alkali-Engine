@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "Game.h"
+#include "Scene.h"
 
-Game::Game(const std::wstring& name, int width, int height, bool vSync)
+Scene::Scene(const std::wstring& name, int width, int height, bool vSync)
 {
     m_Width = width;
     m_Height = height;
@@ -9,11 +9,11 @@ Game::Game(const std::wstring& name, int width, int height, bool vSync)
     m_Name = name;
 }
 
-Game::~Game()
+Scene::~Scene()
 {
 }
 
-bool Game::Initialize()
+bool Scene::Initialize()
 {
     // Check for DirectX Math library support.
     if (!DirectX::XMVerifyCPUSupport())
@@ -29,67 +29,67 @@ bool Game::Initialize()
     return true;
 }
 
-bool Game::LoadContent()
+bool Scene::LoadContent()
 {
     return false;
 }
 
-void Game::UnloadContent()
+void Scene::UnloadContent()
 {
 }
 
-void Game::Destroy()
+void Scene::Destroy()
 {
     Application::Get().DestroyWindow(m_pWindow);
     m_pWindow.reset();
 }
 
-void Game::OnUpdate(UpdateEventArgs& e)
+void Scene::OnUpdate(UpdateEventArgs& e)
 {
 }
 
-void Game::OnRender(RenderEventArgs& e)
+void Scene::OnRender(RenderEventArgs& e)
 {
 }
 
-void Game::OnKeyPressed(KeyEventArgs& e)
+void Scene::OnKeyPressed(KeyEventArgs& e)
 {
 }
 
-void Game::OnKeyReleased(KeyEventArgs& e)
+void Scene::OnKeyReleased(KeyEventArgs& e)
 {
 }
 
-void Game::OnMouseMoved(MouseMotionEventArgs& e)
+void Scene::OnMouseMoved(MouseMotionEventArgs& e)
 {
 }
 
-void Game::OnMouseButtonPressed(MouseButtonEventArgs& e)
+void Scene::OnMouseButtonPressed(MouseButtonEventArgs& e)
 {
 }
 
-void Game::OnMouseButtonReleased(MouseButtonEventArgs& e)
+void Scene::OnMouseButtonReleased(MouseButtonEventArgs& e)
 {
 }
 
-void Game::OnMouseWheel(MouseWheelEventArgs& e)
+void Scene::OnMouseWheel(MouseWheelEventArgs& e)
 {
 }
 
-void Game::OnResize(ResizeEventArgs& e)
+void Scene::OnResize(ResizeEventArgs& e)
 {
 }
 
-void Game::OnWindowDestroy()
+void Scene::OnWindowDestroy()
 {
 }
 
-int Game::GetWidth()
+int Scene::GetWidth()
 {
     return m_Width;
 }
 
-int Game::GetHeight()
+int Scene::GetHeight()
 {
     return m_Height;
 }

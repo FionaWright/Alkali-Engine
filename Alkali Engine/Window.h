@@ -11,10 +11,10 @@
 #include "Application.h"
 #include "CommandQueue.h"
 #include "Window.h"
-#include "Game.h"
+#include "Scene.h"
 
 // Forward-declare the DirectXTemplate class.
-class Game;
+class Scene;
 
 class Window
 {
@@ -93,7 +93,7 @@ protected:
     // Only the application can create a window.
     friend class Application;
     // The DirectXTemplate class needs to register itself with a window.
-    friend class Game;
+    friend class Scene;
 
     Window() = delete;
     Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
@@ -101,7 +101,7 @@ protected:
 
     // Register a Game with this window. This allows
     // the window to callback functions in the Game class.
-    void RegisterCallbacks(std::shared_ptr<Game> pGame);
+    void RegisterCallbacks(std::shared_ptr<Scene> pGame);
 
     // Update and Draw can only be called by the application.
     virtual void OnUpdate(UpdateEventArgs& e);
@@ -148,7 +148,7 @@ private:
     HighResolutionClock m_RenderClock;
     uint64_t m_FrameCounter;
 
-    std::weak_ptr<Game> m_pGame;
+    std::weak_ptr<Scene> m_pGame;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;

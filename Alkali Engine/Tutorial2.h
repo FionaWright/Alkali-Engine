@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Game.h"
+#include "Scene.h"
 
-class Tutorial2 : public Game
+class Tutorial2 : public Scene
 {
 public:
-    using super = Game;
+    using super = Scene;
 
     Tutorial2(const std::wstring& name, int width, int height, bool vSync = false);
 

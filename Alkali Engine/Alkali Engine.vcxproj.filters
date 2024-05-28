@@ -32,7 +32,7 @@
     <ClCompile Include="Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Tutorial2.cpp">
@@ -61,7 +61,7 @@
     <ClInclude Include="CommandQueue.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Game.h">
+    <ClInclude Include="Scene.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Window.h">

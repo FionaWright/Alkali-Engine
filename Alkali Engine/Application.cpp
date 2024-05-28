@@ -278,7 +278,7 @@ std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowN
 }
 
 
-int Application::Run(std::shared_ptr<Game> pGame)
+int Application::Run(std::shared_ptr<Scene> pGame)
 {
     if (!pGame->Initialize()) return 1;
     if (!pGame->LoadContent()) return 2;

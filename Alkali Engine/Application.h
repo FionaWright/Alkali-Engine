@@ -8,12 +8,12 @@
 #include <memory>
 #include <string>
 
-#include "Game.h"
+#include "Scene.h"
 #include "CommandQueue.h"
 #include "Window.h"
 
 class Window;
-class Game;
+class Scene;
 class CommandQueue;
 
 class Application
@@ -70,7 +70,7 @@ public:
     * Run the application loop and message pump.
     * @return The error code if an error occurred.
     */
-    int Run(std::shared_ptr<Game> pGame);
+    int Run(std::shared_ptr<Scene> pGame);
 
     /**
     * Request to quit the application and close all windows.
