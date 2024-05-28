@@ -8,9 +8,10 @@
 #include <string> // for std::wstring
 
 #include "Application.h"
-#include "Model.h"
+#include "Batch.h"
 
 class Window;
+class Batch;
 
 class Scene : public std::enable_shared_from_this<Scene>
 {

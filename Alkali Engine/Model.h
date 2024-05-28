@@ -17,7 +17,6 @@ public:
     void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize);
 
     void SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData);
-    void SetupInputs(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t cbufferSize, const void* pCBufferData);
     void Render(ComPtr<ID3D12GraphicsCommandList2> commandList);
 
 private:
