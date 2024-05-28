@@ -14,9 +14,11 @@
     <Filter Include="Source Files\Tutorials">
       <UniqueIdentifier>{248ac27b-15cc-41ef-a5c3-feee2a161c19}</UniqueIdentifier>
     </Filter>
-    <Filter Include="External">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Source Files\GPU Resources">
+      <UniqueIdentifier>{85c34872-b23d-4cf6-a1a7-164c85448086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{adc8683f-4472-466a-b4c1-ef7fd74b4815}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -41,20 +43,17 @@
     <ClCompile Include="HighResolutionClock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>External</Filter>
+      <Filter>PCH</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="d3dx12.h">
-      <Filter>External</Filter>
-    </ClInclude>
-    <ClInclude Include="Helpers.h">
-      <Filter>External</Filter>
-    </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>External</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
@@ -82,6 +81,19 @@
     <ClInclude Include="Keycodes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Alkali Engine.rc">

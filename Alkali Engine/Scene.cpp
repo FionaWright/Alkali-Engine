@@ -26,6 +26,8 @@ bool Scene::Initialize()
     m_pWindow->RegisterCallbacks(shared_from_this());
     m_pWindow->Show();
 
+    m_device = Application::Get().GetDevice();
+
     return true;
 }
 
@@ -82,14 +84,4 @@ void Scene::OnResize(ResizeEventArgs& e)
 
 void Scene::OnWindowDestroy()
 {
-}
-
-int Scene::GetWidth()
-{
-    return m_Width;
-}
-
-int Scene::GetHeight()
-{
-    return m_Height;
 }
