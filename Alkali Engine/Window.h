@@ -11,7 +11,7 @@
 #include "Application.h"
 #include "CommandQueue.h"
 #include "Window.h"
-#include "Scene.h"
+#include "Scene.h"  
 
 // Forward-declare the DirectXTemplate class.
 class Scene;
