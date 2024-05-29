@@ -16,23 +16,16 @@ class Window;
 class Scene;
 class CommandQueue;
 
+using std::wstring;
+
 class Application
 {
 public:
     static void Create(HINSTANCE hInst);
-
-    /**
-    * Destroy the application instance and all windows created by this application instance.
-    */
     static void Destroy();
-    /**
-    * Get the application singleton.
-    */
+
     static Application& Get();
 
-    /**
-     * Check to see if VSync-off is supported.
-     */
     bool IsTearingSupported() const;
 
     /**
@@ -47,56 +40,25 @@ public:
     * returned.
     */
     std::shared_ptr<Window> CreateRenderWindow(const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync = true);
-
-    /**
-    * Destroy a window given the window name.
-    */
     void DestroyWindow(const std::wstring& windowName);
-    /**
-    * Destroy a window given the window reference.
-    */
     void DestroyWindow(std::shared_ptr<Window> window);
 
-    /**
-    * Find a window by the window name.
-    */
     std::shared_ptr<Window> GetWindowByName(const std::wstring& windowName);
 
-    /**
-    * Run the application loop and message pump.
-    * @return The error code if an error occurred.
-    */
     int Run(std::shared_ptr<Scene> pGame);
-
-    /**
-    * Request to quit the application and close all windows.
-    * @param exitCode The error code to return to the invoking process.
-    */
     void Quit(int exitCode = 0);
 
-    /**
-     * Get the Direct3D 12 device
-     */
     ComPtr<ID3D12Device2> GetDevice() const;
-    /**
-     * Get a command queue. Valid types are:
-     * - D3D12_COMMAND_LIST_TYPE_DIRECT : Can be used for draw, dispatch, or copy commands.
-     * - D3D12_COMMAND_LIST_TYPE_COMPUTE: Can be used for dispatch or copy commands.
-     * - D3D12_COMMAND_LIST_TYPE_COPY   : Can be used for copy commands.
-     */
+    wstring GetEXEDirectoryPath();
     std::shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
 
-    // Flush all command queues.
     void Flush();
 
     ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
 
 protected:
-
-    // Create an application instance.
     Application(HINSTANCE hInst);
-    // Destroy the application instance and all windows associated with this application.
     virtual ~Application();
 
     ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
@@ -107,7 +69,6 @@ private:
     Application(const Application& copy) = delete;
     Application& operator=(const Application& other) = delete;
 
-    // The application instance handle that this application was created with.
     HINSTANCE m_hInstance;
 
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
@@ -118,5 +79,7 @@ private:
     std::shared_ptr<CommandQueue> m_CopyCommandQueue;
 
     bool m_TearingSupported;
+
+    wstring m_exeDirectoryPath;
 
 };

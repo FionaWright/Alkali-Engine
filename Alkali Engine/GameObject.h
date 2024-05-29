@@ -7,6 +7,7 @@
 using std::shared_ptr;
 
 class Model;
+class Shader;
 
 class GameObject
 {
@@ -21,7 +22,7 @@ public:
 	GameObject();
 	~GameObject();
 
-	void Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader, ComPtr<ID3D12PipelineState> pPSO);
+	void Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader);
 	void Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 
 	void SetPosition(float x, float y, float z);
@@ -36,7 +37,6 @@ public:
 	Transform m_transform;
 
 private:
-	ComPtr<ID3D12PipelineState> m_pso;
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
 

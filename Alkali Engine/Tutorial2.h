@@ -49,12 +49,6 @@ private:
 	// Descriptor heap for depth buffer.
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap;
 
-	// Root signature
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
-
-	// Pipeline state object.
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
-
 	D3D12_VIEWPORT m_Viewport;
 	D3D12_RECT m_ScissorRect;
 
@@ -68,4 +62,5 @@ private:
 	shared_ptr<Model> m_modelCube;
 	shared_ptr<Batch> m_batch;
 	shared_ptr<GameObject> m_goCube;
+	shared_ptr<Shader> m_shaderCube;
 };

@@ -9,11 +9,10 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader, ComPtr<ID3D12PipelineState> pPSO)
+void GameObject::Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
 {
 	m_model = pModel;
 	m_shader = pShader;
-	m_pso = pPSO;
 
 	SetPosition(0, 0, 0);
 	SetRotation(0, 0, 0);
@@ -22,7 +21,7 @@ void GameObject::Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader, ComP
 
 void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
 {
-	commandList->SetPipelineState(m_pso.Get());
+	commandList->SetPipelineState(m_shader->GetPSO().Get());
 	commandList->SetGraphicsRootSignature(rootSig.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

@@ -19,18 +19,9 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 {
     int retCode = 0;
 
-    // Set the working directory to the path of the executable.
-    WCHAR path[MAX_PATH];
-    HMODULE hModule = GetModuleHandleW(NULL);
-    if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
-    {
-        PathRemoveFileSpecW(path);
-        SetCurrentDirectoryW(path);
-    }
-
     Application::Create(hInstance);
     {
-        std::shared_ptr<Tutorial2> demo = std::make_shared<Tutorial2>(L"Learning DirectX 12 - Lesson 2", 1280, 720);
+        std::shared_ptr<Tutorial2> demo = std::make_shared<Tutorial2>(L"Learning DirectX 12 - Lesson 2", 1280, 720); // Needs to be changed
         retCode = Application::Get().Run(demo);
     }
     Application::Destroy();

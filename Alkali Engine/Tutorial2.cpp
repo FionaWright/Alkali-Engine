@@ -39,11 +39,12 @@ Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync
 	m_batch = std::make_shared<Batch>();
 	m_goCube = std::make_shared<GameObject>();
 	m_modelCube = std::make_shared<Model>();
+	m_shaderCube = std::make_shared<Shader>();
 }
 
 bool Tutorial2::LoadContent()
 {
-	HRESULT hresult;
+	HRESULT hr;
 
 	auto device = Application::Get().GetDevice();
 	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -57,25 +58,8 @@ bool Tutorial2::LoadContent()
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hresult = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
-	ThrowIfFailed(hresult);
-
-	// Load the vertex shader.
-	ComPtr<ID3DBlob> vertexShaderBlob;
-	hresult = D3DReadFileToBlob(L"Test_VS.cso", &vertexShaderBlob);
-	ThrowIfFailed(hresult);
-
-	// Load the pixel shader.
-	ComPtr<ID3DBlob> pixelShaderBlob;
-	hresult = D3DReadFileToBlob(L"Test_PS.cso", &pixelShaderBlob);
-	ThrowIfFailed(hresult);
-
-	// Create the vertex input layout
-	// Avoid this using structured buffers
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
+	hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
+	ThrowIfFailed(hr);
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -103,47 +87,28 @@ bool Tutorial2::LoadContent()
 	// Serialize the root signature.
 	ComPtr<ID3DBlob> rootSignatureBlob;
 	ComPtr<ID3DBlob> errorBlob;
-	hresult = D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob);
-	ThrowIfFailed(hresult);
+	hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob);
+	ThrowIfFailed(hr);
 
 	// Create the root signature.
-	hresult = device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
-	ThrowIfFailed(hresult);
+	ComPtr<ID3D12RootSignature> rootSig;
+	hr = device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
+	ThrowIfFailed(hr);
 
-	m_batch->Init(m_RootSignature);
-
-	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-	rtvFormats.NumRenderTargets = 1;
-	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	struct PipelineStateStream
-	{
-		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
-		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-	} pipelineStateStream;
-
-	pipelineStateStream.pRootSignature = m_RootSignature.Get();
-	pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
-	pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	pipelineStateStream.RTVFormats = rtvFormats;
-
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
-	sizeof(PipelineStateStream), &pipelineStateStream
-	};
-	ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_PipelineState)));
+	m_batch->Init(rootSig);
 
 	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
 	commandQueue->WaitForFenceValue(fenceValue);
 
-	m_goCube->Init(m_modelCube, nullptr, m_PipelineState);
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	//m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig);
+	m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
+
+	m_goCube->Init(m_modelCube, m_shaderCube);
 
 	m_batch->AddGameObject(m_goCube.get());
 
@@ -238,7 +203,7 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 
 	// Update the model matrix.
 	float angle = static_cast<float>(e.TotalTime * 1.0);
-	m_goCube->SetRotation(0, angle, 0);
+	m_goCube->SetRotation(0, angle, angle);
 
 	// Update the view matrix.
 	const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);

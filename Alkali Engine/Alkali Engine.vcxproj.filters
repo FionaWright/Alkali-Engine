@@ -11,34 +11,22 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{916aed96-10c8-4995-975b-390fa89241d2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Tutorials">
-      <UniqueIdentifier>{248ac27b-15cc-41ef-a5c3-feee2a161c19}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\GPU Resources">
       <UniqueIdentifier>{85c34872-b23d-4cf6-a1a7-164c85448086}</UniqueIdentifier>
     </Filter>
     <Filter Include="PCH">
       <UniqueIdentifier>{adc8683f-4472-466a-b4c1-ef7fd74b4815}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Managers">
+      <UniqueIdentifier>{776cf95e-a2a7-47ca-8167-89810d8d7de0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scenes">
+      <UniqueIdentifier>{248ac27b-15cc-41ef-a5c3-feee2a161c19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Tutorial2.cpp">
-      <Filter>Source Files\Tutorials</Filter>
+      <Filter>Source Files\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="HighResolutionClock.cpp">
       <Filter>Source Files</Filter>
@@ -49,9 +37,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>Source Files\GPU Resources</Filter>
     </ClCompile>
@@ -61,25 +46,31 @@
     <ClCompile Include="Batch.cpp">
       <Filter>Source Files\GPU Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="Tutorial2.h">
-      <Filter>Source Files\Tutorials</Filter>
+      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="HighResolutionClock.h">
       <Filter>Source Files</Filter>
@@ -102,9 +93,6 @@
     <ClInclude Include="pch.h">
       <Filter>PCH</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>Source Files\GPU Resources</Filter>
     </ClInclude>
@@ -113,6 +101,21 @@
     </ClInclude>
     <ClInclude Include="Batch.h">
       <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -126,11 +129,11 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Test_VS.hlsl">
+    <Text Include="Assets\Shaders\Test.ps">
       <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Test_PS.hlsl">
+    </Text>
+    <Text Include="Assets\Shaders\Test.vs">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </Text>
   </ItemGroup>
 </Project>
