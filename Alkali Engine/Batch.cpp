@@ -6,6 +6,11 @@ void Batch::Init(ComPtr<ID3D12RootSignature> pRootSig)
 	m_rootSignature = pRootSig;
 }
 
+void Batch::Init(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
+{
+	m_rootSignature = ResourceManager::CreateRootSignature(params, paramCount);
+}
+
 void Batch::AddGameObject(GameObject* go)
 {
 	// TODO: Sorting
