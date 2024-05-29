@@ -5,31 +5,35 @@
 #include "Window.h"
 #include "CommandQueue.h"
 #include "Scene.h"
+#include "Tutorial2.h"
 
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
 
-using WindowPtr = std::shared_ptr<Window>;
-using WindowMap = std::map< HWND, WindowPtr >;
-using WindowNameMap = std::map< std::wstring, WindowPtr >;
+static Application* gs_Singleton = nullptr;
 
-static Application* gs_pSingelton = nullptr;
-static WindowMap gs_Windows;
-static WindowNameMap gs_WindowByName;
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam); // Is this needed?
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-// A wrapper struct to allow shared pointers for the window class.
-struct MakeWindow : public Window
+Application::Application()
 {
-    MakeWindow(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
-        : Window(hWnd, windowName, clientWidth, clientHeight, vSync)
-    {}
-};
+}
 
-Application::Application(HINSTANCE hInst)
-    : m_hInstance(hInst)
-    , m_TearingSupported(false)
+Application::~Application()
 {
+    assert(m_windowHwndMap.empty() && m_windowNameMap.empty() && "All windows should be destroyed before destroying the application instance.");
+
+    Flush();
+}
+
+void Application::Init(HINSTANCE hInst)
+{
+    if (gs_Singleton)
+        throw new std::exception("Tried to initialise multiple applications at once");
+
+    gs_Singleton = this;
+
+    m_hInstance = hInst;
+    m_TearingSupported = false;
+
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR path[MAX_PATH];
     if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
@@ -84,41 +88,17 @@ Application::Application(HINSTANCE hInst)
     }
 }
 
-void Application::Create(HINSTANCE hInst)
-{
-    if (!gs_pSingelton)
-    {
-        gs_pSingelton = new Application(hInst);
-    }
-}
-
 Application& Application::Get()
 {
-    assert(gs_pSingelton);
-    return *gs_pSingelton;
-}
-
-void Application::Destroy()
-{
-    if (gs_pSingelton)
-    {
-        assert(gs_Windows.empty() && gs_WindowByName.empty() &&
-            "All windows should be destroyed before destroying the application instance.");
-
-        delete gs_pSingelton;
-        gs_pSingelton = nullptr;
-    }
-}
-
-Application::~Application()
-{
-    Flush();
+    assert(gs_Singleton);
+    return *gs_Singleton;
 }
 
 ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp)
 {
     ComPtr<IDXGIFactory4> dxgiFactory;
     UINT createFactoryFlags = 0;
+
 #if defined(_DEBUG)
     createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
@@ -230,11 +210,10 @@ bool Application::IsTearingSupported() const
     return m_TearingSupported;
 }
 
-std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
+shared_ptr<Window> Application::CreateRenderWindow(const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
 {
-    // First check if a window with the given name already exists.
-    WindowNameMap::iterator windowIter = gs_WindowByName.find(windowName);
-    if (windowIter != gs_WindowByName.end())
+    WindowNameMap::iterator windowIter = m_windowNameMap.find(windowName);
+    if (windowIter != m_windowNameMap.end())
     {
         return windowIter->second;
     }
@@ -254,33 +233,34 @@ std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& wind
         return nullptr;
     }
 
-    WindowPtr pWindow = std::make_shared<MakeWindow>(hWnd, windowName, clientWidth, clientHeight, vSync);
+    shared_ptr<Window> pWindow = make_shared<Window>(hWnd, windowName, clientWidth, clientHeight, vSync);
 
-    gs_Windows.insert(WindowMap::value_type(hWnd, pWindow));
-    gs_WindowByName.insert(WindowNameMap::value_type(windowName, pWindow));
+    m_windowHwndMap.insert(WindowMap::value_type(hWnd, pWindow));
+    m_windowNameMap.insert(WindowNameMap::value_type(windowName, pWindow));
 
     return pWindow;
 }
 
-void Application::DestroyWindow(std::shared_ptr<Window> window)
+void Application::DestroyWindow(shared_ptr<Window> window)
 {
-    if (window) window->Destroy();
+    if (window) 
+        window->Destroy();
 }
 
-void Application::DestroyWindow(const std::wstring& windowName)
+void Application::DestroyWindow(const wstring& windowName)
 {
-    WindowPtr pWindow = GetWindowByName(windowName);
+    shared_ptr<Window> pWindow = GetWindowByName(windowName);
     if (pWindow)
     {
         DestroyWindow(pWindow);
     }
 }
 
-std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowName)
+shared_ptr<Window> Application::GetWindowByName(const wstring& windowName)
 {
-    std::shared_ptr<Window> window;
-    WindowNameMap::iterator iter = gs_WindowByName.find(windowName);
-    if (iter != gs_WindowByName.end())
+    shared_ptr<Window> window;
+    WindowNameMap::iterator iter = m_windowNameMap.find(windowName);
+    if (iter != m_windowNameMap.end())
     {
         window = iter->second;
     }
@@ -288,13 +268,26 @@ std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowN
     return window;
 }
 
-
-int Application::Run(std::shared_ptr<Scene> pGame)
+shared_ptr<Window> Application::GetWindowByHwnd(HWND hwnd)
 {
-    if (!pGame->Initialize()) 
+    shared_ptr<Window> window;
+    WindowMap::iterator iter = m_windowHwndMap.find(hwnd);
+    if (iter != m_windowHwndMap.end())
+    {
+        window = iter->second;
+    }
+
+    return window;
+}
+
+int Application::Run()
+{
+    m_tutScene = std::make_shared<Tutorial2>(L"Cube Scene", 1280, 720);
+
+    if (!m_tutScene->Initialize())
         return 1;
 
-    if (!pGame->LoadContent()) 
+    if (!m_tutScene->LoadContent())
         return 2;
 
     MSG msg = { 0 };
@@ -307,11 +300,10 @@ int Application::Run(std::shared_ptr<Scene> pGame)
         }
     }
 
-    // Flush any commands in the commands queues before quiting.
     Flush();
 
-    pGame->UnloadContent();
-    pGame->Destroy();
+    m_tutScene->UnloadContent();
+    m_tutScene->Destroy();
 
     return static_cast<int>(msg.wParam);
 }
@@ -331,9 +323,9 @@ wstring Application::GetEXEDirectoryPath()
     return m_exeDirectoryPath;
 }
 
-std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
 {
-    std::shared_ptr<CommandQueue> commandQueue;
+    shared_ptr<CommandQueue> commandQueue;
     switch (type)
     {
     case D3D12_COMMAND_LIST_TYPE_DIRECT:
@@ -379,15 +371,20 @@ UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE ty
 }
 
 // Remove a window from our window lists.
-static void RemoveWindow(HWND hWnd)
+void Application::RemoveWindow(HWND hWnd)
 {
-    WindowMap::iterator windowIter = gs_Windows.find(hWnd);
-    if (windowIter != gs_Windows.end())
+    WindowMap::iterator windowIter = m_windowHwndMap.find(hWnd);
+    if (windowIter != m_windowHwndMap.end())
     {
-        WindowPtr pWindow = windowIter->second;
-        gs_WindowByName.erase(pWindow->GetWindowName());
-        gs_Windows.erase(windowIter);
+        shared_ptr<Window> pWindow = windowIter->second;
+        m_windowNameMap.erase(pWindow->GetWindowName());
+        m_windowHwndMap.erase(windowIter);
     }
+}
+
+int Application::GetTrackedWindowCount()
+{
+    return m_windowHwndMap.size();
 }
 
 // Convert the message ID into a MouseButton ID
@@ -424,19 +421,10 @@ MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID)
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    WindowPtr pWindow;
-    {
-        WindowMap::iterator iter = gs_Windows.find(hwnd);
-        if (iter != gs_Windows.end())
-        {
-            pWindow = iter->second;
-        }
-    }
+    shared_ptr<Window> pWindow = Application::Get().GetWindowByHwnd(hwnd);
 
     if (!pWindow)
-    {
         return DefWindowProcW(hwnd, message, wParam, lParam);
-    }
     
     switch (message)
     {
@@ -446,6 +434,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             UpdateEventArgs updateEventArgs(0.0f, 0.0f);
             pWindow->OnUpdate(updateEventArgs);
             RenderEventArgs renderEventArgs(0.0f, 0.0f);
+
             // Delta time will be filled in by the Window.
             pWindow->OnRender(renderEventArgs);
         }
@@ -601,9 +590,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         {
             // If a window is being destroyed, remove it from the 
             // window maps.
-            RemoveWindow(hwnd);
+            Application::Get().RemoveWindow(hwnd);
 
-            if (gs_Windows.empty())
+            if (Application::Get().GetTrackedWindowCount() == 0)
             {
                 // If there are no more windows, quit the application.
                 PostQuitMessage(0);

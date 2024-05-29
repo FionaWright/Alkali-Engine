@@ -1,10 +1,11 @@
 #include "pch.h"
 
 #include "Application.h"
-#include "Tutorial2.h"
 
 #include <Shlwapi.h>
 #include <dxgidebug.h>
+
+using std::unique_ptr;
 
 void ReportLiveObjects()
 {
@@ -19,12 +20,14 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 {
     int retCode = 0;
 
-    Application::Create(hInstance);
-    {
-        std::shared_ptr<Tutorial2> demo = std::make_shared<Tutorial2>(L"Learning DirectX 12 - Lesson 2", 1280, 720); // Needs to be changed
-        retCode = Application::Get().Run(demo);
-    }
-    Application::Destroy();
+    unique_ptr<Application> app = std::make_unique<Application>();
+
+    app->Init(hInstance);    
+
+    retCode = app->Run();
+
+    app.reset();
+    app = 0;
 
     atexit(&ReportLiveObjects);
 

@@ -36,7 +36,7 @@ bool Scene::Initialize()
 	//m_FenceValues = new uint64_t[Window::BACK_BUFFER_COUNT];
 
 	if (m_dsvEnabled)
-		CreateDSV(m_width, m_height);
+		SetDSVForSize(m_width, m_height);
 
     return true;
 }
@@ -96,7 +96,7 @@ void Scene::OnResize(ResizeEventArgs& e)
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
 
 	if (m_dsvEnabled)
-		CreateDSV(e.Width, e.Height);
+		SetDSVForSize(e.Width, e.Height);
 }
 
 void Scene::OnWindowDestroy()
@@ -144,7 +144,7 @@ void Scene::Present(ComPtr<ID3D12GraphicsCommandList2> commandList, shared_ptr<C
 	commandQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
 }
 
-void Scene::CreateDSV(int width, int height)
+void Scene::SetDSVForSize(int width, int height)
 {
 	HRESULT hr;
 
@@ -156,28 +156,20 @@ void Scene::CreateDSV(int width, int height)
 	hr = m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap));
 	ThrowIfFailed(hr);
 
-	// Flush any GPU commands that might be referencing the depth buffer.
 	Application::Get().Flush();
 
-	width = std::max(1, width); // BAD? change this?
+	width = std::max(1, width);
 	height = std::max(1, height);
 
-	// Resize screen dependent resources.
-	// Create a depth buffer.
 	D3D12_CLEAR_VALUE optimizedClearValue = {};
 	optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
 	optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&optimizedClearValue,
-		IID_PPV_ARGS(&m_depthBuffer)
-	));
+
+	hr = m_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
+	ThrowIfFailed(hr);
 
 	// Update the depth-stencil view.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
@@ -186,6 +178,6 @@ void Scene::CreateDSV(int width, int height)
 	dsv.Texture2D.MipSlice = 0;
 	dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-	m_device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv,
-		m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	m_device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
 }
