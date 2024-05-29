@@ -30,9 +30,7 @@ static WORD g_Indicies[36] =
 };
 
 Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync)
-	: super(name, width, height, vSync)
-	, m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
-	, m_Viewport(CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)))
+	: super(name, width, height, vSync, true)
 	, m_FoV(45.0)
 	, m_ContentLoaded(false)
 {
@@ -46,20 +44,11 @@ bool Tutorial2::LoadContent()
 {
 	HRESULT hr;
 
-	auto device = Application::Get().GetDevice();
 	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetCommandList();
 
 	m_modelCube->Init(commandList, _countof(g_Vertices), _countof(g_Indicies), sizeof(VertexPosColor));
 	m_modelCube->SetBuffers(commandList, g_Vertices, g_Indicies);
-
-	// Create the descriptor heap for the depth-stencil view.
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
-	ThrowIfFailed(hr);
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
@@ -68,9 +57,6 @@ bool Tutorial2::LoadContent()
 	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, 1);
 
 	m_batch->Init(rootSig);
-
-	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-	commandQueue->WaitForFenceValue(fenceValue);
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -84,71 +70,15 @@ bool Tutorial2::LoadContent()
 
 	m_batch->AddGameObject(m_goCube.get());
 
+	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+	commandQueue->WaitForFenceValue(fenceValue);
 	m_ContentLoaded = true;
-
-	// Resize/Create the depth buffer.
-	ResizeDepthBuffer(m_Width, m_Height);
 
 	return true;
 }
 
 void Tutorial2::UnloadContent()
 {
-}
-
-// Bad name, also creates depth buffer
-void Tutorial2::ResizeDepthBuffer(int width, int height)
-{
-	if (m_ContentLoaded)
-	{
-		// Flush any GPU commands that might be referencing the depth buffer.
-		Application::Get().Flush();
-
-		width = std::max(1, width); // BAD? change this?
-		height = std::max(1, height);
-
-		auto device = Application::Get().GetDevice();
-
-		// Resize screen dependent resources.
-		// Create a depth buffer.
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-		auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-		ThrowIfFailed(device->CreateCommittedResource(
-			&heapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&resourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&optimizedClearValue,
-			IID_PPV_ARGS(&m_DepthBuffer)
-		));
-
-		// Update the depth-stencil view.
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = DXGI_FORMAT_D32_FLOAT;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-		device->CreateDepthStencilView(m_DepthBuffer.Get(), &dsv,
-			m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
-	}
-}
-
-void Tutorial2::OnResize(ResizeEventArgs& e)
-{
-	if (e.Width != m_Width || e.Height != m_Height)
-	{
-		super::OnResize(e);
-
-		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
-			static_cast<float>(e.Width), static_cast<float>(e.Height));
-
-		ResizeDepthBuffer(e.Width, e.Height);
-	}
 }
 
 void Tutorial2::OnUpdate(UpdateEventArgs& e)
@@ -184,33 +114,8 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
 
 	// Update the projection matrix.
-	float aspectRatio = m_Width / static_cast<float>(m_Height);
+	float aspectRatio = m_width / static_cast<float>(m_height);
 	m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
-}
-
-// Transition a resource
-void Tutorial2::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> commandList,
-	ComPtr<ID3D12Resource> resource,
-	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
-{
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		resource.Get(),
-		beforeState, afterState);
-
-	commandList->ResourceBarrier(1, &barrier);
-}
-
-// Clear a render target.
-void Tutorial2::ClearRTV(ComPtr<ID3D12GraphicsCommandList2> commandList,
-	D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
-{
-	commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-}
-
-void Tutorial2::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList,
-	D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
-{
-	commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
 void Tutorial2::OnRender(RenderEventArgs& e)
@@ -219,38 +124,18 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 
 	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetCommandList();
-
-	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
+	
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
-	auto dsv = m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
+	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// Clear the render targets.
-	{
-		TransitionResource(commandList, backBuffer,
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-		FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-
-		ClearRTV(commandList, rtv, clearColor);
-		ClearDepth(commandList, dsv);
-	}
+	ClearBackBuffer(commandList);
 
 	XMMATRIX viewProj = XMMatrixMultiply(m_ViewMatrix, m_ProjectionMatrix);
 
-	m_batch->Render(commandList, m_Viewport, m_ScissorRect, rtv, dsv, viewProj);
+	m_batch->Render(commandList, m_viewport, m_scissorRect, rtv, dsv, viewProj);
 
-	// Present
-	{
-		TransitionResource(commandList, backBuffer,
-			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-		m_FenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
-
-		currentBackBufferIndex = m_pWindow->Present();
-
-		commandQueue->WaitForFenceValue(m_FenceValues[currentBackBufferIndex]);
-	}
+	Present(commandList, commandQueue);
 }
 
 void Tutorial2::OnKeyPressed(KeyEventArgs& e)

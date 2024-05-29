@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Window.h"
 
+#include "Scene.h"
+
 Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
     : m_hWnd(hWnd)
     , m_WindowName(windowName)
@@ -15,7 +17,7 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
     m_IsTearingSupported = app.IsTearingSupported();
 
     m_dxgiSwapChain = CreateSwapChain();
-    m_d3d12RTVDescriptorHeap = app.CreateDescriptorHeap(BufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_d3d12RTVDescriptorHeap = app.CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_RTVDescriptorSize = app.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     UpdateRenderTargetViews();
@@ -43,9 +45,6 @@ void Window::Show()
     ::ShowWindow(m_hWnd, SW_SHOW);
 }
 
-/**
-* Hide the window.
-*/
 void Window::Hide()
 {
     ::ShowWindow(m_hWnd, SW_HIDE);
@@ -53,10 +52,10 @@ void Window::Hide()
 
 void Window::Destroy()
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        // Notify the registered game that the window is being destroyed.
-        pGame->OnWindowDestroy();
+        // Notify the registered Scene that the window is being destroyed.
+        pScene->OnWindowDestroy();
     }
     if (m_hWnd)
     {
@@ -154,23 +153,21 @@ void Window::ToggleFullscreen()
 }
 
 
-void Window::RegisterCallbacks(std::shared_ptr<Scene> pGame)
+void Window::RegisterCallbacks(std::shared_ptr<Scene> pScene)
 {
-    m_pGame = pGame;
-
-    return;
+    m_pScene = pScene;
 }
 
 void Window::OnUpdate(UpdateEventArgs&)
 {
     m_UpdateClock.Tick();
 
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
         m_FrameCounter++;
 
         UpdateEventArgs updateEventArgs(m_UpdateClock.GetDeltaSeconds(), m_UpdateClock.GetTotalSeconds());
-        pGame->OnUpdate(updateEventArgs);
+        pScene->OnUpdate(updateEventArgs);
     }
 }
 
@@ -178,62 +175,62 @@ void Window::OnRender(RenderEventArgs&)
 {
     m_RenderClock.Tick();
 
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
         RenderEventArgs renderEventArgs(m_RenderClock.GetDeltaSeconds(), m_RenderClock.GetTotalSeconds());
-        pGame->OnRender(renderEventArgs);
+        pScene->OnRender(renderEventArgs);
     }
 }
 
 void Window::OnKeyPressed(KeyEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnKeyPressed(e);
+        pScene->OnKeyPressed(e);
     }
 }
 
 void Window::OnKeyReleased(KeyEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnKeyReleased(e);
+        pScene->OnKeyReleased(e);
     }
 }
 
 // The mouse was moved
 void Window::OnMouseMoved(MouseMotionEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnMouseMoved(e);
+        pScene->OnMouseMoved(e);
     }
 }
 
 // A button on the mouse was pressed
 void Window::OnMouseButtonPressed(MouseButtonEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnMouseButtonPressed(e);
+        pScene->OnMouseButtonPressed(e);
     }
 }
 
 // A button on the mouse was released
 void Window::OnMouseButtonReleased(MouseButtonEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnMouseButtonReleased(e);
+        pScene->OnMouseButtonReleased(e);
     }
 }
 
 // The mouse wheel was moved.
 void Window::OnMouseWheel(MouseWheelEventArgs& e)
 {
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnMouseWheel(e);
+        pScene->OnMouseWheel(e);
     }
 }
 
@@ -247,14 +244,14 @@ void Window::OnResize(ResizeEventArgs& e)
 
         Application::Get().Flush();
 
-        for (int i = 0; i < BufferCount; ++i)
+        for (int i = 0; i < BACK_BUFFER_COUNT; ++i)
         {
             m_d3d12BackBuffers[i].Reset();
         }
 
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
         ThrowIfFailed(m_dxgiSwapChain->GetDesc(&swapChainDesc));
-        ThrowIfFailed(m_dxgiSwapChain->ResizeBuffers(BufferCount, m_ClientWidth,
+        ThrowIfFailed(m_dxgiSwapChain->ResizeBuffers(BACK_BUFFER_COUNT, m_ClientWidth,
             m_ClientHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
         m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
@@ -262,9 +259,9 @@ void Window::OnResize(ResizeEventArgs& e)
         UpdateRenderTargetViews();
     }
 
-    if (auto pGame = m_pGame.lock())
+    if (auto pScene = m_pScene.lock())
     {
-        pGame->OnResize(e);
+        pScene->OnResize(e);
     }
 }
 
@@ -288,7 +285,7 @@ Microsoft::WRL::ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = BufferCount;
+    swapChainDesc.BufferCount = BACK_BUFFER_COUNT;
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -323,7 +320,7 @@ void Window::UpdateRenderTargetViews()
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-    for (int i = 0; i < BufferCount; ++i)
+    for (int i = 0; i < BACK_BUFFER_COUNT; ++i)
     {
         ComPtr<ID3D12Resource> backBuffer;
         ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));

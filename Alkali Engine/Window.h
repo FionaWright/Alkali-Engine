@@ -1,6 +1,3 @@
-/**
-* @brief A window for our application.
-*/
 #pragma once
 
 #include "pch.h"
@@ -10,27 +7,16 @@
 
 #include "Application.h"
 #include "CommandQueue.h"
-#include "Window.h"
-#include "Scene.h"  
 
-// Forward-declare the DirectXTemplate class.
 class Scene;
 
 class Window
 {
 public:
     // Number of swapchain back buffers.
-    static const UINT BufferCount = 3;
+    static const UINT BACK_BUFFER_COUNT = 3;
 
-    /**
-    * Get a handle to this window's instance.
-    * @returns The handle to the window instance or nullptr if this is not a valid window.
-    */
     HWND GetWindowHandle() const;
-
-    /**
-    * Destroy this window.
-    */
     void Destroy();
 
     const std::wstring& GetWindowName() const;
@@ -38,96 +24,51 @@ public:
     int GetClientWidth() const;
     int GetClientHeight() const;
 
-    /**
-    * Should this window be rendered with vertical refresh synchronization.
-    */
     bool IsVSync() const;
     void SetVSync(bool vSync);
     void ToggleVSync();
 
-    /**
-    * Is this a windowed window or full-screen?
-    */
     bool IsFullScreen() const;
-
-    // Set the fullscreen state of the window.
     void SetFullscreen(bool fullscreen);
     void ToggleFullscreen();
 
-    /**
-     * Show this window.
-     */
     void Show();
-
-    /**
-     * Hide the window.
-     */
     void Hide();
 
-    /**
-     * Return the current back buffer index.
-     */
     UINT GetCurrentBackBufferIndex() const;
 
-    /**
-     * Present the swapchain's back buffer to the screen.
-     * Returns the current back buffer index after the present.
-     */
     UINT Present();
 
-    /**
-     * Get the render target view for the current back buffer.
-     */
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
 
-    /**
-     * Get the back buffer resource for the current back buffer.
-     */
-    Microsoft::WRL::ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+    ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
 
+    void RegisterCallbacks(std::shared_ptr<Scene> pScene);
 
 protected:
     // The Window procedure needs to call protected methods of this class.
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    // Only the application can create a window.
-    friend class Application;
-    // The DirectXTemplate class needs to register itself with a window.
-    friend class Scene;
-
     Window() = delete;
     Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
     virtual ~Window();
-
-    // Register a Game with this window. This allows
-    // the window to callback functions in the Game class.
-    void RegisterCallbacks(std::shared_ptr<Scene> pGame);
 
     // Update and Draw can only be called by the application.
     virtual void OnUpdate(UpdateEventArgs& e);
     virtual void OnRender(RenderEventArgs& e);
 
-    // A keyboard key was pressed
     virtual void OnKeyPressed(KeyEventArgs& e);
-    // A keyboard key was released
     virtual void OnKeyReleased(KeyEventArgs& e);
 
-    // The mouse was moved
     virtual void OnMouseMoved(MouseMotionEventArgs& e);
-    // A button on the mouse was pressed
     virtual void OnMouseButtonPressed(MouseButtonEventArgs& e);
-    // A button on the mouse was released
     virtual void OnMouseButtonReleased(MouseButtonEventArgs& e);
-    // The mouse wheel was moved.
     virtual void OnMouseWheel(MouseWheelEventArgs& e);
 
-    // The window was resized.
     virtual void OnResize(ResizeEventArgs& e);
 
-    // Create the swapchian.
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> CreateSwapChain();
+    ComPtr<IDXGISwapChain4> CreateSwapChain();
 
-    // Update the render target views for the swapchain back buffers.
     void UpdateRenderTargetViews();
 
 private:
@@ -148,11 +89,11 @@ private:
     HighResolutionClock m_RenderClock;
     uint64_t m_FrameCounter;
 
-    std::weak_ptr<Scene> m_pGame;
+    std::weak_ptr<Scene> m_pScene;
 
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_d3d12BackBuffers[BufferCount];
+    ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
+    ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
+    ComPtr<ID3D12Resource> m_d3d12BackBuffers[BACK_BUFFER_COUNT];
 
     UINT m_RTVDescriptorSize;
     UINT m_CurrentBackBufferIndex;
