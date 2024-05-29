@@ -17,7 +17,7 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
     m_IsTearingSupported = app.IsTearingSupported();
 
     m_dxgiSwapChain = CreateSwapChain();
-    m_d3d12RTVDescriptorHeap = app.CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_d3d12RTVDescriptorHeap = ResourceManager::CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_RTVDescriptorSize = app.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     UpdateRenderTargetViews();
@@ -158,7 +158,7 @@ void Window::RegisterCallbacks(std::shared_ptr<Scene> pScene)
     m_pScene = pScene;
 }
 
-void Window::OnUpdate(UpdateEventArgs&)
+void Window::OnUpdate()
 {
     m_UpdateClock.Tick();
 
@@ -171,7 +171,7 @@ void Window::OnUpdate(UpdateEventArgs&)
     }
 }
 
-void Window::OnRender(RenderEventArgs&)
+void Window::OnRender()
 {
     m_RenderClock.Tick();
 

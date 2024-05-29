@@ -7,8 +7,6 @@
 #include "Scene.h"
 #include "Tutorial2.h"
 
-constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
-
 static Application* gs_Singleton = nullptr;
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam); // Is this needed?
@@ -112,67 +110,61 @@ ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp)
     {
         ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
         ThrowIfFailed(dxgiAdapter1.As(&dxgiAdapter4));
-    }
-    else
-    {
-        SIZE_T maxDedicatedVideoMemory = 0;
-        for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
-        {
-            DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-            dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
 
-            // Check to see if the adapter can create a D3D12 device without actually 
-            // creating it. The adapter with the largest dedicated video memory
-            // is favored.
-            if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-                SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(),
-                    D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
-                dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
-            {
-                maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
-                ThrowIfFailed(dxgiAdapter1.As(&dxgiAdapter4));
-            }
+        return dxgiAdapter4;
+    }
+    
+    SIZE_T maxDedicatedVideoMemory = 0;
+    for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
+    {
+        DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
+        dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
+
+        // Check to see if the adapter can create a D3D12 device without actually 
+        // creating it. The adapter with the largest dedicated video memory
+        // is favored.
+        bool flagsMatch = (dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0;
+        bool deviceCreatedSuccessfully = SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr));
+        bool enoughMemory = dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory;
+        if (flagsMatch && deviceCreatedSuccessfully && enoughMemory)
+        {
+            maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
+            ThrowIfFailed(dxgiAdapter1.As(&dxgiAdapter4));
         }
     }
 
     return dxgiAdapter4;
 }
+
 ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 {
-    ComPtr<ID3D12Device2> d3d12Device2;
-    ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
-    //    NAME_D3D12_OBJECT(d3d12Device2);
+    HRESULT hr;
 
-        // Enable debug messages in debug mode.
+    ComPtr<ID3D12Device2> d3d12Device2;
+    hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2));
+    ThrowIfFailed(hr);    
+
 #if defined(_DEBUG)
+    d3d12Device2->SetName(L"DX12 Device2 Object");
+
     ComPtr<ID3D12InfoQueue> pInfoQueue;
     if (SUCCEEDED(d3d12Device2.As(&pInfoQueue)))
     {
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);        
 
-        // Suppress whole categories of messages
-        //D3D12_MESSAGE_CATEGORY Categories[] = {};
-
-        // Suppress messages based on their severity level
-        D3D12_MESSAGE_SEVERITY Severities[] =
+        D3D12_MESSAGE_ID DenyIds[] =
         {
-            D3D12_MESSAGE_SEVERITY_INFO
-        };
-
-        // Suppress individual messages by their ID
-        D3D12_MESSAGE_ID DenyIds[] = {
             D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,   // I'm really not sure how to avoid this message.
             D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,                         // This warning occurs when using capture frame while graphics debugging.
             D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,                       // This warning occurs when using capture frame while graphics debugging.
         };
 
         D3D12_INFO_QUEUE_FILTER NewFilter = {};
-        //NewFilter.DenyList.NumCategories = _countof(Categories);
-        //NewFilter.DenyList.pCategoryList = Categories;
-        NewFilter.DenyList.NumSeverities = _countof(Severities);
-        NewFilter.DenyList.pSeverityList = Severities;
+        NewFilter.DenyList.NumSeverities = _countof(SEVERITIES);
+        NewFilter.DenyList.pSeverityList = const_cast<D3D12_MESSAGE_SEVERITY*>(SEVERITIES);
+
         NewFilter.DenyList.NumIDs = _countof(DenyIds);
         NewFilter.DenyList.pIDList = DenyIds;
 
@@ -185,23 +177,24 @@ ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 
 bool Application::CheckTearingSupport()
 {
-    BOOL allowTearing = FALSE;
-
     // Rather than create the DXGI 1.5 factory interface directly, we create the
     // DXGI 1.4 interface and query for the 1.5 interface. This is to enable the 
     // graphics debugging tools which will not support the 1.5 factory interface 
     // until a future update.
-    ComPtr<IDXGIFactory4> factory4;
-    if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory4))))
-    {
-        ComPtr<IDXGIFactory5> factory5;
-        if (SUCCEEDED(factory4.As(&factory5)))
-        {
-            factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-                &allowTearing, sizeof(allowTearing));
-        }
-    }
 
+    ComPtr<IDXGIFactory4> factory4;
+    HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
+    if (!SUCCEEDED(hr))
+        return false;
+  
+    ComPtr<IDXGIFactory5> factory5;
+    hr = factory4.As(&factory5);
+
+    if (!SUCCEEDED(hr))
+        return false;
+
+    BOOL allowTearing = FALSE;
+    factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
     return allowTearing == TRUE;
 }
 
@@ -221,11 +214,12 @@ shared_ptr<Window> Application::CreateRenderWindow(const wstring& windowName, in
     RECT windowRect = { 0, 0, clientWidth, clientHeight };
     AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
-    HWND hWnd = CreateWindowW(WINDOW_CLASS_NAME, windowName.c_str(),
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-        windowRect.right - windowRect.left,
-        windowRect.bottom - windowRect.top,
-        nullptr, nullptr, m_hInstance, nullptr);
+    int width = windowRect.right - windowRect.left;
+    int height = windowRect.bottom - windowRect.top;
+    HWND parent = nullptr;
+    HMENU menu = nullptr;
+    LPVOID param = nullptr;
+    HWND hWnd = CreateWindowW(WINDOW_CLASS_NAME, windowName.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, parent, menu, m_hInstance, param);
 
     if (!hWnd)
     {
@@ -282,7 +276,7 @@ shared_ptr<Window> Application::GetWindowByHwnd(HWND hwnd)
 
 int Application::Run()
 {
-    m_tutScene = std::make_shared<Tutorial2>(L"Cube Scene", 1280, 720);
+    m_tutScene = std::make_shared<Tutorial2>(L"Cube Scene", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     if (!m_tutScene->Initialize())
         return 1;
@@ -351,26 +345,11 @@ void Application::Flush()
     m_CopyCommandQueue->Flush();
 }
 
-ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
-{
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = type;
-    desc.NumDescriptors = numDescriptors;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    ThrowIfFailed(m_d3d12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-
-    return descriptorHeap;
-}
-
 UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
 {
     return m_d3d12Device->GetDescriptorHandleIncrementSize(type);
 }
 
-// Remove a window from our window lists.
 void Application::RemoveWindow(HWND hWnd)
 {
     WindowMap::iterator windowIter = m_windowHwndMap.find(hWnd);
@@ -387,36 +366,27 @@ int Application::GetTrackedWindowCount()
     return m_windowHwndMap.size();
 }
 
-// Convert the message ID into a MouseButton ID
 MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID)
 {
-    MouseButtonEventArgs::MouseButton mouseButton = MouseButtonEventArgs::None;
     switch (messageID)
     {
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_LBUTTONDBLCLK:
-    {
-        mouseButton = MouseButtonEventArgs::Left;
-    }
-    break;
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    case WM_RBUTTONDBLCLK:
-    {
-        mouseButton = MouseButtonEventArgs::Right;
-    }
-    break;
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_MBUTTONDBLCLK:
-    {
-        mouseButton = MouseButtonEventArgs::Middel;
-    }
-    break;
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_LBUTTONDBLCLK:
+            return MouseButtonEventArgs::Left;
+
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_RBUTTONDBLCLK:
+            return MouseButtonEventArgs::Right;
+
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_MBUTTONDBLCLK:
+            return MouseButtonEventArgs::Middle;
     }
 
-    return mouseButton;
+    return MouseButtonEventArgs::None;
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -430,13 +400,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     {
         case WM_PAINT:
         {
-            // Delta time will be filled in by the Window.
-            UpdateEventArgs updateEventArgs(0.0f, 0.0f);
-            pWindow->OnUpdate(updateEventArgs);
-            RenderEventArgs renderEventArgs(0.0f, 0.0f);
-
-            // Delta time will be filled in by the Window.
-            pWindow->OnRender(renderEventArgs);
+            pWindow->OnUpdate();
+            pWindow->OnRender();
         }
         break;
 
@@ -444,22 +409,27 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case WM_KEYDOWN:
         {
             MSG charMsg;
+
             // Get the Unicode character (UTF-16)
-            unsigned int c = 0;
+            unsigned int unicodeChar = 0;
+
             // For printable characters, the next message will be WM_CHAR.
             // This message contains the character code we need to send the KeyPressed event.
             // Inspired by the SDL 1.2 implementation.
             if (PeekMessage(&charMsg, hwnd, 0, 0, PM_NOREMOVE) && charMsg.message == WM_CHAR)
             {
                 GetMessage(&charMsg, hwnd, 0, 0);
-                c = static_cast<unsigned int>(charMsg.wParam);
+                unicodeChar = static_cast<unsigned int>(charMsg.wParam);
             }
+
             bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
             bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
             bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
             KeyCode::Key key = (KeyCode::Key)wParam;
             unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
-            KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Pressed, shift, control, alt);
+
+            KeyEventArgs keyEventArgs(key, unicodeChar, KeyEventArgs::Pressed, shift, control, alt);
             pWindow->OnKeyPressed(keyEventArgs);
         }
         break;
@@ -470,8 +440,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
             bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
             bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
             KeyCode::Key key = (KeyCode::Key)wParam;
-            unsigned int c = 0;
+            unsigned int unicodeChar = 0;
             unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
 
             // Determine which key was released by converting the key code and the scan code
@@ -479,20 +450,22 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             // Inspired by the SDL 1.2 implementation.
             unsigned char keyboardState[256];
             GetKeyboardState(keyboardState);
+
             wchar_t translatedCharacters[4];
+            // CHANGE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // Afraid to do it rn because I don't fully understand it and can't test it yet
             if (int result = ToUnicodeEx(static_cast<UINT>(wParam), scanCode, keyboardState, translatedCharacters, 4, 0, NULL) > 0)
             {
-                c = translatedCharacters[0];
+                unicodeChar = translatedCharacters[0];
             }
 
-            KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Released, shift, control, alt);
+            KeyEventArgs keyEventArgs(key, unicodeChar, KeyEventArgs::Released, shift, control, alt);
             pWindow->OnKeyReleased(keyEventArgs);
         }
         break;
 
         // The default window procedure will play a system notification sound 
-        // when pressing the Alt+Enter keyboard combination if this message is 
-        // not handled.
+        // when pressing the Alt+Enter keyboard combination if this message is not handled
         case WM_SYSCHAR:
             break;
 
@@ -550,9 +523,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
         case WM_MOUSEWHEEL:
         {
-            // The distance the mouse wheel is rotated.
-            // A positive value indicates the wheel was rotated to the right.
-            // A negative value indicates the wheel was rotated to the left.
             float zDelta = ((int)(short)HIWORD(wParam)) / (float)WHEEL_DELTA;
             short keyStates = (short)LOWORD(wParam);
 
@@ -565,7 +535,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             int x = ((int)(short)LOWORD(lParam));
             int y = ((int)(short)HIWORD(lParam));
 
-            // Convert the screen coordinates to client coordinates.
             POINT clientToScreenPoint;
             clientToScreenPoint.x = x;
             clientToScreenPoint.y = y;
@@ -588,13 +557,10 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
         case WM_DESTROY:
         {
-            // If a window is being destroyed, remove it from the 
-            // window maps.
             Application::Get().RemoveWindow(hwnd);
 
             if (Application::Get().GetTrackedWindowCount() == 0)
             {
-                // If there are no more windows, quit the application.
                 PostQuitMessage(0);
             }
         }

@@ -73,7 +73,7 @@ public:
         None = 0,
         Left = 1,
         Right = 2,
-        Middel = 3
+        Middle = 3
     };
     enum ButtonState
     {
