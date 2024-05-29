@@ -14,10 +14,7 @@ class Window
 {
 public:
     Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
-    virtual ~Window();
-
-    // Number of swapchain back buffers.
-    static const UINT BACK_BUFFER_COUNT = 3;
+    virtual ~Window();    
 
     HWND GetWindowHandle() const;
     void Destroy();
@@ -53,8 +50,8 @@ protected:
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     // Update and Draw can only be called by the application.
-    virtual void OnUpdate(UpdateEventArgs& e);
-    virtual void OnRender(RenderEventArgs& e);
+    virtual void OnUpdate();
+    virtual void OnRender();
 
     virtual void OnKeyPressed(KeyEventArgs& e);
     virtual void OnKeyReleased(KeyEventArgs& e);

@@ -73,5 +73,5 @@ private:
 
     ComPtr<ID3D12Resource> m_depthBuffer;   
 
-    array<uint64_t, Window::BACK_BUFFER_COUNT> m_FenceValues = {};
+    array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};
 };

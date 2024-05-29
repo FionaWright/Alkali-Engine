@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "Settings.h"
 
 #include <memory>
 #include <string>
@@ -44,22 +45,17 @@ public:
     shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
 
     void Flush();
-
-    ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;    
 
     void RemoveWindow(HWND hWnd);
 
     int GetTrackedWindowCount();
 
-protected:    
+private:
     ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
     ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter);
     bool CheckTearingSupport();
-
-private:
-    Application(const Application& copy) = delete;
-    Application& operator=(const Application& other) = delete;    
 
     HINSTANCE m_hInstance;
 

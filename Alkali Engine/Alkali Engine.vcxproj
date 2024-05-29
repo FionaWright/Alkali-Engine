@@ -135,6 +135,7 @@
     <ClInclude Include="Keycodes.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Tutorial2.h" />
     <ClInclude Include="Window.h" />
