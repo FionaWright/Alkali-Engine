@@ -15,6 +15,7 @@
 
 using std::array;
 
+class Model;
 class Batch;
 class CommandQueue;
 
@@ -51,7 +52,7 @@ public:
 
     void Present(ComPtr<ID3D12GraphicsCommandList2> commandList, std::shared_ptr<CommandQueue> commandQueue);
 
-    void CreateDSV(int width, int height);
+    void SetDSVForSize(int width, int height);
 
     std::shared_ptr<Window> m_pWindow;
 

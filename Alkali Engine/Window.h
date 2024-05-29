@@ -13,6 +13,9 @@ class Scene;
 class Window
 {
 public:
+    Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
+    virtual ~Window();
+
     // Number of swapchain back buffers.
     static const UINT BACK_BUFFER_COUNT = 3;
 
@@ -48,10 +51,6 @@ public:
 protected:
     // The Window procedure needs to call protected methods of this class.
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-    Window() = delete;
-    Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
-    virtual ~Window();
 
     // Update and Draw can only be called by the application.
     virtual void OnUpdate(UpdateEventArgs& e);
