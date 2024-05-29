@@ -8,10 +8,6 @@
 #include <memory>
 #include <string>
 
-#include "Scene.h"
-#include "CommandQueue.h"
-#include "Window.h"
-
 class Window;
 class Scene;
 class CommandQueue;

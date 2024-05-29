@@ -2,6 +2,10 @@
 #include "Application.h"
 #include <Shlwapi.h>
 
+#include "Window.h"
+#include "CommandQueue.h"
+#include "Scene.h"
+
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
 
 using WindowPtr = std::shared_ptr<Window>;
@@ -41,9 +45,6 @@ Application::Application(HINSTANCE hInst)
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 #if defined(_DEBUG)
-    // Always enable the debug layer before doing anything DX12 related
-    // so all possible errors generated while creating DX12 objects
-    // are caught by the debug layer.
     ComPtr<ID3D12Debug> debugInterface;
     ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
     debugInterface->EnableDebugLayer();
@@ -72,6 +73,7 @@ Application::Application(HINSTANCE hInst)
     {
         m_d3d12Device = CreateDevice(m_dxgiAdapter);
     }
+
     if (m_d3d12Device)
     {
         m_DirectCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -155,7 +157,7 @@ ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp)
 
     return dxgiAdapter4;
 }
-Microsoft::WRL::ComPtr<ID3D12Device2> Application::CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter)
+ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 {
     ComPtr<ID3D12Device2> d3d12Device2;
     ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
@@ -289,8 +291,11 @@ std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowN
 
 int Application::Run(std::shared_ptr<Scene> pGame)
 {
-    if (!pGame->Initialize()) return 1;
-    if (!pGame->LoadContent()) return 2;
+    if (!pGame->Initialize()) 
+        return 1;
+
+    if (!pGame->LoadContent()) 
+        return 2;
 
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
@@ -316,7 +321,7 @@ void Application::Quit(int exitCode)
     PostQuitMessage(exitCode);
 }
 
-Microsoft::WRL::ComPtr<ID3D12Device2> Application::GetDevice() const
+ComPtr<ID3D12Device2> Application::GetDevice() const
 {
     return m_d3d12Device;
 }
@@ -354,7 +359,7 @@ void Application::Flush()
     m_CopyCommandQueue->Flush();
 }
 
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = type;
@@ -362,7 +367,7 @@ Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(U
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     desc.NodeMask = 0;
 
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
     ThrowIfFailed(m_d3d12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
 
     return descriptorHeap;
@@ -372,7 +377,6 @@ UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE ty
 {
     return m_d3d12Device->GetDescriptorHandleIncrementSize(type);
 }
-
 
 // Remove a window from our window lists.
 static void RemoveWindow(HWND hWnd)
@@ -429,10 +433,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
     }
 
-    if (pWindow)
+    if (!pWindow)
     {
-        switch (message)
-        {
+        return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
+    
+    switch (message)
+    {
         case WM_PAINT:
         {
             // Delta time will be filled in by the Window.
@@ -443,6 +450,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnRender(renderEventArgs);
         }
         break;
+
         case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
         {
@@ -466,6 +474,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnKeyPressed(keyEventArgs);
         }
         break;
+
         case WM_SYSKEYUP:
         case WM_KEYUP:
         {
@@ -491,11 +500,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnKeyReleased(keyEventArgs);
         }
         break;
+
         // The default window procedure will play a system notification sound 
         // when pressing the Alt+Enter keyboard combination if this message is 
         // not handled.
         case WM_SYSCHAR:
             break;
+
         case WM_MOUSEMOVE:
         {
             bool lButton = (wParam & MK_LBUTTON) != 0;
@@ -511,6 +522,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnMouseMoved(mouseMotionEventArgs);
         }
         break;
+
         case WM_LBUTTONDOWN:
         case WM_RBUTTONDOWN:
         case WM_MBUTTONDOWN:
@@ -528,6 +540,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnMouseButtonPressed(mouseButtonEventArgs);
         }
         break;
+
         case WM_LBUTTONUP:
         case WM_RBUTTONUP:
         case WM_MBUTTONUP:
@@ -545,6 +558,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnMouseButtonReleased(mouseButtonEventArgs);
         }
         break;
+
         case WM_MOUSEWHEEL:
         {
             // The distance the mouse wheel is rotated.
@@ -572,6 +586,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnMouseWheel(mouseWheelEventArgs);
         }
         break;
+
         case WM_SIZE:
         {
             int width = ((int)(short)LOWORD(lParam));
@@ -581,6 +596,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             pWindow->OnResize(resizeEventArgs);
         }
         break;
+
         case WM_DESTROY:
         {
             // If a window is being destroyed, remove it from the 
@@ -594,13 +610,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             }
         }
         break;
+
         default:
             return DefWindowProcW(hwnd, message, wParam, lParam);
-        }
-    }
-    else
-    {
-        return DefWindowProcW(hwnd, message, wParam, lParam);
     }
 
     return 0;
