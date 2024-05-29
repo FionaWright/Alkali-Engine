@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Application.h"
+#include <Shlwapi.h>
 
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
 
@@ -25,6 +26,14 @@ Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
     , m_TearingSupported(false)
 {
+    HMODULE hModule = GetModuleHandleW(NULL);
+    WCHAR path[MAX_PATH];
+    if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
+    {
+        PathRemoveFileSpecW(path);
+        m_exeDirectoryPath.assign(path);
+    }
+
     // Windows 10 Creators update adds Per Monitor V2 DPI awareness context.
     // Using this awareness context allows the client area of the window 
     // to achieve 100% scaling while still allowing non-client window content to 
@@ -310,6 +319,11 @@ void Application::Quit(int exitCode)
 Microsoft::WRL::ComPtr<ID3D12Device2> Application::GetDevice() const
 {
     return m_d3d12Device;
+}
+
+wstring Application::GetEXEDirectoryPath()
+{
+    return m_exeDirectoryPath;
 }
 
 std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
