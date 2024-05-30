@@ -129,7 +129,7 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 
 	fin.close();
 
-	int vertexCount = m_indexList.size();
+	size_t vertexCount = m_indexList.size();
 
 	vector<VertexInputData> vertexBuffer;
 	unordered_map<VertexKey, int> vertexMap;
@@ -152,7 +152,7 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 			data = SetVertexData(indices, i1, i2);
 			vertexBuffer.push_back(data);
 
-			int vBufferIndex = vertexBuffer.size() - 1;
+			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
 			indexBuffer.push_back(vBufferIndex);			
 			vertexMap.emplace(key, vBufferIndex);
 		}
@@ -170,7 +170,7 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 			data = SetVertexData(indices, i, i2);
 			vertexBuffer.push_back(data);
 
-			int vBufferIndex = vertexBuffer.size() - 1;
+			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
 			indexBuffer.push_back(vBufferIndex);
 			vertexMap.emplace(key, vBufferIndex);
 		}
@@ -188,7 +188,7 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 			data = SetVertexData(indices, i1, i);
 			vertexBuffer.push_back(data);
 
-			int vBufferIndex = vertexBuffer.size() - 1;
+			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
 			indexBuffer.push_back(vBufferIndex);
 			vertexMap.emplace(key, vBufferIndex);
 		}

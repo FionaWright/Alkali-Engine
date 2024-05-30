@@ -6,6 +6,9 @@ Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync
 	m_FoV = 45.0f;
 	m_ContentLoaded = false;
 
+	m_ViewMatrix = XMMatrixIdentity();
+	m_ProjectionMatrix = XMMatrixIdentity();
+
 	m_batch = std::make_shared<Batch>();
 	m_goCube = std::make_shared<GameObject>();
 	m_modelCube = std::make_shared<Model>();
@@ -15,8 +18,6 @@ Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync
 
 bool Tutorial2::LoadContent()
 {
-	HRESULT hr;
-
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetAvailableCommandList();
 
@@ -118,21 +119,20 @@ void Tutorial2::OnKeyPressed(KeyEventArgs& e)
 {
 	super::OnKeyPressed(e);
 
-	switch (e.Key)
+	if (e.Key == KeyCode::Escape)
 	{
-	case KeyCode::Escape:
 		PostQuitMessage(0);
-		break;
-	case KeyCode::Enter:
-		if (e.Alt)
-		{
-	case KeyCode::F11:
+	}
+
+	bool altEnter = e.Key == KeyCode::Enter && e.Alt;
+	if (altEnter || e.Key == KeyCode::F11)
+	{
 		m_pWindow->ToggleFullscreen();
-		break;
-		}
-	case KeyCode::V:
+	}
+
+	if (e.Key == KeyCode::V)
+	{
 		m_pWindow->ToggleVSync();
-		break;
 	}
 }
 

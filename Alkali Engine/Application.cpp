@@ -10,6 +10,8 @@
 
 Application::Application()
 {
+    m_hInstance = nullptr;
+
     //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
 }
 

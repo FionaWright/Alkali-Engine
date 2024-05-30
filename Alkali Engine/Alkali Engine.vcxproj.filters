@@ -93,9 +93,6 @@
     <ClInclude Include="Model.h">
       <Filter>Source Files\GPU Resources</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
-      <Filter>PCH</Filter>
-    </ClInclude>
     <ClInclude Include="Helpers.h">
       <Filter>PCH</Filter>
     </ClInclude>
@@ -133,6 +130,9 @@
     <ClInclude Include="WindowManager.h" />
     <ClInclude Include="Window.h">
       <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

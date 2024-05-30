@@ -16,7 +16,7 @@ void ReportLiveObjects()
     dxgiDebug->Release();
 }
 
-int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
+_Use_decl_annotations_ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
     int retCode = 0;
 
