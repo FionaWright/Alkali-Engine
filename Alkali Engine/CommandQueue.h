@@ -1,11 +1,11 @@
 #pragma once
 
-#include <wrl.h>    // For Microsoft::WRL::ComPtr
+#include "pch.h"
 
 #include <cstdint>  // For uint64_t
-#include <queue>    // For std::queue
+#include <queue>    
 
-#include "pch.h"
+using std::queue;
 
 class CommandQueue
 {
@@ -13,11 +13,8 @@ public:
     CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
     virtual ~CommandQueue();
 
-    // Get an available command list from the command queue.
-    ComPtr<ID3D12GraphicsCommandList2> GetCommandList();
+    ComPtr<ID3D12GraphicsCommandList2> GetAvailableCommandList();
 
-    // Execute a command list.
-    // Returns the fence value to wait for for this command list.
     uint64_t ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> commandList);
 
     uint64_t Signal();
@@ -32,15 +29,14 @@ protected:
     ComPtr<ID3D12GraphicsCommandList2> CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator);
 
 private:
-    // Keep track of command allocators that are "in-flight"
     struct CommandAllocatorEntry
     {
         uint64_t fenceValue;
         ComPtr<ID3D12CommandAllocator> commandAllocator;
     };
 
-    using CommandAllocatorQueue = std::queue<CommandAllocatorEntry>;
-    using CommandListQueue = std::queue< ComPtr<ID3D12GraphicsCommandList2> >;
+    using CommandAllocatorQueue = queue<CommandAllocatorEntry>;
+    using CommandListQueue = queue<ComPtr<ID3D12GraphicsCommandList2> >;
 
     D3D12_COMMAND_LIST_TYPE                     m_CommandListType;
     ComPtr<ID3D12Device2>                       m_d3d12Device;
