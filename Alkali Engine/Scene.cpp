@@ -33,8 +33,6 @@ bool Scene::Initialize()
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 
-	//m_FenceValues = new uint64_t[Window::BACK_BUFFER_COUNT];
-
 	if (m_dsvEnabled)
 		SetDSVForSize(m_width, m_height);
 
@@ -148,7 +146,6 @@ void Scene::SetDSVForSize(int width, int height)
 {
 	HRESULT hr;
 
-	// Create the descriptor heap for the depth-stencil view.
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;

@@ -99,3 +99,109 @@ ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescr
 
     return descriptorHeap;
 }
+
+ComPtr<ID3D12Device2> ResourceManager::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
+{
+    HRESULT hr;
+
+    ComPtr<ID3D12Device2> d3d12Device2;
+    hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2));
+    ThrowIfFailed(hr);
+
+#if defined(_DEBUG)
+    d3d12Device2->SetName(L"DX12 Device2 Object");
+
+    ComPtr<ID3D12InfoQueue> pInfoQueue;
+    if (SUCCEEDED(d3d12Device2.As(&pInfoQueue)))
+    {
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+
+        D3D12_MESSAGE_ID DenyIds[] =
+        {
+            D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,   // I'm really not sure how to avoid this message.
+            D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,                         // This warning occurs when using capture frame while graphics debugging.
+            D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,                       // This warning occurs when using capture frame while graphics debugging.
+        };
+
+        D3D12_INFO_QUEUE_FILTER NewFilter = {};
+        NewFilter.DenyList.NumSeverities = _countof(SEVERITIES);
+        NewFilter.DenyList.pSeverityList = const_cast<D3D12_MESSAGE_SEVERITY*>(SEVERITIES);
+
+        NewFilter.DenyList.NumIDs = _countof(DenyIds);
+        NewFilter.DenyList.pIDList = DenyIds;
+
+        ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
+    }
+#endif
+
+    return d3d12Device2;
+}
+
+ComPtr<IDXGIAdapter4> ResourceManager::GetAdapter(bool bUseWarp)
+{
+    ComPtr<IDXGIFactory4> dxgiFactory;
+    UINT createFactoryFlags = 0;
+
+#if defined(_DEBUG)
+    createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+    ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
+
+    ComPtr<IDXGIAdapter1> dxgiAdapter1;
+    ComPtr<IDXGIAdapter4> dxgiAdapter4;
+
+    if (bUseWarp)
+    {
+        ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
+        ThrowIfFailed(dxgiAdapter1.As(&dxgiAdapter4));
+
+        return dxgiAdapter4;
+    }
+
+    SIZE_T maxDedicatedVideoMemory = 0;
+    for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
+    {
+        DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
+        dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
+
+        // Check to see if the adapter can create a D3D12 device without actually 
+        // creating it. The adapter with the largest dedicated video memory
+        // is favored.
+        bool flagsMatch = (dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0;
+        bool deviceCreatedSuccessfully = SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr));
+        bool enoughMemory = dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory;
+        if (flagsMatch && deviceCreatedSuccessfully && enoughMemory)
+        {
+            maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
+            ThrowIfFailed(dxgiAdapter1.As(&dxgiAdapter4));
+        }
+    }
+
+    return dxgiAdapter4;
+}
+
+bool ResourceManager::CheckTearingSupport()
+{
+    // Rather than create the DXGI 1.5 factory interface directly, we create the
+    // DXGI 1.4 interface and query for the 1.5 interface. This is to enable the 
+    // graphics debugging tools which will not support the 1.5 factory interface 
+    // until a future update.
+
+    ComPtr<IDXGIFactory4> factory4;
+    HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
+    if (!SUCCEEDED(hr))
+        return false;
+
+    ComPtr<IDXGIFactory5> factory5;
+    hr = factory4.As(&factory5);
+
+    if (!SUCCEEDED(hr))
+        return false;
+
+    BOOL allowTearing = FALSE;
+    factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+    return allowTearing == TRUE;
+}

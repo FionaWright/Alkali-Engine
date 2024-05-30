@@ -6,6 +6,7 @@
 #include <string>
 
 using std::string;
+using std::wstring;
 
 class Model
 {
@@ -13,7 +14,7 @@ public:
 	Model();
     ~Model();
 
-    void Init(string filepath);
+    void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepath);
     void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize);
 
     void SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData);

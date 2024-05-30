@@ -31,6 +31,7 @@ private:
 	bool m_ContentLoaded;
 
 	shared_ptr<Model> m_modelCube;
+	shared_ptr<Model> m_modelMadeline;
 	shared_ptr<Batch> m_batch;
 	shared_ptr<GameObject> m_goCube;
 	shared_ptr<Shader> m_shaderCube;
