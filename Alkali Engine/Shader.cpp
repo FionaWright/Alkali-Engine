@@ -2,7 +2,7 @@
 #include "Shader.h"
 #include <iostream>
 
-void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig)
+void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device)
 {
 	m_vsName = g_dirPath + vsName;
 	m_psName = g_dirPath + psName;
@@ -11,29 +11,26 @@ void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEM
 	m_inputLayoutCount = inputLayoutCount;
 	m_rootSig = rootSig;
 
-	Compile();
+	Compile(device);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device, wstring exePath)
 {
 	m_preCompiled = true;
 
-	wstring exeDirPath = Application::Get().GetEXEDirectoryPath();
-	m_vsName = exeDirPath + L"\\" + vsName;
-	m_psName = exeDirPath + L"\\" + psName;
+	m_vsName = exePath + L"\\" + vsName;
+	m_psName = exePath + L"\\" + psName;
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
 	m_rootSig = rootSig;
 
-	Compile();
+	Compile(device);
 }
 
-void Shader::Compile()
+void Shader::Compile(ComPtr<ID3D12Device2> device)
 {
 	HRESULT hr;
-
-	auto device = Application::Get().GetDevice();
 
 	ComPtr<ID3DBlob> vBlob;
 	ComPtr<ID3DBlob> pBlob;

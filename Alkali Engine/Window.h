@@ -5,16 +5,17 @@
 #include "Events.h"
 #include "HighResolutionClock.h"
 
-#include "Application.h"
 #include "CommandQueue.h"
+#include "D3DClass.h"
+#include "Settings.h"
 
 class Scene;
 
 class Window
 {
 public:
-    Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
-    virtual ~Window();    
+    Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
+    virtual ~Window();
 
     HWND GetWindowHandle() const;
     void Destroy();
@@ -49,7 +50,6 @@ protected:
     // The Window procedure needs to call protected methods of this class.
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    // Update and Draw can only be called by the application.
     virtual void OnUpdate();
     virtual void OnRender();
 
@@ -95,6 +95,7 @@ private:
     UINT m_CurrentBackBufferIndex;
 
     RECT m_WindowRect;
-    bool m_IsTearingSupported;
+
+    shared_ptr<D3DClass> m_d3dClass;
 
 };

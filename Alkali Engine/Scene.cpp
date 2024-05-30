@@ -14,7 +14,7 @@ Scene::~Scene()
 {
 }
 
-bool Scene::Initialize()
+bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
 {
     // Check for DirectX Math library support.
     if (!DirectX::XMVerifyCPUSupport())
@@ -23,11 +23,11 @@ bool Scene::Initialize()
         return false;
     }
 
-    m_pWindow = Application::Get().CreateRenderWindow(m_name, m_width, m_height, m_vSync);
+	m_d3dClass = pD3DClass;
+
+    m_pWindow = WindowManager::GetInstance()->CreateRenderWindow(pD3DClass, m_name, m_width, m_height, m_vSync);
     m_pWindow->RegisterCallbacks(shared_from_this());
     m_pWindow->Show();
-
-    m_device = Application::Get().GetDevice();
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
@@ -50,7 +50,10 @@ void Scene::UnloadContent()
 
 void Scene::Destroy()
 {
-    Application::Get().DestroyWindow(m_pWindow);
+	if (!m_pWindow)
+		return;
+
+	m_pWindow->Destroy();
     m_pWindow.reset();
 }
 
@@ -146,14 +149,16 @@ void Scene::SetDSVForSize(int width, int height)
 {
 	HRESULT hr;
 
+	auto device = m_d3dClass->GetDevice();
+
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap));
+	hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap));
 	ThrowIfFailed(hr);
 
-	Application::Get().Flush();
+	m_d3dClass->Flush();
 
 	width = std::max(1, width);
 	height = std::max(1, height);
@@ -165,7 +170,7 @@ void Scene::SetDSVForSize(int width, int height)
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-	hr = m_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
+	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
 	ThrowIfFailed(hr);
 
 	// Update the depth-stencil view.
@@ -176,5 +181,5 @@ void Scene::SetDSVForSize(int width, int height)
 	dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	m_device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
+	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
 }

@@ -55,9 +55,6 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Source Files\Managers</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
     <ClCompile Include="CommandQueue.cpp">
       <Filter>Source Files\Managers</Filter>
     </ClCompile>
@@ -66,6 +63,15 @@
     </ClCompile>
     <ClCompile Include="ModelLoader.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -111,9 +117,6 @@
     <ClInclude Include="ResourceManager.h">
       <Filter>Source Files\Managers</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="CommandQueue.h">
       <Filter>Source Files\Managers</Filter>
     </ClInclude>
@@ -125,6 +128,11 @@
     </ClInclude>
     <ClInclude Include="ModelLoader.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DClass.h" />
+    <ClInclude Include="WindowManager.h" />
+    <ClInclude Include="Window.h">
+      <Filter>Source Files\GPU Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

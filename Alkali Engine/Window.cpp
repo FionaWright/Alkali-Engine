@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "Window.h"
-
 #include "Scene.h"
 
-Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
+Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
     : m_hWnd(hWnd)
     , m_WindowName(windowName)
     , m_ClientWidth(clientWidth)
@@ -12,13 +11,11 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
     , m_Fullscreen(false)
     , m_FrameCounter(0)
 {
-    Application& app = Application::Get();
-
-    m_IsTearingSupported = app.IsTearingSupported();
+    m_d3dClass = pD3DClass;
 
     m_dxgiSwapChain = CreateSwapChain();
     m_d3d12RTVDescriptorHeap = ResourceManager::CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_RTVDescriptorSize = app.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_RTVDescriptorSize = m_d3dClass->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     UpdateRenderTargetViews();
 }
@@ -94,56 +91,55 @@ bool Window::IsFullScreen() const
     return m_Fullscreen;
 }
 
-// Set the fullscreen state of the window.
 void Window::SetFullscreen(bool fullscreen)
 {
-    if (m_Fullscreen != fullscreen)
+    if (m_Fullscreen == fullscreen)
+        return;
+
+    m_Fullscreen = fullscreen;
+
+    if (m_Fullscreen) // Switching to fullscreen.
     {
-        m_Fullscreen = fullscreen;
+        // Store the current window dimensions so they can be restored 
+        // when switching out of fullscreen state.
+        ::GetWindowRect(m_hWnd, &m_WindowRect);
 
-        if (m_Fullscreen) // Switching to fullscreen.
-        {
-            // Store the current window dimensions so they can be restored 
-            // when switching out of fullscreen state.
-            ::GetWindowRect(m_hWnd, &m_WindowRect);
+        // Set the window style to a borderless window so the client area fills
+        // the entire screen.
+        UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 
-            // Set the window style to a borderless window so the client area fills
-            // the entire screen.
-            UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+        ::SetWindowLongW(m_hWnd, GWL_STYLE, windowStyle);
 
-            ::SetWindowLongW(m_hWnd, GWL_STYLE, windowStyle);
+        // Query the name of the nearest display device for the window.
+        // This is required to set the fullscreen dimensions of the window
+        // when using a multi-monitor setup.
+        HMONITOR hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+        MONITORINFOEX monitorInfo = {};
+        monitorInfo.cbSize = sizeof(MONITORINFOEX);
+        ::GetMonitorInfo(hMonitor, &monitorInfo);
 
-            // Query the name of the nearest display device for the window.
-            // This is required to set the fullscreen dimensions of the window
-            // when using a multi-monitor setup.
-            HMONITOR hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
-            MONITORINFOEX monitorInfo = {};
-            monitorInfo.cbSize = sizeof(MONITORINFOEX);
-            ::GetMonitorInfo(hMonitor, &monitorInfo);
+        ::SetWindowPos(m_hWnd, HWND_TOPMOST,
+            monitorInfo.rcMonitor.left,
+            monitorInfo.rcMonitor.top,
+            monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+            monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+            SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
-            ::SetWindowPos(m_hWnd, HWND_TOPMOST,
-                monitorInfo.rcMonitor.left,
-                monitorInfo.rcMonitor.top,
-                monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
-                SWP_FRAMECHANGED | SWP_NOACTIVATE);
+        ::ShowWindow(m_hWnd, SW_MAXIMIZE);
+    }
+    else
+    {
+        // Restore all the window decorators.
+        ::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 
-            ::ShowWindow(m_hWnd, SW_MAXIMIZE);
-        }
-        else
-        {
-            // Restore all the window decorators.
-            ::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+        ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
+            m_WindowRect.left,
+            m_WindowRect.top,
+            m_WindowRect.right - m_WindowRect.left,
+            m_WindowRect.bottom - m_WindowRect.top,
+            SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
-            ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
-                m_WindowRect.left,
-                m_WindowRect.top,
-                m_WindowRect.right - m_WindowRect.left,
-                m_WindowRect.bottom - m_WindowRect.top,
-                SWP_FRAMECHANGED | SWP_NOACTIVATE);
-
-            ::ShowWindow(m_hWnd, SW_NORMAL);
-        }
+        ::ShowWindow(m_hWnd, SW_NORMAL);
     }
 }
 
@@ -151,7 +147,6 @@ void Window::ToggleFullscreen()
 {
     SetFullscreen(!m_Fullscreen);
 }
-
 
 void Window::RegisterCallbacks(std::shared_ptr<Scene> pScene)
 {
@@ -198,7 +193,6 @@ void Window::OnKeyReleased(KeyEventArgs& e)
     }
 }
 
-// The mouse was moved
 void Window::OnMouseMoved(MouseMotionEventArgs& e)
 {
     if (auto pScene = m_pScene.lock())
@@ -207,7 +201,6 @@ void Window::OnMouseMoved(MouseMotionEventArgs& e)
     }
 }
 
-// A button on the mouse was pressed
 void Window::OnMouseButtonPressed(MouseButtonEventArgs& e)
 {
     if (auto pScene = m_pScene.lock())
@@ -216,7 +209,6 @@ void Window::OnMouseButtonPressed(MouseButtonEventArgs& e)
     }
 }
 
-// A button on the mouse was released
 void Window::OnMouseButtonReleased(MouseButtonEventArgs& e)
 {
     if (auto pScene = m_pScene.lock())
@@ -225,7 +217,6 @@ void Window::OnMouseButtonReleased(MouseButtonEventArgs& e)
     }
 }
 
-// The mouse wheel was moved.
 void Window::OnMouseWheel(MouseWheelEventArgs& e)
 {
     if (auto pScene = m_pScene.lock())
@@ -236,13 +227,12 @@ void Window::OnMouseWheel(MouseWheelEventArgs& e)
 
 void Window::OnResize(ResizeEventArgs& e)
 {
-    // Update the client size.
     if (m_ClientWidth != e.Width || m_ClientHeight != e.Height)
     {
         m_ClientWidth = std::max(1, e.Width);
         m_ClientHeight = std::max(1, e.Height);
 
-        Application::Get().Flush();
+        m_d3dClass->Flush();
 
         for (int i = 0; i < BACK_BUFFER_COUNT; ++i)
         {
@@ -265,13 +255,12 @@ void Window::OnResize(ResizeEventArgs& e)
     }
 }
 
-Microsoft::WRL::ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
+ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
 {
-    Application& app = Application::Get();
-
     ComPtr<IDXGISwapChain4> dxgiSwapChain4;
     ComPtr<IDXGIFactory4> dxgiFactory4;
     UINT createFactoryFlags = 0;
+
 #if defined(_DEBUG)
     createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
@@ -289,9 +278,10 @@ Microsoft::WRL::ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+
     // It is recommended to always allow tearing if tearing support is available.
-    swapChainDesc.Flags = m_IsTearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-    ID3D12CommandQueue* pCommandQueue = app.GetCommandQueue()->GetD3D12CommandQueue().Get();
+    swapChainDesc.Flags = m_d3dClass->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    ID3D12CommandQueue* pCommandQueue = m_d3dClass->GetCommandQueue()->GetD3D12CommandQueue().Get();
 
     ComPtr<IDXGISwapChain1> swapChain1;
     ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(
@@ -316,7 +306,7 @@ Microsoft::WRL::ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
 // Update the render target views for the swapchain back buffers.
 void Window::UpdateRenderTargetViews()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = m_d3dClass->GetDevice();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
@@ -335,8 +325,7 @@ void Window::UpdateRenderTargetViews()
 
 D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
 {
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_CurrentBackBufferIndex, m_RTVDescriptorSize);
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 }
 
 Microsoft::WRL::ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
@@ -352,7 +341,7 @@ UINT Window::GetCurrentBackBufferIndex() const
 UINT Window::Present()
 {
     UINT syncInterval = m_VSync ? 1 : 0;
-    UINT presentFlags = m_IsTearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+    UINT presentFlags = m_d3dClass->IsTearingSupported() && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
     ThrowIfFailed(m_dxgiSwapChain->Present(syncInterval, presentFlags));
     m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
 

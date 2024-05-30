@@ -11,9 +11,10 @@ const wstring g_dirPath = L"Assets/Shaders/";
 class Shader
 {
 public:
-	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig);
-	void Compile();
+	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device);
+	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device, wstring exePath);
+
+	void Compile(ComPtr<ID3D12Device2> device);
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 

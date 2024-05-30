@@ -8,7 +8,6 @@
 #include <string> // for std::wstring
 #include <array>
 
-#include "Application.h"
 #include "Batch.h"
 #include "CommandQueue.h"
 #include "Window.h"
@@ -25,7 +24,7 @@ public:
     Scene(const std::wstring& name, int width, int height, bool vSync, bool createDSV);
     virtual ~Scene();
 
-    virtual bool Initialize();
+    bool Init(shared_ptr<D3DClass> pD3DClass);
     virtual bool LoadContent() = 0;
 
     virtual void UnloadContent() = 0;
@@ -45,6 +44,7 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
+protected:
     void SetBackgroundColor(float r, float g, float b, float a);
     
     void ClearBackBuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
@@ -59,11 +59,12 @@ public:
     int m_width;
     int m_height;
 
-    ComPtr<ID3D12Device2> m_device; 
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
     D3D12_VIEWPORT m_viewport;
     D3D12_RECT m_scissorRect;
+
+    shared_ptr<D3DClass> m_d3dClass;
 
 private:
     std::wstring m_name;

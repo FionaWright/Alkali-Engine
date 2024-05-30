@@ -28,8 +28,6 @@ void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCo
 	m_indexCount = indexCount;
 	m_vertexInputSize = vertexInputSize;
 
-	auto device = Application::Get().GetDevice();
-
 	ComPtr<ID3D12Resource> intermediateVertexBuffer;
 	ResourceManager::CreateCommittedResource(commandList, m_VertexBuffer, m_vertexCount, m_vertexInputSize);
 

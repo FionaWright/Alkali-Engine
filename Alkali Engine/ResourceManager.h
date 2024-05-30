@@ -20,5 +20,7 @@ public:
 	static ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
 
 	static bool CheckTearingSupport();
+
+	static void Shutdown();
 };
 
