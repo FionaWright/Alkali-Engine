@@ -52,11 +52,7 @@ public:
 
     int GetTrackedWindowCount();
 
-private:
-    ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
-    ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter);
-    bool CheckTearingSupport();
-
+private:        
     HINSTANCE m_hInstance;
 
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;

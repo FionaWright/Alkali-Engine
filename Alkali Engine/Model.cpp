@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Model.h"
+#include "ModelLoader.h"
 
 Model::Model()
 {
@@ -9,8 +10,16 @@ Model::~Model()
 {
 }
 
-void Model::Init(string filepath)
+void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepath)
 {
+	size_t vertexCount = 0, indexCount = 0;
+	vector<VertexInputData> vertexBuffer;
+	vector<WORD> indexBuffer;
+
+	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount);
+
+	Init(commandList, vertexCount, indexCount, sizeof(VertexInputData));
+	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
 void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize)

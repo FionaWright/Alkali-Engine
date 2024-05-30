@@ -1,9 +1,10 @@
-struct P_IN
+struct V_OUT
 {
-    float4 Color : COLOR;
+    float3 Normal : NORMAL;
+    float4 Position : SV_Position;
 };
 
-float4 main(P_IN input) : SV_Target
+float4 main(V_OUT input) : SV_Target
 {
-    return input.Color;
+    return float4(input.Normal, 1.0f);
 }
