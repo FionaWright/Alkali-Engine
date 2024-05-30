@@ -18,7 +18,7 @@ bool Tutorial2::LoadContent()
 	HRESULT hr;
 
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	auto commandList = commandQueue->GetCommandList();
+	auto commandList = commandQueue->GetAvailableCommandList();
 
 	m_modelMadeline->Init(commandList, L"Madeline.model");
 
@@ -99,7 +99,7 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 	super::OnRender(e);
 
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandList = commandQueue->GetCommandList();
+	auto commandList = commandQueue->GetAvailableCommandList();
 	
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
