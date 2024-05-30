@@ -1,29 +1,32 @@
 #include "pch.h"
 #include "ResourceManager.h"
 
+static ComPtr<ID3D12Device2> gs_device;
+
 void ResourceManager::CreateCommittedResource(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12Resource>& pDestinationResource, size_t numElements, size_t elementSize, D3D12_RESOURCE_FLAGS flags)
 {
+    assert(gs_device);
+
     size_t bufferSize = numElements * elementSize;
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
-
-    ComPtr<ID3D12Device2> device = Application::Get().GetDevice();
-    HRESULT hresult = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pDestinationResource));
+    
+    HRESULT hresult = gs_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&pDestinationResource));
 
     ThrowIfFailed(hresult);
 }
 
 void ResourceManager::UploadCommittedResource(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData)
 {
-    ComPtr<ID3D12Device2> device = Application::Get().GetDevice();
+    assert(gs_device);
 
     size_t bufferSize = numElements * elementSize;
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
     
-    HRESULT hresult = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(pIntermediateResource));
+    HRESULT hresult = gs_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(pIntermediateResource));
 
     ThrowIfFailed(hresult);
 
@@ -42,11 +45,11 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 {
 	HRESULT hr;
 
-	auto device = Application::Get().GetDevice();
+    assert(gs_device);
 
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	hr = device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData));
+	hr = gs_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData));
 	if (FAILED(hr))
 	{
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
@@ -69,7 +72,7 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 	ThrowIfFailed(hr);
 
 	ComPtr<ID3D12RootSignature> rootSig;
-	hr = device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
+	hr = gs_device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
 	ThrowIfFailed(hr);
 
 	return rootSig;
@@ -85,7 +88,7 @@ ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescr
 {
     HRESULT hr;
 
-    auto device = Application::Get().GetDevice();
+    assert(gs_device);
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = type;
@@ -94,7 +97,7 @@ ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescr
     desc.NodeMask = 0;
 
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap));
+    hr = gs_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap));
     ThrowIfFailed(hr);
 
     return descriptorHeap;
@@ -135,6 +138,8 @@ ComPtr<ID3D12Device2> ResourceManager::CreateDevice(ComPtr<IDXGIAdapter4> adapte
         ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
     }
 #endif
+
+    gs_device = d3d12Device2;
 
     return d3d12Device2;
 }
@@ -204,4 +209,9 @@ bool ResourceManager::CheckTearingSupport()
     BOOL allowTearing = FALSE;
     factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
     return allowTearing == TRUE;
+}
+
+void ResourceManager::Shutdown()
+{
+    gs_device.Reset();
 }

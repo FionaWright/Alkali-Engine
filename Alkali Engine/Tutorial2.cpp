@@ -17,7 +17,7 @@ bool Tutorial2::LoadContent()
 {
 	HRESULT hr;
 
-	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetCommandList();
 
 	m_modelMadeline->Init(commandList, L"Madeline.model");
@@ -39,7 +39,7 @@ bool Tutorial2::LoadContent()
 		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig);
+	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
 	m_goCube->Init(m_modelMadeline, m_shaderCube);
@@ -98,7 +98,7 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 {
 	super::OnRender(e);
 
-	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetCommandList();
 	
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
@@ -121,7 +121,7 @@ void Tutorial2::OnKeyPressed(KeyEventArgs& e)
 	switch (e.Key)
 	{
 	case KeyCode::Escape:
-		Application::Get().Quit(0);
+		PostQuitMessage(0);
 		break;
 	case KeyCode::Enter:
 		if (e.Alt)

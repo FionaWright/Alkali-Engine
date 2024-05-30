@@ -106,6 +106,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
+    <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
@@ -120,11 +121,13 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Tutorial2.cpp" />
     <ClCompile Include="Window.cpp" />
+    <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="CommandQueue.h" />
+    <ClInclude Include="D3DClass.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="GameObject.h" />
@@ -141,6 +144,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Tutorial2.h" />
     <ClInclude Include="Window.h" />
+    <ClInclude Include="WindowManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Alkali Engine.rc" />
