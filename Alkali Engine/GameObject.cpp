@@ -3,6 +3,8 @@
 
 GameObject::GameObject()
 {
+	m_transform = {};
+	m_worldMatrix = XMMatrixIdentity();
 }
 
 GameObject::~GameObject()

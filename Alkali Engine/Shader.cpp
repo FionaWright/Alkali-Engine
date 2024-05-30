@@ -2,6 +2,16 @@
 #include "Shader.h"
 #include <iostream>
 
+Shader::Shader()
+{
+	m_inputLayout = nullptr;
+	m_inputLayoutCount = 0;
+}
+
+Shader::~Shader()
+{
+}
+
 void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device)
 {
 	m_vsName = g_dirPath + vsName;

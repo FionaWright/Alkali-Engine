@@ -8,6 +8,8 @@ Scene::Scene(const std::wstring& name, int width, int height, bool vSync, bool c
     m_vSync = vSync;
     m_name = name;
 	m_dsvEnabled = createDSV;
+
+	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 }
 
 Scene::~Scene()
@@ -30,8 +32,7 @@ bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
     m_pWindow->Show();
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
-	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
+	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));	
 
 	if (m_dsvEnabled)
 		SetDSVForSize(m_width, m_height);

@@ -26,10 +26,10 @@ private:
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
     ComPtr<ID3D12Device2> m_d3d12Device;
 
-    shared_ptr<CommandQueue> m_DirectCommandQueue;
-    shared_ptr<CommandQueue> m_ComputeCommandQueue;
-    shared_ptr<CommandQueue> m_CopyCommandQueue;
+    shared_ptr<CommandQueue> m_directCommandQueue;
+    shared_ptr<CommandQueue> m_computeCommandQueue;
+    shared_ptr<CommandQueue> m_copyCommandQueue;
 
-    bool m_TearingSupported;
+    bool m_tearingSupported;
 };
 

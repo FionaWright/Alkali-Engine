@@ -139,7 +139,7 @@ void WindowManager::RemoveWindow(HWND hWnd)
 
 int WindowManager::GetTrackedWindowCount()
 {
-    return m_windowHwndMap.size();
+    return static_cast<int>(m_windowHwndMap.size());
 }
 
 MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID)
