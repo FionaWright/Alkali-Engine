@@ -177,22 +177,6 @@ void Window::OnRender()
     }
 }
 
-void Window::OnKeyPressed(KeyEventArgs& e)
-{
-    if (auto pScene = m_pScene.lock())
-    {
-        pScene->OnKeyPressed(e);
-    }
-}
-
-void Window::OnKeyReleased(KeyEventArgs& e)
-{
-    if (auto pScene = m_pScene.lock())
-    {
-        pScene->OnKeyReleased(e);
-    }
-}
-
 void Window::OnMouseMoved(MouseMotionEventArgs& e)
 {
     if (auto pScene = m_pScene.lock())
