@@ -9,16 +9,16 @@ using std::shared_ptr;
 class Model;
 class Shader;
 
+struct Transform
+{
+	XMFLOAT3 Position;
+	XMFLOAT3 Rotation;
+	XMFLOAT3 Scale;
+};
+
 class GameObject
 {
 public:
-	struct Transform 
-	{
-		XMFLOAT3 Position;
-		XMFLOAT3 Rotation;
-		XMFLOAT3 Scale;
-	};
-
 	GameObject(shared_ptr<Model> pModel, shared_ptr<Shader> pShader);
 	~GameObject();
 
@@ -31,13 +31,13 @@ public:
 	void SetScale(float x, float y, float z);
 	void SetScale(XMFLOAT3 xyz);
 
-	void UpdateWorldMatrix();
+	void UpdateWorldMatrix();	
 
-	Transform m_transform;
-
-private:
+protected:
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
+
+	Transform m_transform;
 
 	XMMATRIX m_worldMatrix;
 };

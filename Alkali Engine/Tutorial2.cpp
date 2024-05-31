@@ -47,6 +47,9 @@ bool Tutorial2::LoadContent()
 	commandQueue->WaitForFenceValue(fenceValue);
 	m_ContentLoaded = true;
 
+	m_camera->SetPosition(0, 0, -10);
+	m_camera->SetSpeed(1);
+
 	return true;
 }
 
@@ -74,21 +77,30 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 
 		frameCount = 0;
 		totalTime = 0.0;
+	}	
+
+	float angle = static_cast<float>(e.TotalTime * 1.0);
+	m_goCube->SetRotation(0, angle, 0);
+
+	m_ViewMatrix = m_camera->GetViewMatrix();
+
+	m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);
+
+	if (InputManager::IsKeyDown(KeyCode::Escape))
+	{
+		PostQuitMessage(0);
 	}
 
-	// Update the model matrix.
-	float angle = static_cast<float>(e.TotalTime * 1.0);
-	m_goCube->SetRotation(0, angle, angle);
+	bool altEnter = InputManager::IsKeyDown(KeyCode::Enter) && InputManager::IsAltHeld();
+	if (altEnter || InputManager::IsKeyDown(KeyCode::F11))
+	{
+		m_pWindow->ToggleFullscreen();
+	}
 
-	// Update the view matrix.
-	const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
-	const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
-	const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-	m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
-
-	// Update the projection matrix.
-	float aspectRatio = m_width / static_cast<float>(m_height);
-	m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+	if (InputManager::IsKeyDown(KeyCode::V))
+	{
+		m_pWindow->ToggleVSync();
+	}
 }
 
 void Tutorial2::OnRender(RenderEventArgs& e)
@@ -109,27 +121,6 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 	m_batch->Render(commandList, m_viewport, m_scissorRect, rtv, dsv, viewProj);
 
 	Present(commandList, commandQueue);
-}
-
-void Tutorial2::OnKeyPressed(KeyEventArgs& e)
-{
-	super::OnKeyPressed(e);
-
-	if (e.Key == KeyCode::Escape)
-	{
-		PostQuitMessage(0);
-	}
-
-	bool altEnter = e.Key == KeyCode::Enter && e.Alt;
-	if (altEnter || e.Key == KeyCode::F11)
-	{
-		m_pWindow->ToggleFullscreen();
-	}
-
-	if (e.Key == KeyCode::V)
-	{
-		m_pWindow->ToggleVSync();
-	}
 }
 
 void Tutorial2::OnMouseWheel(MouseWheelEventArgs& e)

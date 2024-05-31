@@ -11,6 +11,10 @@
 #include "Batch.h"
 #include "CommandQueue.h"
 #include "Window.h"
+#include "InputManager.h"
+#include "Camera.h"
+
+using std::unique_ptr;
 
 using std::array;
 
@@ -32,9 +36,6 @@ public:
 
     virtual void OnUpdate(UpdateEventArgs& e);
     virtual void OnRender(RenderEventArgs& e);
-
-    virtual void OnKeyPressed(KeyEventArgs& e);
-    virtual void OnKeyReleased(KeyEventArgs& e);
 
     virtual void OnMouseMoved(MouseMotionEventArgs& e);
     virtual void OnMouseButtonPressed(MouseButtonEventArgs& e);
@@ -65,6 +66,8 @@ protected:
     D3D12_RECT m_scissorRect;
 
     shared_ptr<D3DClass> m_d3dClass;
+
+    unique_ptr<Camera> m_camera;
 
 private:
     std::wstring m_name;

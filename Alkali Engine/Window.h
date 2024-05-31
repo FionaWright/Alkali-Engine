@@ -55,9 +55,6 @@ protected:
     virtual void OnUpdate();
     virtual void OnRender();
 
-    virtual void OnKeyPressed(KeyEventArgs& e);
-    virtual void OnKeyReleased(KeyEventArgs& e);
-
     virtual void OnMouseMoved(MouseMotionEventArgs& e);
     virtual void OnMouseButtonPressed(MouseButtonEventArgs& e);
     virtual void OnMouseButtonReleased(MouseButtonEventArgs& e);

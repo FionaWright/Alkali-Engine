@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "GameObject.h"
+#include "Settings.h"
 
 GameObject::GameObject(shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
 	:
@@ -19,6 +20,9 @@ GameObject::~GameObject()
 
 void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
 {
+	if (!m_model || !m_shader)
+		return;
+
 	commandList->SetPipelineState(m_shader->GetPSO().Get());
 	commandList->SetGraphicsRootSignature(rootSig.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -50,12 +54,18 @@ void GameObject::SetPosition(XMFLOAT3 xyz)
 void GameObject::SetRotation(float x, float y, float z)
 {
 	m_transform.Rotation = XMFLOAT3(x, y, z);
+	m_transform.Rotation.x *= DEG_TO_RAD;
+	m_transform.Rotation.y *= DEG_TO_RAD;
+	m_transform.Rotation.z *= DEG_TO_RAD;
 	UpdateWorldMatrix();
 }
 
 void GameObject::SetRotation(XMFLOAT3 xyz)
 {
 	m_transform.Rotation = xyz;
+	m_transform.Rotation.x *= DEG_TO_RAD;
+	m_transform.Rotation.y *= DEG_TO_RAD;
+	m_transform.Rotation.z *= DEG_TO_RAD;
 	UpdateWorldMatrix();
 }
 

@@ -18,8 +18,6 @@ protected:
 
 	virtual void OnRender(RenderEventArgs& e) override;
 
-	virtual void OnKeyPressed(KeyEventArgs& e) override;
-
 	virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
 
 private:
@@ -34,5 +32,5 @@ private:
 	shared_ptr<Model> m_modelMadeline;
 	shared_ptr<Batch> m_batch;
 	shared_ptr<GameObject> m_goCube;
-	shared_ptr<Shader> m_shaderCube;
+	shared_ptr<Shader> m_shaderCube;	
 };

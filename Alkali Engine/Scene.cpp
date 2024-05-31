@@ -7,6 +7,7 @@ Scene::Scene(const std::wstring& name, int width, int height, bool vSync, bool c
 	, m_vSync(vSync)
 	, m_name(name)
 	, m_dsvEnabled(createDSV)
+	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP))
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 }
@@ -59,17 +60,10 @@ void Scene::Destroy()
 
 void Scene::OnUpdate(UpdateEventArgs& e)
 {
+	m_camera->Update(e);
 }
 
 void Scene::OnRender(RenderEventArgs& e)
-{
-}
-
-void Scene::OnKeyPressed(KeyEventArgs& e)
-{
-}
-
-void Scene::OnKeyReleased(KeyEventArgs& e)
 {
 }
 

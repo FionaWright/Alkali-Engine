@@ -9,10 +9,9 @@
 #include "ModelLoader.h"
 
 Application::Application(HINSTANCE hInst)
-    : 
-    m_hInstance(hInst),
-    m_windowManager(std::make_shared<WindowManager>()),
-    m_d3dClass(std::make_shared<D3DClass>())
+    : m_hInstance(hInst)
+    , m_windowManager(std::make_shared<WindowManager>())
+    , m_d3dClass(std::make_shared<D3DClass>())
 {
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR path[MAX_PATH];

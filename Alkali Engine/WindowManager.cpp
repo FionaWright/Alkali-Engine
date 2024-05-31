@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "WindowManager.h"
 #include "Settings.h"
+#include "InputManager.h"
 
 static WindowManager* gs_Instance;
 
@@ -178,6 +179,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     {
         pWindow->OnUpdate();
         pWindow->OnRender();
+        InputManager::ProgressFrame();
     }
     break;
 
@@ -187,42 +189,26 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         MSG charMsg;
 
         unsigned int unicodeChar = 0;
-
-        // For printable characters, the next message will be WM_CHAR.
-        // This message contains the character code we need to send the KeyPressed event.
-        // Inspired by the SDL 1.2 implementation.
         if (PeekMessage(&charMsg, hwnd, 0, 0, PM_NOREMOVE) && charMsg.message == WM_CHAR)
         {
             GetMessage(&charMsg, hwnd, 0, 0);
             unicodeChar = static_cast<unsigned int>(charMsg.wParam);
         }
 
-        bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-        bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-        bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
-
         KeyCode::Key key = (KeyCode::Key)wParam;
-        unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
 
-        KeyEventArgs keyEventArgs(key, unicodeChar, KeyEventArgs::Pressed, shift, control, alt);
-        pWindow->OnKeyPressed(keyEventArgs);
+        KeyState state = { key, unicodeChar };
+        InputManager::AddKey(state);
     }
     break;
 
     case WM_SYSKEYUP:
     case WM_KEYUP:
     {
-        bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-        bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-        bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
-
         KeyCode::Key key = (KeyCode::Key)wParam;
         unsigned int unicodeChar = 0;
         unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
 
-        // Determine which key was released by converting the key code and the scan code
-        // to a printable character (if possible).
-        // Inspired by the SDL 1.2 implementation.
         unsigned char keyboardState[256];
         GetKeyboardState(keyboardState);
 
@@ -234,8 +220,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             unicodeChar = translatedCharacters[0];
         }
 
-        KeyEventArgs keyEventArgs(key, unicodeChar, KeyEventArgs::Released, shift, control, alt);
-        pWindow->OnKeyReleased(keyEventArgs);
+        KeyState state = { key, unicodeChar };
+        InputManager::RemoveKey(state);
     }
     break;
 
