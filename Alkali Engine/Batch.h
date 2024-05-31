@@ -12,8 +12,8 @@ class GameObject;
 class Batch
 {
 public:
-	void Init(ComPtr<ID3D12RootSignature> pRootSig);
-	void Init(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
+	Batch(ComPtr<ID3D12RootSignature> pRootSig);
+	Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
 	void AddGameObject(GameObject* go);
 	void Render(ComPtr<ID3D12GraphicsCommandList2> commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 

@@ -4,8 +4,6 @@
 
 Shader::Shader()
 {
-	m_inputLayout = nullptr;
-	m_inputLayoutCount = 0;
 }
 
 Shader::~Shader()

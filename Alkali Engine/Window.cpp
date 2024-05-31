@@ -2,17 +2,17 @@
 #include "Window.h"
 #include "Scene.h"
 
-Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync)
+using std::wstring;
+
+Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
     : m_hWnd(hWnd)
     , m_WindowName(windowName)
     , m_ClientWidth(clientWidth)
     , m_ClientHeight(clientHeight)
     , m_VSync(vSync)
     , m_Fullscreen(false)
-    , m_FrameCounter(0)
+    , m_d3dClass(pD3DClass)
 {
-    m_d3dClass = pD3DClass;
-
     m_dxgiSwapChain = CreateSwapChain();
     m_d3d12RTVDescriptorHeap = ResourceManager::CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_RTVDescriptorSize = m_d3dClass->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -32,7 +32,7 @@ HWND Window::GetWindowHandle() const
     return m_hWnd;
 }
 
-const std::wstring& Window::GetWindowName() const
+const wstring& Window::GetWindowName() const
 {
     return m_WindowName;
 }

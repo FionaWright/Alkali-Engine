@@ -28,8 +28,8 @@ protected:
 
 private:
 	wstring m_vsName, m_psName, m_hsName, m_dsName;
-	D3D12_INPUT_ELEMENT_DESC* m_inputLayout;
-	UINT m_inputLayoutCount;
+	D3D12_INPUT_ELEMENT_DESC* m_inputLayout = nullptr;
+	UINT m_inputLayoutCount = 0;
 
 	ComPtr<ID3D12RootSignature> m_rootSig;
 	ComPtr<ID3D12PipelineState> m_pso;

@@ -30,5 +30,5 @@ private:
     ComPtr<ID3D12Resource> m_intermediateVertexBuffer;
     ComPtr<ID3D12Resource> m_intermediateIndexBuffer;
 
-    size_t m_vertexCount, m_indexCount, m_vertexInputSize;
+    size_t m_vertexCount = 0, m_indexCount = 0, m_vertexInputSize = 0;
 };

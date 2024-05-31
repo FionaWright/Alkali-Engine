@@ -17,12 +17,11 @@ using std::map;
 class Application
 {
 public:
-    Application();
-    virtual ~Application();
-
-    void Init(HINSTANCE hInst);
+    Application(HINSTANCE hInst);
 
     int Run();
+
+    void Shutdown();
 
     wstring GetEXEDirectoryPath();
 

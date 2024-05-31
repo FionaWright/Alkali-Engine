@@ -28,7 +28,7 @@ private:
 	XMMATRIX m_ViewMatrix;
 	XMMATRIX m_ProjectionMatrix;
 
-	bool m_ContentLoaded;
+	bool m_ContentLoaded = false;
 
 	shared_ptr<Model> m_modelCube;
 	shared_ptr<Model> m_modelMadeline;

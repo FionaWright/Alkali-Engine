@@ -1,24 +1,20 @@
 #include "pch.h"
 #include "GameObject.h"
 
-GameObject::GameObject()
+GameObject::GameObject(shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
+	:
+	m_transform({}),
+	m_worldMatrix(XMMatrixIdentity()),
+	m_model(pModel),
+	m_shader(pShader)
 {
-	m_transform = {};
-	m_worldMatrix = XMMatrixIdentity();
+	SetPosition(0, 0, 0);
+	SetRotation(0, 0, 0);
+	SetScale(1, 1, 1);
 }
 
 GameObject::~GameObject()
 {
-}
-
-void GameObject::Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
-{
-	m_model = pModel;
-	m_shader = pShader;
-
-	SetPosition(0, 0, 0);
-	SetRotation(0, 0, 0);
-	SetScale(1, 1, 1);
 }
 
 void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)

@@ -4,7 +4,6 @@
 
 D3DClass::D3DClass()
 {
-    m_tearingSupported = false;
 }
 
 D3DClass::~D3DClass()

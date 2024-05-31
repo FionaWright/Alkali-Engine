@@ -30,6 +30,6 @@ private:
     shared_ptr<CommandQueue> m_computeCommandQueue;
     shared_ptr<CommandQueue> m_copyCommandQueue;
 
-    bool m_tearingSupported;
+    bool m_tearingSupported = false;
 };
 

@@ -1,19 +1,15 @@
 #include "pch.h"
 #include "Tutorial2.h"
 
-Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync) : super(name, width, height, vSync, true)
+Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync) 
+	: super(name, width, height, vSync, true)
+	, m_FoV(45.0f)
+	, m_ViewMatrix(XMMatrixIdentity())
+	, m_ProjectionMatrix(XMMatrixIdentity())	
+	, m_modelCube(std::make_shared<Model>())
+	, m_modelMadeline(std::make_shared<Model>())
+	, m_shaderCube(std::make_shared<Shader>())
 {
-	m_FoV = 45.0f;
-	m_ContentLoaded = false;
-
-	m_ViewMatrix = XMMatrixIdentity();
-	m_ProjectionMatrix = XMMatrixIdentity();
-
-	m_batch = std::make_shared<Batch>();
-	m_goCube = std::make_shared<GameObject>();
-	m_modelCube = std::make_shared<Model>();
-	m_modelMadeline = std::make_shared<Model>();
-	m_shaderCube = std::make_shared<Shader>();
 }
 
 bool Tutorial2::LoadContent()
@@ -29,7 +25,7 @@ bool Tutorial2::LoadContent()
 
 	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, 1);
 
-	m_batch->Init(rootSig);
+	m_batch = std::make_shared<Batch>(rootSig);
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
@@ -43,7 +39,7 @@ bool Tutorial2::LoadContent()
 	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
-	m_goCube->Init(m_modelMadeline, m_shaderCube);
+	m_goCube = std::make_shared<GameObject>(m_modelMadeline, m_shaderCube);
 
 	m_batch->AddGameObject(m_goCube.get());
 

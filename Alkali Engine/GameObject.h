@@ -19,10 +19,9 @@ public:
 		XMFLOAT3 Scale;
 	};
 
-	GameObject();
+	GameObject(shared_ptr<Model> pModel, shared_ptr<Shader> pShader);
 	~GameObject();
 
-	void Init(shared_ptr<Model> pModel, shared_ptr<Shader> pShader);
 	void Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 
 	void SetPosition(float x, float y, float z);

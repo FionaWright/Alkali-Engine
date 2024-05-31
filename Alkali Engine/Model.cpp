@@ -3,15 +3,12 @@
 #include "ModelLoader.h"
 
 Model::Model()
+	:
+	m_VertexBuffer(nullptr),
+	m_IndexBuffer(nullptr),
+	m_IndexBufferView({}),
+	m_VertexBufferView({})
 {
-	m_vertexCount = 0; 
-	m_indexCount = 0; 
-	m_vertexInputSize = 0;
-
-	m_VertexBuffer = nullptr;
-	m_IndexBuffer = nullptr;
-	m_IndexBufferView = {};
-	m_VertexBufferView = {};
 }
 
 Model::~Model()

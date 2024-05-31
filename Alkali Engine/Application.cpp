@@ -8,23 +8,12 @@
 #include "Tutorial2.h"
 #include "ModelLoader.h"
 
-Application::Application()
+Application::Application(HINSTANCE hInst)
+    : 
+    m_hInstance(hInst),
+    m_windowManager(std::make_shared<WindowManager>()),
+    m_d3dClass(std::make_shared<D3DClass>())
 {
-    m_hInstance = nullptr;
-
-    //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
-}
-
-Application::~Application()
-{
-    m_d3dClass->Flush();
-    ResourceManager::Shutdown();
-}
-
-void Application::Init(HINSTANCE hInst)
-{
-    m_hInstance = hInst;    
-
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR path[MAX_PATH];
     if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
@@ -33,11 +22,10 @@ void Application::Init(HINSTANCE hInst)
         m_exeDirectoryPath.assign(path);
     }
 
-    m_windowManager = std::make_shared<WindowManager>();
     m_windowManager->Init(hInst);
-
-    m_d3dClass = std::make_shared<D3DClass>();
     m_d3dClass->Init();
+
+    //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
 }
 
 int Application::Run()
@@ -66,6 +54,12 @@ int Application::Run()
     m_tutScene->Destroy();
 
     return static_cast<int>(msg.wParam);
+}
+
+void Application::Shutdown()
+{
+    m_d3dClass->Flush();
+    ResourceManager::Shutdown();
 }
 
 wstring Application::GetEXEDirectoryPath()
