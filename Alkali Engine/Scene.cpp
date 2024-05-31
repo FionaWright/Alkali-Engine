@@ -2,13 +2,12 @@
 #include "Scene.h"
 
 Scene::Scene(const std::wstring& name, int width, int height, bool vSync, bool createDSV)
+	: m_width(width)
+	, m_height(height)
+	, m_vSync(vSync)
+	, m_name(name)
+	, m_dsvEnabled(createDSV)
 {
-    m_width = width;
-    m_height = height;
-    m_vSync = vSync;
-    m_name = name;
-	m_dsvEnabled = createDSV;
-
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 }
 

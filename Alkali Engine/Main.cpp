@@ -20,14 +20,11 @@ _Use_decl_annotations_ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPre
 {
     int retCode = 0;
 
-    unique_ptr<Application> app = std::make_unique<Application>();
+    Application app(hInstance);
 
-    app->Init(hInstance);    
+    retCode = app.Run();
 
-    retCode = app->Run();
-
-    app.reset();
-    app = 0;
+    app.Shutdown();
 
     atexit(&ReportLiveObjects);
 

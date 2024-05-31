@@ -9,18 +9,20 @@
 #include "D3DClass.h"
 #include "Settings.h"
 
+using std::wstring;
+
 class Scene;
 
 class Window
 {
 public:
-    Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync);
+    Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync);
     virtual ~Window();
 
     HWND GetWindowHandle() const;
     void Destroy();
 
-    const std::wstring& GetWindowName() const;
+    const wstring& GetWindowName() const;
 
     int GetClientWidth() const;
     int GetClientHeight() const;
@@ -74,7 +76,7 @@ private:
 
     HWND m_hWnd;
 
-    std::wstring m_WindowName;
+    wstring m_WindowName;
 
     int m_ClientWidth;
     int m_ClientHeight;
@@ -83,7 +85,7 @@ private:
 
     HighResolutionClock m_UpdateClock;
     HighResolutionClock m_RenderClock;
-    uint64_t m_FrameCounter;
+    uint64_t m_FrameCounter = 0;
 
     std::weak_ptr<Scene> m_pScene;
 
