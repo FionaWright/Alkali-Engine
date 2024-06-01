@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Tutorial2.h"
+#include "imgui.h"
+#include "ImGUIManager.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync) 
 	: super(name, width, height, vSync, true)
@@ -111,18 +113,22 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 {
 	super::OnRender(e);
 
+	ImGUIManager::Begin();
+
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetAvailableCommandList();
 	
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	auto rtv = m_pWindow->GetCurrentRenderTargetView();
-	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
+	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
 	ClearBackBuffer(commandList);
 
 	XMMATRIX viewProj = XMMatrixMultiply(m_ViewMatrix, m_ProjectionMatrix);
 
-	m_batch->Render(commandList, m_viewport, m_scissorRect, rtv, dsv, viewProj);
+	m_batch->Render(commandList, m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
+
+	ImGUIManager::Render(commandList);
 
 	Present(commandList, commandQueue);
 }

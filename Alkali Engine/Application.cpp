@@ -7,6 +7,7 @@
 #include "Scene.h"
 #include "Tutorial2.h"
 #include "ModelLoader.h"
+#include "ImGUIManager.h"
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
@@ -24,19 +25,22 @@ Application::Application(HINSTANCE hInst)
     m_windowManager->Init(hInst);
     m_d3dClass->Init();
 
-    ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
-}
-
-int Application::Run()
-{
     m_tutScene = std::make_shared<Tutorial2>(L"Cube Scene", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     if (!m_tutScene->Init(m_d3dClass))
-        return 1;
+        throw new std::exception("Failed to initialise base scene");
 
     if (!m_tutScene->LoadContent())
-        return 2;
+        throw new std::exception("Failed to load content of base scene");
 
+    shared_ptr<Window> pWindow = m_tutScene->GetWindow();
+    ImGUIManager::Init(pWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
+
+    //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
+}
+
+int Application::Run()
+{   
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {
@@ -57,6 +61,7 @@ int Application::Run()
 
 void Application::Shutdown()
 {
+    ImGUIManager::Shutdown();
     m_d3dClass->Flush();
     ResourceManager::Shutdown();
 }

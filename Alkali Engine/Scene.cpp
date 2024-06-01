@@ -82,6 +82,11 @@ void Scene::OnWindowDestroy()
 {
 }
 
+shared_ptr<Window> Scene::GetWindow()
+{
+	return m_pWindow;
+}
+
 void Scene::SetBackgroundColor(float r, float g, float b, float a)
 {
 	m_backgroundColor[0] = r;

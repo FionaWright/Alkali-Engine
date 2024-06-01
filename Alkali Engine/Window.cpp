@@ -14,6 +14,7 @@ Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowN
     , m_d3dClass(pD3DClass)
 {
     m_dxgiSwapChain = CreateSwapChain();
+
     m_d3d12RTVDescriptorHeap = ResourceManager::CreateDescriptorHeap(BACK_BUFFER_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_RTVDescriptorSize = m_d3dClass->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -222,7 +223,7 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = m_ClientWidth;
     swapChainDesc.Height = m_ClientHeight;
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.Format = SWAP_CHAIN_DXGI_FORMAT;
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -283,6 +284,16 @@ D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
 ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
 {
     return m_d3d12BackBuffers[m_CurrentBackBufferIndex];
+}
+
+HWND Window::GetHWND()
+{
+    return m_hWnd;
+}
+
+ComPtr<ID3D12DescriptorHeap> Window::GetRTVDescriptorHeap()
+{
+    return m_d3d12RTVDescriptorHeap;
 }
 
 UINT Window::GetCurrentBackBufferIndex() const
