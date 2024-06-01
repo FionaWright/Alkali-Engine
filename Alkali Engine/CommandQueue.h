@@ -39,7 +39,7 @@ private:
     using CommandListQueue = queue<ComPtr<ID3D12GraphicsCommandList2> >;
 
     D3D12_COMMAND_LIST_TYPE                     m_CommandListType;
-    ComPtr<ID3D12Device2>                       m_d3d12Device;
+    ComPtr<ID3D12Device2>                       m_device;
     ComPtr<ID3D12CommandQueue>                  m_d3d12CommandQueue;
     ComPtr<ID3D12Fence>                         m_d3d12Fence;
     HANDLE                                      m_FenceEvent;

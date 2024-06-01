@@ -2,14 +2,16 @@
 
 #define SCREEN_WIDTH 1280.0f
 #define SCREEN_HEIGHT 720.0f
+constexpr bool USING_IM_GUI = true;
 
 constexpr float ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
 
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12 Alkali Engine Window";
 
+// DX12
 constexpr UINT BACK_BUFFER_COUNT = 3;
-
 constexpr bool USE_B_WARP = false;
+constexpr DXGI_FORMAT SWAP_CHAIN_DXGI_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 // GPU Debug
 constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] =

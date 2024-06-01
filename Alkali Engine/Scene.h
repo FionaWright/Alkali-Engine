@@ -40,6 +40,8 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
+    shared_ptr<Window> GetWindow();
+
 protected:
     void SetBackgroundColor(float r, float g, float b, float a);
     

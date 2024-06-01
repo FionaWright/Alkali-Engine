@@ -2,6 +2,7 @@
 #include "WindowManager.h"
 #include "Settings.h"
 #include "InputManager.h"
+#include "ImGUIManager.h"
 
 static WindowManager* gs_Instance;
 
@@ -146,6 +147,10 @@ int WindowManager::GetTrackedWindowCount()
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+        return true;
+
     shared_ptr<Window> pWindow = gs_Instance->GetWindowByHwnd(hwnd);
 
     if (!pWindow)
@@ -154,7 +159,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     switch (message)
     {
     case WM_PAINT:
-    {
+    {        
         pWindow->OnUpdate();
         pWindow->OnRender();
         InputManager::ProgressFrame();

@@ -84,7 +84,7 @@ void ResourceManager::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> comm
 	commandList->ResourceBarrier(1, &barrier);
 }
 
-ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     HRESULT hr;
 
@@ -93,7 +93,7 @@ ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescr
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = type;
     desc.NumDescriptors = numDescriptors;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    desc.Flags = flags; 
     desc.NodeMask = 0;
 
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;

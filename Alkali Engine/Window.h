@@ -43,8 +43,9 @@ public:
     UINT Present();
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
-
     ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+    HWND GetHWND();
+    ComPtr<ID3D12DescriptorHeap> GetRTVDescriptorHeap();
 
     void RegisterCallbacks(std::shared_ptr<Scene> pScene);
 
