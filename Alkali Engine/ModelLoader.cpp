@@ -71,9 +71,35 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 	{
 		if (input == 'f')
 		{
-			for (int i = 0; fin.peek() == ' '; i++)
+			ObjIndexGroup indices;
+
+			for (int i = 0; i < 3; i++)
+			{			
+				fin >> indices.PositionIndex;
+				indices.PositionIndex--;
+
+				if (fin.peek() == '/')
+					fin.get();
+
+				if (fin.peek() == '/')
+					throw new std::exception("Invalid obj format. Make sure to triangulate");
+
+				fin >> indices.TextureIndex;
+				indices.TextureIndex--;
+
+				if (fin.peek() == '/')
+					fin.get();
+
+				fin >> indices.NormalIndex;
+				indices.NormalIndex--;
+
+				m_indexList.push_back(indices);
+			}
+
+			if (fin.peek() == ' ')
 			{
-				ObjIndexGroup indices;
+				m_indexList.push_back(indices);
+				m_indexList.push_back(m_indexList.at(m_indexList.size() - 3));
 
 				fin >> indices.PositionIndex;
 				indices.PositionIndex--;
@@ -82,7 +108,7 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 					fin.get();
 
 				if (fin.peek() == '/')
-					throw new std::exception("Invalid model data, make sure to triangulate");
+					throw new std::exception("Invalid obj format. Make sure to triangulate");
 
 				fin >> indices.TextureIndex;
 				indices.TextureIndex--;

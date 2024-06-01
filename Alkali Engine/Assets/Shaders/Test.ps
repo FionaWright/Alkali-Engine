@@ -6,5 +6,5 @@ struct V_OUT
 
 float4 main(V_OUT input) : SV_Target
 {
-    return float4(input.Normal, 1.0f);
+    return float4(abs(input.Normal), 1.0f);
 }
