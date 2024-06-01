@@ -177,6 +177,38 @@ void Window::OnRender()
     }
 }
 
+void Window::OnMouseMoved(MouseMotionEventArgs& e)
+{
+    if (auto pScene = m_pScene.lock())
+    {
+        pScene->OnMouseMoved(e);
+    }
+}
+
+void Window::OnMouseButtonPressed(MouseButtonEventArgs& e)
+{
+    if (auto pScene = m_pScene.lock())
+    {
+        pScene->OnMouseButtonPressed(e);
+    }
+}
+
+void Window::OnMouseButtonReleased(MouseButtonEventArgs& e)
+{
+    if (auto pScene = m_pScene.lock())
+    {
+        pScene->OnMouseButtonReleased(e);
+    }
+}
+
+void Window::OnMouseWheel(MouseWheelEventArgs& e)
+{
+    if (auto pScene = m_pScene.lock())
+    {
+        pScene->OnMouseWheel(e);
+    }
+}
+
 void Window::OnResize(ResizeEventArgs& e)
 {
     if (m_ClientWidth != e.Width || m_ClientHeight != e.Height)

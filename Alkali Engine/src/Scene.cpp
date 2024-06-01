@@ -67,6 +67,22 @@ void Scene::OnRender(RenderEventArgs& e)
 {
 }
 
+void Scene::OnMouseMoved(MouseMotionEventArgs& e)
+{
+}
+
+void Scene::OnMouseButtonPressed(MouseButtonEventArgs& e)
+{
+}
+
+void Scene::OnMouseButtonReleased(MouseButtonEventArgs& e)
+{
+}
+
+void Scene::OnMouseWheel(MouseWheelEventArgs& e)
+{
+}
+
 void Scene::OnResize(ResizeEventArgs& e)
 {
 	if (e.Width == m_width && e.Height == m_height)

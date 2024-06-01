@@ -18,6 +18,8 @@ protected:
 
 	virtual void OnRender(RenderEventArgs& e) override;
 
+	virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
+
 private:
 	float m_FoV;
 

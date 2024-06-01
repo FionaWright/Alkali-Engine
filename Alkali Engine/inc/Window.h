@@ -55,6 +55,11 @@ protected:
     virtual void OnUpdate();
     virtual void OnRender();
 
+    virtual void OnMouseMoved(MouseMotionEventArgs& e);
+    virtual void OnMouseButtonPressed(MouseButtonEventArgs& e);
+    virtual void OnMouseButtonReleased(MouseButtonEventArgs& e);
+    virtual void OnMouseWheel(MouseWheelEventArgs& e);
+
     virtual void OnResize(ResizeEventArgs& e);
 
     ComPtr<IDXGISwapChain4> CreateSwapChain();

@@ -8,7 +8,6 @@ static WindowManager* gs_Instance;
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 WindowManager::WindowManager()
-    : m_hInstance(nullptr)
 {
     if (!gs_Instance)
         gs_Instance = this;
@@ -144,6 +143,29 @@ int WindowManager::GetTrackedWindowCount()
     return static_cast<int>(m_windowHwndMap.size());
 }
 
+MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID)
+{
+    switch (messageID)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+        return MouseButtonEventArgs::Left;
+
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+        return MouseButtonEventArgs::Right;
+
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+        return MouseButtonEventArgs::Middle;
+    }
+
+    return MouseButtonEventArgs::None;
+}
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     shared_ptr<Window> pWindow = gs_Instance->GetWindowByHwnd(hwnd);
@@ -210,24 +232,38 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     case WM_MOUSEMOVE:
     {
+        bool lButton = (wParam & MK_LBUTTON) != 0;
+        bool rButton = (wParam & MK_RBUTTON) != 0;
+        bool mButton = (wParam & MK_MBUTTON) != 0;
+        bool shift = (wParam & MK_SHIFT) != 0;
+        bool control = (wParam & MK_CONTROL) != 0;
+
         int x = ((int)(short)LOWORD(lParam));
         int y = ((int)(short)HIWORD(lParam));
 
-        InputManager::SetMousePos(XMFLOAT2(x, y));
-
-        POINT clientToScreenPoint;
-        clientToScreenPoint.x = x;
-        clientToScreenPoint.y = y;
-        ScreenToClient(hwnd, &clientToScreenPoint);
-
-        XMFLOAT2 client = XMFLOAT2(clientToScreenPoint.x, clientToScreenPoint.y);
-        InputManager::SetMousePosClient(client);
+        MouseMotionEventArgs mouseMotionEventArgs(lButton, mButton, rButton, control, shift, x, y);
+        pWindow->OnMouseMoved(mouseMotionEventArgs);
     }
     break;
 
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN:
     case WM_MBUTTONDOWN:
+    {
+        bool lButton = (wParam & MK_LBUTTON) != 0;
+        bool rButton = (wParam & MK_RBUTTON) != 0;
+        bool mButton = (wParam & MK_MBUTTON) != 0;
+        bool shift = (wParam & MK_SHIFT) != 0;
+        bool control = (wParam & MK_CONTROL) != 0;
+
+        int x = ((int)(short)LOWORD(lParam));
+        int y = ((int)(short)HIWORD(lParam));
+
+        MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Pressed, lButton, mButton, rButton, control, shift, x, y);
+        pWindow->OnMouseButtonPressed(mouseButtonEventArgs);
+    }
+    break;
+
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
@@ -235,18 +271,38 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         bool lButton = (wParam & MK_LBUTTON) != 0;
         bool rButton = (wParam & MK_RBUTTON) != 0;
         bool mButton = (wParam & MK_MBUTTON) != 0;
+        bool shift = (wParam & MK_SHIFT) != 0;
+        bool control = (wParam & MK_CONTROL) != 0;
 
-        InputManager::SetMouseLeftState(lButton);
-        InputManager::SetMouseRightState(rButton);
-        InputManager::SetMouseMiddleState(mButton);
+        int x = ((int)(short)LOWORD(lParam));
+        int y = ((int)(short)HIWORD(lParam));
+
+        MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Released, lButton, mButton, rButton, control, shift, x, y);
+        pWindow->OnMouseButtonReleased(mouseButtonEventArgs);
     }
     break;
 
     case WM_MOUSEWHEEL:
     {
         float zDelta = ((int)(short)HIWORD(wParam)) / (float)WHEEL_DELTA;
+        short keyStates = (short)LOWORD(wParam);
 
-        InputManager::SetMouseWheelDelta(zDelta);
+        bool lButton = (keyStates & MK_LBUTTON) != 0;
+        bool rButton = (keyStates & MK_RBUTTON) != 0;
+        bool mButton = (keyStates & MK_MBUTTON) != 0;
+        bool shift = (keyStates & MK_SHIFT) != 0;
+        bool control = (keyStates & MK_CONTROL) != 0;
+
+        int x = ((int)(short)LOWORD(lParam));
+        int y = ((int)(short)HIWORD(lParam));
+
+        POINT clientToScreenPoint;
+        clientToScreenPoint.x = x;
+        clientToScreenPoint.y = y;
+        ScreenToClient(hwnd, &clientToScreenPoint);
+
+        MouseWheelEventArgs mouseWheelEventArgs(zDelta, lButton, mButton, rButton, control, shift, (int)clientToScreenPoint.x, (int)clientToScreenPoint.y);
+        pWindow->OnMouseWheel(mouseWheelEventArgs);
     }
     break;
 
