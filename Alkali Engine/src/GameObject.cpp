@@ -53,23 +53,19 @@ void GameObject::SetPosition(XMFLOAT3 xyz)
 
 void GameObject::SetRotation(float x, float y, float z)
 {
-	float degToRad = static_cast<float>(DEG_TO_RAD);
-
 	m_transform.Rotation = XMFLOAT3(x, y, z);
-	m_transform.Rotation.x *= degToRad;
-	m_transform.Rotation.y *= degToRad;
-	m_transform.Rotation.z *= degToRad;
+	m_transform.Rotation.x *= DEG_TO_RAD;
+	m_transform.Rotation.y *= DEG_TO_RAD;
+	m_transform.Rotation.z *= DEG_TO_RAD;
 	UpdateWorldMatrix();
 }
 
 void GameObject::SetRotation(XMFLOAT3 xyz)
 {
-	float degToRad = static_cast<float>(DEG_TO_RAD);
-
 	m_transform.Rotation = xyz;
-	m_transform.Rotation.x *= degToRad;
-	m_transform.Rotation.y *= degToRad;
-	m_transform.Rotation.z *= degToRad;
+	m_transform.Rotation.x *= DEG_TO_RAD;
+	m_transform.Rotation.y *= DEG_TO_RAD;
+	m_transform.Rotation.z *= DEG_TO_RAD;
 	UpdateWorldMatrix();
 }
 

@@ -78,10 +78,8 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 		totalTime = 0.0;
 	}	
 
-	XMFLOAT2 mousePos = InputManager::GetMousePos();
-
 	float angle = static_cast<float>(e.TotalTime * 1.0);
-	m_goCube->SetRotation(0, mousePos.x + angle, 0);
+	m_goCube->SetRotation(0, angle, 0);
 
 	m_ViewMatrix = m_camera->GetViewMatrix();
 
@@ -102,9 +100,6 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
-
-	m_FoV -= InputManager::GetMouseWheelDelta();
-	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
 void Tutorial2::OnRender(RenderEventArgs& e)
@@ -125,4 +120,14 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 	m_batch->Render(commandList, m_viewport, m_scissorRect, rtv, dsv, viewProj);
 
 	Present(commandList, commandQueue);
+}
+
+void Tutorial2::OnMouseWheel(MouseWheelEventArgs& e)
+{
+	m_FoV -= e.WheelDelta;
+	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
+
+	char buffer[256];
+	sprintf_s(buffer, "FoV: %f\n", m_FoV);
+	OutputDebugStringA(buffer);
 }

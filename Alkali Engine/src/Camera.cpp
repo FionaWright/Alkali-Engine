@@ -37,8 +37,8 @@ void Camera::MoveFirstPerson(UpdateEventArgs& eUpdate)
 		return;
 	}
 
-	float speed = m_speed * static_cast<float>(eUpdate.ElapsedTime);
-	float rotSpeed = m_rotationSpeed * static_cast<float>(eUpdate.ElapsedTime);
+	float speed = m_speed * eUpdate.ElapsedTime;
+	float rotSpeed = m_rotationSpeed * eUpdate.ElapsedTime;
 
 	float sinX = sin(m_transform.Rotation.x);
 	float cosX = cos(m_transform.Rotation.x);
@@ -59,7 +59,7 @@ void Camera::MoveFirstPerson(UpdateEventArgs& eUpdate)
 	if (InputManager::IsKey(KeyCode::Z))
 		m_transform.Rotation.y -= rotSpeed;
 
-	m_transform.Rotation.y = static_cast<float>(fmod(m_transform.Rotation.y, 360));
+	m_transform.Rotation.y = fmod(m_transform.Rotation.y, 360);
 
 	if (InputManager::IsKey(KeyCode::C))
 	{
@@ -75,8 +75,8 @@ void Camera::MoveFirstPerson(UpdateEventArgs& eUpdate)
 		if (InputManager::IsKey(KeyCode::S))
 			m_transform.Rotation.x -= rotSpeed;
 
-		m_transform.Rotation.x = static_cast<float>(fmod(m_transform.Rotation.x, 360));
-		m_transform.Rotation.z = static_cast<float>(fmod(m_transform.Rotation.z, 360));
+		m_transform.Rotation.x = fmod(m_transform.Rotation.x, 360);
+		m_transform.Rotation.z = fmod(m_transform.Rotation.z, 360);
 
 		return;
 	}
