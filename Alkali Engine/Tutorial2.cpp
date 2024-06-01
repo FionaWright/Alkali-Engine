@@ -48,7 +48,6 @@ bool Tutorial2::LoadContent()
 	m_ContentLoaded = true;
 
 	m_camera->SetPosition(0, 0, -10);
-	m_camera->SetSpeed(1);
 
 	return true;
 }

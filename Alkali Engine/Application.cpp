@@ -24,7 +24,7 @@ Application::Application(HINSTANCE hInst)
     m_windowManager->Init(hInst);
     m_d3dClass->Init();
 
-    //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
+    ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
 }
 
 int Application::Run()

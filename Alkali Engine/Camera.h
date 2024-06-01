@@ -26,7 +26,7 @@ private:
 	void MoveFirstPerson(UpdateEventArgs& eUpdate);
 
 	CameraMode m_currentMode;
-	float m_speed = 1;
+	float m_speed = 3;
 	float m_rotationSpeed = 2;
 };
 
