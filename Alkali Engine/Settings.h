@@ -4,6 +4,8 @@
 #define SCREEN_HEIGHT 720.0f
 constexpr bool USING_IM_GUI = true;
 
+constexpr float IM_GUI_INDENTATION = 16;
+
 constexpr float ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
 
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12 Alkali Engine Window";

@@ -182,7 +182,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     case WM_MOUSEMOVE:
     {
-        int x = ((int)(short)LOWORD(lParam));
+        int x = ((int)(short)LOWORD(lParam)); // Why???
         int y = ((int)(short)HIWORD(lParam));
 
         InputManager::SetMousePos(XMFLOAT2(x, y));

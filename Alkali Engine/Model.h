@@ -20,6 +20,9 @@ public:
     void SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData);
     void Render(ComPtr<ID3D12GraphicsCommandList2> commandList);
 
+    size_t GetVertexCount();
+    size_t GetIndexCount();
+
 private:
     ComPtr<ID3D12Resource> m_VertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;

@@ -2,12 +2,12 @@
 #include "GameObject.h"
 #include "Settings.h"
 
-GameObject::GameObject(shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
-	:
-	m_transform({}),
-	m_worldMatrix(XMMatrixIdentity()),
-	m_model(pModel),
-	m_shader(pShader)
+GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
+	: m_transform({})
+	, m_worldMatrix(XMMatrixIdentity())
+	, m_model(pModel)
+	, m_shader(pShader)
+	, m_Name(name)
 {
 	SetPosition(0, 0, 0);
 	SetRotation(0, 0, 0);
@@ -103,4 +103,22 @@ void GameObject::UpdateWorldMatrix()
 	XMMATRIX S = XMMatrixScaling(m_transform.Scale.x, m_transform.Scale.y, m_transform.Scale.z);
 
 	m_worldMatrix = XMMatrixMultiply(S, XMMatrixMultiply(R, T));
+}
+
+size_t GameObject::GetModelVertexCount()
+{
+	return m_model->GetVertexCount();
+}
+
+size_t GameObject::GetModelIndexCount()
+{
+	return m_model->GetIndexCount();
+}
+
+void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds)
+{
+	vs = m_shader->m_VSName;
+	ps = m_shader->m_PSName;
+	hs = m_shader->m_HSName;
+	ds = m_shader->m_DSName;
 }

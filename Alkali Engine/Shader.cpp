@@ -12,8 +12,8 @@ Shader::~Shader()
 
 void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device)
 {
-	m_vsName = g_dirPath + vsName;
-	m_psName = g_dirPath + psName;
+	m_VSName = g_dirPath + vsName;
+	m_PSName = g_dirPath + psName;
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
@@ -26,8 +26,8 @@ void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12
 {
 	m_preCompiled = true;
 
-	m_vsName = exePath + L"\\" + vsName;
-	m_psName = exePath + L"\\" + psName;
+	m_VSName = exePath + L"\\" + vsName;
+	m_PSName = exePath + L"\\" + psName;
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
@@ -45,13 +45,13 @@ void Shader::Compile(ComPtr<ID3D12Device2> device)
 
 	if (m_preCompiled)
 	{
-		vBlob = ReadPreCompiledShader(m_vsName.c_str());
-		pBlob = ReadPreCompiledShader(m_psName.c_str());
+		vBlob = ReadPreCompiledShader(m_VSName.c_str());
+		pBlob = ReadPreCompiledShader(m_PSName.c_str());
 	}
 	else
 	{
-		vBlob = CompileShader(m_vsName.c_str(), "main", "vs_5_1");
-		pBlob = CompileShader(m_psName.c_str(), "main", "ps_5_1");
+		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1");
+		pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1");
 	}
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
