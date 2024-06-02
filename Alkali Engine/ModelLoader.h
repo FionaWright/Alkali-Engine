@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 using std::wstring;
+using std::string;
 using std::ifstream;
 using std::ofstream;
 using std::vector;
@@ -34,7 +35,7 @@ struct VertexInputData
 class ModelLoader
 {
 public:
-	static void PreprocessObjFile(wstring filePath);
+	static void PreprocessObjFile(string filePath);
 	static VertexInputData SetVertexData(ObjIndexGroup indices, int otherVertexInFaceIndex1, int otherVertexInFaceIndex2);
 	static void LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<WORD>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount);
 

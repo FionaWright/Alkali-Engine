@@ -32,7 +32,7 @@ namespace std
 	};
 }
 
-void ModelLoader::PreprocessObjFile(wstring filePath)
+void ModelLoader::PreprocessObjFile(string filePath)
 {
 	ifstream fin;
 	char input = '0';
@@ -210,11 +210,11 @@ void ModelLoader::PreprocessObjFile(wstring filePath)
 	m_norList.clear();
 	m_indexList.clear();
 
-	size_t lastSlashPos = filePath.find_last_of(L"\\/");
-	size_t lastDotPos = filePath.find_last_of(L".");
-	wstring name = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
+	size_t lastSlashPos = filePath.find_last_of("\\/");
+	size_t lastDotPos = filePath.find_last_of(".");
+	string name = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
 
-	wstring outputPath = L"Assets/Models/" + name + L".model";
+	string outputPath = "Assets/Models/" + name + ".model";
 
 	ofstream fout;
 	std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
