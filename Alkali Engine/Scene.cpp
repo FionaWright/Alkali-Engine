@@ -8,9 +8,6 @@ Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDS
 	: m_Name(name)
 	, m_pWindow(pWindow)
 	, m_dsvEnabled(createDSV)
-	, m_width(pWindow->GetClientWidth())
-	, m_height(pWindow->GetClientHeight())
-	, m_vSync(pWindow->IsVSync())
 	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP))
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
@@ -33,10 +30,13 @@ bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
 	m_d3dClass = pD3DClass;
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));	
+
+	float width = m_pWindow->GetClientWidth();
+	float height = m_pWindow->GetClientHeight();
+	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
 	if (m_dsvEnabled)
-		SetDSVForSize(m_width, m_height);
+		SetDSVForSize(width, height);
 
     return true;
 }
@@ -84,8 +84,9 @@ void Scene::OnRender(RenderEventArgs& e)
             ImGui::SeparatorText("DX12");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-            ImGui::Checkbox("VSync", &m_vSync);    
-			m_pWindow->SetVSync(m_vSync);
+			bool vSync = m_pWindow->IsVSync();
+            ImGui::Checkbox("VSync", &vSync);
+			m_pWindow->SetVSync(vSync);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
@@ -238,7 +239,9 @@ void Scene::OnRender(RenderEventArgs& e)
 
 void Scene::OnResize(ResizeEventArgs& e)
 {
-	if (e.Width == m_width && e.Height == m_height)
+	float width = m_pWindow->GetClientWidth();
+	float height = m_pWindow->GetClientHeight();
+	if (e.Width == width && e.Height == height)
 		return;
 
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
