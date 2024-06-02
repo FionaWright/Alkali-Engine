@@ -5,17 +5,11 @@
 
 using std::unordered_map;
 
-struct KeyState
-{
-	KeyCode::Key KeyCode;
-	unsigned int UnicodeChar;
-};
-
 class InputManager
 {
 public:
-	static void AddKey(KeyState keyState);
-	static void RemoveKey(KeyState keyState);
+	static void AddKey(KeyCode::Key keyState);
+	static void RemoveKey(KeyCode::Key keyState);
 	static void SetMouseLeftState(bool state);
 	static void SetMouseRightState(bool state);
 	static void SetMouseMiddleState(bool state);

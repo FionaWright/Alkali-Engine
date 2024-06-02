@@ -39,6 +39,17 @@ void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<I
 	m_model->Render(commandList);
 }
 
+Transform GameObject::GetTransform()
+{
+	return m_transform;
+}
+
+void GameObject::SetTransform(Transform t)
+{
+	m_transform = t;
+	UpdateWorldMatrix();
+}
+
 void GameObject::SetPosition(float x, float y, float z)
 {
 	m_transform.Position = XMFLOAT3(x, y, z);

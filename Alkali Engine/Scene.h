@@ -70,7 +70,8 @@ private:
     std::wstring m_name;
     bool m_vSync;    
     bool m_dsvEnabled;
-    FLOAT m_backgroundColor[4];
+    bool m_showImGUIDemo = false;
+    float m_backgroundColor[4];
 
     ComPtr<ID3D12Resource> m_depthBuffer;   
 
