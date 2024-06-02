@@ -119,7 +119,7 @@ void Window::SetFullscreen(bool fullscreen)
         monitorInfo.cbSize = sizeof(MONITORINFOEX);
         ::GetMonitorInfo(hMonitor, &monitorInfo);
 
-        ::SetWindowPos(m_hWnd, HWND_TOPMOST,
+        ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
             monitorInfo.rcMonitor.left,
             monitorInfo.rcMonitor.top,
             monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
