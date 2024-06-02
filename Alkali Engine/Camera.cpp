@@ -22,13 +22,13 @@ void Camera::SetSpeed(float speed)
 	m_speed = speed;
 }
 
-void Camera::Update(UpdateEventArgs& eUpdate)
+void Camera::Update(TimeEventArgs& eUpdate)
 {
 	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
 		MoveFirstPerson(eUpdate);
 }
 
-void Camera::MoveFirstPerson(UpdateEventArgs& eUpdate)
+void Camera::MoveFirstPerson(TimeEventArgs& eUpdate)
 {
 	if (InputManager::IsKeyDown(KeyCode::R))
 	{

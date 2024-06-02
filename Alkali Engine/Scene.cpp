@@ -3,6 +3,7 @@
 #include "ImGUIManager.h"
 #include <locale>
 #include <codecvt>
+#include "Utils.h"
 
 Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDSV)
 	: m_Name(name)
@@ -54,21 +55,12 @@ void Scene::Destroy()
 {
 }
 
-void Scene::OnUpdate(UpdateEventArgs& e)
+void Scene::OnUpdate(TimeEventArgs& e)
 {
 	m_camera->Update(e);
 }
 
-std::string ws2s(const std::wstring& wstr)
-{
-	std::string str;
-	std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [](wchar_t c) {
-		return (char)c;
-		});
-	return str;
-}
-
-void Scene::OnRender(RenderEventArgs& e)
+void Scene::OnRender(TimeEventArgs& e)
 {
     if (ImGui::CollapsingHeader("Settings"))
     {
@@ -122,14 +114,6 @@ void Scene::OnRender(RenderEventArgs& e)
 
 		ImGui::Unindent(IM_GUI_INDENTATION);
     }
-
-	if (ImGui::CollapsingHeader("Scenes"))
-	{
-		if (ImGui::Button("Reset current scene"))
-		{
-
-		}
-	}
 
 	if (ImGui::CollapsingHeader("Current Scene"))
 	{
@@ -207,10 +191,10 @@ void Scene::OnRender(RenderEventArgs& e)
 						ps = L"PS: " + ps;
 						hs = L"HS: " + hs;
 						ds = L"DS: " + ds;
-						ImGui::Text(ws2s(vs).c_str());
-						ImGui::Text(ws2s(ps).c_str());
-						ImGui::Text(ws2s(hs).c_str());
-						ImGui::Text(ws2s(ds).c_str());
+						ImGui::Text(wstringToString(vs).c_str());
+						ImGui::Text(wstringToString(ps).c_str());
+						ImGui::Text(wstringToString(hs).c_str());
+						ImGui::Text(wstringToString(ds).c_str());
 
 						ImGui::TreePop();
 						ImGui::Unindent(IM_GUI_INDENTATION);

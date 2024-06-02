@@ -8,9 +8,6 @@ Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
 	, m_FoV(45.0f)
 	, m_ViewMatrix(XMMatrixIdentity())
 	, m_ProjectionMatrix(XMMatrixIdentity())
-	, m_modelCube(std::make_shared<Model>())
-	, m_modelMadeline(std::make_shared<Model>())
-	, m_shaderCube(std::make_shared<Shader>())
 {
 }
 
@@ -19,6 +16,7 @@ bool Tutorial2::LoadContent()
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetAvailableCommandList();
 
+	m_modelMadeline = std::make_shared<Model>();
 	m_modelMadeline->Init(commandList, L"Madeline.model");
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
@@ -38,6 +36,7 @@ bool Tutorial2::LoadContent()
 		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
+	m_shaderCube = std::make_shared<Shader>();
 	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
@@ -49,16 +48,25 @@ bool Tutorial2::LoadContent()
 	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
 	commandQueue->WaitForFenceValue(fenceValue);
 
+	m_camera = std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP);
 	m_camera->SetPosition(0, 0, -10);
+	m_camera->SetRotation(0, 0, 0);
 
 	return true;
 }
 
 void Tutorial2::UnloadContent()
 {
+	m_FoV = 45;
+	m_modelMadeline.reset();
+	m_batch.reset();
+	m_shaderCube.reset();
+	m_goCube.reset();
+	m_gameObjectList.clear();
+	m_camera.reset();
 }
 
-void Tutorial2::OnUpdate(UpdateEventArgs& e)
+void Tutorial2::OnUpdate(TimeEventArgs& e)
 {
 	static uint64_t frameCount = 0;
 	static double totalTime = 0.0;
@@ -82,7 +90,7 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.TotalTime * 1.0);
+	float angle = static_cast<float>(e.TotalTime * 5.0);
 	m_goCube->SetRotation(0, angle, 0);
 
 	m_ViewMatrix = m_camera->GetViewMatrix();
@@ -108,7 +116,7 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
-void Tutorial2::OnRender(RenderEventArgs& e)
+void Tutorial2::OnRender(TimeEventArgs& e)
 {
 	super::OnRender(e);	
 

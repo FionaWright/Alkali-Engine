@@ -27,32 +27,6 @@ public:
 
 };
 
-class UpdateEventArgs : public EventArgs
-{
-public:
-    typedef EventArgs base;
-    UpdateEventArgs(double fDeltaTime, double fTotalTime)
-        : ElapsedTime(fDeltaTime)
-        , TotalTime(fTotalTime)
-    {}
-
-    double ElapsedTime;
-    double TotalTime;
-};
-
-class RenderEventArgs : public EventArgs
-{
-public:
-    typedef EventArgs base;
-    RenderEventArgs(double fDeltaTime, double fTotalTime)
-        : ElapsedTime(fDeltaTime)
-        , TotalTime(fTotalTime)
-    {}
-
-    double ElapsedTime;
-    double TotalTime;
-};
-
 class UserEventArgs : public EventArgs
 {
 public:

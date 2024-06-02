@@ -18,12 +18,12 @@ public:
 	void SetMode(CameraMode mode);
 	void SetSpeed(float speed);
 
-	void Update(UpdateEventArgs& eUpdate);	
+	void Update(TimeEventArgs& eUpdate);	
 
 	XMMATRIX GetViewMatrix();	
 
 private:
-	void MoveFirstPerson(UpdateEventArgs& eUpdate);
+	void MoveFirstPerson(TimeEventArgs& eUpdate);
 
 	CameraMode m_currentMode;
 	float m_speed = 3;

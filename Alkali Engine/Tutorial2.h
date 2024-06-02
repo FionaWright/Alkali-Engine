@@ -14,9 +14,9 @@ public:
 	virtual void UnloadContent() override;
 
 protected:
-	virtual void OnUpdate(UpdateEventArgs& e) override;
+	virtual void OnUpdate(TimeEventArgs& e) override;
 
-	virtual void OnRender(RenderEventArgs& e) override;
+	virtual void OnRender(TimeEventArgs& e) override;
 
 private:
 	float m_FoV;

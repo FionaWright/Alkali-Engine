@@ -8,6 +8,7 @@
 #include "Tutorial2.h"
 #include "ModelLoader.h"
 #include "ImGUIManager.h"
+#include "Utils.h"
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
@@ -48,6 +49,8 @@ int Application::Run()
     {
         ImGUIManager::Begin();
 
+        RenderImGuiScenes();
+
         if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
             ::TranslateMessage(&msg);
@@ -55,14 +58,42 @@ int Application::Run()
         }
         else
         {
-            m_mainWindow->OnUpdate();
+            m_updateClock.Tick();
+            TimeEventArgs args = m_updateClock.GetTimeArgs();
+            m_mainWindow->OnUpdate(args);
             InputManager::ProgressFrame();
         }
                
-        m_mainWindow->OnRender();        
+        m_renderClock.Tick();
+        TimeEventArgs args = m_renderClock.GetTimeArgs();
+        m_mainWindow->OnRender(args);        
     }    
 
     return static_cast<int>(msg.wParam);
+}
+
+void Application::RenderImGuiScenes() 
+{
+    if (ImGui::CollapsingHeader("Scenes"))
+    {
+        for (const auto& pair : m_sceneMap)
+        {
+            ImGui::BeginDisabled(pair.second == m_currentScene);
+
+            if (ImGui::Button(wstringToString(pair.first).c_str()))
+            {
+                AssignScene(pair.second);
+            }
+
+            if (pair.second == m_currentScene)
+                ImGui::EndDisabled();
+        }
+
+        if (ImGui::Button("Reset current scene"))
+        {
+            AssignScene(m_currentScene);
+        }
+    }
 }
 
 void Application::Shutdown()
@@ -92,12 +123,16 @@ void Application::ChangeScene(wstring sceneID)
 
 void Application::AssignScene(shared_ptr<Scene> scene) 
 {
+    m_d3dClass->Flush();
+
     if (m_currentScene && m_currentScene->m_ContentLoaded)
-    {
-        m_d3dClass->Flush();
+    {        
         m_currentScene->UnloadContent();
         m_currentScene->m_ContentLoaded = false;
     }
+
+    m_updateClock.Reset();
+    m_renderClock.Reset();
 
     if (!scene->m_ContentLoaded)
     {
@@ -108,7 +143,6 @@ void Application::AssignScene(shared_ptr<Scene> scene)
     m_mainWindow->RegisterCallbacks(scene);    
 
     scene->m_ContentLoaded = true;
-
     m_currentScene = scene;
 }
 

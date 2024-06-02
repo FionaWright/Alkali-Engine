@@ -1,24 +1,23 @@
-/**
- * High resolution clock used for performing timings.
- */
-
 #pragma once
 
 #include <chrono>
 #include "pch.h"
+
+using std::chrono::high_resolution_clock;
+
+struct TimeEventArgs
+{
+    double ElapsedTime;
+    double TotalTime;
+};
 
 class HighResolutionClock
 {
 public:
     HighResolutionClock();
 
-    // Tick the high resolution clock.
-    // Tick the clock before reading the delta time for the first time.
-    // Only tick the clock once per frame.
-    // Use the Get* functions to return the elapsed time between ticks.
     void Tick();
 
-    // Reset the clock.
     void Reset();
 
     double GetDeltaNanoseconds() const;
@@ -31,10 +30,11 @@ public:
     double GetTotalMilliSeconds() const;
     double GetTotalSeconds() const;
 
+    TimeEventArgs GetTimeArgs();
+
 private:
-    // Initial time point.
-    std::chrono::high_resolution_clock::time_point m_T0;
-    // Time since last tick.
-    std::chrono::high_resolution_clock::duration m_DeltaTime;
-    std::chrono::high_resolution_clock::duration m_TotalTime;
+    high_resolution_clock::time_point m_t0;
+
+    high_resolution_clock::duration m_deltaTime;
+    high_resolution_clock::duration m_totalTime;
 };
