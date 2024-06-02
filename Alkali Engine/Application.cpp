@@ -9,6 +9,7 @@
 #include "ModelLoader.h"
 #include "ImGUIManager.h"
 #include "Utils.h"
+#include "CubeScene.h"
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
@@ -30,16 +31,24 @@ Application::Application(HINSTANCE hInst)
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass, L"Main Window", SCREEN_WIDTH, SCREEN_HEIGHT, vSync);
     m_mainWindow->Show();
 
-    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Cube Scene", m_mainWindow);
-    if (!tut2Scene->Init(m_d3dClass))
-        throw new std::exception("Failed to initialise base scene");
-    m_sceneMap.emplace(tut2Scene->m_Name, tut2Scene);
+    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow);
+    InitScene(tut2Scene);
+
+    shared_ptr<CubeScene> cubeScene = std::make_shared<CubeScene>(L"Cube Scene", m_mainWindow);
+    InitScene(cubeScene);
 
     AssignScene(tut2Scene);
 
     ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
 
     //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
+}
+
+void Application::InitScene(shared_ptr<Scene> scene)
+{
+    if (!scene->Init(m_d3dClass))
+        throw new std::exception("Failed to initialise scene");
+    m_sceneMap.emplace(scene->m_Name, scene);
 }
 
 int Application::Run()
@@ -78,14 +87,16 @@ void Application::RenderImGuiScenes()
     {
         for (const auto& pair : m_sceneMap)
         {
-            ImGui::BeginDisabled(pair.second == m_currentScene);
+            bool disabled = pair.second == m_currentScene;
+            if (disabled)
+                ImGui::BeginDisabled(true);
 
             if (ImGui::Button(wstringToString(pair.first).c_str()))
             {
                 AssignScene(pair.second);
             }
 
-            if (pair.second == m_currentScene)
+            if (disabled)
                 ImGui::EndDisabled();
         }
 

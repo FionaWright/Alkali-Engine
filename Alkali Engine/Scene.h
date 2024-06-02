@@ -62,6 +62,9 @@ protected:
     D3D12_VIEWPORT m_viewport;
     D3D12_RECT m_scissorRect;
 
+    XMMATRIX m_viewMatrix;
+    XMMATRIX m_projectionMatrix;
+
     shared_ptr<D3DClass> m_d3dClass;
 
     unique_ptr<Camera> m_camera;

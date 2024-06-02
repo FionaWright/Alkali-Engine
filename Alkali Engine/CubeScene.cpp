@@ -1,20 +1,20 @@
 #include "pch.h"
-#include "Tutorial2.h"
+#include "CubeScene.h"
 #include "ImGUIManager.h"
 
-Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
+CubeScene::CubeScene(const std::wstring& name, shared_ptr<Window> pWindow)
 	: Scene(name, pWindow, true)
 	, m_FoV(45.0f)
 {
 }
 
-bool Tutorial2::LoadContent()
+bool CubeScene::LoadContent()
 {
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetAvailableCommandList();
 
-	m_modelMadeline = std::make_shared<Model>();
-	m_modelMadeline->Init(commandList, L"Madeline.model");
+	m_modelCube = std::make_shared<Model>();
+	m_modelCube->Init(commandList, L"Cube.model");
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
@@ -37,7 +37,7 @@ bool Tutorial2::LoadContent()
 	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
-	m_goCube = std::make_shared<GameObject>("Madeline", m_modelMadeline, m_shaderCube);
+	m_goCube = std::make_shared<GameObject>("Cube", m_modelCube, m_shaderCube);
 	m_gameObjectList.push_back(m_goCube.get());
 
 	m_batch->AddGameObject(m_goCube.get());
@@ -51,18 +51,18 @@ bool Tutorial2::LoadContent()
 	return true;
 }
 
-void Tutorial2::UnloadContent()
+void CubeScene::UnloadContent()
 {
 	Scene::UnloadContent();
 
 	m_FoV = 45;
-	m_modelMadeline.reset();
+	m_modelCube.reset();
 	m_batch.reset();
 	m_shaderCube.reset();
-	m_goCube.reset();	
+	m_goCube.reset();
 }
 
-void Tutorial2::OnUpdate(TimeEventArgs& e)
+void CubeScene::OnUpdate(TimeEventArgs& e)
 {
 	static uint64_t frameCount = 0;
 	static double totalTime = 0.0;
@@ -82,7 +82,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 		frameCount = 0;
 		totalTime = 0.0;
-	}	
+	}
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
@@ -112,13 +112,13 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
-void Tutorial2::OnRender(TimeEventArgs& e)
+void CubeScene::OnRender(TimeEventArgs& e)
 {
-	Scene::OnRender(e);	
+	Scene::OnRender(e);
 
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetAvailableCommandList();
-	
+
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();

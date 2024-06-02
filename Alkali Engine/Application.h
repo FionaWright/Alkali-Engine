@@ -21,6 +21,8 @@ class Application
 public:
     Application(HINSTANCE hInst);
 
+    void InitScene(shared_ptr<Scene> scene);
+
     int Run();
 
     void RenderImGuiScenes();
