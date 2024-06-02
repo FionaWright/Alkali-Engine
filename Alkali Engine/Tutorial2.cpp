@@ -41,7 +41,8 @@ bool Tutorial2::LoadContent()
 	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
-	m_goCube = std::make_shared<GameObject>(m_modelMadeline, m_shaderCube);
+	m_goCube = std::make_shared<GameObject>("Madeline", m_modelMadeline, m_shaderCube);
+	m_gameObjectList.push_back(m_goCube.get());
 
 	m_batch->AddGameObject(m_goCube.get());
 
@@ -83,10 +84,9 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
 	float angle = static_cast<float>(e.TotalTime * 1.0);
-	m_goCube->SetRotation(0, mousePos.x + angle, 0);
+	m_goCube->SetRotation(0, angle, 0);
 
 	m_ViewMatrix = m_camera->GetViewMatrix();
-
 	m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))

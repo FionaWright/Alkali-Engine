@@ -3,7 +3,7 @@
 #include "InputManager.h"
 
 Camera::Camera(CameraMode mode)
-	: GameObject(nullptr, nullptr)
+	: GameObject("Camera", nullptr, nullptr)
 	, m_currentMode(mode)
 {
 }

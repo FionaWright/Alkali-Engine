@@ -61,3 +61,13 @@ void Model::Render(ComPtr<ID3D12GraphicsCommandList2> commandList)
 
 	commandList->DrawIndexedInstanced(static_cast<UINT>(m_indexCount), 1, 0, 0, 0);
 }
+
+size_t Model::GetVertexCount()
+{
+	return m_vertexCount;
+}
+
+size_t Model::GetIndexCount()
+{
+	return m_indexCount;
+}

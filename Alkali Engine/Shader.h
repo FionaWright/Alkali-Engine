@@ -21,13 +21,14 @@ public:
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 
+	wstring m_VSName, m_PSName, m_HSName, m_DSName;
+
 protected:
 	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target);
 
 	ComPtr<ID3DBlob> ReadPreCompiledShader(LPCWSTR path);
 
 private:
-	wstring m_vsName, m_psName, m_hsName, m_dsName;
 	D3D12_INPUT_ELEMENT_DESC* m_inputLayout = nullptr;
 	UINT m_inputLayoutCount = 0;
 

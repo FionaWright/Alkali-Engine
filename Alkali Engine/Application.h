@@ -7,12 +7,14 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 class Tutorial2;
+class Scene;
 
 using std::wstring;
 using std::shared_ptr;
-using std::map;
+using std::unordered_map;
 
 class Application
 {
@@ -33,6 +35,8 @@ private:
     shared_ptr<WindowManager> m_windowManager;
 
     shared_ptr<Tutorial2> m_tutScene;
+
+    unordered_map<wstring, Scene*> m_sceneMap;
 
     wstring m_exeDirectoryPath;
 };

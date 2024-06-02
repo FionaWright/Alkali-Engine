@@ -42,6 +42,8 @@ public:
 
     shared_ptr<Window> GetWindow();
 
+    std::wstring m_Name;
+
 protected:
     void SetBackgroundColor(float r, float g, float b, float a);
     
@@ -66,8 +68,9 @@ protected:
 
     unique_ptr<Camera> m_camera;
 
-private:
-    std::wstring m_name;
+    vector<GameObject*> m_gameObjectList;
+
+private:    
     bool m_vSync;    
     bool m_dsvEnabled;
     bool m_showImGUIDemo = false;
