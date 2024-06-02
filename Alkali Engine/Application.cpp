@@ -29,11 +29,12 @@ Application::Application(HINSTANCE hInst)
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass, L"Main Window", SCREEN_WIDTH, SCREEN_HEIGHT, vSync);
     m_mainWindow->Show();
 
-    shared_ptr<Tutorial2> scene = std::make_shared<Tutorial2>(L"Cube Scene", m_mainWindow);
-    if (!scene->Init(m_d3dClass))
+    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Cube Scene", m_mainWindow);
+    if (!tut2Scene->Init(m_d3dClass))
         throw new std::exception("Failed to initialise base scene");
+    m_sceneMap.emplace(tut2Scene->m_Name, tut2Scene);
 
-    AssignScene(scene);
+    AssignScene(tut2Scene);
 
     ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
 
@@ -59,11 +60,7 @@ int Application::Run()
         }
                
         m_mainWindow->OnRender();        
-    }
-
-    m_d3dClass->Flush();
-    m_currentScene->UnloadContent();
-    m_currentScene->Destroy();
+    }    
 
     return static_cast<int>(msg.wParam);
 }
@@ -71,8 +68,13 @@ int Application::Run()
 void Application::Shutdown()
 {
     ImGUIManager::Shutdown();
+
     m_d3dClass->Flush();
     ResourceManager::Shutdown();
+
+    DestroyScenes();
+    m_mainWindow->Destroy();
+    m_sceneMap.clear();
 }
 
 wstring Application::GetEXEDirectoryPath()
@@ -82,16 +84,9 @@ wstring Application::GetEXEDirectoryPath()
 
 void Application::ChangeScene(wstring sceneID)
 {
-    //Scene* scene = m_sceneMap.at(sceneID);
+    shared_ptr<Scene> scene = m_sceneMap.at(sceneID);
 
-    //if (!scene->m_ContentLoaded)
-    //{
-    //    if (!scene->Init(m_d3dClass))
-    //        throw new std::exception("Failed to initialise base scene");
-
-    //    if (!scene->LoadContent())
-    //        throw new std::exception("Failed to load content of base scene");
-    //}
+    AssignScene(scene);
 }
 
 void Application::AssignScene(shared_ptr<Scene> scene) 
@@ -118,5 +113,11 @@ void Application::AssignScene(shared_ptr<Scene> scene)
 
 void Application::DestroyScenes() 
 {
-    // Loop over all scenes in the map and unload then destroy them
+    for (const auto& pair : m_sceneMap)
+    {
+        shared_ptr<Scene> scene = pair.second;
+        
+        scene->UnloadContent();
+        scene->Destroy();
+    }
 }
