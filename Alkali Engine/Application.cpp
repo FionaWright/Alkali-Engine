@@ -39,9 +39,7 @@ Application::Application(HINSTANCE hInst)
 
     AssignScene(tut2Scene);
 
-    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
-
-    //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
+    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);    
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
@@ -85,8 +83,11 @@ void Application::RenderImGuiScenes()
 {
     if (ImGui::CollapsingHeader("Scenes"))
     {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
         for (const auto& pair : m_sceneMap)
-        {
+        {            
+
             bool disabled = pair.second == m_currentScene;
             if (disabled)
                 ImGui::BeginDisabled(true);
@@ -100,10 +101,40 @@ void Application::RenderImGuiScenes()
                 ImGui::EndDisabled();
         }
 
+        ImGui::Spacing();
+
         if (ImGui::Button("Reset current scene"))
         {
             AssignScene(m_currentScene);
         }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
+    if (ImGui::CollapsingHeader("Tools"))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        if (ImGui::TreeNode("Model Preprocessing"))
+        {
+            string fileDir = "C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\";
+            string msg = "Using directory: " + fileDir;
+            ImGui::Text(msg.c_str());
+
+            static char fileName[256];
+            ImGui::InputText("File name (.obj)", fileName, 256, 0);
+
+            if (ImGui::Button("Import"))
+            {
+                string fileNameStr(fileName);
+                string filePath = fileDir + fileNameStr + ".obj";
+                ModelLoader::PreprocessObjFile(filePath);
+            }
+
+            ImGui::TreePop();
+        }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
     }
 }
 
