@@ -27,6 +27,8 @@ public:
 
     void RenderImGuiScenes();
 
+    void CalculateFPS(float deltaTime);
+
     void Shutdown();
 
     wstring GetEXEDirectoryPath();
@@ -52,4 +54,8 @@ private:
     unordered_map<wstring, shared_ptr<Scene>> m_sceneMap;
 
     wstring m_exeDirectoryPath;
+
+    double m_fps;
+    double m_fpsTimeSinceUpdate;
+    unsigned int m_fpsFramesSinceUpdate;
 };

@@ -67,6 +67,8 @@ int Application::Run()
         {
             m_updateClock.Tick();
             TimeEventArgs args = m_updateClock.GetTimeArgs();
+            CalculateFPS(args.ElapsedTime);
+
             m_mainWindow->OnUpdate(args);
             InputManager::ProgressFrame();
         }
@@ -81,6 +83,15 @@ int Application::Run()
 
 void Application::RenderImGuiScenes() 
 {
+    ImGui::SeparatorText("Stats");
+    ImGui::Indent(IM_GUI_INDENTATION);
+
+    string fpsTxt = "FPS: " + std::to_string(m_fps);
+    ImGui::Text(fpsTxt.c_str());
+
+    ImGui::Spacing();
+    ImGui::Unindent(IM_GUI_INDENTATION);
+
     if (ImGui::CollapsingHeader("Scenes"))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
@@ -111,6 +122,8 @@ void Application::RenderImGuiScenes()
         ImGui::Unindent(IM_GUI_INDENTATION);
     }
 
+    ImGui::Spacing();
+
     if (ImGui::CollapsingHeader("Tools"))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
@@ -135,6 +148,22 @@ void Application::RenderImGuiScenes()
         }
 
         ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
+    ImGui::Spacing();
+}
+
+void Application::CalculateFPS(float deltaTime) 
+{
+    m_fpsTimeSinceUpdate += deltaTime;
+    m_fpsFramesSinceUpdate++;
+
+    if (m_fpsTimeSinceUpdate > 0.1)
+    {
+        m_fps = m_fpsFramesSinceUpdate / m_fpsTimeSinceUpdate;
+
+        m_fpsFramesSinceUpdate = 0;
+        m_fpsTimeSinceUpdate = 0.0;
     }
 }
 

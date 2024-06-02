@@ -119,6 +119,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		ImGui::Unindent(IM_GUI_INDENTATION);
     }
 
+	ImGui::Spacing();
+
 	if (ImGui::CollapsingHeader("Current Scene"))
 	{
 		ImGui::Indent(IM_GUI_INDENTATION);
@@ -224,8 +226,6 @@ void Scene::OnResize(ResizeEventArgs& e)
 {
 	float width = m_pWindow->GetClientWidth();
 	float height = m_pWindow->GetClientHeight();
-	if (e.Width == width && e.Height == height)
-		return;
 
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
 
