@@ -38,8 +38,8 @@ public:
     void Show();
     void Hide();
 
-    void OnUpdate();
-    void OnRender();
+    void OnUpdate(TimeEventArgs& args);
+    void OnRender(TimeEventArgs& args);
 
     UINT GetCurrentBackBufferIndex() const;
 
@@ -75,8 +75,6 @@ private:
     bool m_VSync;
     bool m_Fullscreen;
 
-    HighResolutionClock m_UpdateClock;
-    HighResolutionClock m_RenderClock;
     uint64_t m_FrameCounter = 0;
 
     std::weak_ptr<Scene> m_pScene;

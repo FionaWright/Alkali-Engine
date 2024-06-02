@@ -23,6 +23,8 @@ public:
 
     int Run();
 
+    void RenderImGuiScenes();
+
     void Shutdown();
 
     wstring GetEXEDirectoryPath();
@@ -39,6 +41,9 @@ private:
     shared_ptr<D3DClass> m_d3dClass;
     shared_ptr<WindowManager> m_windowManager;
     shared_ptr<Window> m_mainWindow;
+
+    HighResolutionClock m_updateClock;
+    HighResolutionClock m_renderClock;
 
     shared_ptr<Scene> m_currentScene;
 

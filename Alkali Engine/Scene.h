@@ -34,8 +34,8 @@ public:
     virtual void UnloadContent() = 0;
     virtual void Destroy();
 
-    virtual void OnUpdate(UpdateEventArgs& e);
-    virtual void OnRender(RenderEventArgs& e);
+    virtual void OnUpdate(TimeEventArgs& e);
+    virtual void OnRender(TimeEventArgs& e);
 
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();

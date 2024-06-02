@@ -154,27 +154,21 @@ void Window::RegisterCallbacks(std::shared_ptr<Scene> pScene)
     m_pScene = pScene;
 }
 
-void Window::OnUpdate()
-{
-    m_UpdateClock.Tick();
-
+void Window::OnUpdate(TimeEventArgs& e)
+{   
     if (auto pScene = m_pScene.lock())
     {
         m_FrameCounter++;
 
-        UpdateEventArgs updateEventArgs(m_UpdateClock.GetDeltaSeconds(), m_UpdateClock.GetTotalSeconds());
-        pScene->OnUpdate(updateEventArgs);
+        pScene->OnUpdate(e);
     }
 }
 
-void Window::OnRender()
-{
-    m_RenderClock.Tick();
-
+void Window::OnRender(TimeEventArgs& e)
+{   
     if (auto pScene = m_pScene.lock())
     {
-        RenderEventArgs renderEventArgs(m_RenderClock.GetDeltaSeconds(), m_RenderClock.GetTotalSeconds());
-        pScene->OnRender(renderEventArgs);
+        pScene->OnRender(e);
     }
 }
 
