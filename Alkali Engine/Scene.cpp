@@ -10,6 +10,8 @@ Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDS
 	, m_pWindow(pWindow)
 	, m_dsvEnabled(createDSV)
 	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP))
+	, m_viewMatrix(XMMatrixIdentity())
+	, m_projectionMatrix(XMMatrixIdentity())
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 }
@@ -49,6 +51,8 @@ bool Scene::LoadContent()
 
 void Scene::UnloadContent()
 {
+	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
+	m_gameObjectList.clear();
 }
 
 void Scene::Destroy()

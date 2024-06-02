@@ -112,6 +112,9 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CubeScene.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -188,6 +191,9 @@
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeScene.h">
+      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

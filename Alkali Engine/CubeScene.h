@@ -2,10 +2,10 @@
 
 #include "Scene.h"
 
-class Tutorial2 : public Scene
+class CubeScene : public Scene
 {
 public:
-	Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow);
+	CubeScene(const std::wstring& name, shared_ptr<Window> pWindow);
 
 	virtual bool LoadContent() override;
 
@@ -19,8 +19,8 @@ protected:
 private:
 	float m_FoV;
 
-	shared_ptr<Model> m_modelMadeline;
+	shared_ptr<Model> m_modelCube;
 	shared_ptr<Batch> m_batch;
 	shared_ptr<GameObject> m_goCube;
-	shared_ptr<Shader> m_shaderCube;	
+	shared_ptr<Shader> m_shaderCube;
 };
