@@ -52,11 +52,6 @@ void Scene::UnloadContent()
 
 void Scene::Destroy()
 {
-	if (!m_pWindow)
-		return;
-
-	m_pWindow->Destroy();
-    m_pWindow.reset();
 }
 
 void Scene::OnUpdate(UpdateEventArgs& e)
