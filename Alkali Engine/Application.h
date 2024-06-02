@@ -31,6 +31,8 @@ public:
 
     void AssignScene(shared_ptr<Scene> scene);
 
+    void DestroyScenes();
+
 private:        
     HINSTANCE m_hInstance;
 

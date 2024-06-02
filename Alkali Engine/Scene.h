@@ -57,9 +57,6 @@ protected:
 
     std::shared_ptr<Window> m_pWindow;
 
-    int m_width;
-    int m_height;
-
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
     D3D12_VIEWPORT m_viewport;
@@ -72,7 +69,6 @@ protected:
     vector<GameObject*> m_gameObjectList;
 
 private:    
-    bool m_vSync;    
     bool m_dsvEnabled;
     bool m_showImGUIDemo = false;
     float m_backgroundColor[4];

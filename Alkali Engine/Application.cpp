@@ -45,20 +45,23 @@ int Application::Run()
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {
+        ImGUIManager::Begin();
+
         if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
         }
-
-        ImGUIManager::Begin();
-        m_mainWindow->OnUpdate();
-        m_mainWindow->OnRender();
-        InputManager::ProgressFrame();
+        else
+        {
+            m_mainWindow->OnUpdate();
+            InputManager::ProgressFrame();
+        }
+               
+        m_mainWindow->OnRender();        
     }
 
     m_d3dClass->Flush();
-
     m_currentScene->UnloadContent();
     m_currentScene->Destroy();
 
@@ -95,6 +98,7 @@ void Application::AssignScene(shared_ptr<Scene> scene)
 {
     if (m_currentScene && m_currentScene->m_ContentLoaded)
     {
+        m_d3dClass->Flush();
         m_currentScene->UnloadContent();
         m_currentScene->m_ContentLoaded = false;
     }
@@ -110,4 +114,9 @@ void Application::AssignScene(shared_ptr<Scene> scene)
     scene->m_ContentLoaded = true;
 
     m_currentScene = scene;
+}
+
+void Application::DestroyScenes() 
+{
+    // Loop over all scenes in the map and unload then destroy them
 }
