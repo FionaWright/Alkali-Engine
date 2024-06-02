@@ -27,16 +27,20 @@ public:
 
     wstring GetEXEDirectoryPath();
 
+    void ChangeScene(wstring sceneID);
+
+    void AssignScene(shared_ptr<Scene> scene);
+
 private:        
     HINSTANCE m_hInstance;
 
     shared_ptr<D3DClass> m_d3dClass;
-
     shared_ptr<WindowManager> m_windowManager;
+    shared_ptr<Window> m_mainWindow;
 
-    shared_ptr<Tutorial2> m_tutScene;
+    shared_ptr<Scene> m_currentScene;
 
-    unordered_map<wstring, Scene*> m_sceneMap;
+    unordered_map<wstring, shared_ptr<Scene>> m_sceneMap;
 
     wstring m_exeDirectoryPath;
 };

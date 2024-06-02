@@ -7,7 +7,7 @@ class Tutorial2 : public Scene
 public:
 	using super = Scene;
 
-	Tutorial2(const std::wstring& name, int width, int height, bool vSync = false);
+	Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow);
 
 	virtual bool LoadContent() override;
 
@@ -23,8 +23,6 @@ private:
 
 	XMMATRIX m_ViewMatrix;
 	XMMATRIX m_ProjectionMatrix;
-
-	bool m_ContentLoaded = false;
 
 	shared_ptr<Model> m_modelCube;
 	shared_ptr<Model> m_modelMadeline;

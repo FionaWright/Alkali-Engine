@@ -15,7 +15,7 @@
 #include "Camera.h"
 
 using std::unique_ptr;
-
+using std::wstring;
 using std::array;
 
 class Model;
@@ -25,7 +25,7 @@ class CommandQueue;
 class Scene : public std::enable_shared_from_this<Scene>
 {
 public:
-    Scene(const std::wstring& name, int width, int height, bool vSync, bool createDSV);
+    Scene(const wstring& name, shared_ptr<Window> pWindow, bool createDSV);
     virtual ~Scene();
 
     bool Init(shared_ptr<D3DClass> pD3DClass);
@@ -42,7 +42,8 @@ public:
 
     shared_ptr<Window> GetWindow();
 
-    std::wstring m_Name;
+    wstring m_Name;
+    bool m_ContentLoaded = false;
 
 protected:
     void SetBackgroundColor(float r, float g, float b, float a);
