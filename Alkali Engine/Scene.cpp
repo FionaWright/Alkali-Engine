@@ -4,12 +4,13 @@
 #include <locale>
 #include <codecvt>
 
-Scene::Scene(const std::wstring& name, int width, int height, bool vSync, bool createDSV)
-	: m_width(width)
-	, m_height(height)
-	, m_vSync(vSync)
-	, m_Name(name)
+Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDSV)
+	: m_Name(name)
+	, m_pWindow(pWindow)
 	, m_dsvEnabled(createDSV)
+	, m_width(pWindow->GetClientWidth())
+	, m_height(pWindow->GetClientHeight())
+	, m_vSync(pWindow->IsVSync())
 	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP))
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
@@ -22,6 +23,7 @@ Scene::~Scene()
 bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
 {
     // Check for DirectX Math library support.
+	// Note: Should this be moved to Application/D3DClass?
     if (!DirectX::XMVerifyCPUSupport())
     {
         MessageBoxA(NULL, "Failed to verify DirectX Math library support.", "Error", MB_OK | MB_ICONERROR);
@@ -29,10 +31,6 @@ bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
     }
 
 	m_d3dClass = pD3DClass;
-
-    m_pWindow = WindowManager::GetInstance()->CreateRenderWindow(pD3DClass, m_Name, m_width, m_height, m_vSync);
-    m_pWindow->RegisterCallbacks(shared_from_this());
-    m_pWindow->Show();
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));	

@@ -25,24 +25,23 @@ Application::Application(HINSTANCE hInst)
     m_windowManager->Init(hInst);
     m_d3dClass->Init();
 
-    m_tutScene = std::make_shared<Tutorial2>(L"Cube Scene", SCREEN_WIDTH, SCREEN_HEIGHT);
+    bool vSync = false;
+    m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass, L"Main Window", SCREEN_WIDTH, SCREEN_HEIGHT, vSync);
+    m_mainWindow->Show();
 
-    if (!m_tutScene->Init(m_d3dClass))
+    shared_ptr<Tutorial2> scene = std::make_shared<Tutorial2>(L"Cube Scene", m_mainWindow);
+    if (!scene->Init(m_d3dClass))
         throw new std::exception("Failed to initialise base scene");
 
-    if (!m_tutScene->LoadContent())
-        throw new std::exception("Failed to load content of base scene");
+    AssignScene(scene);
 
-    shared_ptr<Window> pWindow = m_tutScene->GetWindow();
-    ImGUIManager::Init(pWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
+    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, SWAP_CHAIN_DXGI_FORMAT);
 
     //ModelLoader::PreprocessObjFile(L"C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Madeline.obj");
 }
 
 int Application::Run()
 {   
-    shared_ptr<Window> pWindow = m_tutScene->GetWindow();
-
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {
@@ -53,15 +52,15 @@ int Application::Run()
         }
 
         ImGUIManager::Begin();
-        pWindow->OnUpdate();
-        pWindow->OnRender();
+        m_mainWindow->OnUpdate();
+        m_mainWindow->OnRender();
         InputManager::ProgressFrame();
     }
 
     m_d3dClass->Flush();
 
-    m_tutScene->UnloadContent();
-    m_tutScene->Destroy();
+    m_currentScene->UnloadContent();
+    m_currentScene->Destroy();
 
     return static_cast<int>(msg.wParam);
 }
@@ -76,4 +75,39 @@ void Application::Shutdown()
 wstring Application::GetEXEDirectoryPath()
 {
     return m_exeDirectoryPath;
+}
+
+void Application::ChangeScene(wstring sceneID)
+{
+    //Scene* scene = m_sceneMap.at(sceneID);
+
+    //if (!scene->m_ContentLoaded)
+    //{
+    //    if (!scene->Init(m_d3dClass))
+    //        throw new std::exception("Failed to initialise base scene");
+
+    //    if (!scene->LoadContent())
+    //        throw new std::exception("Failed to load content of base scene");
+    //}
+}
+
+void Application::AssignScene(shared_ptr<Scene> scene) 
+{
+    if (m_currentScene && m_currentScene->m_ContentLoaded)
+    {
+        m_currentScene->UnloadContent();
+        m_currentScene->m_ContentLoaded = false;
+    }
+
+    if (!scene->m_ContentLoaded)
+    {
+        if (!scene->LoadContent())
+            throw new std::exception("Failed to load content of base scene");
+    }
+
+    m_mainWindow->RegisterCallbacks(scene);    
+
+    scene->m_ContentLoaded = true;
+
+    m_currentScene = scene;
 }

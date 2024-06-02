@@ -3,11 +3,11 @@
 #include "imgui.h"
 #include "ImGUIManager.h"
 
-Tutorial2::Tutorial2(const std::wstring& name, int width, int height, bool vSync) 
-	: super(name, width, height, vSync, true)
+Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
+	: super(name, pWindow, true)
 	, m_FoV(45.0f)
 	, m_ViewMatrix(XMMatrixIdentity())
-	, m_ProjectionMatrix(XMMatrixIdentity())	
+	, m_ProjectionMatrix(XMMatrixIdentity())
 	, m_modelCube(std::make_shared<Model>())
 	, m_modelMadeline(std::make_shared<Model>())
 	, m_shaderCube(std::make_shared<Shader>())
@@ -48,7 +48,6 @@ bool Tutorial2::LoadContent()
 
 	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
 	commandQueue->WaitForFenceValue(fenceValue);
-	m_ContentLoaded = true;
 
 	m_camera->SetPosition(0, 0, -10);
 
