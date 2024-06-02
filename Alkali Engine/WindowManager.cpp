@@ -145,9 +145,10 @@ int WindowManager::GetTrackedWindowCount()
     return static_cast<int>(m_windowHwndMap.size());
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+{    
     if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
         return true;
 
@@ -158,30 +159,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     switch (message)
     {
-    case WM_PAINT:
-    {        
-        pWindow->OnUpdate();
-        pWindow->OnRender();
-        InputManager::ProgressFrame();
-    }
-    break;
-
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
     {
-        MSG charMsg;
-
-        unsigned int unicodeChar = 0;
-        if (PeekMessage(&charMsg, hwnd, 0, 0, PM_NOREMOVE) && charMsg.message == WM_CHAR)
-        {
-            GetMessage(&charMsg, hwnd, 0, 0);
-            unicodeChar = static_cast<unsigned int>(charMsg.wParam);
-        }
-
         KeyCode::Key key = (KeyCode::Key)wParam;
-
-        KeyState state = { key, unicodeChar };
-        InputManager::AddKey(state);
+        InputManager::AddKey(key);
     }
     break;
 
@@ -189,22 +171,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_KEYUP:
     {
         KeyCode::Key key = (KeyCode::Key)wParam;
-        unsigned int unicodeChar = 0;
-        unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
-
-        unsigned char keyboardState[256];
-        GetKeyboardState(keyboardState);
-
-        wchar_t translatedCharacters[4];
-        // CHANGE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // Afraid to do it rn because I don't fully understand it and can't test it yet
-        if (int result = ToUnicodeEx(static_cast<UINT>(wParam), scanCode, keyboardState, translatedCharacters, 4, 0, NULL) > 0)
-        {
-            unicodeChar = translatedCharacters[0];
-        }
-
-        KeyState state = { key, unicodeChar };
-        InputManager::RemoveKey(state);
+        InputManager::RemoveKey(key);
     }
     break;
 

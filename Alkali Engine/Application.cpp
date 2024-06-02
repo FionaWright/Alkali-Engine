@@ -41,14 +41,21 @@ Application::Application(HINSTANCE hInst)
 
 int Application::Run()
 {   
+    shared_ptr<Window> pWindow = m_tutScene->GetWindow();
+
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {
-        if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            ::TranslateMessage(&msg);
+            ::DispatchMessage(&msg);
         }
+
+        ImGUIManager::Begin();
+        pWindow->OnUpdate();
+        pWindow->OnRender();
+        InputManager::ProgressFrame();
     }
 
     m_d3dClass->Flush();

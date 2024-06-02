@@ -20,14 +20,14 @@ bool InputManager::m_mouseLeftStateLastFrame;
 bool InputManager::m_mouseRightStateLastFrame;
 bool InputManager::m_mouseMiddleStateLastFrame;
 
-void InputManager::AddKey(KeyState keyState)
+void InputManager::AddKey(KeyCode::Key key)
 {
-    s_currentlyHeldKeys.insert_or_assign(keyState.KeyCode, true);
+    s_currentlyHeldKeys.insert_or_assign(key, true);
 }
 
-void InputManager::RemoveKey(KeyState keyState)
+void InputManager::RemoveKey(KeyCode::Key key)
 {
-    s_currentlyHeldKeys.insert_or_assign(keyState.KeyCode, false);
+    s_currentlyHeldKeys.insert_or_assign(key, false);
 }
 
 void InputManager::SetMouseLeftState(bool state)

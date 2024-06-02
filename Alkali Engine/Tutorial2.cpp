@@ -111,9 +111,7 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 
 void Tutorial2::OnRender(RenderEventArgs& e)
 {
-	super::OnRender(e);
-
-	ImGUIManager::Begin();
+	super::OnRender(e);	
 
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetAvailableCommandList();

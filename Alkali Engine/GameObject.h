@@ -24,6 +24,9 @@ public:
 
 	void Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 
+	Transform GetTransform();
+	void SetTransform(Transform t);
+
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3 xyz);
 	void SetRotation(float x, float y, float z);

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Scene.h"
+#include "ImGUIManager.h"
 
 Scene::Scene(const std::wstring& name, int width, int height, bool vSync, bool createDSV)
 	: m_width(width)
@@ -65,6 +66,63 @@ void Scene::OnUpdate(UpdateEventArgs& e)
 
 void Scene::OnRender(RenderEventArgs& e)
 {
+	static char text[256];
+	ImGui::InputText("Test", text, 256, 0);
+
+    if (ImGui::CollapsingHeader("Settings"))
+    {
+        if (ImGui::TreeNode("Engine##2"))
+        {
+            ImGui::SeparatorText("DX12");
+            ImGui::Checkbox("VSync", &m_vSync);    
+			m_pWindow->SetVSync(m_vSync);
+
+			ImGui::SeparatorText("Window");
+			bool fullScreen = m_pWindow->IsFullScreen();
+			ImGui::Checkbox("Fullscreen", &fullScreen);
+			m_pWindow->SetFullscreen(fullScreen);
+
+			ImGui::SeparatorText("ImGUI");
+			ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
+
+            ImGui::TreePop();
+            ImGui::Spacing();
+        }
+
+		if (ImGui::TreeNode("Scene##2"))
+		{
+			ImGui::SeparatorText("Visuals");
+			ImGui::ColorEdit4("Background Color", m_backgroundColor, ImGuiColorEditFlags_DisplayHex);			
+
+			ImGui::SeparatorText("Rendering");
+			ImGui::Checkbox("DSV", &m_dsvEnabled);
+
+			ImGui::TreePop();
+			ImGui::Spacing();
+		}
+    }
+
+	if (ImGui::CollapsingHeader("Scene"))
+	{
+		if (ImGui::TreeNode("Objects##2"))
+		{
+			ImGui::SeparatorText("Camera");
+			Transform camTrans = m_camera->GetTransform();
+			float pPos[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
+			ImGui::InputFloat3("Position", pPos);
+			float pRot[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
+			ImGui::InputFloat3("Rotation", pRot);
+			camTrans.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
+			camTrans.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+			m_camera->SetTransform(camTrans);
+
+			ImGui::TreePop();
+			ImGui::Spacing();
+		}
+	}
+
+	if (m_showImGUIDemo)
+		ImGui::ShowDemoWindow(); // Show demo window! :)
 }
 
 void Scene::OnResize(ResizeEventArgs& e)

@@ -17,5 +17,5 @@ public:
 	static void Shutdown();	
 
 private:
-	static ComPtr<ID3D12DescriptorHeap> m_descHeapSRV;
+	static ComPtr<ID3D12DescriptorHeap> ms_descHeapSRV;
 };

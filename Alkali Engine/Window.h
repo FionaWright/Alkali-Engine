@@ -38,6 +38,9 @@ public:
     void Show();
     void Hide();
 
+    void OnUpdate();
+    void OnRender();
+
     UINT GetCurrentBackBufferIndex() const;
 
     UINT Present();
@@ -50,11 +53,7 @@ public:
     void RegisterCallbacks(std::shared_ptr<Scene> pScene);
 
 protected:
-    // The Window procedure needs to call protected methods of this class.
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-    virtual void OnUpdate();
-    virtual void OnRender();
 
     virtual void OnResize(ResizeEventArgs& e);
 
