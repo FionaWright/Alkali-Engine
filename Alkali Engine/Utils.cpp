@@ -1,5 +1,7 @@
 #include "Utils.h"
 #include "pch.h"
+#include <iostream>
+#include <fstream>
 
 std::string wstringToString(const std::wstring& wstr)
 {
@@ -29,4 +31,25 @@ XMFLOAT3 Normalize(const XMFLOAT3& v)
 bool Equals(XMFLOAT3 a, XMFLOAT3 b)
 {
 	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool resetPos) 
+{
+    std::streampos startPosition = file.tellg();
+
+    for (char c : expected)
+    {
+        if (file.peek() != c)
+        {
+            if (resetPos)
+                file.seekg(startPosition);
+            return false;            
+        }
+        
+        file.get();
+    }
+
+    if (resetPos)
+        file.seekg(startPosition);
+    return true;
 }

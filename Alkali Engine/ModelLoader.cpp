@@ -8,14 +8,22 @@ vector<XMFLOAT2> ModelLoader::m_texList;
 vector<XMFLOAT3> ModelLoader::m_norList;
 vector<ObjObject> ModelLoader::m_indexList;
 
-void ModelLoader::PreprocessObjFile(string filePath)
+void ModelLoader::PreprocessObjFile(string filePath, bool split)
 {
-	// Goal:
-	// Place objects into their own files 
-	// Create folder with name of filepath
-	// Whenever you encounter o or usemtl then save index list and move onto next one
-	// Save name of object with each index list and use that for the file naem
-	// Repeat end section for each index list  
+	size_t lastSlashPos = filePath.find_last_of("\\/");
+	size_t lastDotPos = filePath.find_last_of(".");
+	string folderName = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
+	string folderPath = "Assets/Models/" + folderName;
+
+	struct _stat64i32 info;
+	bool dirExists = (_stat(folderPath.c_str(), &info) == 0 && info.st_mode & _S_IFDIR);
+
+	if (split && !dirExists)
+	{
+		int result = _mkdir(folderPath.c_str());
+		if (result != 0)
+			throw new std::exception("IO Exception (OUTPUT)");
+	}
 
 	ifstream fin;
 	char input = '0';
@@ -32,19 +40,43 @@ void ModelLoader::PreprocessObjFile(string filePath)
 
 	int objectIndex = -1;
 
+	if (!split)
+	{
+		objectIndex = 0;
+		ObjObject object;
+		object.Name = folderPath;
+		m_indexList.push_back(object);
+	}
+
 	while (fin.get(input))
 	{
-		if (input == 'o')
+		bool oLine = input == 'o';
+		bool usemtlLine = input == 'u' && NextCharactersMatch(fin, "semtl", false);
+		if (split && (oLine || usemtlLine))
 		{
 			if (fin.peek() != ' ')
-				continue;
-
-			objectIndex++;
+				continue;			
+			
 			ObjObject object;
 
-			fin.get();
+			fin.get(); // Remove ' '
 			fin >> object.Name;
+
+			bool foundExistingObject = false;
+			for (size_t i = 0; i < m_indexList.size(); i++)
+			{
+				if (m_indexList.at(i).Name == object.Name)
+				{
+					objectIndex = i;
+					foundExistingObject = true;
+					break;
+				}
+			}
+			if (foundExistingObject)
+				continue;
+
 			m_indexList.push_back(object);
+			objectIndex = m_indexList.size() - 1;
 			continue;
 		}
 
@@ -136,16 +168,11 @@ void ModelLoader::PreprocessObjFile(string filePath)
 
 	fin.close();
 
-	size_t lastSlashPos = filePath.find_last_of("\\/");
-	size_t lastDotPos = filePath.find_last_of(".");
-	string folderName = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
-	string folderPath = "Assets/Models/" + folderName;
-	int result = _mkdir(folderPath.c_str());
-	if (result != 0)
-		throw new std::exception("IO Exception (OUTPUT)");
-
 	for (size_t i = 0; i < m_indexList.size(); i++)
 	{
+		if (m_indexList.at(i).IndexList.size() == 0)
+			continue;
+
 		string outputPath = folderPath + "/" + m_indexList.at(i).Name + ".model";
 
 		SaveObject(outputPath, m_indexList.at(i).IndexList);

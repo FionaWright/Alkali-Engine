@@ -144,11 +144,14 @@ void Application::RenderImGuiScenes()
             static char fileName[256];
             ImGui::InputText("File name (.obj)", fileName, 256, 0);
 
+            static bool split = true;
+            ImGui::Checkbox("Split Model", &split);
+
             if (ImGui::Button("Import"))
             {
                 string fileNameStr(fileName);
                 string filePath = fileDir + fileNameStr + ".obj";
-                ModelLoader::PreprocessObjFile(filePath);
+                ModelLoader::PreprocessObjFile(filePath, split);
             }
 
             ImGui::TreePop();

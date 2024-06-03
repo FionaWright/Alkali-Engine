@@ -66,7 +66,7 @@ namespace std
 class ModelLoader
 {
 public:
-	static void PreprocessObjFile(string filePath);
+	static void PreprocessObjFile(string filePath, bool split = true);
 	static void SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices);
 	static void TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int>& vertexMap, int i, int i1, int i2);
 	static VertexInputData SetVertexData(ObjFaceVertexIndices i, ObjFaceVertexIndices i1, ObjFaceVertexIndices i2);	

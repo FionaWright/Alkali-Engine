@@ -14,7 +14,7 @@ bool Tutorial2::LoadContent()
 	auto commandList = commandQueue->GetAvailableCommandList();
 
 	m_modelMadeline = std::make_shared<Model>();
-	m_modelMadeline->Init(commandList, L"Madeline/Hair.001_Plane.003.model");
+	m_modelMadeline->Init(commandList, L"Madeline/Outline2.model");
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
