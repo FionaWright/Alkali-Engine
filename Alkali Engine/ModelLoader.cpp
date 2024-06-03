@@ -50,44 +50,19 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 
 	while (fin.get(input))
 	{
-		bool oLine = input == 'o';
-		bool usemtlLine = input == 'u' && NextCharactersMatch(fin, "semtl", false);
-		if (split && (oLine || usemtlLine))
-		{
+		if (input == 'f')
+		{		
 			if (fin.peek() != ' ')
-				continue;			
-			
-			ObjObject object;
-
-			fin.get(); // Remove ' '
-			fin >> object.Name;
-
-			bool foundExistingObject = false;
-			for (size_t i = 0; i < m_indexList.size(); i++)
-			{
-				if (m_indexList.at(i).Name == object.Name)
-				{
-					objectIndex = i;
-					foundExistingObject = true;
-					break;
-				}
-			}
-			if (foundExistingObject)
 				continue;
 
-			m_indexList.push_back(object);
-			objectIndex = m_indexList.size() - 1;
-			continue;
-		}
-
-		if (input == 'f')
-		{
 			ObjFaceVertexIndices indices;
 
 			for (int i = 0; i < 3; i++)
-			{
+			{			
+				indices = {};
+
 				fin >> indices.PositionIndex;
-				indices.PositionIndex--;
+				indices.PositionIndex--;			
 
 				if (fin.peek() == '/')
 					fin.get();
@@ -109,10 +84,9 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 
 			if (fin.peek() == ' ')
 			{
-				m_indexList.at(objectIndex).IndexList.push_back(indices);
-
-				auto indicesMinus3 = m_indexList.at(objectIndex).IndexList.at(m_indexList.at(objectIndex).IndexList.size() - 3);
-				m_indexList.at(objectIndex).IndexList.push_back(indicesMinus3);
+				auto firstIndices = m_indexList.at(objectIndex).IndexList.at(m_indexList.at(objectIndex).IndexList.size() - 3);
+				m_indexList.at(objectIndex).IndexList.push_back(firstIndices);
+				m_indexList.at(objectIndex).IndexList.push_back(indices);				
 
 				fin >> indices.PositionIndex;
 				indices.PositionIndex--;
@@ -131,9 +105,38 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 
 				fin >> indices.NormalIndex;
 				indices.NormalIndex--;
-
-				m_indexList.at(objectIndex).IndexList.push_back(indices);
+				
+				m_indexList.at(objectIndex).IndexList.push_back(indices);							
 			}
+
+			continue;
+		}
+
+		if (split && input == 'u' && NextCharactersMatch(fin, "semtl", false))
+		{
+			if (fin.peek() != ' ')
+				continue;
+
+			ObjObject object;
+
+			fin.get(); // Remove ' '
+			fin >> object.Name;
+
+			bool foundExistingObject = false;
+			for (size_t i = 0; i < m_indexList.size(); i++)
+			{
+				if (m_indexList.at(i).Name == object.Name)
+				{
+					objectIndex = i;
+					foundExistingObject = true;
+					break;
+				}
+			}
+			if (foundExistingObject)
+				continue;
+
+			m_indexList.push_back(object);
+			objectIndex = m_indexList.size() - 1;
 
 			continue;
 		}
@@ -141,13 +144,13 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 		if (input != 'v')
 			continue;
 
-		fin.get(input);
-
-		if (input != ' ' && input != 't' && input != 'n')
-			continue;
+		fin.get(input);		
 
 		if (input == 't')
 		{
+			if (fin.peek() != ' ')
+				continue;
+
 			XMFLOAT2 tex;
 			fin >> tex.x;
 			fin >> tex.y;
@@ -155,18 +158,38 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 			continue;
 		}
 
+		if (input != ' ' && input != 'n')
+			continue;
+
+		if (input == 'n' && fin.peek() != ' ')
+			continue;
+
 		XMFLOAT3 vec;
 		fin >> vec.x;
 		fin >> vec.y;
 		fin >> vec.z;
 
 		if (input == 'n')
+		{		
 			m_norList.push_back(vec);
+		}			
 		else
 			m_posList.push_back(vec);
 	}
 
 	fin.close();
+
+	if (!split)
+	{
+		string outputPath = folderPath + ".model";
+
+		SaveObject(outputPath, m_indexList.at(0).IndexList);
+
+		m_posList.clear();
+		m_texList.clear();
+		m_norList.clear();
+		return;
+	}
 
 	for (size_t i = 0; i < m_indexList.size(); i++)
 	{
@@ -188,13 +211,13 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 	size_t vertexCount = objIndices.size();
 
 	vector<VertexInputData> vertexBuffer;
-	unordered_map<VertexKey, int> vertexMap;
-	vector<int> indexBuffer;
+	unordered_map<VertexKey, int32_t> vertexMap;
+	vector<int32_t> indexBuffer;
 
-	for (int i = 0; i < vertexCount - 2; i += 3)
+	for (int32_t i = 0; i < vertexCount - 2; i += 3)
 	{
-		int i1 = i + 1;
-		int i2 = i + 2;
+		int32_t i1 = i + 1;
+		int32_t i2 = i + 2;
 
 		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
 		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);
@@ -217,7 +240,7 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 	fout.write(reinterpret_cast<const char*>(&indexCountUINT), sizeof(size_t));
 
 	for (int i = 0; i < indexBuffer.size(); i++)
-		fout.write(reinterpret_cast<const char*>(&indexBuffer.at(i)), sizeof(int));
+		fout.write(reinterpret_cast<const char*>(&indexBuffer.at(i)), sizeof(int32_t));
 
 	fout.close();
 
@@ -225,7 +248,7 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 		throw new std::exception("IO Exception (OUTPUT)");
 }
 
-void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int>& vertexMap, int i, int i1, int i2)
+void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int32_t>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int32_t>& vertexMap, int32_t i, int32_t i1, int32_t i2)
 {
 	auto indices = objIndices.at(i);
 	VertexKey key = { indices.PositionIndex, indices.NormalIndex };
@@ -291,7 +314,7 @@ VertexInputData ModelLoader::SetVertexData(ObjFaceVertexIndices i, ObjFaceVertex
 	return vertex;
 }
 
-void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<WORD>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount)
+void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount)
 {
 	ifstream fin;
 	wstring longPath = L"Assets/Models/" + filePath;
@@ -303,7 +326,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	fin.read(reinterpret_cast<char*>(&outVertexCount), sizeof(size_t));
 
 	VertexInputData data;
-	for (int i = 0; i < outVertexCount; i++)
+	for (int32_t i = 0; i < outVertexCount; i++)
 	{		
 		fin.read(reinterpret_cast<char*>(&data), sizeof(VertexInputData));
 		outVertexBuffer.push_back(data);
@@ -311,10 +334,10 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	fin.read(reinterpret_cast<char*>(&outIndexCount), sizeof(size_t));
 
-	int index;
-	for (int i = 0; i < outIndexCount; i++)
+	int32_t index;
+	for (int32_t i = 0; i < outIndexCount; i++)
 	{		
-		fin.read(reinterpret_cast<char*>(&index), sizeof(int));
-		outIndexBuffer.push_back((WORD)index);
+		fin.read(reinterpret_cast<char*>(&index), sizeof(int32_t));
+		outIndexBuffer.push_back((int32_t)index);
 	}
 }

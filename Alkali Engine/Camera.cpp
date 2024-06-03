@@ -38,6 +38,16 @@ void Camera::Update(TimeEventArgs& e)
 		MoveScroll(e);
 }
 
+void Camera::Reset()
+{
+	m_pitch = 0;
+	m_yaw = 0;
+	SetRotation(0, 0, 0);
+	m_upVector = XMFLOAT3(0, 1, 0);
+	m_forwardVector = XMFLOAT3(0, 0, 1);
+	m_rightVector = XMFLOAT3(1,0,0);
+}
+
 void Camera::MoveFirstPerson(TimeEventArgs& e)
 {
 	if (InputManager::IsKeyDown(KeyCode::R))
@@ -186,10 +196,10 @@ XMMATRIX Camera::GetViewMatrix()
 		return XMMatrixLookAtLH(positionVector, lookAtVector, upVector);
 	}
 
-	XMVECTOR forward = XMLoadFloat3(&m_forwardVector);
 	XMVECTOR up = XMLoadFloat3(&m_upVector);
+	XMVECTOR dir = XMLoadFloat3(&m_forwardVector);
 
 	XMVECTOR positionVector = XMLoadFloat3(&m_transform.Position);
 
-	return XMMatrixLookToLH(positionVector, forward, up);
+	return XMMatrixLookToLH(positionVector, dir, up);
 }

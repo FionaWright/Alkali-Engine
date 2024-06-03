@@ -21,6 +21,8 @@ public:
 
 	void Update(TimeEventArgs& e);	
 
+	void Reset();
+
 	XMMATRIX GetViewMatrix();	
 
 private:

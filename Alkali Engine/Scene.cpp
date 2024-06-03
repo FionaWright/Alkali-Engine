@@ -53,6 +53,7 @@ void Scene::UnloadContent()
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 	m_gameObjectList.clear();
+	m_camera->Reset();
 }
 
 void Scene::Destroy()
@@ -78,6 +79,10 @@ void Scene::OnRender(TimeEventArgs& e)
 			bool vSync = m_pWindow->IsVSync();
             ImGui::Checkbox("VSync", &vSync);
 			m_pWindow->SetVSync(vSync);
+
+			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
+
+			ImGui::Checkbox("Cull Back", &Shader::ms_CullNone);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");

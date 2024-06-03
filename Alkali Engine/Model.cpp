@@ -19,7 +19,7 @@ void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepat
 {
 	size_t vertexCount = 0, indexCount = 0;
 	vector<VertexInputData> vertexBuffer;
-	vector<WORD> indexBuffer;
+	vector<int32_t> indexBuffer;
 
 	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount);
 
@@ -41,17 +41,17 @@ void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCo
 	m_VertexBufferView.StrideInBytes = static_cast<UINT>(m_vertexInputSize);
 
 	ComPtr<ID3D12Resource> intermediateIndexBuffer;
-	ResourceManager::CreateCommittedResource(commandList, m_IndexBuffer, m_indexCount, sizeof(WORD));
+	ResourceManager::CreateCommittedResource(commandList, m_IndexBuffer, m_indexCount, sizeof(int32_t));
 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-	m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	m_IndexBufferView.SizeInBytes = static_cast<UINT>(m_indexCount * sizeof(WORD));
+	m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_IndexBufferView.SizeInBytes = static_cast<UINT>(m_indexCount * sizeof(int32_t));
  }
 
 void Model::SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData)
 {
 	ResourceManager::UploadCommittedResource(commandList, m_VertexBuffer, &m_intermediateVertexBuffer, m_vertexCount, m_vertexInputSize, vBufferData);
-	ResourceManager::UploadCommittedResource(commandList, m_IndexBuffer, &m_intermediateIndexBuffer, m_indexCount, sizeof(WORD), iBufferData);
+	ResourceManager::UploadCommittedResource(commandList, m_IndexBuffer, &m_intermediateIndexBuffer, m_indexCount, sizeof(int32_t), iBufferData);
 }
 
 void Model::Render(ComPtr<ID3D12GraphicsCommandList2> commandList)

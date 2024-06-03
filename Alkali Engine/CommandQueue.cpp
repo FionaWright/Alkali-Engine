@@ -6,14 +6,19 @@ CommandQueue::CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE
     , m_CommandListType(type)
     , m_device(device)
 {
+    HRESULT hr;
+
     D3D12_COMMAND_QUEUE_DESC desc = {};
     desc.Type = type;
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     desc.NodeMask = 0;
 
-    ThrowIfFailed(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_d3d12CommandQueue)));
-    ThrowIfFailed(m_device->CreateFence(m_FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_d3d12Fence)));
+    hr = m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_d3d12CommandQueue));
+    ThrowIfFailed(hr);
+
+    hr = m_device->CreateFence(m_FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_d3d12Fence));
+    ThrowIfFailed(hr);
 
     m_FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     assert(m_FenceEvent && "Failed to create fence event handle.");

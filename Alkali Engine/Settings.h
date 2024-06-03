@@ -15,6 +15,9 @@ constexpr UINT BACK_BUFFER_COUNT = 3;
 constexpr bool USE_B_WARP = false;
 constexpr DXGI_FORMAT SWAP_CHAIN_DXGI_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+constexpr float NEAR_PLANE = 0.1f;
+constexpr float FAR_PLANE = 300;
+
 // GPU Debug
 constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] =
 {
