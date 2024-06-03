@@ -187,8 +187,7 @@ void Window::OnResize(ResizeEventArgs& e)
 
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
         ThrowIfFailed(m_dxgiSwapChain->GetDesc(&swapChainDesc));
-        ThrowIfFailed(m_dxgiSwapChain->ResizeBuffers(BACK_BUFFER_COUNT, m_ClientWidth,
-            m_ClientHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+        ThrowIfFailed(m_dxgiSwapChain->ResizeBuffers(BACK_BUFFER_COUNT, m_ClientWidth, m_ClientHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
         m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
 
@@ -224,9 +223,8 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-
-    // It is recommended to always allow tearing if tearing support is available.
     swapChainDesc.Flags = m_d3dClass->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
     ID3D12CommandQueue* pCommandQueue = m_d3dClass->GetCommandQueue()->GetD3D12CommandQueue().Get();
 
     ComPtr<IDXGISwapChain1> swapChain1;
@@ -238,8 +236,6 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
         nullptr,
         &swapChain1));
 
-    // Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen
-    // will be handled manually.
     ThrowIfFailed(dxgiFactory4->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER));
 
     ThrowIfFailed(swapChain1.As(&dxgiSwapChain4));

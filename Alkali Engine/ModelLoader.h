@@ -16,9 +16,9 @@ using std::unordered_map;
 
 struct ObjFaceVertexIndices
 {
-	int PositionIndex;
-	int TextureIndex;
-	int NormalIndex;
+	int32_t PositionIndex;
+	int32_t TextureIndex;
+	int32_t NormalIndex;
 };
 
 struct ObjObject
@@ -40,8 +40,8 @@ struct VertexInputData
 
 struct VertexKey
 {
-	int PositionIndex;
-	int NormalIndex;
+	int32_t PositionIndex;
+	int32_t NormalIndex;
 
 	bool operator==(const VertexKey& other) const {
 		return PositionIndex == other.PositionIndex && NormalIndex == other.NormalIndex;
@@ -54,10 +54,9 @@ namespace std
 	struct hash<VertexKey>
 	{
 		size_t operator()(const VertexKey& key) const {
-			// Combine hash values of PositionIndex and NormalIndex
 			size_t hashValue = 17;
-			hashValue = hashValue * 31 + hash<int>()(key.PositionIndex);
-			hashValue = hashValue * 31 + hash<int>()(key.NormalIndex);
+			hashValue = hashValue * 31 + hash<int32_t>()(key.PositionIndex);
+			hashValue = hashValue * 31 + hash<int32_t>()(key.NormalIndex);
 			return hashValue;
 		}
 	};
@@ -68,9 +67,9 @@ class ModelLoader
 public:
 	static void PreprocessObjFile(string filePath, bool split = true);
 	static void SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices);
-	static void TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int>& vertexMap, int i, int i1, int i2);
+	static void TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int32_t>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int32_t>& vertexMap, int32_t i, int32_t i1, int32_t i2);
 	static VertexInputData SetVertexData(ObjFaceVertexIndices i, ObjFaceVertexIndices i1, ObjFaceVertexIndices i2);	
-	static void LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<WORD>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount);
+	static void LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount);
 
 private:
 	static vector<XMFLOAT3> m_posList;

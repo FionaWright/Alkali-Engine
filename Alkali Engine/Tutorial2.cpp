@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Tutorial2.h"
 #include "ImGUIManager.h"
+#include "ModelLoader.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
 	: Scene(name, pWindow, true)
@@ -13,8 +14,9 @@ bool Tutorial2::LoadContent()
 	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetAvailableCommandList();
 
+	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 	m_modelMadeline = std::make_shared<Model>();
-	m_modelMadeline->Init(commandList, L"Madeline/Outline2.model");
+	m_modelMadeline->Init(commandList, L"Bistro.model");
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
@@ -38,6 +40,7 @@ bool Tutorial2::LoadContent()
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
 	m_goCube = std::make_shared<GameObject>("Madeline", m_modelMadeline, m_shaderCube);
+	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
 	m_gameObjectList.push_back(m_goCube.get());
 
 	m_batch->AddGameObject(m_goCube.get());
@@ -68,11 +71,11 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.ElapsedTime * 50.0);
+	float angle = static_cast<float>(e.ElapsedTime * 0.0);
 	m_goCube->RotateBy(0, angle, 0);
 
 	m_viewMatrix = m_camera->GetViewMatrix();
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
