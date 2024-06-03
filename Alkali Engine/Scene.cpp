@@ -224,9 +224,6 @@ void Scene::OnRender(TimeEventArgs& e)
 
 void Scene::OnResize(ResizeEventArgs& e)
 {
-	float width = m_pWindow->GetClientWidth();
-	float height = m_pWindow->GetClientHeight();
-
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
 
 	if (m_dsvEnabled)
@@ -285,6 +282,9 @@ void Scene::Present(ComPtr<ID3D12GraphicsCommandList2> commandList, shared_ptr<C
 
 void Scene::SetDSVForSize(int width, int height)
 {
+	if (!m_dsvEnabled)
+		return;
+
 	HRESULT hr;
 
 	auto device = m_d3dClass->GetDevice();

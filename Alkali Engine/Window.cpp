@@ -99,7 +99,7 @@ void Window::SetFullscreen(bool fullscreen)
 
     m_Fullscreen = fullscreen;
 
-    if (m_Fullscreen) // Switching to fullscreen.
+    if (m_Fullscreen) 
     {
         // Store the current window dimensions so they can be restored 
         // when switching out of fullscreen state.
@@ -127,21 +127,20 @@ void Window::SetFullscreen(bool fullscreen)
             SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
         ::ShowWindow(m_hWnd, SW_MAXIMIZE);
+        return;
     }
-    else
-    {
-        // Restore all the window decorators.
-        ::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+    
+    // Restore all the window decorators.
+    ::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 
-        ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
-            m_WindowRect.left,
-            m_WindowRect.top,
-            m_WindowRect.right - m_WindowRect.left,
-            m_WindowRect.bottom - m_WindowRect.top,
-            SWP_FRAMECHANGED | SWP_NOACTIVATE);
+    ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
+        m_WindowRect.left,
+        m_WindowRect.top,
+        m_WindowRect.right - m_WindowRect.left,
+        m_WindowRect.bottom - m_WindowRect.top,
+        SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
-        ::ShowWindow(m_hWnd, SW_NORMAL);
-    }
+    ::ShowWindow(m_hWnd, SW_NORMAL);
 }
 
 void Window::ToggleFullscreen()

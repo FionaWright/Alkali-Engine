@@ -64,25 +64,7 @@ void CubeScene::UnloadContent()
 
 void CubeScene::OnUpdate(TimeEventArgs& e)
 {
-	static uint64_t frameCount = 0;
-	static double totalTime = 0.0;
-
 	Scene::OnUpdate(e);
-
-	totalTime += e.ElapsedTime;
-	frameCount++;
-
-	if (totalTime > 1.0)
-	{
-		double fps = frameCount / totalTime;
-
-		char buffer[512];
-		sprintf_s(buffer, "FPS: %f\n", fps);
-		OutputDebugStringA(buffer);
-
-		frameCount = 0;
-		totalTime = 0.0;
-	}
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 

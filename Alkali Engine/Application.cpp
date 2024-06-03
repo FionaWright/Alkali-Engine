@@ -192,12 +192,12 @@ void Application::ChangeScene(wstring sceneID)
     AssignScene(scene);
 }
 
-void Application::AssignScene(shared_ptr<Scene> scene) 
+void Application::AssignScene(shared_ptr<Scene> scene)
 {
     m_d3dClass->Flush();
 
     if (m_currentScene && m_currentScene->m_ContentLoaded)
-    {        
+    {
         m_currentScene->UnloadContent();
         m_currentScene->m_ContentLoaded = false;
     }
@@ -210,6 +210,9 @@ void Application::AssignScene(shared_ptr<Scene> scene)
         if (!scene->LoadContent())
             throw new std::exception("Failed to load content of base scene");
     }
+
+    ResizeEventArgs e = { m_mainWindow->GetClientWidth(), m_mainWindow->GetClientHeight() };
+    scene->OnResize(e);
 
     m_mainWindow->RegisterCallbacks(scene);    
 
