@@ -1,39 +1,22 @@
 #include "pch.h"
 #include "ModelLoader.h"
 #include "Utils.h"
+#include <direct.h>
 
 vector<XMFLOAT3> ModelLoader::m_posList;
 vector<XMFLOAT2> ModelLoader::m_texList;
 vector<XMFLOAT3> ModelLoader::m_norList;
-vector<ObjIndexGroup> ModelLoader::m_indexList;
-
-struct VertexKey
-{
-	int PositionIndex;
-	int NormalIndex;
-
-	bool operator==(const VertexKey& other) const {
-		return PositionIndex == other.PositionIndex && NormalIndex == other.NormalIndex;
-	}
-};
-
-namespace std
-{
-	template<>
-	struct hash<VertexKey>
-	{
-		size_t operator()(const VertexKey& key) const {
-			// Combine hash values of PositionIndex and NormalIndex
-			size_t hashValue = 17;
-			hashValue = hashValue * 31 + hash<int>()(key.PositionIndex);
-			hashValue = hashValue * 31 + hash<int>()(key.NormalIndex);
-			return hashValue;
-		}
-	};
-}
+vector<ObjObject> ModelLoader::m_indexList;
 
 void ModelLoader::PreprocessObjFile(string filePath)
 {
+	// Goal:
+	// Place objects into their own files 
+	// Create folder with name of filepath
+	// Whenever you encounter o or usemtl then save index list and move onto next one
+	// Save name of object with each index list and use that for the file naem
+	// Repeat end section for each index list  
+
 	ifstream fin;
 	char input = '0';
 
@@ -47,14 +30,30 @@ void ModelLoader::PreprocessObjFile(string filePath)
 	m_norList.clear();
 	m_indexList.clear();
 
+	int objectIndex = -1;
+
 	while (fin.get(input))
 	{
+		if (input == 'o')
+		{
+			if (fin.peek() != ' ')
+				continue;
+
+			objectIndex++;
+			ObjObject object;
+
+			fin.get();
+			fin >> object.Name;
+			m_indexList.push_back(object);
+			continue;
+		}
+
 		if (input == 'f')
 		{
-			ObjIndexGroup indices;
+			ObjFaceVertexIndices indices;
 
 			for (int i = 0; i < 3; i++)
-			{			
+			{
 				fin >> indices.PositionIndex;
 				indices.PositionIndex--;
 
@@ -73,13 +72,15 @@ void ModelLoader::PreprocessObjFile(string filePath)
 				fin >> indices.NormalIndex;
 				indices.NormalIndex--;
 
-				m_indexList.push_back(indices);
+				m_indexList.at(objectIndex).IndexList.push_back(indices);
 			}
 
 			if (fin.peek() == ' ')
 			{
-				m_indexList.push_back(indices);
-				m_indexList.push_back(m_indexList.at(m_indexList.size() - 3));
+				m_indexList.at(objectIndex).IndexList.push_back(indices);
+
+				auto indicesMinus3 = m_indexList.at(objectIndex).IndexList.at(m_indexList.at(objectIndex).IndexList.size() - 3);
+				m_indexList.at(objectIndex).IndexList.push_back(indicesMinus3);
 
 				fin >> indices.PositionIndex;
 				indices.PositionIndex--;
@@ -99,7 +100,7 @@ void ModelLoader::PreprocessObjFile(string filePath)
 				fin >> indices.NormalIndex;
 				indices.NormalIndex--;
 
-				m_indexList.push_back(indices);
+				m_indexList.at(objectIndex).IndexList.push_back(indices);
 			}
 
 			continue;
@@ -135,86 +136,43 @@ void ModelLoader::PreprocessObjFile(string filePath)
 
 	fin.close();
 
-	size_t vertexCount = m_indexList.size();
+	size_t lastSlashPos = filePath.find_last_of("\\/");
+	size_t lastDotPos = filePath.find_last_of(".");
+	string folderName = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
+	string folderPath = "Assets/Models/" + folderName;
+	int result = _mkdir(folderPath.c_str());
+	if (result != 0)
+		throw new std::exception("IO Exception (OUTPUT)");
 
-	vector<VertexInputData> vertexBuffer;
-	unordered_map<VertexKey, int> vertexMap;
-	vector<int> indexBuffer;
-	
-	for (int i = 0; i < vertexCount - 2; i += 3)
+	for (size_t i = 0; i < m_indexList.size(); i++)
 	{
-		int i1 = i + 1;
-		int i2 = i + 2;
+		string outputPath = folderPath + "/" + m_indexList.at(i).Name + ".model";
 
-		VertexInputData data;
-		VertexKey key;
-		ObjIndexGroup indices;
-
-		indices = m_indexList.at(i);
-		key = { indices.PositionIndex, indices.NormalIndex };
-
-		if (!vertexMap.contains(key))
-		{		
-			data = SetVertexData(indices, i1, i2);
-			vertexBuffer.push_back(data);
-
-			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
-			indexBuffer.push_back(vBufferIndex);			
-			vertexMap.emplace(key, vBufferIndex);
-		}
-		else
-		{
-			int vIndex = vertexMap.at(key);
-			indexBuffer.push_back(vIndex);
-		}			
-
-		indices = m_indexList.at(i1);
-		key = { indices.PositionIndex, indices.NormalIndex };
-
-		if (!vertexMap.contains(key))
-		{
-			data = SetVertexData(indices, i, i2);
-			vertexBuffer.push_back(data);
-
-			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
-			indexBuffer.push_back(vBufferIndex);
-			vertexMap.emplace(key, vBufferIndex);
-		}
-		else
-		{
-			int vIndex = vertexMap.at(key);
-			indexBuffer.push_back(vIndex);
-		}
-
-		indices = m_indexList.at(i2);
-		key = { indices.PositionIndex, indices.NormalIndex };
-
-		if (!vertexMap.contains(key))
-		{
-			data = SetVertexData(indices, i1, i);
-			vertexBuffer.push_back(data);
-
-			int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
-			indexBuffer.push_back(vBufferIndex);
-			vertexMap.emplace(key, vBufferIndex);
-		}
-		else
-		{
-			int vIndex = vertexMap.at(key);
-			indexBuffer.push_back(vIndex);
-		}
+		SaveObject(outputPath, m_indexList.at(i).IndexList);
 	}
 
 	m_posList.clear();
 	m_texList.clear();
 	m_norList.clear();
-	m_indexList.clear();
+}
 
-	size_t lastSlashPos = filePath.find_last_of("\\/");
-	size_t lastDotPos = filePath.find_last_of(".");
-	string name = (lastSlashPos != std::string::npos) ? filePath.substr(lastSlashPos + 1, lastDotPos - lastSlashPos - 1) : filePath;
+void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices) 
+{
+	size_t vertexCount = objIndices.size();
 
-	string outputPath = "Assets/Models/" + name + ".model";
+	vector<VertexInputData> vertexBuffer;
+	unordered_map<VertexKey, int> vertexMap;
+	vector<int> indexBuffer;
+
+	for (int i = 0; i < vertexCount - 2; i += 3)
+	{
+		int i1 = i + 1;
+		int i2 = i + 2;
+
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i);
+	}
 
 	ofstream fout;
 	std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
@@ -224,11 +182,13 @@ void ModelLoader::PreprocessObjFile(string filePath)
 
 	size_t vertexCountUINT = vertexBuffer.size();
 	fout.write(reinterpret_cast<const char*>(&vertexCountUINT), sizeof(size_t));
+
 	for (int i = 0; i < vertexBuffer.size(); i++)
 		fout.write(reinterpret_cast<const char*>(&vertexBuffer.at(i)), sizeof(VertexInputData));
 
 	size_t indexCountUINT = indexBuffer.size();
 	fout.write(reinterpret_cast<const char*>(&indexCountUINT), sizeof(size_t));
+
 	for (int i = 0; i < indexBuffer.size(); i++)
 		fout.write(reinterpret_cast<const char*>(&indexBuffer.at(i)), sizeof(int));
 
@@ -238,24 +198,45 @@ void ModelLoader::PreprocessObjFile(string filePath)
 		throw new std::exception("IO Exception (OUTPUT)");
 }
 
-VertexInputData ModelLoader::SetVertexData(ObjIndexGroup indices, int otherVertexInFaceIndex1, int otherVertexInFaceIndex2)
+void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int>& vertexMap, int i, int i1, int i2)
+{
+	auto indices = objIndices.at(i);
+	VertexKey key = { indices.PositionIndex, indices.NormalIndex };
+
+	if (!vertexMap.contains(key))
+	{
+		auto indices1 = objIndices.at(i1);
+		auto indices2 = objIndices.at(i2);
+
+		VertexInputData data = SetVertexData(indices, indices1, indices2);
+		vertexBuffer.push_back(data);
+
+		int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
+		indexBuffer.push_back(vBufferIndex);
+		vertexMap.emplace(key, vBufferIndex);
+	}
+	else
+	{
+		int vIndex = vertexMap.at(key);
+		indexBuffer.push_back(vIndex);
+	}
+}
+
+VertexInputData ModelLoader::SetVertexData(ObjFaceVertexIndices i, ObjFaceVertexIndices i1, ObjFaceVertexIndices i2)
 {
 	VertexInputData vertex;
 
-	ObjIndexGroup indices1 = m_indexList.at(otherVertexInFaceIndex1);
-	ObjIndexGroup indices2 = m_indexList.at(otherVertexInFaceIndex2);
+	vertex.Position = m_posList.at(i.PositionIndex);
+	vertex.Texture = m_texList.at(i.TextureIndex);
 
-	vertex.Position = m_posList.at(indices.PositionIndex);
-	vertex.Texture = m_texList.at(indices.TextureIndex);
-
-	XMFLOAT3 normal = m_norList.at(indices.NormalIndex);
+	XMFLOAT3 normal = m_norList.at(i.NormalIndex);
 	vertex.Normal = normal;
 
-	XMFLOAT3 pos1 = m_posList.at(indices1.PositionIndex);
-	XMFLOAT3 pos2 = m_posList.at(indices2.PositionIndex);
+	XMFLOAT3 pos1 = m_posList.at(i1.PositionIndex);
+	XMFLOAT3 pos2 = m_posList.at(i2.PositionIndex);
 
-	XMFLOAT2 tex1 = m_texList.at(indices1.TextureIndex);
-	XMFLOAT2 tex2 = m_texList.at(indices2.TextureIndex);
+	XMFLOAT2 tex1 = m_texList.at(i1.TextureIndex);
+	XMFLOAT2 tex2 = m_texList.at(i2.TextureIndex);
 
 	XMFLOAT3 vec1 = Subtract(pos1, vertex.Position);
 	XMFLOAT3 vec2 = Subtract(pos2, vertex.Position);
