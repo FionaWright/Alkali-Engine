@@ -12,7 +12,7 @@ class Shader;
 struct Transform
 {
 	XMFLOAT3 Position;
-	XMFLOAT3 Rotation;
+	XMFLOAT4 Rotation;
 	XMFLOAT3 Scale;
 };
 
@@ -31,8 +31,16 @@ public:
 	void SetPosition(XMFLOAT3 xyz);
 	void SetRotation(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
+	void SetRotation(XMFLOAT4 quat);
 	void SetScale(float x, float y, float z);
 	void SetScale(XMFLOAT3 xyz);
+
+	void AddPosition(float x, float y, float z);
+	void AddPosition(XMFLOAT3 xyz);
+
+	void RotateBy(float x, float y, float z);
+	void RotateBy(XMFLOAT3 xyz);
+	void RotateBy(XMFLOAT4 quat);
 
 	void UpdateWorldMatrix();	
 

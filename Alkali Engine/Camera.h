@@ -16,17 +16,22 @@ public:
 	~Camera();
 
 	void SetMode(CameraMode mode);
+	CameraMode GetMode();
 	void SetSpeed(float speed);
 
-	void Update(TimeEventArgs& eUpdate);	
+	void Update(TimeEventArgs& e);	
 
 	XMMATRIX GetViewMatrix();	
 
 private:
-	void MoveFirstPerson(TimeEventArgs& eUpdate);
+	void MoveFirstPerson(TimeEventArgs& e);
+	void MoveScroll(TimeEventArgs& e);
 
 	CameraMode m_currentMode;
 	float m_speed = 3;
 	float m_rotationSpeed = 2;
+
+	XMFLOAT3 m_upVector, m_forwardVector, m_rightVector;
+	float m_pitch, m_yaw;
 };
 

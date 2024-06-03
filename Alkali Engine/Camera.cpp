@@ -5,7 +5,10 @@
 Camera::Camera(CameraMode mode)
 	: GameObject("Camera", nullptr, nullptr)
 	, m_currentMode(mode)
-{
+	, m_upVector(XMFLOAT3(0, 1, 0))
+	, m_forwardVector(XMFLOAT3(0, 0, 1))
+	, m_rightVector(XMFLOAT3(1, 0, 0))
+{	
 }
 
 Camera::~Camera()
@@ -17,18 +20,25 @@ void Camera::SetMode(CameraMode mode)
 	m_currentMode = mode;
 }
 
+CameraMode Camera::GetMode()
+{
+	return m_currentMode;
+}
+
 void Camera::SetSpeed(float speed)
 {
 	m_speed = speed;
 }
 
-void Camera::Update(TimeEventArgs& eUpdate)
+void Camera::Update(TimeEventArgs& e)
 {
 	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
-		MoveFirstPerson(eUpdate);
+		MoveFirstPerson(e);
+	else if (m_currentMode == CameraMode::CAMERA_MODE_SCROLL)
+		MoveScroll(e);
 }
 
-void Camera::MoveFirstPerson(TimeEventArgs& eUpdate)
+void Camera::MoveFirstPerson(TimeEventArgs& e)
 {
 	if (InputManager::IsKeyDown(KeyCode::R))
 	{
@@ -37,8 +47,8 @@ void Camera::MoveFirstPerson(TimeEventArgs& eUpdate)
 		return;
 	}
 
-	float speed = m_speed * static_cast<float>(eUpdate.ElapsedTime);
-	float rotSpeed = m_rotationSpeed * static_cast<float>(eUpdate.ElapsedTime);
+	float speed = m_speed * static_cast<float>(e.ElapsedTime);
+	float rotSpeed = m_rotationSpeed * static_cast<float>(e.ElapsedTime);
 
 	float sinX = sin(m_transform.Rotation.x);
 	float cosX = cos(m_transform.Rotation.x);
@@ -108,21 +118,78 @@ void Camera::MoveFirstPerson(TimeEventArgs& eUpdate)
 	}
 }
 
+void Camera::MoveScroll(TimeEventArgs& e)
+{
+	if (InputManager::IsMouseRight())
+	{
+		XMFLOAT2 deltaMouse = InputManager::GetMousePosDelta();
+		float rotationSpeed = 1.5f * e.ElapsedTime * m_rotationSpeed;
+		deltaMouse.x *= rotationSpeed;
+		deltaMouse.y *= rotationSpeed;
+
+		m_pitch += deltaMouse.y;
+		m_yaw += deltaMouse.x;
+		XMVECTOR rot = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
+		rot = XMQuaternionNormalize(rot);
+		XMStoreFloat4(&m_transform.Rotation, rot);
+
+		XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
+		XMStoreFloat3(&m_forwardVector, direction);
+
+		XMVECTOR up = XMVector3Rotate(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rot);
+		XMStoreFloat3(&m_upVector, up);
+
+		XMVECTOR right = XMVector3Rotate(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rot);
+		XMStoreFloat3(&m_rightVector, right);
+		return;
+	}
+
+	if (InputManager::IsMouseMiddle())
+	{
+		XMFLOAT2 deltaMouse = InputManager::GetMousePosDelta();
+		float panSpeed = -3.5f * e.ElapsedTime * m_speed;
+		deltaMouse.x *= panSpeed;
+		deltaMouse.y *= panSpeed;
+
+		XMFLOAT3 upTranslation = XMFLOAT3(m_upVector.x * -deltaMouse.y, m_upVector.y * -deltaMouse.y, m_upVector.z * -deltaMouse.y);
+		AddPosition(upTranslation);
+
+		XMFLOAT3 rightTranslation = XMFLOAT3(m_rightVector.x * deltaMouse.x, m_rightVector.y * deltaMouse.x, m_rightVector.z * deltaMouse.x);
+		AddPosition(rightTranslation);
+		return;
+	}
+
+	float mouseWheelDelta = InputManager::GetMouseWheelDelta();
+	mouseWheelDelta *= 230 * e.ElapsedTime * m_speed;
+	XMFLOAT3 forwardTranslation = XMFLOAT3(m_forwardVector.x * mouseWheelDelta, m_forwardVector.y * mouseWheelDelta, m_forwardVector.z * mouseWheelDelta);
+	AddPosition(forwardTranslation);
+}
+
 XMMATRIX Camera::GetViewMatrix()
 {	
-	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
-	XMVECTOR upVector = XMLoadFloat3(&up);
+	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
+	{
+		XMFLOAT3 up = XMFLOAT3(0, 1, 0);
+		XMVECTOR upVector = XMLoadFloat3(&up);
 
-	XMFLOAT3 lookAt = XMFLOAT3(0, 0, 1);
-	XMVECTOR lookAtVector = XMLoadFloat3(&lookAt);
+		XMFLOAT3 lookAt = XMFLOAT3(0, 0, 1);
+		XMVECTOR lookAtVector = XMLoadFloat3(&lookAt);
 
-	XMMATRIX R = XMMatrixRotationRollPitchYaw(m_transform.Rotation.x, m_transform.Rotation.y, m_transform.Rotation.z);
+		XMMATRIX R = XMMatrixRotationRollPitchYaw(m_transform.Rotation.x, m_transform.Rotation.y, m_transform.Rotation.z);
 
-	lookAtVector = XMVector3TransformCoord(lookAtVector, R);
-	upVector = XMVector3TransformCoord(upVector, R);
+		lookAtVector = XMVector3TransformCoord(lookAtVector, R);
+		upVector = XMVector3TransformCoord(upVector, R);
+
+		XMVECTOR positionVector = XMLoadFloat3(&m_transform.Position);
+		lookAtVector = XMVectorAdd(positionVector, lookAtVector);
+
+		return XMMatrixLookAtLH(positionVector, lookAtVector, upVector);
+	}
+
+	XMVECTOR forward = XMLoadFloat3(&m_forwardVector);
+	XMVECTOR up = XMLoadFloat3(&m_upVector);
 
 	XMVECTOR positionVector = XMLoadFloat3(&m_transform.Position);
-	lookAtVector = XMVectorAdd(positionVector, lookAtVector);
 
-	return XMMatrixLookAtLH(positionVector, lookAtVector, upVector);
+	return XMMatrixLookToLH(positionVector, forward, up);
 }

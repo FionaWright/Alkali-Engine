@@ -9,7 +9,7 @@ Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDS
 	: m_Name(name)
 	, m_pWindow(pWindow)
 	, m_dsvEnabled(createDSV)
-	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_FP))
+	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_SCROLL))
 	, m_viewMatrix(XMMatrixIdentity())
 	, m_projectionMatrix(XMMatrixIdentity())
 {
@@ -133,18 +133,47 @@ void Scene::OnRender(TimeEventArgs& e)
 			{
 				ImGui::Indent(IM_GUI_INDENTATION);
 
+				ImGui::SeparatorText("Camera Controls");
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				bool usingFP = m_camera->GetMode() == CameraMode::CAMERA_MODE_FP;
+				if (!usingFP)
+					ImGui::BeginDisabled(true);
+
+				if (ImGui::Button("Scroll Mode"))
+				{
+					m_camera->SetMode(CameraMode::CAMERA_MODE_SCROLL);
+				}
+
+				if (!usingFP)
+					ImGui::EndDisabled();
+
+				if (usingFP)
+					ImGui::BeginDisabled(true);
+
+				if (ImGui::Button("WASD Mode"))
+				{
+					m_camera->SetMode(CameraMode::CAMERA_MODE_FP);
+				}
+
+				if (usingFP)
+					ImGui::EndDisabled();
+
+				ImGui::Spacing();
+				ImGui::Unindent(IM_GUI_INDENTATION);
+
 				Transform camTrans = m_camera->GetTransform();
 				float pPosCam[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
 				ImGui::InputFloat3("Position##Camera", pPosCam);
-				float pRotCam[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
-				ImGui::InputFloat3("Rotation##Camera", pRotCam);
+				float pRotCam[4] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z, camTrans.Rotation.w };
+				ImGui::InputFloat4("Rotation##Camera", pRotCam);
 				camTrans.Position = XMFLOAT3(pPosCam[0], pPosCam[1], pPosCam[2]);
-				camTrans.Rotation = XMFLOAT3(pRotCam[0], pRotCam[1], pRotCam[2]);
+				camTrans.Rotation = XMFLOAT4(pRotCam[0], pRotCam[1], pRotCam[2], pRotCam[3]);
 
 				if (ImGui::Button("Reset to Default"))
 				{
 					camTrans.Position = XMFLOAT3(0, 0, -10);
-					camTrans.Rotation = XMFLOAT3(0, 0, 0);
+					camTrans.Rotation = XMFLOAT4(0, 0, 0, 1);
 				}
 
 				m_camera->SetTransform(camTrans);
@@ -162,13 +191,13 @@ void Scene::OnRender(TimeEventArgs& e)
 
 					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
 					ImGui::InputFloat3("Position##" + i, pPos);
-					float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
-					ImGui::InputFloat3("Rotation##" + i, pRot);
+					float pRot[4] = { t.Rotation.x, t.Rotation.y, t.Rotation.z, t.Rotation.w };
+					ImGui::InputFloat4("Rotation##" + i, pRot);
 					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
 					ImGui::InputFloat3("Scale##" + i, pScale);
 
 					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-					t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+					t.Rotation = XMFLOAT4(pRot[0], pRot[1], pRot[2], pRot[3]);
 					t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
 
 					m_gameObjectList.at(i)->SetTransform(t);
