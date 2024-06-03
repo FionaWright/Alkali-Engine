@@ -65,22 +65,24 @@ void GameObject::SetPosition(XMFLOAT3 xyz)
 void GameObject::SetRotation(float x, float y, float z)
 {
 	float degToRad = static_cast<float>(DEG_TO_RAD);
+	x *= degToRad;
+	y *= degToRad;
+	z *= degToRad;
 
-	m_transform.Rotation = XMFLOAT3(x, y, z);
-	m_transform.Rotation.x *= degToRad;
-	m_transform.Rotation.y *= degToRad;
-	m_transform.Rotation.z *= degToRad;
+	XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(x, y, z);
+	XMStoreFloat4(&m_transform.Rotation, quaternion);
 	UpdateWorldMatrix();
 }
 
 void GameObject::SetRotation(XMFLOAT3 xyz)
 {
-	float degToRad = static_cast<float>(DEG_TO_RAD);
+	SetRotation(xyz.x, xyz.y, xyz.z);
+}
 
-	m_transform.Rotation = xyz;
-	m_transform.Rotation.x *= degToRad;
-	m_transform.Rotation.y *= degToRad;
-	m_transform.Rotation.z *= degToRad;
+void GameObject::SetRotation(XMFLOAT4 quat)
+{
+	XMVECTOR quaternion = XMLoadFloat4(&quat);
+	XMStoreFloat4(&m_transform.Rotation, quaternion);
 	UpdateWorldMatrix();
 }
 
@@ -93,6 +95,51 @@ void GameObject::SetScale(float x, float y, float z)
 void GameObject::SetScale(XMFLOAT3 xyz)
 {
 	m_transform.Scale = xyz;
+	UpdateWorldMatrix();
+}
+
+void GameObject::AddPosition(float x, float y, float z)
+{
+	m_transform.Position.x += x;
+	m_transform.Position.y += y;
+	m_transform.Position.z += z;
+	UpdateWorldMatrix();
+}
+
+void GameObject::AddPosition(XMFLOAT3 xyz)
+{
+	AddPosition(xyz.x, xyz.y, xyz.z);
+}
+
+void GameObject::RotateBy(float x, float y, float z)
+{
+	float degToRad = static_cast<float>(DEG_TO_RAD);
+	x *= degToRad;
+	y *= degToRad;
+	z *= degToRad;
+
+	XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(x, y, z);
+	XMVECTOR curRot = XMLoadFloat4(&m_transform.Rotation);
+	curRot = XMQuaternionMultiply(curRot, quaternion);
+	curRot = XMQuaternionNormalize(curRot);
+
+	XMStoreFloat4(&m_transform.Rotation, curRot);
+	UpdateWorldMatrix();
+}
+
+void GameObject::RotateBy(XMFLOAT3 xyz)
+{
+	RotateBy(xyz.x, xyz.y, xyz.z);
+}
+
+void GameObject::RotateBy(XMFLOAT4 quat)
+{
+	XMVECTOR quaternion = XMLoadFloat4(&quat);
+	XMVECTOR curRot = XMLoadFloat4(&m_transform.Rotation);
+	curRot = XMQuaternionMultiply(curRot, quaternion);
+	curRot = XMQuaternionNormalize(curRot);
+
+	XMStoreFloat4(&m_transform.Rotation, curRot);
 	UpdateWorldMatrix();
 }
 

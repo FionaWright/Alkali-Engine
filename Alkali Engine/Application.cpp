@@ -89,6 +89,14 @@ void Application::RenderImGuiScenes()
     string fpsTxt = "FPS: " + std::to_string(m_fps);
     ImGui::Text(fpsTxt.c_str());
 
+    XMFLOAT2 mousePos = InputManager::GetMousePos();
+    string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
+    ImGui::Text(mouseTxt.c_str());
+
+    XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
+    string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
+    ImGui::Text(mouseDeltaTxt.c_str());
+
     ImGui::Spacing();
     ImGui::Unindent(IM_GUI_INDENTATION);
 
@@ -98,7 +106,6 @@ void Application::RenderImGuiScenes()
 
         for (const auto& pair : m_sceneMap)
         {            
-
             bool disabled = pair.second == m_currentScene;
             if (disabled)
                 ImGui::BeginDisabled(true);

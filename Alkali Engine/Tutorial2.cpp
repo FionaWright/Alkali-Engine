@@ -68,8 +68,8 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.TotalTime * 5.0);
-	m_goCube->SetRotation(0, angle, 0);
+	float angle = static_cast<float>(e.ElapsedTime * 50.0);
+	m_goCube->RotateBy(0, angle, 0);
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);
@@ -90,7 +90,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 		m_pWindow->ToggleVSync();
 	}
 
-	m_FoV -= InputManager::GetMouseWheelDelta();
+	//m_FoV -= InputManager::GetMouseWheelDelta();
 	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
