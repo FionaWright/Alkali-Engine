@@ -20,7 +20,7 @@ bool CubeScene::LoadContent()
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 	rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, 1);
+	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, 1, nullptr, 0);
 
 	m_batch = std::make_shared<Batch>(rootSig);
 

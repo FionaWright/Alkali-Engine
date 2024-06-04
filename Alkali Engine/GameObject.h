@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "Model.h"
 #include "Shader.h"
+#include "Material.h"
 
 using std::shared_ptr;
 
@@ -19,7 +20,7 @@ struct Transform
 class GameObject
 {
 public:
-	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader);
+	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr);
 	~GameObject();
 
 	void Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
@@ -53,6 +54,7 @@ public:
 protected:	
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
+	shared_ptr<Material> m_material;
 
 	Transform m_transform;
 
