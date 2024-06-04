@@ -9,7 +9,7 @@ Batch::Batch(ComPtr<ID3D12RootSignature> pRootSig)
 
 Batch::Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
 	:
-	m_rootSignature(ResourceManager::CreateRootSignature(params, paramCount))
+	m_rootSignature(ResourceManager::CreateRootSignature(params, paramCount, nullptr, 0))
 {
 }
 

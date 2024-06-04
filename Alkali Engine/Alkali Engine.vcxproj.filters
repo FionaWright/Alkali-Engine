@@ -115,6 +115,12 @@
     <ClCompile Include="CubeScene.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -124,9 +130,6 @@
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="HighResolutionClock.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Events.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
@@ -195,6 +198,18 @@
     <ClInclude Include="CubeScene.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="CBuffers.h">
+      <Filter>Source Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Events.h">
+      <Filter>Source Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Alkali Engine.rc">
@@ -207,11 +222,19 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\Test.ps">
+    <Text Include="Assets\Shaders\Normals.ps">
       <Filter>Shaders</Filter>
     </Text>
-    <Text Include="Assets\Shaders\Test.vs">
+    <Text Include="Assets\Shaders\Normals.vs">
       <Filter>Shaders</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Shaders\PBR.ps">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\PBR.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

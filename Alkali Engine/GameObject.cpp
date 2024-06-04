@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "GameObject.h"
 #include "Settings.h"
+#include "CBuffers.h"
 
-GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader)
+GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial)
 	: m_transform({})
 	, m_worldMatrix(XMMatrixIdentity())
 	, m_model(pModel)
 	, m_shader(pShader)
 	, m_Name(name)
+	, m_material(pMaterial)
 {
 	SetPosition(0, 0, 0);
 	SetRotation(0, 0, 0);
@@ -18,25 +20,37 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandListDirect, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
 {
 	if (!m_model || !m_shader)
 		return;
 
-	commandList->SetPipelineState(m_shader->GetPSO().Get());
-	commandList->SetGraphicsRootSignature(rootSig.Get());
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
+	commandListDirect->SetGraphicsRootSignature(rootSig.Get());
+	commandListDirect->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	commandList->RSSetViewports(1, &viewPort);
-	commandList->RSSetScissorRects(1, &scissorRect);
+	commandListDirect->RSSetViewports(1, &viewPort);
+	commandListDirect->RSSetScissorRects(1, &scissorRect);
 
 	UINT numRenderTargets = 1;
-	commandList->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
+	commandListDirect->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
 
-	XMMATRIX mvpMatrix = XMMatrixMultiply(m_worldMatrix, viewProj);
-	commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+	if (m_material)
+	{
+		auto samplerHeap = m_material->GetSamplerHeap();
+		ID3D12DescriptorHeap* ppHeaps[] = { samplerHeap.Get() };
+		commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	m_model->Render(commandList);
+		commandListDirect->SetGraphicsRootDescriptorTable(1, samplerHeap->GetGPUDescriptorHandleForHeapStart());
+	}
+
+	MatricesCB matricesCB;
+	matricesCB.M = m_worldMatrix;
+	matricesCB.InverseTransposeM = XMMatrixInverse(nullptr, XMMatrixTranspose(m_worldMatrix));
+	matricesCB.VP = viewProj;
+	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matricesCB, 0);
+
+	m_model->Render(commandListDirect);
 }
 
 Transform GameObject::GetTransform()

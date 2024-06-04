@@ -142,6 +142,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="pch.cpp">
@@ -153,6 +154,7 @@
     <ClCompile Include="HighResolutionClock.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Tutorial2.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -162,6 +164,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CBuffers.h" />
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="D3DClass.h" />
@@ -170,6 +173,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ImGUIManager.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelLoader.h" />
     <ClInclude Include="ResourceManager.h" />
@@ -181,6 +185,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Tutorial2.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Window.h" />
@@ -193,12 +198,16 @@
     <Image Include="icon1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\Test.ps">
+    <Text Include="Assets\Shaders\Normals.ps">
       <FileType>Document</FileType>
     </Text>
-    <Text Include="Assets\Shaders\Test.vs">
+    <Text Include="Assets\Shaders\Normals.vs">
       <FileType>Document</FileType>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Shaders\PBR.ps" />
+    <None Include="Assets\Shaders\PBR.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
