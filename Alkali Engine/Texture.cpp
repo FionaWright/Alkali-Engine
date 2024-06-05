@@ -5,6 +5,7 @@
 constexpr int NUM_CHANNELS = 4;
 
 Texture::Texture()
+    : m_textureData(0)
 {
 }
 
@@ -75,7 +76,7 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     m_texture->SetName(L"Sample Texture");
 
     UpdateSubresources(commandListDirect, m_texture.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
-    ResourceManager::TransitionResource(commandListDirect, m_texture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    ResourceManager::TransitionResource(commandListDirect, m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     delete m_textureData;
     m_textureData = 0;

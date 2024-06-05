@@ -13,19 +13,18 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device)
+void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device)
 {
 	m_VSName = g_dirPath + vsName;
 	m_PSName = g_dirPath + psName;
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
-	m_rootSig = rootSig;
 
-	Compile(device);
+	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device, wstring exePath)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath)
 {
 	m_preCompiled = true;
 
@@ -34,12 +33,11 @@ void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
-	m_rootSig = rootSig;
 
-	Compile(device);
+	Compile(device, rootSig);
 }
 
-void Shader::Compile(ComPtr<ID3D12Device2> device)
+void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 {
 	HRESULT hr;
 
@@ -107,7 +105,7 @@ void Shader::Compile(ComPtr<ID3D12Device2> device)
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;		
 	} pipelineStateStream;
 
-	pipelineStateStream.pRootSignature = m_rootSig.Get();
+	pipelineStateStream.pRootSignature = rootSig;
 	pipelineStateStream.InputLayout = { m_inputLayout, m_inputLayoutCount };
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());

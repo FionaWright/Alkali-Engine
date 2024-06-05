@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CommandQueue.h"
 
-CommandQueue::CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
+CommandQueue::CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
     : m_FenceValue(0)
     , m_CommandListType(type)
     , m_device(device)
@@ -31,7 +31,8 @@ CommandQueue::~CommandQueue()
 ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator()
 {
     ComPtr<ID3D12CommandAllocator> commandAllocator;
-    ThrowIfFailed(m_device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&commandAllocator)));
+    HRESULT hr = m_device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&commandAllocator));
+    ThrowIfFailed(hr);
 
     return commandAllocator;
 }
@@ -39,7 +40,8 @@ ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator()
 ComPtr<ID3D12GraphicsCommandList2> CommandQueue::CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator)
 {
     ComPtr<ID3D12GraphicsCommandList2> commandList;
-    ThrowIfFailed(m_device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+    HRESULT hr = m_device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+    ThrowIfFailed(hr);
 
     return commandList;
 }
@@ -115,12 +117,12 @@ uint64_t CommandQueue::ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> com
 
 uint64_t CommandQueue::Signal()
 {
-    uint64_t fenceValueForSignal = ++m_FenceValue;
+    m_FenceValue++;
 
-    HRESULT hr = m_d3d12CommandQueue->Signal(m_d3d12Fence.Get(), fenceValueForSignal);
+    HRESULT hr = m_d3d12CommandQueue->Signal(m_d3d12Fence.Get(), m_FenceValue);
     ThrowIfFailed(hr);
 
-    return fenceValueForSignal;
+    return m_FenceValue;
 }
 
 bool CommandQueue::IsFenceComplete(uint64_t fenceValue)
@@ -146,7 +148,7 @@ void CommandQueue::Flush()
     WaitForFenceValue(fenceValueForSignal);
 }
 
-ComPtr<ID3D12CommandQueue> CommandQueue::GetD3D12CommandQueue() const
+ID3D12CommandQueue* CommandQueue::GetD3D12CommandQueue() const
 {
-    return m_d3d12CommandQueue;
+    return m_d3d12CommandQueue.Get();
 }

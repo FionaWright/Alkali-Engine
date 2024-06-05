@@ -14,10 +14,10 @@ public:
 	Shader();
 	~Shader();
 
-	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ComPtr<ID3D12RootSignature> rootSig, ComPtr<ID3D12Device2> device, wstring exePath);
+	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device);
+	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath);
 
-	void Compile(ComPtr<ID3D12Device2> device);
+	void Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig);
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 
@@ -35,7 +35,6 @@ private:
 	D3D12_INPUT_ELEMENT_DESC* m_inputLayout = nullptr;
 	UINT m_inputLayoutCount = 0;
 
-	ComPtr<ID3D12RootSignature> m_rootSig;
 	ComPtr<ID3D12PipelineState> m_pso;
 
 	bool m_preCompiled = false;
