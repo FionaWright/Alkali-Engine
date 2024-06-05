@@ -2,6 +2,9 @@
 #include "ModelLoader.h"
 #include "Utils.h"
 #include <direct.h>
+#include <filesystem>
+
+namespace filesystem = std::filesystem;
 
 vector<XMFLOAT3> ModelLoader::m_posList;
 vector<XMFLOAT2> ModelLoader::m_texList;
@@ -342,7 +345,103 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	}
 }
 
-void ModelLoader::LoadSplitModel(wstring folderName, Batch* batch, Shader* shader)
+void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
 {
-	vector<Model> models;
+	string mtlFilePath = "Assets/Models/" + name + "/" + name + ".mtl";
+
+	ifstream fin;
+	fin.open(mtlFilePath);
+
+	if (!fin)
+		throw new std::exception("IO Exception");
+
+	string line;
+
+	while (std::getline(fin, line))
+	{
+		if (!line.starts_with("newmtl"))
+			continue;
+
+		string modelName = line.substr(line.find_first_of(' ') + 1);
+
+		float specularExponent = 1;
+		float opticalDensity = 0;
+		float dissolveFactor = 0;
+		int illuminationModel = 3;
+		string diffuseName = "";
+		string specularName = "";
+		string normalName = "";
+
+		// TODO: Ambient and emmissive
+		while (std::getline(fin, line))
+		{
+			if (line.empty())
+				break;
+			
+			if (line.starts_with("Ns"))
+			{
+				specularExponent = std::stof(line.substr(line.find_first_of(' ') + 1));
+				continue;
+			}		
+
+			if (line.starts_with("Ni"))
+			{
+				opticalDensity = std::stof(line.substr(line.find_first_of(' ') + 1));
+				continue;
+			}
+
+			if (line.starts_with("d"))
+			{
+				dissolveFactor = std::stof(line.substr(line.find_first_of(' ') + 1));
+				continue;
+			}
+
+			if (line.starts_with("illum"))
+			{
+				illuminationModel = std::atoi(line.substr(line.find_first_of(' ') + 1).c_str());
+				continue;
+			}
+
+			if (line.starts_with("map_Kd"))
+			{
+				diffuseName = line.substr(line.find_first_of(' ') + 1);
+				continue;
+			}
+
+			if (line.starts_with("map_Ks"))
+			{
+				specularName = line.substr(line.find_first_of(' ') + 1);
+				continue;
+			}
+
+			if (line.starts_with("map_Bump"))
+			{
+				normalName = line.substr(line.find_last_of(' ') + 1);
+				continue;
+			}
+		}	
+
+		shared_ptr<Model> model = std::make_shared<Model>();
+		shared_ptr<Material> material = std::make_shared<Material>(2);
+		shared_ptr<Texture> diffuseTex = std::make_shared<Texture>();
+		shared_ptr<Texture> normalTex = std::make_shared<Texture>();		
+
+		string modelPath = "Bistro/" + modelName + ".model";
+		model->Init(commandList, modelPath);		
+
+		string diffuseTexPath = "Bistro/" + diffuseName;
+		diffuseTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
+
+		string normalTexPath = "Bistro/" + normalName;
+		//normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
+		normalTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
+
+		material->AddTexture(d3d->GetDevice(), diffuseTex);
+		material->AddTexture(d3d->GetDevice(), normalTex);
+
+		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
+		batch->AddGameObject(go);
+	}
+
+	fin.close();
 }

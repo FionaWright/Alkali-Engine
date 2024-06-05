@@ -121,6 +121,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>Source Files\GPU Resources</Filter>
     </ClCompile>
+    <ClCompile Include="SceneBistro.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -209,6 +212,9 @@
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneBistro.h">
+      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

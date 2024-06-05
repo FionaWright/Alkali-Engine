@@ -13,16 +13,16 @@ Batch::Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
 {
 }
 
-void Batch::AddGameObject(GameObject* go)
+void Batch::AddGameObject(shared_ptr<GameObject> go)
 {
 	// TODO: Sorting
 	m_gameObjectList.push_back(go);
 }
 
-void Batch::Render(ComPtr<ID3D12GraphicsCommandList2> commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
 {
 	for (int i = 0; i < m_gameObjectList.size(); i++) 
 	{
-		m_gameObjectList.at(i)->Render(commandList, m_rootSignature, viewPort, scissorRect, rtv, dsv, viewProj);
+		m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 }

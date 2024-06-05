@@ -13,8 +13,8 @@ public:
 
     void Init();
 
-    ComPtr<ID3D12Device2> GetDevice() const;
-    shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
+    ID3D12Device2* GetDevice() const;
+    CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
 
     bool IsTearingSupported() const;
 
@@ -26,7 +26,7 @@ private:
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
     ComPtr<ID3D12Device2> m_d3d12Device;
 
-    shared_ptr<CommandQueue> m_directCommandQueue;
+    shared_ptr<CommandQueue> m_directCommandQueue; // Change these to unique
     shared_ptr<CommandQueue> m_computeCommandQueue;
     shared_ptr<CommandQueue> m_copyCommandQueue;
 

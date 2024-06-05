@@ -14,7 +14,7 @@ bool CubeScene::LoadContent()
 	auto commandList = commandQueue->GetAvailableCommandList();
 
 	m_modelCube = std::make_shared<Model>();
-	m_modelCube->Init(commandList, L"Cube.model");
+	m_modelCube->Init(commandList.Get(), L"Cube.model");
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
@@ -40,7 +40,7 @@ bool CubeScene::LoadContent()
 	m_goCube = std::make_shared<GameObject>("Cube", m_modelCube, m_shaderCube);
 	m_gameObjectList.push_back(m_goCube.get());
 
-	m_batch->AddGameObject(m_goCube.get());
+	m_batch->AddGameObject(m_goCube);
 
 	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
 	commandQueue->WaitForFenceValue(fenceValue);
@@ -105,13 +105,13 @@ void CubeScene::OnRender(TimeEventArgs& e)
 	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	ClearBackBuffer(commandList);
+	ClearBackBuffer(commandList.Get());
 
 	XMMATRIX viewProj = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 
-	m_batch->Render(commandList, m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
+	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
 
 	ImGUIManager::Render(commandList);
 
-	Present(commandList, commandQueue);
+	Present(commandList.Get(), commandQueue);
 }
