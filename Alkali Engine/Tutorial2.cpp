@@ -20,12 +20,13 @@ bool Tutorial2::LoadContent()
 
 	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 	m_modelMadeline = std::make_shared<Model>();
-	m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+	m_modelMadeline->Init(commandListCopy.Get(), L"Madeline.model");
 	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
 
 	m_texture = std::make_shared<Texture>();
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Celeste.tga");
+	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
+	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Celeste.tga");
 
 	m_normalMap = std::make_shared<Texture>();
 	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "RockNormal.tga");
