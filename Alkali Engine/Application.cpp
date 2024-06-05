@@ -185,9 +185,7 @@ void Application::Shutdown()
 {
     m_d3dClass->Flush();
 
-    ImGUIManager::Shutdown();
-    
-    ResourceManager::Shutdown();
+    ImGUIManager::Shutdown();   
 
     DestroyScenes();
     m_mainWindow->Destroy();

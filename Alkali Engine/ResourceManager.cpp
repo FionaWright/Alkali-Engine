@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "ResourceManager.h"
 
-static ComPtr<ID3D12Device2> gs_device;
+static ID3D12Device2* gs_device;
 
-void ResourceManager::CreateCommittedResource(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12Resource>& pDestinationResource, size_t numElements, size_t elementSize, D3D12_RESOURCE_FLAGS flags)
+void ResourceManager::CreateCommittedResource(ID3D12GraphicsCommandList2* commandList, ComPtr<ID3D12Resource>& pDestinationResource, size_t numElements, size_t elementSize, D3D12_RESOURCE_FLAGS flags)
 {
     assert(gs_device);
 
@@ -17,7 +17,7 @@ void ResourceManager::CreateCommittedResource(ComPtr<ID3D12GraphicsCommandList2>
     ThrowIfFailed(hresult);
 }
 
-void ResourceManager::UploadCommittedResource(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData)
+void ResourceManager::UploadCommittedResource(ID3D12GraphicsCommandList2* commandList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData)
 {
     assert(gs_device);
 
@@ -38,7 +38,7 @@ void ResourceManager::UploadCommittedResource(ComPtr<ID3D12GraphicsCommandList2>
     UINT64 offset = 0;
     UINT startIndex = 0;
     UINT resourceCount = 1;
-    UpdateSubresources(commandList.Get(), pDestinationResource.Get(), *pIntermediateResource, offset, startIndex, resourceCount, &subresourceData);
+    UpdateSubresources(commandList, pDestinationResource.Get(), *pIntermediateResource, offset, startIndex, resourceCount, &subresourceData);
 }
 
 ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount)
@@ -77,9 +77,9 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 	return rootSig;
 }
 
-void ResourceManager::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> commandList, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
+void ResourceManager::TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), beforeState, afterState);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
 	commandList->ResourceBarrier(1, &barrier);
 }
 
@@ -102,12 +102,12 @@ ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescr
     return descriptorHeap;
 }
 
-ComPtr<ID3D12Device2> ResourceManager::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
+ComPtr<ID3D12Device2> ResourceManager::CreateDevice(IDXGIAdapter4* adapter)
 {
     HRESULT hr;
 
     ComPtr<ID3D12Device2> d3d12Device2;
-    hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2));
+    hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2));
     ThrowIfFailed(hr);
 
 #if defined(_DEBUG)
@@ -138,7 +138,7 @@ ComPtr<ID3D12Device2> ResourceManager::CreateDevice(ComPtr<IDXGIAdapter4> adapte
     }
 #endif
 
-    gs_device = d3d12Device2;
+    gs_device = d3d12Device2.Get();
 
     return d3d12Device2;
 }
@@ -208,9 +208,4 @@ bool ResourceManager::CheckTearingSupport()
     BOOL allowTearing = FALSE;
     factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
     return allowTearing == TRUE;
-}
-
-void ResourceManager::Shutdown()
-{
-    gs_device.Reset();
 }

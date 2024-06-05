@@ -10,6 +10,7 @@
 #include "Settings.h"
 
 using std::wstring;
+using std::shared_ptr;
 
 class Scene;
 
@@ -46,11 +47,11 @@ public:
     UINT Present();
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
-    ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+    ID3D12Resource* GetCurrentBackBuffer() const;
     HWND GetHWND();
-    ComPtr<ID3D12DescriptorHeap> GetRTVDescriptorHeap();
+    ID3D12DescriptorHeap* GetRTVDescriptorHeap();
 
-    void RegisterCallbacks(std::shared_ptr<Scene> pScene);
+    void RegisterCallbacks(shared_ptr<Scene> pScene);
 
 protected:
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

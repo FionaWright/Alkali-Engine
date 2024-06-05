@@ -38,7 +38,7 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Roo
 	if (m_material)
 	{
 		auto texHeap = m_material->GetTextureHeap();
-		ID3D12DescriptorHeap* ppHeaps[] = { texHeap.Get() };
+		ID3D12DescriptorHeap* ppHeaps[] = { texHeap };
 		commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 		commandListDirect->SetGraphicsRootDescriptorTable(1, texHeap->GetGPUDescriptorHandleForHeapStart());

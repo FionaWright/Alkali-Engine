@@ -34,7 +34,7 @@ bool CubeScene::LoadContent()
 	};
 
 	m_shaderCube = std::make_shared<Shader>();
-	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
+	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
 	m_goCube = std::make_shared<GameObject>("Cube", m_modelCube, m_shaderCube);

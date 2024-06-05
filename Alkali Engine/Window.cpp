@@ -23,8 +23,6 @@ Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowN
 
 Window::~Window()
 {
-    // Window should be destroyed with Application::DestroyWindow before
-    // the window goes out of scope.
     assert(!m_hWnd && "Use Application::DestroyWindow before destruction.");
 }
 
@@ -52,9 +50,9 @@ void Window::Destroy()
 {
     if (auto pScene = m_pScene.lock())
     {
-        // Notify the registered Scene that the window is being destroyed.
         pScene->OnWindowDestroy();
     }
+
     if (m_hWnd)
     {
         DestroyWindow(m_hWnd);
@@ -101,19 +99,11 @@ void Window::SetFullscreen(bool fullscreen)
 
     if (m_Fullscreen) 
     {
-        // Store the current window dimensions so they can be restored 
-        // when switching out of fullscreen state.
         ::GetWindowRect(m_hWnd, &m_WindowRect);
 
-        // Set the window style to a borderless window so the client area fills
-        // the entire screen.
         UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
-
         ::SetWindowLongW(m_hWnd, GWL_STYLE, windowStyle);
 
-        // Query the name of the nearest display device for the window.
-        // This is required to set the fullscreen dimensions of the window
-        // when using a multi-monitor setup.
         HMONITOR hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
         MONITORINFOEX monitorInfo = {};
         monitorInfo.cbSize = sizeof(MONITORINFOEX);
@@ -130,7 +120,6 @@ void Window::SetFullscreen(bool fullscreen)
         return;
     }
     
-    // Restore all the window decorators.
     ::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 
     ::SetWindowPos(m_hWnd, HWND_NOTOPMOST,
@@ -148,7 +137,7 @@ void Window::ToggleFullscreen()
     SetFullscreen(!m_Fullscreen);
 }
 
-void Window::RegisterCallbacks(std::shared_ptr<Scene> pScene)
+void Window::RegisterCallbacks(shared_ptr<Scene> pScene)
 {
     m_pScene = pScene;
 }
@@ -202,15 +191,18 @@ void Window::OnResize(ResizeEventArgs& e)
 
 ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
 {
+    HRESULT hr;
+
     ComPtr<IDXGISwapChain4> dxgiSwapChain4;
     ComPtr<IDXGIFactory4> dxgiFactory4;
     UINT createFactoryFlags = 0;
 
 #if defined(_DEBUG)
-    createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+    createFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-    ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4)));
+    hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
+    ThrowIfFailed(hr);
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = m_ClientWidth;
@@ -225,18 +217,14 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapChainDesc.Flags = m_d3dClass->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-    ID3D12CommandQueue* pCommandQueue = m_d3dClass->GetCommandQueue()->GetD3D12CommandQueue().Get();
+    ID3D12CommandQueue* pCommandQueue = m_d3dClass->GetCommandQueue()->GetD3D12CommandQueue();
 
     ComPtr<IDXGISwapChain1> swapChain1;
-    ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(
-        pCommandQueue,
-        m_hWnd,
-        &swapChainDesc,
-        nullptr,
-        nullptr,
-        &swapChain1));
+    hr = dxgiFactory4->CreateSwapChainForHwnd(pCommandQueue, m_hWnd, &swapChainDesc, nullptr, nullptr, &swapChain1);
+    ThrowIfFailed(hr);
 
-    ThrowIfFailed(dxgiFactory4->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER));
+    hr = dxgiFactory4->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER);
+    ThrowIfFailed(hr);
 
     ThrowIfFailed(swapChain1.As(&dxgiSwapChain4));
 
@@ -245,7 +233,6 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     return dxgiSwapChain4;
 }
 
-// Update the render target views for the swapchain back buffers.
 void Window::UpdateRenderTargetViews()
 {
     auto device = m_d3dClass->GetDevice();
@@ -270,9 +257,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 }
 
-ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
+ID3D12Resource* Window::GetCurrentBackBuffer() const
 {
-    return m_d3d12BackBuffers[m_CurrentBackBufferIndex];
+    return m_d3d12BackBuffers[m_CurrentBackBufferIndex].Get();
 }
 
 HWND Window::GetHWND()
@@ -280,9 +267,9 @@ HWND Window::GetHWND()
     return m_hWnd;
 }
 
-ComPtr<ID3D12DescriptorHeap> Window::GetRTVDescriptorHeap()
+ID3D12DescriptorHeap* Window::GetRTVDescriptorHeap()
 {
-    return m_d3d12RTVDescriptorHeap;
+    return m_d3d12RTVDescriptorHeap.Get();
 }
 
 UINT Window::GetCurrentBackBufferIndex() const

@@ -24,7 +24,7 @@ void Material::AddTexture(ID3D12Device2* device, shared_ptr<Texture> tex)
 	m_textures.push_back(tex);
 }
 
-ComPtr<ID3D12DescriptorHeap> Material::GetTextureHeap()
+ID3D12DescriptorHeap* Material::GetTextureHeap()
 {
-	return m_textureHeap;
+	return m_textureHeap.Get();
 }
