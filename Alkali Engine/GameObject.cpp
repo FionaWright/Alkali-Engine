@@ -37,11 +37,11 @@ void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandListDirect, Co
 
 	if (m_material)
 	{
-		auto samplerHeap = m_material->GetSamplerHeap();
-		ID3D12DescriptorHeap* ppHeaps[] = { samplerHeap.Get() };
+		auto texHeap = m_material->GetTextureHeap();
+		ID3D12DescriptorHeap* ppHeaps[] = { texHeap.Get() };
 		commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		commandListDirect->SetGraphicsRootDescriptorTable(1, samplerHeap->GetGPUDescriptorHandleForHeapStart());
+		commandListDirect->SetGraphicsRootDescriptorTable(1, texHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
 	MatricesCB matricesCB;
