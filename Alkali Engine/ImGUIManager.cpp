@@ -4,7 +4,7 @@
 
 ComPtr<ID3D12DescriptorHeap> ImGUIManager::ms_descHeapSRV;
 
-void ImGUIManager::Init(HWND hwnd, ComPtr<ID3D12Device2> device, int framesInFlight, DXGI_FORMAT format)
+void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DXGI_FORMAT format)
 {
 	if (!USING_IM_GUI)
 		return;
@@ -20,7 +20,7 @@ void ImGUIManager::Init(HWND hwnd, ComPtr<ID3D12Device2> device, int framesInFli
 	ms_descHeapSRV = ResourceManager::CreateDescriptorHeap(backBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX12_Init(device.Get(), framesInFlight, format, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
+	ImGui_ImplDX12_Init(device, framesInFlight, format, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
 }
 
 void ImGUIManager::Begin()
@@ -38,7 +38,7 @@ void ImGUIManager::Begin()
 	ImGui::Begin("Alkali Engine GUI", nullptr, ImGuiWindowFlags_None);
 }
 
-void ImGUIManager::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
+void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 {
 	if (!USING_IM_GUI)
 		return;
@@ -49,7 +49,7 @@ void ImGUIManager::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
 	ID3D12DescriptorHeap* pDescHeap = ms_descHeapSRV.Get();
 	commandList->SetDescriptorHeaps(1, &pDescHeap);
 
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 }
 
 void ImGUIManager::Shutdown()

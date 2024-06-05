@@ -4,7 +4,7 @@
 
 using std::wstring;
 
-Window::Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
+Window::Window(HWND hWnd, D3DClass* pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
     : m_hWnd(hWnd)
     , m_WindowName(windowName)
     , m_ClientWidth(clientWidth)
