@@ -33,30 +33,26 @@ void D3DClass::Init()
     m_tearingSupported = ResourceManager::CheckTearingSupport();
 }
 
-ComPtr<ID3D12Device2> D3DClass::GetDevice() const
+ID3D12Device2* D3DClass::GetDevice() const
 {
-    return m_d3d12Device;
+    return m_d3d12Device.Get();
 }
 
-shared_ptr<CommandQueue> D3DClass::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+CommandQueue* D3DClass::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
 {
-    shared_ptr<CommandQueue> commandQueue;
     switch (type)
     {
     case D3D12_COMMAND_LIST_TYPE_DIRECT:
-        commandQueue = m_directCommandQueue;
-        break;
+        return m_directCommandQueue.get();
     case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-        commandQueue = m_computeCommandQueue;
+        return m_computeCommandQueue.get();
         break;
     case D3D12_COMMAND_LIST_TYPE_COPY:
-        commandQueue = m_copyCommandQueue;
+        return m_copyCommandQueue.get();
         break;
     default:
         assert(false && "Invalid command queue type.");
     }
-
-    return commandQueue;
 }
 
 bool D3DClass::IsTearingSupported() const

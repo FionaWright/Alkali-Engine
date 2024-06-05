@@ -281,7 +281,7 @@ void Scene::SetBackgroundColor(float r, float g, float b, float a)
 	m_backgroundColor[3] = a;
 }
 
-void Scene::ClearBackBuffer(ComPtr<ID3D12GraphicsCommandList2> commandList)
+void Scene::ClearBackBuffer(ID3D12GraphicsCommandList2* commandList)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
@@ -293,12 +293,12 @@ void Scene::ClearBackBuffer(ComPtr<ID3D12GraphicsCommandList2> commandList)
 	ClearDepth(commandList, dsv);
 }
 
-void Scene::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
+void Scene::ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
 	commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void Scene::Present(ComPtr<ID3D12GraphicsCommandList2> commandList, shared_ptr<CommandQueue> commandQueue)
+void Scene::Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue)
 {
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();

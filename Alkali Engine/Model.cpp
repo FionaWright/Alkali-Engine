@@ -15,7 +15,7 @@ Model::~Model()
 {
 }
 
-void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepath)
+void Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
 {
 	size_t vertexCount = 0, indexCount = 0;
 	vector<VertexInputData> vertexBuffer;
@@ -27,7 +27,13 @@ void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepat
 	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
-void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize)
+void Model::Init(ID3D12GraphicsCommandList2* commandList, string filepath)
+{
+	wstring wFilePath(filepath.begin(), filepath.end());
+	Init(commandList, wFilePath);
+}
+
+void Model::Init(ID3D12GraphicsCommandList2* commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize)
 {
 	m_vertexCount = vertexCount;
 	m_indexCount = indexCount;
@@ -48,13 +54,13 @@ void Model::Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCo
 	m_IndexBufferView.SizeInBytes = static_cast<UINT>(m_indexCount * sizeof(int32_t));
  }
 
-void Model::SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData)
+void Model::SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBufferData, const void* iBufferData)
 {
 	ResourceManager::UploadCommittedResource(commandList, m_VertexBuffer, &m_intermediateVertexBuffer, m_vertexCount, m_vertexInputSize, vBufferData);
 	ResourceManager::UploadCommittedResource(commandList, m_IndexBuffer, &m_intermediateIndexBuffer, m_indexCount, sizeof(int32_t), iBufferData);
 }
 
-void Model::Render(ComPtr<ID3D12GraphicsCommandList2> commandList)
+void Model::Render(ID3D12GraphicsCommandList2* commandList)
 {
 	commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
 	commandList->IASetIndexBuffer(&m_IndexBufferView);

@@ -48,10 +48,10 @@ public:
 protected:
     void SetBackgroundColor(float r, float g, float b, float a);
     
-    void ClearBackBuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
-    void ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
+    void ClearBackBuffer(ID3D12GraphicsCommandList2* commandList);
+    void ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
 
-    void Present(ComPtr<ID3D12GraphicsCommandList2> commandList, std::shared_ptr<CommandQueue> commandQueue);
+    void Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue);
 
     void SetDSVForSize(int width, int height);
 

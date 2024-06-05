@@ -10,6 +10,7 @@
 #include "ImGUIManager.h"
 #include "Utils.h"
 #include "CubeScene.h"
+#include "SceneBistro.h"
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
@@ -36,6 +37,9 @@ Application::Application(HINSTANCE hInst)
 
     shared_ptr<CubeScene> cubeScene = std::make_shared<CubeScene>(L"Cube Scene", m_mainWindow);
     InitScene(cubeScene);
+
+    shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow);
+    InitScene(bistroScene);
 
     AssignScene(tut2Scene);
 

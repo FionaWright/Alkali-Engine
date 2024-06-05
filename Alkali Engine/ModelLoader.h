@@ -72,7 +72,7 @@ public:
 	static VertexInputData SetVertexData(ObjFaceVertexIndices i, ObjFaceVertexIndices i1, ObjFaceVertexIndices i2);	
 	static void LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount);
 
-	static void LoadSplitModel(wstring folderName, Batch* batch, Shader* shader);
+	static void LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader);
 
 private:
 	static vector<XMFLOAT3> m_posList;

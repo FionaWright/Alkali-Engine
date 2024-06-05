@@ -14,11 +14,12 @@ public:
 	Model();
     ~Model();
 
-    void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, wstring filepath);
-    void Init(ComPtr<ID3D12GraphicsCommandList2> commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize);
+    void Init(ID3D12GraphicsCommandList2* commandList, wstring filepath);
+    void Init(ID3D12GraphicsCommandList2* commandList, string filepath);
+    void Init(ID3D12GraphicsCommandList2* commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize);
 
-    void SetBuffers(ComPtr<ID3D12GraphicsCommandList2> commandList, const void* vBufferData, const void* iBufferData);
-    void Render(ComPtr<ID3D12GraphicsCommandList2> commandList);
+    void SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBufferData, const void* iBufferData);
+    void Render(ID3D12GraphicsCommandList2* commandList);
 
     size_t GetVertexCount();
     size_t GetIndexCount();

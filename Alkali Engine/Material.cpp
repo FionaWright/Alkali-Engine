@@ -13,13 +13,15 @@ Material::~Material()
 {
 }
 
-void Material::AddTexture(ComPtr<ID3D12Device2> device, Texture* tex)
+void Material::AddTexture(ID3D12Device2* device, shared_ptr<Texture> tex)
 {
 	if (m_texturesAddedCount >= m_expectedTextureCount)
 		throw new std::exception("Too many textures being added to material");
 
-	tex->AddToDescriptorHeap(device, m_textureHeap, m_texturesAddedCount);
+	tex->AddToDescriptorHeap(device, m_textureHeap.Get(), m_texturesAddedCount);
 	m_texturesAddedCount++;
+
+	m_textures.push_back(tex);
 }
 
 ComPtr<ID3D12DescriptorHeap> Material::GetTextureHeap()

@@ -20,13 +20,13 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ComPtr<ID3D12GraphicsCommandList2> commandListDirect, ComPtr<ID3D12RootSignature> rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
 {
 	if (!m_model || !m_shader)
 		return;
 
 	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
-	commandListDirect->SetGraphicsRootSignature(rootSig.Get());
+	commandListDirect->SetGraphicsRootSignature(rootSig);
 	commandListDirect->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	commandListDirect->RSSetViewports(1, &viewPort);
