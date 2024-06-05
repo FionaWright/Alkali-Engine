@@ -271,7 +271,7 @@ void Texture::LoadDDS_DXT1(ifstream& fin)
     constexpr int BIT_MASK = 0b11;
 
     constexpr bool flipUpsideDown = true;
-    constexpr bool flipRightsideLeft = true;
+    constexpr bool flipRightsideLeft = false;
 
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
@@ -388,7 +388,7 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
     constexpr int BIT_MASK = 0b11;
 
     constexpr bool flipUpsideDown = true;
-    constexpr bool flipRightsideLeft = true;
+    constexpr bool flipRightsideLeft = false;
 
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
