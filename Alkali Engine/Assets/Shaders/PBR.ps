@@ -16,13 +16,13 @@ float4 main(V_OUT input) : SV_Target
     float4 tex = g_texture.Sample(g_sampler, input.UV);
     //float4 bump = g_normalMap.Sample(g_sampler, input.UV);
 
-    //return float4(normalize(input.UV.xy), 0, 1);
+    float3 lightDir = normalize(float3(0.1, -1, 0.1));
 
-    //return tex.aaaa;
+    float intensity = saturate(dot(-lightDir, input.Normal));
+    //return float4(intensity, intensity, intensity, 1);
 
-    return tex;
+    float3 ambient = (0,0,0);
+    float3 col = lerp(ambient, tex.rgb, intensity);
 
-    //return tex;
-
-   // return lerp(tex, bump, input.UV.x);
+    return float4(col, 1);
 }

@@ -270,6 +270,9 @@ void Texture::LoadDDS_DXT1(ifstream& fin)
 
     constexpr int BIT_MASK = 0b11;
 
+    constexpr bool flipUpsideDown = true;
+    constexpr bool flipRightsideLeft = true;
+
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
         for (int bX = 0; bX < blockWidth; ++bX)
@@ -327,8 +330,11 @@ void Texture::LoadDDS_DXT1(ifstream& fin)
                     else
                         throw new std::exception("Color block error");
 
-                    int texturePixelYIndex = bY * 4 + y;
-                    int texturePixelXIndex = bX * 4 + x;
+                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+
+                    int texturePixelYIndex = dBY * 4 + y;
+                    int texturePixelXIndex = dBX * 4 + x;
                     int pixelIndex = texturePixelYIndex * m_textureWidth + texturePixelXIndex;
                     int destIndex = pixelIndex * NUM_CHANNELS;
 
@@ -380,6 +386,9 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
     fin.read(reinterpret_cast<char*>(blocks), totalBlocks * sizeof(DXT5FullBlock));
 
     constexpr int BIT_MASK = 0b11;
+
+    constexpr bool flipUpsideDown = true;
+    constexpr bool flipRightsideLeft = true;
 
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
@@ -453,8 +462,11 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
                     else
                         throw new std::exception("Color block error");
 
-                    int texturePixelYIndex = bY * 4 + y;
-                    int texturePixelXIndex = bX * 4 + x;
+                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+
+                    int texturePixelYIndex = dBY * 4 + y;
+                    int texturePixelXIndex = dBX * 4 + x;
                     int pixelIndex = texturePixelYIndex * m_textureWidth + texturePixelXIndex;
                     int destIndex = pixelIndex * NUM_CHANNELS;
 
