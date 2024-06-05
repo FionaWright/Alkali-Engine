@@ -341,3 +341,8 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 		outIndexBuffer.push_back((int32_t)index);
 	}
 }
+
+void ModelLoader::LoadSplitModel(wstring folderName, Batch* batch, Shader* shader)
+{
+	vector<Model> models;
+}

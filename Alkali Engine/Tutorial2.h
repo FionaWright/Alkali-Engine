@@ -24,5 +24,5 @@ private:
 	shared_ptr<GameObject> m_goCube;
 	shared_ptr<Shader> m_shaderCube;	
 	shared_ptr<Material> m_material;
-	shared_ptr<Texture> m_texture;
+	shared_ptr<Texture> m_texture, m_normalMap;
 };

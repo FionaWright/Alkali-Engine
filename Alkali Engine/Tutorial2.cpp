@@ -23,18 +23,24 @@ bool Tutorial2::LoadContent()
 	m_modelMadeline->Init(commandListCopy, L"Bistro.model");
 
 	m_texture = std::make_shared<Texture>();
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect, "Celeste.tga");
+	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect, "Celeste.tga");
+	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect, "WickerBasket_BaseColor.dds");
 
-	m_material = std::make_shared<Material>(1);
+	m_normalMap = std::make_shared<Texture>();
+	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect, "RockNormal.tga");
+
+	m_material = std::make_shared<Material>(2);
 	m_material->AddTexture(m_d3dClass->GetDevice(), m_texture.get());
+	m_material->AddTexture(m_d3dClass->GetDevice(), m_normalMap.get());
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	int numDescriptors = 2;
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 	const int paramCount = 2;
 	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
 	rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
 	sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;

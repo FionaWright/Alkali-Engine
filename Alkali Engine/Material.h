@@ -11,8 +11,11 @@ public:
 
 	void AddTexture(ComPtr<ID3D12Device2> device, Texture* tex);
 
-	ComPtr<ID3D12DescriptorHeap> GetSamplerHeap();
+	ComPtr<ID3D12DescriptorHeap> GetTextureHeap();
+
 private:
-	ComPtr<ID3D12DescriptorHeap> m_samplerHeap;
+	ComPtr<ID3D12DescriptorHeap> m_textureHeap;
+	int m_expectedTextureCount;
+	int m_texturesAddedCount;
 };
 
