@@ -1,63 +1,63 @@
 #include "pch.h"
 #include "InputManager.h"
 
-unordered_map<KeyCode::Key, bool> InputManager::s_currentlyHeldKeys;
-unordered_map<KeyCode::Key, bool> InputManager::s_keysLastFrame;
+unordered_map<KeyCode::Key, bool> InputManager::ms_currentlyHeldKeys;
+unordered_map<KeyCode::Key, bool> InputManager::ms_keysLastFrame;
 
-XMFLOAT2 InputManager::m_mousePos;
-XMFLOAT2 InputManager::m_mousePosLastFrame;
+XMFLOAT2 InputManager::ms_mousePos;
+XMFLOAT2 InputManager::ms_mousePosLastFrame;
 
-XMFLOAT2 InputManager::m_mousePosClient;
-XMFLOAT2 InputManager::m_mousePosClientLastFrame;
+XMFLOAT2 InputManager::ms_mousePosClient;
+XMFLOAT2 InputManager::ms_mousePosClientLastFrame;
 
-float InputManager::m_mouseWheelDelta;
+float InputManager::ms_mouseWheelDelta;
 
-bool InputManager::m_mouseLeftState;
-bool InputManager::m_mouseRightState;
-bool InputManager::m_mouseMiddleState;
+bool InputManager::ms_mouseLeftState;
+bool InputManager::ms_mouseRightState;
+bool InputManager::ms_mouseMiddleState;
 
-bool InputManager::m_mouseLeftStateLastFrame;
-bool InputManager::m_mouseRightStateLastFrame;
-bool InputManager::m_mouseMiddleStateLastFrame;
+bool InputManager::ms_mouseLeftStateLastFrame;
+bool InputManager::ms_mouseRightStateLastFrame;
+bool InputManager::ms_mouseMiddleStateLastFrame;
 
 void InputManager::AddKey(KeyCode::Key key)
 {
-    s_currentlyHeldKeys.insert_or_assign(key, true);
+    ms_currentlyHeldKeys.insert_or_assign(key, true);
 }
 
 void InputManager::RemoveKey(KeyCode::Key key)
 {
-    s_currentlyHeldKeys.insert_or_assign(key, false);
+    ms_currentlyHeldKeys.insert_or_assign(key, false);
 }
 
 void InputManager::SetMouseLeftState(bool state)
 {
-    m_mouseLeftState = state;
+    ms_mouseLeftState = state;
 }
 
 void InputManager::SetMouseRightState(bool state)
 {
-    m_mouseRightState = state;
+    ms_mouseRightState = state;
 }
 
 void InputManager::SetMouseMiddleState(bool state)
 {
-    m_mouseMiddleState = state;
+    ms_mouseMiddleState = state;
 }
 
 void InputManager::SetMousePos(XMFLOAT2 pos)
 {
-    m_mousePos = pos;
+    ms_mousePos = pos;
 }
 
 void InputManager::SetMousePosClient(XMFLOAT2 pos)
 {
-    m_mousePosClient = pos;
+    ms_mousePosClient = pos;
 }
 
 void InputManager::SetMouseWheelDelta(float delta)
 {
-    m_mouseWheelDelta += delta;
+    ms_mouseWheelDelta += delta;
 }
 
 bool InputManager::KeyActive(unordered_map<KeyCode::Key, bool> map, KeyCode::Key key) 
@@ -71,17 +71,17 @@ bool InputManager::KeyActive(unordered_map<KeyCode::Key, bool> map, KeyCode::Key
 
 bool InputManager::IsKeyDown(KeyCode::Key code)
 {
-    return KeyActive(s_currentlyHeldKeys, code) && !KeyActive(s_keysLastFrame, code);
+    return KeyActive(ms_currentlyHeldKeys, code) && !KeyActive(ms_keysLastFrame, code);
 }
 
 bool InputManager::IsKey(KeyCode::Key code)
 {
-    return KeyActive(s_currentlyHeldKeys, code);
+    return KeyActive(ms_currentlyHeldKeys, code);
 }
 
 bool InputManager::IsKeyUp(KeyCode::Key code)
 {
-    return !KeyActive(s_currentlyHeldKeys, code) && KeyActive(s_keysLastFrame, code);
+    return !KeyActive(ms_currentlyHeldKeys, code) && KeyActive(ms_keysLastFrame, code);
 }
 
 bool InputManager::IsShiftHeld()
@@ -101,84 +101,84 @@ bool InputManager::IsAltHeld()
 
 bool InputManager::IsMouseLeftDown()
 {
-    return m_mouseLeftState && !m_mouseLeftStateLastFrame;
+    return ms_mouseLeftState && !ms_mouseLeftStateLastFrame;
 }
 
 bool InputManager::IsMouseLeft()
 {
-    return m_mouseLeftState;
+    return ms_mouseLeftState;
 }
 
 bool InputManager::IsMouseLeftUp()
 {
-    return !m_mouseLeftState && m_mouseLeftStateLastFrame;
+    return !ms_mouseLeftState && ms_mouseLeftStateLastFrame;
 }
 
 bool InputManager::IsMouseRightDown()
 {
-    return m_mouseRightState && !m_mouseRightStateLastFrame;
+    return ms_mouseRightState && !ms_mouseRightStateLastFrame;
 }
 
 bool InputManager::IsMouseRight()
 {
-    return m_mouseRightState;
+    return ms_mouseRightState;
 }
 
 bool InputManager::IsMouseRightUp()
 {
-    return !m_mouseRightState && m_mouseRightStateLastFrame;
+    return !ms_mouseRightState && ms_mouseRightStateLastFrame;
 }
 
 bool InputManager::IsMouseMiddleDown()
 {
-    return m_mouseMiddleState && !m_mouseMiddleStateLastFrame;
+    return ms_mouseMiddleState && !ms_mouseMiddleStateLastFrame;
 }
 
 bool InputManager::IsMouseMiddle()
 {
-    return m_mouseMiddleState;
+    return ms_mouseMiddleState;
 }
 
 bool InputManager::IsMouseMiddleUp()
 {
-    return !m_mouseMiddleState && m_mouseMiddleStateLastFrame;
+    return !ms_mouseMiddleState && ms_mouseMiddleStateLastFrame;
 }
 
 XMFLOAT2 InputManager::GetMousePos()
 {
-    return m_mousePos;
+    return ms_mousePos;
 }
 
 XMFLOAT2 InputManager::GetMousePosDelta()
 {
-    return XMFLOAT2(m_mousePos.x - m_mousePosLastFrame.x, m_mousePos.y - m_mousePosLastFrame.y);
+    return XMFLOAT2(ms_mousePos.x - ms_mousePosLastFrame.x, ms_mousePos.y - ms_mousePosLastFrame.y);
 }
 
 XMFLOAT2 InputManager::GetMousePosClient()
 {
-    return m_mousePosClient;
+    return ms_mousePosClient;
 }
 
 XMFLOAT2 InputManager::GetMousePosClientDelta()
 {
-    return XMFLOAT2(m_mousePosClient.x - m_mousePosClientLastFrame.x, m_mousePosClient.y - m_mousePosClientLastFrame.y);
+    return XMFLOAT2(ms_mousePosClient.x - ms_mousePosClientLastFrame.x, ms_mousePosClient.y - ms_mousePosClientLastFrame.y);
 }
 
 float InputManager::GetMouseWheelDelta()
 {
-    return m_mouseWheelDelta;
+    return ms_mouseWheelDelta;
 }
 
 void InputManager::ProgressFrame()
 {
-    s_keysLastFrame = s_currentlyHeldKeys;
+    ms_keysLastFrame = ms_currentlyHeldKeys;
 
-    m_mouseLeftStateLastFrame = m_mouseLeftState;
-    m_mouseRightStateLastFrame = m_mouseRightState;
-    m_mouseMiddleStateLastFrame = m_mouseMiddleState;
+    ms_mouseLeftStateLastFrame = ms_mouseLeftState;
+    ms_mouseRightStateLastFrame = ms_mouseRightState;
+    ms_mouseMiddleStateLastFrame = ms_mouseMiddleState;
 
-    m_mousePosLastFrame = m_mousePos;
-    m_mousePosClientLastFrame = m_mousePosClient;
+    ms_mousePosLastFrame = ms_mousePos;
+    ms_mousePosClientLastFrame = ms_mousePosClient;
 
-    m_mouseWheelDelta = 0;
+    ms_mouseWheelDelta = 0;
 }

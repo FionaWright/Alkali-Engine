@@ -122,7 +122,7 @@ void SceneBistro::OnRender(TimeEventArgs& e)
 
 	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
 
-	ImGUIManager::Render(commandList);
+	ImGUIManager::Render(commandList.Get());
 
 	Present(commandList.Get(), commandQueue);
 }

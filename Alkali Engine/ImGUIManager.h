@@ -9,10 +9,10 @@
 class ImGUIManager
 {
 public:
-	static void Init(HWND hwnd, ComPtr<ID3D12Device2> device, int framesInFlight, DXGI_FORMAT format);
+	static void Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DXGI_FORMAT format);
 
 	static void Begin();
-	static void Render(ComPtr<ID3D12GraphicsCommandList> commandList);
+	static void Render(ID3D12GraphicsCommandList* commandList);
 
 	static void Shutdown();	
 

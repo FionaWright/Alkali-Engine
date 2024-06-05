@@ -22,7 +22,7 @@ public:
 
     static WindowManager* GetInstance();
 
-    shared_ptr<Window> CreateRenderWindow(shared_ptr<D3DClass> pD3D, const wstring& windowName, int clientWidth, int clientHeight, bool vSync = true);
+    shared_ptr<Window> CreateRenderWindow(D3DClass* pD3D, const wstring& windowName, int clientWidth, int clientHeight, bool vSync = true);
     void DestroyWindow(const wstring& windowName);
     void DestroyWindow(shared_ptr<Window> window);
 

@@ -17,7 +17,7 @@ class Scene;
 class Window
 {
 public:
-    Window(HWND hWnd, shared_ptr<D3DClass> pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync);
+    Window(HWND hWnd, D3DClass* pD3DClass, const wstring& windowName, int clientWidth, int clientHeight, bool vSync);
     virtual ~Window();
 
     HWND GetWindowHandle() const;
@@ -89,6 +89,6 @@ private:
 
     RECT m_WindowRect;
 
-    shared_ptr<D3DClass> m_d3dClass;
+    D3DClass* m_d3dClass;
 
 };

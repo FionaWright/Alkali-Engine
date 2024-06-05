@@ -49,23 +49,23 @@ public:
 	static void ProgressFrame();
 
 private:
-	static unordered_map<KeyCode::Key, bool> s_currentlyHeldKeys;
-	static unordered_map<KeyCode::Key, bool> s_keysLastFrame;
+	static unordered_map<KeyCode::Key, bool> ms_currentlyHeldKeys;
+	static unordered_map<KeyCode::Key, bool> ms_keysLastFrame;
 
-	static XMFLOAT2 m_mousePos;
-	static XMFLOAT2 m_mousePosLastFrame;
+	static XMFLOAT2 ms_mousePos;
+	static XMFLOAT2 ms_mousePosLastFrame;
 
-	static XMFLOAT2 m_mousePosClient;
-	static XMFLOAT2 m_mousePosClientLastFrame;
+	static XMFLOAT2 ms_mousePosClient;
+	static XMFLOAT2 ms_mousePosClientLastFrame;
 
-	static float m_mouseWheelDelta;
+	static float ms_mouseWheelDelta;
 
-	static bool m_mouseLeftState;
-	static bool m_mouseRightState;
-	static bool m_mouseMiddleState;
+	static bool ms_mouseLeftState;
+	static bool ms_mouseRightState;
+	static bool ms_mouseMiddleState;
 
-	static bool m_mouseLeftStateLastFrame;
-	static bool m_mouseRightStateLastFrame;
-	static bool m_mouseMiddleStateLastFrame;
+	static bool ms_mouseLeftStateLastFrame;
+	static bool ms_mouseRightStateLastFrame;
+	static bool ms_mouseMiddleStateLastFrame;
 };
 

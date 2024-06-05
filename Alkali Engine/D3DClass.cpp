@@ -46,10 +46,8 @@ CommandQueue* D3DClass::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
         return m_directCommandQueue.get();
     case D3D12_COMMAND_LIST_TYPE_COMPUTE:
         return m_computeCommandQueue.get();
-        break;
     case D3D12_COMMAND_LIST_TYPE_COPY:
         return m_copyCommandQueue.get();
-        break;
     default:
         assert(false && "Invalid command queue type.");
     }

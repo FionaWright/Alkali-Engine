@@ -57,7 +57,7 @@ WindowManager* WindowManager::GetInstance()
     return gs_Instance;
 }
 
-shared_ptr<Window> WindowManager::CreateRenderWindow(shared_ptr<D3DClass> pD3D, const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
+shared_ptr<Window> WindowManager::CreateRenderWindow(D3DClass* pD3D, const wstring& windowName, int clientWidth, int clientHeight, bool vSync)
 {
     WindowNameMap::iterator windowIter = m_windowNameMap.find(windowName);
     if (windowIter != m_windowNameMap.end())
