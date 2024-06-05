@@ -16,12 +16,13 @@ public:
 	Texture();
 	~Texture();
 
-	void Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandList, string filePath);
+	void Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath);
+	void Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha);
 
 	void AddToDescriptorHeap(ID3D12Device2* device, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
 	void LoadTGA(string filePath);
-	void LoadDDS(string filePath);
+	void LoadDDS(string filePath, bool& hasAlpha);
 	void LoadDDS_DXT1(ifstream& fin);
 	void LoadDDS_DXT5(ifstream& fin);
 	void LoadPNG(string filePath);

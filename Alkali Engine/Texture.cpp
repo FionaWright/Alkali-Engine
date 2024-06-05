@@ -19,6 +19,14 @@ Texture::~Texture()
 
 void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath)
 {
+    bool _;
+    Init(device, commandListDirect, filePath, _);
+}
+
+void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha)
+{
+    hasAlpha = false;
+
     HRESULT hr;
 
     size_t dotIndex = filePath.find_last_of('.');
@@ -29,7 +37,7 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     if (fileExtension == "tga")
         LoadTGA(filePath);
     else if (fileExtension == "dds")
-        LoadDDS(filePath);
+        LoadDDS(filePath, hasAlpha);
     else
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
@@ -151,7 +159,7 @@ void Texture::LoadTGA(string filePath)
     fin.close();
 }
 
-void Texture::LoadDDS(string filePath)
+void Texture::LoadDDS(string filePath, bool& hasAlpha)
 {
     ifstream fin;
     string longPath = "Assets/Textures/" + filePath;
@@ -222,10 +230,11 @@ void Texture::LoadDDS(string filePath)
         __debugbreak();
         throw new std::exception("DXT4 not supported");
     case '5TXD': // DXT5
+        hasAlpha = true;
         format = DXGI_FORMAT_BC3_UNORM;
         LoadDDS_DXT5(fin);
         break;
-    case '01XD': // DXT5
+    case '01XD': // DXT10
         __debugbreak();
         throw new std::exception("DX10 not supported");
     case '2ITA': // ATI2
@@ -412,6 +421,9 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
 
                     int alphaIndex = (block.alphaBlock.alphaLookup[blockPixelIndex / 2] >> (4 * (blockPixelIndex % 2))) & 0x0F;
 
+                    int alphaBitPos = blockPixelIndex * 3;
+                    alphaIndex = ((block.alphaBlock.alphaLookup[alphaBitPos / 8] >> (alphaBitPos % 8)) | (block.alphaBlock.alphaLookup[alphaBitPos / 8 + 1] << (8 - (alphaBitPos % 8)))) & 0x07;
+
                     uint8_t r, g, b;
 
                     if (pixelColorCode == 0b00)
@@ -428,15 +440,15 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
                     }
                     else if (pixelColorCode == 0b10)
                     {
-                        r = (r0 + r1) / 2;
-                        g = (g0 + g1) / 2;
-                        b = (b0 + b1) / 2;
-                    }
-                    else if (pixelColorCode == 0b11)
-                    {
                         r = (2 * r0 + r1) / 3;
                         g = (2 * g0 + g1) / 3;
                         b = (2 * b0 + b1) / 3;
+                    }
+                    else if (pixelColorCode == 0b11)
+                    {
+                        r = (r0 + 2 * r1) / 3;
+                        g = (g0 + 2 * g1) / 3;
+                        b = (b0 + 2 * b1) / 3;
                     }
                     else
                         throw new std::exception("Color block error");

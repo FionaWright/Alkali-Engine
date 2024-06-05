@@ -29,9 +29,9 @@ bool SceneBistro::LoadContent()
 
 	D3D12_STATIC_SAMPLER_DESC sampler[1]; 
 	sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	sampler[0].MipLODBias = 0;
 	sampler[0].MaxAnisotropy = 0;
 	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -42,9 +42,7 @@ bool SceneBistro::LoadContent()
 	sampler[0].RegisterSpace = 0;
 	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
-
-	m_batch = std::make_shared<Batch>(rootSig);
+	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);	
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
@@ -58,7 +56,9 @@ bool SceneBistro::LoadContent()
 	m_shaderPBR = std::make_shared<Shader>();
 	m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 
+	m_batch = std::make_shared<Batch>(rootSig);
 	ModelLoader::LoadSplitModel(m_d3dClass.get(), commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
+	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);

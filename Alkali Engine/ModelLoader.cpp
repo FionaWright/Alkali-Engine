@@ -430,7 +430,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		model->Init(commandList, modelPath);		
 
 		string diffuseTexPath = "Bistro/" + diffuseName;
-		diffuseTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
+		bool hasAlpha;
+		diffuseTex->Init(d3d->GetDevice(), commandList, diffuseTexPath, hasAlpha);
 
 		string normalTexPath = "Bistro/" + normalName;
 		//normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
@@ -440,7 +441,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		material->AddTexture(d3d->GetDevice(), normalTex);
 
 		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
-		batch->AddGameObject(go);
+		batch->AddGameObject(go, hasAlpha);
 	}
 
 	fin.close();

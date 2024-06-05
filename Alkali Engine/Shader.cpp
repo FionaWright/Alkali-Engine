@@ -74,6 +74,24 @@ void Shader::Compile(ComPtr<ID3D12Device2> device)
 	rasterizerDesc.ForcedSampleCount = 0;
 	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
+	D3D12_BLEND_DESC blendDesc = {};
+	blendDesc.AlphaToCoverageEnable = FALSE;
+	blendDesc.IndependentBlendEnable = FALSE;
+	const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+	{
+		TRUE,                           // BlendEnable
+		FALSE,                          // LogicOpEnable
+		D3D12_BLEND_SRC_ALPHA,          // SrcBlend
+		D3D12_BLEND_INV_SRC_ALPHA,      // DestBlend
+		D3D12_BLEND_OP_ADD,             // BlendOp
+		D3D12_BLEND_ONE,                // SrcBlendAlpha
+		D3D12_BLEND_ZERO,               // DestBlendAlpha
+		D3D12_BLEND_OP_ADD,             // BlendOpAlpha
+		D3D12_LOGIC_OP_NOOP,            // LogicOp
+		D3D12_COLOR_WRITE_ENABLE_ALL    // RenderTargetWriteMask
+	};
+	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;
+
 	// For full list of fields (Order matters!)
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type
 	struct PipelineStateStream
@@ -83,6 +101,7 @@ void Shader::Compile(ComPtr<ID3D12Device2> device)
 		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
 		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
 		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC Blend;
 		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;		
@@ -93,6 +112,7 @@ void Shader::Compile(ComPtr<ID3D12Device2> device)
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
 	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
+	pipelineStateStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	pipelineStateStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	pipelineStateStream.RTVFormats = rtvFormats;	

@@ -20,10 +20,11 @@ bool Tutorial2::LoadContent()
 
 	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 	m_modelMadeline = std::make_shared<Model>();
-	m_modelMadeline->Init(commandListCopy.Get(), L"Cube.model");
+	m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
 
 	m_texture = std::make_shared<Texture>();
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Foliage_Ivy_leaf_a_BaseColor.dds");
+	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
 	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Celeste.tga");
 
 	m_normalMap = std::make_shared<Texture>();
@@ -74,7 +75,7 @@ bool Tutorial2::LoadContent()
 	m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig, m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
-	m_goCube = std::make_shared<GameObject>("Madeline", m_modelMadeline, m_shaderCube, m_material);
+	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
 	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
 	m_gameObjectList.push_back(m_goCube.get());
 
@@ -110,7 +111,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
 	float angle = static_cast<float>(e.ElapsedTime * 50.0);
-	m_goCube->RotateBy(0, angle, 0);
+	//m_goCube->RotateBy(0, angle, 0);
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
