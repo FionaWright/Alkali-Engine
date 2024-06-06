@@ -239,8 +239,9 @@ void Texture::LoadDDS(string filePath, bool& hasAlpha)
         __debugbreak();
         throw new std::exception("DX10 not supported");
     case '2ITA': // ATI2
-        __debugbreak();
-        throw new std::exception("ATI2 not supported");
+        format = DXGI_FORMAT_BC5_UNORM;
+        LoadDDS_ATI2(fin);
+        break;
     default:
         throw new std::exception("Unsupported DDS format");
     }
@@ -482,6 +483,103 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
 
     delete[] blocks;
 }
+
+void Texture::LoadDDS_ATI2(ifstream& fin)
+{
+    struct ATI2Block
+    {
+        uint8_t red0;
+        uint8_t red1;
+        uint8_t redIndices[6];
+        uint8_t green0;
+        uint8_t green1;
+        uint8_t greenIndices[6];
+    };
+
+    size_t totalPixelCount = m_textureWidth * m_textureHeight;
+    size_t totalChannelCount = totalPixelCount * NUM_CHANNELS;
+    m_textureData = new uint8_t[totalChannelCount];
+
+    int blockWidth = m_textureWidth / 4;
+    int blockHeight = m_textureHeight / 4;
+
+    size_t totalBlocks = blockWidth * blockHeight;
+    ATI2Block* blocks = new ATI2Block[totalBlocks];
+
+    fin.read(reinterpret_cast<char*>(blocks), totalBlocks * sizeof(ATI2Block));
+
+    constexpr bool flipUpsideDown = true;
+    constexpr bool flipRightsideLeft = false;
+
+    auto decompressChannel = [](uint8_t val0, uint8_t val1, const uint8_t indices[6], uint8_t* output)
+        {
+            uint8_t values[8];
+            values[0] = val0;
+            values[1] = val1;
+            if (val0 > val1)
+            {
+                values[2] = (6 * val0 + 1 * val1) / 7;
+                values[3] = (5 * val0 + 2 * val1) / 7;
+                values[4] = (4 * val0 + 3 * val1) / 7;
+                values[5] = (3 * val0 + 4 * val1) / 7;
+                values[6] = (2 * val0 + 5 * val1) / 7;
+                values[7] = (1 * val0 + 6 * val1) / 7;
+            }
+            else
+            {
+                values[2] = (4 * val0 + 1 * val1) / 5;
+                values[3] = (3 * val0 + 2 * val1) / 5;
+                values[4] = (2 * val0 + 3 * val1) / 5;
+                values[5] = (1 * val0 + 4 * val1) / 5;
+                values[6] = 0;
+                values[7] = 255;
+            }
+
+            for (int i = 0; i < 16; ++i)
+            {
+                int index = (indices[i / 2] >> (4 * (i % 2))) & 0xF;
+                output[i] = values[index & 0x07];
+            }
+        };
+
+    uint8_t decompressedRed[16];
+    uint8_t decompressedGreen[16];
+
+    for (int bY = 0; bY < blockHeight; ++bY)
+    {
+        for (int bX = 0; bX < blockWidth; ++bX)
+        {
+            const ATI2Block& block = blocks[bY * blockWidth + bX];
+
+            decompressChannel(block.red0, block.red1, block.redIndices, decompressedRed);
+            decompressChannel(block.green0, block.green1, block.greenIndices, decompressedGreen);
+
+            for (int y = 0; y < 4; ++y)
+            {
+                for (int x = 0; x < 4; ++x)
+                {
+                    int pixelIndex = y * 4 + x;
+
+                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+
+                    int texturePixelYIndex = dBY * 4 + y;
+                    int texturePixelXIndex = dBX * 4 + x;
+                    int finalPixelIndex = texturePixelYIndex * m_textureWidth + texturePixelXIndex;
+                    int destIndex = finalPixelIndex * NUM_CHANNELS;
+
+                    m_textureData[destIndex + 0] = decompressedRed[pixelIndex];
+                    m_textureData[destIndex + 1] = decompressedGreen[pixelIndex];
+                    m_textureData[destIndex + 2] = 0;
+                    m_textureData[destIndex + 3] = 255;
+                }
+            }
+        }
+    }
+
+    delete[] blocks;
+}
+
 
 void Texture::LoadPNG(string filePath)
 {

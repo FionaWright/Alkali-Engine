@@ -18,7 +18,7 @@ void D3DClass::Init()
     debugInterface->EnableDebugLayer();
 #endif
 
-    m_dxgiAdapter = ResourceManager::GetAdapter(USE_B_WARP);
+    m_dxgiAdapter = ResourceManager::GetAdapter(USE_BARRIER_WARP);
     if (!m_dxgiAdapter)
         throw new std::exception("Adapter not found");
 
