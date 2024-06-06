@@ -25,6 +25,7 @@ public:
 	void LoadDDS(string filePath, bool& hasAlpha);
 	void LoadDDS_DXT1(ifstream& fin);
 	void LoadDDS_DXT5(ifstream& fin);
+	void LoadDDS_ATI2(ifstream& fin);
 	void LoadPNG(string filePath);
 	void LoadJPG(string filePath);
 

@@ -226,6 +226,9 @@
     <Image Include="icon1.ico">
       <Filter>Resources</Filter>
     </Image>
+    <Image Include="AlkaliIcon4.ico">
+      <Filter>Resources</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\Normals.ps">

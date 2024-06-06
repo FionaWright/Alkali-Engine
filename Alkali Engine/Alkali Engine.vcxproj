@@ -197,6 +197,7 @@
     <ResourceCompile Include="Alkali Engine.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="AlkaliIcon4.ico" />
     <Image Include="icon1.ico" />
   </ItemGroup>
   <ItemGroup>

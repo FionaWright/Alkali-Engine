@@ -434,8 +434,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		diffuseTex->Init(d3d->GetDevice(), commandList, diffuseTexPath, hasAlpha);
 
 		string normalTexPath = "Bistro/" + normalName;
-		//normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
-		normalTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
+		normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
+		//normalTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
 
 		material->AddTexture(d3d->GetDevice(), diffuseTex);
 		material->AddTexture(d3d->GetDevice(), normalTex);

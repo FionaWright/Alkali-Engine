@@ -12,7 +12,7 @@ constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12 Alkali Engine Window";
 
 // DX12
 constexpr UINT BACK_BUFFER_COUNT = 3;
-constexpr bool USE_B_WARP = false;
+constexpr bool USE_BARRIER_WARP = false;
 constexpr DXGI_FORMAT SWAP_CHAIN_DXGI_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 constexpr float NEAR_PLANE = 0.1f;

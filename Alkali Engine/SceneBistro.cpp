@@ -20,7 +20,7 @@ bool SceneBistro::LoadContent()
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	int numDescriptors = 2;
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC); // 2 Textures
 
 	const int paramCount = 2;
 	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];

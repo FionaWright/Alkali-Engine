@@ -33,11 +33,11 @@ void WindowManager::Init(HINSTANCE hInstance)
     wndClass.lpfnWndProc = &WndProc;
     wndClass.hInstance = hInstance;
     wndClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
+    wndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON2));
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszMenuName = nullptr;
     wndClass.lpszClassName = WINDOW_CLASS_NAME;
-    wndClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
+    wndClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON2));
 
     if (!RegisterClassExW(&wndClass))
     {
