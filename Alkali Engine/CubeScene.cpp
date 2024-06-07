@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CubeScene.h"
 #include "ImGUIManager.h"
+#include "ModelLoader.h"
+#include "CBuffers.h"
 
 CubeScene::CubeScene(const std::wstring& name, shared_ptr<Window> pWindow)
 	: Scene(name, pWindow, true)
@@ -10,17 +12,54 @@ CubeScene::CubeScene(const std::wstring& name, shared_ptr<Window> pWindow)
 
 bool CubeScene::LoadContent()
 {
-	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	auto commandList = commandQueue->GetAvailableCommandList();
+	auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
+	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
+	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 	m_modelCube = std::make_shared<Model>();
-	m_modelCube->Init(commandList.Get(), L"Cube.model");
+	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+	m_modelCube->Init(commandListCopy.Get(), L"Bistro_Unflipped.model");
+	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
 
-	// A single 32-bit constant root parameter that is used by the vertex shader.
-	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-	rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	m_texture = std::make_shared<Texture>();
+	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
+	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, 1, nullptr, 0);
+	m_normalMap = std::make_shared<Texture>();
+	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+
+	m_material = std::make_shared<Material>(2);
+	m_material->AddTexture(m_d3dClass->GetDevice(), m_texture);
+	m_material->AddTexture(m_d3dClass->GetDevice(), m_normalMap);
+
+	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+	int numDescriptors = 2;
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+	const int paramCount = 2;
+	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+	rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+
+	D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
+	sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler[0].MipLODBias = 0;
+	sampler[0].MaxAnisotropy = 0;
+	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler[0].MinLOD = 0.0f;
+	sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+	sampler[0].ShaderRegister = 0;
+	sampler[0].RegisterSpace = 0;
+	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
 
 	m_batch = std::make_shared<Batch>(rootSig);
 
@@ -34,16 +73,29 @@ bool CubeScene::LoadContent()
 	};
 
 	m_shaderCube = std::make_shared<Shader>();
-	m_shaderCube->Init(L"Test.vs", L"Test.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
+	m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
-	m_goCube = std::make_shared<GameObject>("Cube", m_modelCube, m_shaderCube);
+	m_goCube = std::make_shared<GameObject>("Test", m_modelCube, m_shaderCube, m_material);
+	m_goCube->SetRotation(0, 90, 0);
+	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
 	m_gameObjectList.push_back(m_goCube.get());
 
-	m_batch->AddGameObject(m_goCube);
+	m_modelCube = std::make_shared<Model>();
+	m_modelCube->Init(commandListCopy.Get(), L"Cube.model");
 
-	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-	commandQueue->WaitForFenceValue(fenceValue);
+	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelCube, m_shaderCube, m_material);
+	refCube->SetPosition(-3, 0, 0);
+	m_gameObjectList.push_back(refCube.get());
+
+	m_batch->AddGameObject(m_goCube);
+	m_batch->AddGameObject(refCube);
+
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
+
+	fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);
@@ -69,7 +121,7 @@ void CubeScene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
 	float angle = static_cast<float>(e.TotalTime * 5.0);
-	m_goCube->SetRotation(0, angle, 0);
+	//m_goCube->SetRotation(0, angle, 0);
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);

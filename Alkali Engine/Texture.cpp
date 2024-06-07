@@ -42,19 +42,19 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     else
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
-    D3D12_RESOURCE_DESC textureDesc = {};
-    textureDesc.MipLevels = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    textureDesc.Width = m_textureWidth;
-    textureDesc.Height = m_textureHeight;
-    textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    textureDesc.DepthOrArraySize = 1;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.SampleDesc.Quality = 0;
-    textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    m_textureDesc = {};
+    m_textureDesc.MipLevels = 1;
+    m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DXGI_FORMAT;
+    m_textureDesc.Width = m_textureWidth;
+    m_textureDesc.Height = m_textureHeight;
+    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    m_textureDesc.DepthOrArraySize = 1;
+    m_textureDesc.SampleDesc.Count = 1;
+    m_textureDesc.SampleDesc.Quality = 0;
+    m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_texture));
+    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_texture));
     ThrowIfFailed(hr);
 
     const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_texture.Get(), 0, 1);
@@ -64,7 +64,8 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
     ThrowIfFailed(hr);
 
-    int channelsPerRow = m_textureWidth * 4;
+    int numChannels = m_is2Channel ? 2 : NUM_CHANNELS;
+    int channelsPerRow = m_textureWidth * numChannels;
     int bytesPerRow = channelsPerRow * sizeof(uint8_t);
     int totalBytes = bytesPerRow * m_textureHeight;
 
@@ -86,9 +87,9 @@ void Texture::AddToDescriptorHeap(ID3D12Device2* device, ID3D12DescriptorHeap* s
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    srvDesc.Format = m_textureDesc.Format;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(srvHeap->GetCPUDescriptorHandleForHeapStart(), srvHeapOffset, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     device->CreateShaderResourceView(m_texture.Get(), &srvDesc, srvHandle);
@@ -239,6 +240,7 @@ void Texture::LoadDDS(string filePath, bool& hasAlpha)
         __debugbreak();
         throw new std::exception("DX10 not supported");
     case '2ITA': // ATI2
+        m_is2Channel = true;
         format = DXGI_FORMAT_BC5_UNORM;
         LoadDDS_ATI2(fin);
         break;
@@ -289,6 +291,9 @@ void Texture::LoadDDS_DXT1(ifstream& fin)
             uint8_t g1 = (block.color1 & 0x07E0) >> 3;
             uint8_t b1 = (block.color1 & 0x001F) << 3;
 
+            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+
             for (int y = 0; y < 4; ++y)
             {
                 for (int x = 0; x < 4; ++x)
@@ -330,10 +335,7 @@ void Texture::LoadDDS_DXT1(ifstream& fin)
                         b = (b0 + 2 * b1) / 3;
                     }
                     else
-                        throw new std::exception("Color block error");
-
-                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+                        throw new std::exception("Color block error");                    
 
                     int texturePixelYIndex = dBY * 4 + y;
                     int texturePixelXIndex = dBX * 4 + x;
@@ -422,6 +424,9 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
                 alphaValues[7] = 255;
             }
 
+            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+
             for (int y = 0; y < 4; ++y)
             {
                 for (int x = 0; x < 4; ++x)
@@ -462,10 +467,7 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
                         b = (b0 + 2 * b1) / 3;
                     }
                     else
-                        throw new std::exception("Color block error");
-
-                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+                        throw new std::exception("Color block error");                    
 
                     int texturePixelYIndex = dBY * 4 + y;
                     int texturePixelXIndex = dBX * 4 + x;
@@ -484,6 +486,42 @@ void Texture::LoadDDS_DXT5(ifstream& fin)
     delete[] blocks;
 }
 
+void decodeIndices(const uint8_t indices[6], uint8_t* outIndices)
+{
+    for (int i = 0; i < 16; ++i)
+    {
+        int index = (i * 3) / 8;
+        int shift = (i * 3) % 8;
+        outIndices[i] = (indices[index] >> shift) & 0x07;
+        if (shift > 5)
+        {
+            outIndices[i] |= (indices[index + 1] << (8 - shift)) & 0x07;
+        }
+    }
+}
+
+void computeInterpolatedValues(uint8_t v0, uint8_t v1, uint8_t* values)
+{
+    values[0] = v0;
+    values[1] = v1;
+    if (v0 > v1)
+    {
+        for (int i = 2; i < 8; ++i)
+        {
+            values[i] = ((8 - i) * v0 + (i - 1) * v1) / 7;
+        }
+    }
+    else
+    {
+        for (int i = 2; i < 6; ++i)
+        {
+            values[i] = ((6 - i) * v0 + (i - 1) * v1) / 5;
+        }
+        values[6] = 0;
+        values[7] = 255;
+    }
+}
+
 void Texture::LoadDDS_ATI2(ifstream& fin)
 {
     struct ATI2Block
@@ -496,8 +534,10 @@ void Texture::LoadDDS_ATI2(ifstream& fin)
         uint8_t greenIndices[6];
     };
 
+    int numChannels = 2;
+
     size_t totalPixelCount = m_textureWidth * m_textureHeight;
-    size_t totalChannelCount = totalPixelCount * NUM_CHANNELS;
+    size_t totalChannelCount = totalPixelCount * numChannels;
     m_textureData = new uint8_t[totalChannelCount];
 
     int blockWidth = m_textureWidth / 4;
@@ -511,37 +551,6 @@ void Texture::LoadDDS_ATI2(ifstream& fin)
     constexpr bool flipUpsideDown = true;
     constexpr bool flipRightsideLeft = false;
 
-    auto decompressChannel = [](uint8_t val0, uint8_t val1, const uint8_t indices[6], uint8_t* output)
-        {
-            uint8_t values[8];
-            values[0] = val0;
-            values[1] = val1;
-            if (val0 > val1)
-            {
-                values[2] = (6 * val0 + 1 * val1) / 7;
-                values[3] = (5 * val0 + 2 * val1) / 7;
-                values[4] = (4 * val0 + 3 * val1) / 7;
-                values[5] = (3 * val0 + 4 * val1) / 7;
-                values[6] = (2 * val0 + 5 * val1) / 7;
-                values[7] = (1 * val0 + 6 * val1) / 7;
-            }
-            else
-            {
-                values[2] = (4 * val0 + 1 * val1) / 5;
-                values[3] = (3 * val0 + 2 * val1) / 5;
-                values[4] = (2 * val0 + 3 * val1) / 5;
-                values[5] = (1 * val0 + 4 * val1) / 5;
-                values[6] = 0;
-                values[7] = 255;
-            }
-
-            for (int i = 0; i < 16; ++i)
-            {
-                int index = (indices[i / 2] >> (4 * (i % 2))) & 0xF;
-                output[i] = values[index & 0x07];
-            }
-        };
-
     uint8_t decompressedRed[16];
     uint8_t decompressedGreen[16];
 
@@ -551,27 +560,26 @@ void Texture::LoadDDS_ATI2(ifstream& fin)
         {
             const ATI2Block& block = blocks[bY * blockWidth + bX];
 
-            decompressChannel(block.red0, block.red1, block.redIndices, decompressedRed);
-            decompressChannel(block.green0, block.green1, block.greenIndices, decompressedGreen);
+            uint8_t xIndices[16], yIndices[16];
+            decodeIndices(block.redIndices, xIndices);
+            decodeIndices(block.greenIndices, yIndices);
+
+            uint8_t xValues[8], yValues[8];
+            computeInterpolatedValues(block.red0, block.red1, xValues);
+            computeInterpolatedValues(block.green0, block.green1, yValues);
+
+            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
+            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
 
             for (int y = 0; y < 4; ++y)
             {
                 for (int x = 0; x < 4; ++x)
                 {
-                    int pixelIndex = y * 4 + x;
+                    int blockPixelIndex = 4 * y + x;
+                    int texturePixelIndex = ((dBY * 4 + y) * m_textureWidth + (dBX * 4 + x)) * 2;
 
-                    int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-                    int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
-
-                    int texturePixelYIndex = dBY * 4 + y;
-                    int texturePixelXIndex = dBX * 4 + x;
-                    int finalPixelIndex = texturePixelYIndex * m_textureWidth + texturePixelXIndex;
-                    int destIndex = finalPixelIndex * NUM_CHANNELS;
-
-                    m_textureData[destIndex + 0] = decompressedRed[pixelIndex];
-                    m_textureData[destIndex + 1] = decompressedGreen[pixelIndex];
-                    m_textureData[destIndex + 2] = 0;
-                    m_textureData[destIndex + 3] = 255;
+                    m_textureData[texturePixelIndex + 0] = xValues[xIndices[blockPixelIndex]];
+                    m_textureData[texturePixelIndex + 1] = yValues[yIndices[blockPixelIndex]];
                 }
             }
         }

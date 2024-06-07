@@ -21,15 +21,15 @@ bool Tutorial2::LoadContent()
 	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 	m_modelMadeline = std::make_shared<Model>();
 	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
-	m_modelMadeline->Init(commandListCopy.Get(), L"Madeline.model");
+	m_modelMadeline->Init(commandListCopy.Get(), L"Cube.model");
 	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
 
 	m_texture = std::make_shared<Texture>();
 	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Celeste.tga");
+	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
 
 	m_normalMap = std::make_shared<Texture>();
-	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "RockNormal.tga");
+	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 
 	m_material = std::make_shared<Material>(2);
 	m_material->AddTexture(m_d3dClass->GetDevice(), m_texture);
@@ -77,10 +77,16 @@ bool Tutorial2::LoadContent()
 	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
+	m_goCube->SetRotation(0, 90, 0);
 	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
 	m_gameObjectList.push_back(m_goCube.get());
 
+	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelMadeline, m_shaderCube, m_material);
+	refCube->SetPosition(-3, 0, 0);
+	m_gameObjectList.push_back(refCube.get());
+
 	m_batch->AddGameObject(m_goCube);
+	m_batch->AddGameObject(refCube);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);

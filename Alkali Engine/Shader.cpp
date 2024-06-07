@@ -57,7 +57,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
 	rtvFormats.NumRenderTargets = 1;
-	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtvFormats.RTFormats[0] = SHADER_RTV_FORMAT;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = ms_FillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
@@ -112,7 +112,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
 	pipelineStateStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	pipelineStateStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
-	pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	pipelineStateStream.DSVFormat = DSV_FORMAT;
 	pipelineStateStream.RTVFormats = rtvFormats;	
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &pipelineStateStream };
