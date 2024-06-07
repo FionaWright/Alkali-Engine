@@ -11,6 +11,8 @@ vector<XMFLOAT2> ModelLoader::m_texList;
 vector<XMFLOAT3> ModelLoader::m_norList;
 vector<ObjObject> ModelLoader::m_indexList;
 
+constexpr bool RIGHT_HANDED_TO_LEFT = true;
+
 void ModelLoader::PreprocessObjFile(string filePath, bool split)
 {
 	size_t lastSlashPos = filePath.find_last_of("\\/");
@@ -172,6 +174,9 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 		fin >> vec.y;
 		fin >> vec.z;
 
+		if (RIGHT_HANDED_TO_LEFT)
+			vec.x = -vec.x;
+
 		if (input == 'n')
 		{		
 			m_norList.push_back(vec);
@@ -221,6 +226,14 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 	{
 		int32_t i1 = i + 1;
 		int32_t i2 = i + 2;
+
+		if (RIGHT_HANDED_TO_LEFT)
+		{
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i);			
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
+			continue;
+		}
 
 		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
 		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);

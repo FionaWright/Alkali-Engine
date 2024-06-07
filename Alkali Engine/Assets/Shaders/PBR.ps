@@ -20,18 +20,27 @@ float4 main(V_OUT input) : SV_Target
     normalTangentSpace.xy = bump * 2.0f - 1.0f;
     normalTangentSpace.z = sqrt(1.0f - dot(normalTangentSpace.xy, normalTangentSpace.xy));
 
+    //return float4(input.Normal, 1);
+
     float3 normalWorldSpace = normalize(
         normalTangentSpace.x * input.Tangent +
         normalTangentSpace.y * input.Binormal +
         normalTangentSpace.z * input.Normal);
 
-    float3 lightDir = normalize(float3(0.5, -1, 0.1));
+    float3 lightDir = normalize(float3(0.5, -1, -0.1));    
 
-    float intensity = saturate(dot(-lightDir, normalWorldSpace));
-    //return float4(intensity, intensity, intensity, 1);
+    float3 ambient = 0.15f;
+    float4 finalCol = float4(ambient, tex.a);
 
-    float3 ambient = (0,0,0);
-    float3 col = lerp(ambient, tex.rgb, intensity);
+    float intensity = max(0, dot(-lightDir, normalWorldSpace));
+    float3 diffuseDirColor = (1, 1, 1);
+    float specularPower = 32;
+    
+    finalCol.rgb += diffuseDirColor * intensity;
+    //reflection = normalize(2.0f * intensity * normalWorldSpace + lightDir); 
+    //specular = pow(saturate(dot(reflection, input.viewDirection)), specularPower);
+    
+    finalCol.rgb = saturate(finalCol.rgb * tex.rgb);
 
-    return float4(col, tex.a);
+    return finalCol;
 }

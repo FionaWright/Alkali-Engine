@@ -32,9 +32,10 @@ V_OUT main(V_IN input)
     float4 pos = float4(input.Position, 1.0f);
     o.Position = mul(mul(MatricesCB.VP, MatricesCB.M), pos);
     o.UV = input.Texture;
-    o.Normal = normalize(mul(input.Normal, (float3x3)MatricesCB.InverseTransposeM));
-    o.Tangent = normalize(mul(input.Tangent, (float3x3)MatricesCB.InverseTransposeM));
-    o.Binormal = normalize(mul(input.Binormal, (float3x3)MatricesCB.InverseTransposeM));
+
+    o.Normal = normalize(mul((float3x3)MatricesCB.InverseTransposeM, input.Normal));
+    o.Tangent = normalize(mul((float3x3)MatricesCB.InverseTransposeM, input.Tangent));
+    o.Binormal = normalize(mul((float3x3)MatricesCB.InverseTransposeM, input.Binormal));
 
     return o;
 }

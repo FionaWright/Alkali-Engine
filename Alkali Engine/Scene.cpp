@@ -194,12 +194,14 @@ void Scene::OnRender(TimeEventArgs& e)
 
 					Transform t = m_gameObjectList.at(i)->GetTransform();
 
+					string iStr = std::to_string(i);
+
 					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-					ImGui::InputFloat3("Position##" + i, pPos);
+					ImGui::InputFloat3(("Position##" + iStr).c_str(), pPos);
 					float pRot[4] = { t.Rotation.x, t.Rotation.y, t.Rotation.z, t.Rotation.w };
-					ImGui::InputFloat4("Rotation##" + i, pRot);
+					ImGui::InputFloat4(("Rotation##" + iStr).c_str(), pRot);
 					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-					ImGui::InputFloat3("Scale##" + i, pScale);
+					ImGui::InputFloat3(("Scale##" + iStr).c_str(), pScale);
 
 					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
 					t.Rotation = XMFLOAT4(pRot[0], pRot[1], pRot[2], pRot[3]);
@@ -336,18 +338,18 @@ void Scene::SetDSVForSize(int width, int height)
 	height = std::max(1, height);
 
 	D3D12_CLEAR_VALUE optimizedClearValue = {};
-	optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	optimizedClearValue.Format = DSV_FORMAT;
 	optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DSV_FORMAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
+	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
 	ThrowIfFailed(hr);
 
 	// Update the depth-stencil view.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-	dsv.Format = DXGI_FORMAT_D32_FLOAT;
+	dsv.Format = DSV_FORMAT;
 	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsv.Texture2D.MipSlice = 0;
 	dsv.Flags = D3D12_DSV_FLAG_NONE;

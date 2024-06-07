@@ -46,7 +46,7 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Roo
 
 	MatricesCB matricesCB;
 	matricesCB.M = m_worldMatrix;
-	matricesCB.InverseTransposeM = XMMatrixInverse(nullptr, XMMatrixTranspose(m_worldMatrix));
+	matricesCB.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
 	matricesCB.VP = viewProj;
 	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matricesCB, 0);
 
