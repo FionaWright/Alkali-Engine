@@ -244,7 +244,11 @@ void Window::UpdateRenderTargetViews()
         ComPtr<ID3D12Resource> backBuffer;
         ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
 
-        device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
+        D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+        desc.Format = RTV_FORMAT;
+        desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+        device->CreateRenderTargetView(backBuffer.Get(), &desc, rtvHandle);
 
         m_d3d12BackBuffers[i] = backBuffer;
 
