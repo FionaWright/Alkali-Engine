@@ -44,7 +44,7 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
 
     m_textureDesc = {};
     m_textureDesc.MipLevels = 1;
-    m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DXGI_FORMAT;
+    m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
     m_textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;

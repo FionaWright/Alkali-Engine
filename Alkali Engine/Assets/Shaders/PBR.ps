@@ -14,6 +14,8 @@ SamplerState g_sampler : register(s0);
 float4 main(V_OUT input) : SV_Target
 {
     float4 tex = g_texture.Sample(g_sampler, input.UV);
+    //tex.rgb = pow(tex.rgb, 2.2f);
+
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
 
     float3 normalTangentSpace;
@@ -41,6 +43,7 @@ float4 main(V_OUT input) : SV_Target
     //specular = pow(saturate(dot(reflection, input.viewDirection)), specularPower);
     
     finalCol.rgb = saturate(finalCol.rgb * tex.rgb);
+    //finalCol.rgb = pow(finalCol.rgb, 1.0f / 2.2f);
 
     return finalCol;
 }
