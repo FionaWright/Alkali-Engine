@@ -26,10 +26,10 @@ bool CubeScene::LoadContent()
 
 	m_texture = std::make_shared<Texture>();
 	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
+	m_texture->Init(m_d3dClass.get(), commandListDirect.Get(), "White.tga");
 
 	m_normalMap = std::make_shared<Texture>();
-	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+	m_normalMap->Init(m_d3dClass.get(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 
 	m_material = std::make_shared<Material>(2);
 	m_material->AddTexture(m_d3dClass.get(), m_texture);
@@ -118,13 +118,8 @@ void CubeScene::OnUpdate(TimeEventArgs& e)
 {
 	Scene::OnUpdate(e);
 
-	XMFLOAT2 mousePos = InputManager::GetMousePos();
-
 	float angle = static_cast<float>(e.TotalTime * 5.0);
 	//m_goCube->SetRotation(0, angle, 0);
-
-	m_viewMatrix = m_camera->GetViewMatrix();
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, 0.1f, 100.0f);
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
@@ -141,9 +136,6 @@ void CubeScene::OnUpdate(TimeEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
-
-	m_FoV -= InputManager::GetMouseWheelDelta();
-	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
 void CubeScene::OnRender(TimeEventArgs& e)
@@ -159,9 +151,7 @@ void CubeScene::OnRender(TimeEventArgs& e)
 
 	ClearBackBuffer(commandList.Get());
 
-	XMMATRIX viewProj = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
-
-	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
+	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
 
 	ImGUIManager::Render(commandList.Get());
 

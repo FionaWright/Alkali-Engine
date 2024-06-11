@@ -12,6 +12,8 @@ Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDS
 	, m_camera(std::make_unique<Camera>(CameraMode::CAMERA_MODE_SCROLL))
 	, m_viewMatrix(XMMatrixIdentity())
 	, m_projectionMatrix(XMMatrixIdentity())
+	, m_viewProjMatrix(XMMatrixIdentity())
+	, m_FoV(45.0f)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 }
@@ -63,6 +65,13 @@ void Scene::Destroy()
 void Scene::OnUpdate(TimeEventArgs& e)
 {
 	m_camera->Update(e);
+
+	m_viewMatrix = m_camera->GetViewMatrix();
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
+	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
+
+	if (m_updatingFrustum)
+		m_frustum.UpdateValues(m_viewProjMatrix);
 }
 
 void Scene::OnRender(TimeEventArgs& e)
@@ -83,6 +92,8 @@ void Scene::OnRender(TimeEventArgs& e)
 			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
 
 			ImGui::Checkbox("Cull Back", &Shader::ms_CullNone);
+
+			ImGui::Checkbox("Freeze Frustum Culling", &m_updatingFrustum);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
@@ -215,9 +226,11 @@ void Scene::OnRender(TimeEventArgs& e)
 
 						string vCountStr = "Model Vertex Count: " + std::to_string(m_gameObjectList.at(i)->GetModelVertexCount());
 						string iCountStr = "Model Index Count: " + std::to_string(m_gameObjectList.at(i)->GetModelIndexCount());
+						string iRadiStr = "Model Bounding Radius: " + std::to_string(m_gameObjectList.at(i)->GetSphereRadius());
 
 						ImGui::Text(vCountStr.c_str());
 						ImGui::Text(iCountStr.c_str());
+						ImGui::Text(iRadiStr.c_str());
 
 						ImGui::TreePop();
 						ImGui::Unindent(IM_GUI_INDENTATION);

@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "GameObject.h"
+#include "Frustum.h"
 
 #include <vector>
 
@@ -15,7 +16,7 @@ public:
 	Batch(ComPtr<ID3D12RootSignature> pRootSig);
 	Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
 	void AddGameObject(shared_ptr<GameObject> go, bool transparent = false);
-	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
+	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, Frustum& frustum);
 
 	void AddHeldGameObjectsToList(vector<GameObject*>& list);
 

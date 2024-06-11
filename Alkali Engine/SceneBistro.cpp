@@ -85,9 +85,6 @@ void SceneBistro::OnUpdate(TimeEventArgs& e)
 {
 	Scene::OnUpdate(e);
 
-	m_viewMatrix = m_camera->GetViewMatrix();
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
-
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
 		PostQuitMessage(0);
@@ -118,9 +115,7 @@ void SceneBistro::OnRender(TimeEventArgs& e)
 
 	ClearBackBuffer(commandList.Get());
 
-	XMMATRIX viewProj = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
-
-	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
+	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
 
 	ImGUIManager::Render(commandList.Get());
 

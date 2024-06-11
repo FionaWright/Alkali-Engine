@@ -5,13 +5,14 @@
 #include "CBuffers.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
-	: Scene(name, pWindow, true)
-	, m_FoV(45.0f)
+	: Scene(name, pWindow, true)	
 {
 }
 
 bool Tutorial2::LoadContent()
 {
+	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Cube.obj", false);
+
 	// Models
 	{
 		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -27,20 +28,17 @@ bool Tutorial2::LoadContent()
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
+	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
 	// Textures
 	{
-		auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
-
 		m_texture = std::make_shared<Texture>();
 		//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-		m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
+		m_texture->Init(m_d3dClass.get(), commandListDirect.Get(), "White.tga");
 
 		m_normalMap = std::make_shared<Texture>();
-		m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
-
-		auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-		commandQueueDirect->WaitForFenceValue(fenceValue);
+		m_normalMap->Init(m_d3dClass.get(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 	}
 
 	// Materials
@@ -49,6 +47,9 @@ bool Tutorial2::LoadContent()
 		m_material->AddTexture(m_d3dClass.get(), m_texture);
 		m_material->AddTexture(m_d3dClass.get(), m_normalMap);
 	}
+
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	int numDescriptors = 2;
@@ -132,9 +133,6 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	float angle = static_cast<float>(e.ElapsedTime * 50.0);
 	//m_goCube->RotateBy(0, angle, 0);
 
-	m_viewMatrix = m_camera->GetViewMatrix();
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
-
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
 		PostQuitMessage(0);
@@ -150,9 +148,6 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
-
-	//m_FoV -= InputManager::GetMouseWheelDelta();
-	m_FoV = std::clamp(m_FoV, 12.0f, 90.0f);
 }
 
 void Tutorial2::OnRender(TimeEventArgs& e)
@@ -166,11 +161,9 @@ void Tutorial2::OnRender(TimeEventArgs& e)
 	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	ClearBackBuffer(commandList.Get());
+	ClearBackBuffer(commandList.Get());	
 
-	XMMATRIX viewProj = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
-
-	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, viewProj);
+	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
 
 	ImGUIManager::Render(commandList.Get());
 

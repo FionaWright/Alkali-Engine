@@ -111,8 +111,8 @@
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="D3DClass.cpp" />
+    <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="GenerateMipsPSO.cpp" />
     <ClCompile Include="ImGUIManager.cpp" />
     <ClCompile Include="Includes\imgui-master\backends\imgui_impl_dx12.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -172,8 +172,8 @@
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Events.h" />
+    <ClInclude Include="Frustum.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="GenerateMipsPSO.h" />
     <ClInclude Include="ImGUIManager.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Material.h" />
@@ -223,11 +223,6 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-    </FxCompile>
-    <FxCompile Include="GenerateMips.hlsl">
-      <FileType>Document</FileType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
     </FxCompile>
   </ItemGroup>

@@ -221,6 +221,8 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 	vector<VertexInputData> vertexBuffer;
 	unordered_map<VertexKey, int32_t> vertexMap;
 	vector<int32_t> indexBuffer;
+	
+	XMFLOAT3 rollingCentroidSum = XMFLOAT3(0, 0, 0);
 
 	for (int32_t i = 0; i < vertexCount - 2; i += 3)
 	{
@@ -229,22 +231,39 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 
 		if (RIGHT_HANDED_TO_LEFT)
 		{
-			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i);			
-			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);
-			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i, rollingCentroidSum);
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2, rollingCentroidSum);
+			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2, rollingCentroidSum);
 			continue;
 		}
 
-		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2);
-		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2);
-		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i);
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i, i1, i2, rollingCentroidSum);
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2, rollingCentroidSum);
+		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i, rollingCentroidSum);
 	}
+
+	rollingCentroidSum = Divide(rollingCentroidSum, vertexBuffer.size());
+
+	float boundingRadiusSq = 0;
+
+	for (size_t i = 0; i < vertexBuffer.size(); i++)
+	{
+		XMFLOAT3 pos = vertexBuffer.at(i).Position;
+		XMFLOAT3 diff = Subtract(rollingCentroidSum, pos);
+		float magSq = Dot(diff, diff);
+		if (magSq > boundingRadiusSq)
+			boundingRadiusSq = magSq;
+	}
+
+	boundingRadiusSq = std::sqrt(boundingRadiusSq);
 
 	ofstream fout;
 	std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
 	fout.open(outputPath, openFlags);
 	if (!fout)
 		throw new std::exception("IO Exception (OUTPUT)");
+
+	fout.write(reinterpret_cast<const char*>(&boundingRadiusSq), sizeof(float));
 
 	size_t vertexCountUINT = vertexBuffer.size();
 	fout.write(reinterpret_cast<const char*>(&vertexCountUINT), sizeof(size_t));
@@ -264,7 +283,7 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 		throw new std::exception("IO Exception (OUTPUT)");
 }
 
-void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int32_t>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int32_t>& vertexMap, int32_t i, int32_t i1, int32_t i2)
+void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int32_t>& indexBuffer, vector<ObjFaceVertexIndices>& objIndices, unordered_map<VertexKey, int32_t>& vertexMap, int32_t i, int32_t i1, int32_t i2, XMFLOAT3& rollingCentroidSum)
 {
 	auto indices = objIndices.at(i);
 	VertexKey key = { indices.PositionIndex, indices.NormalIndex };
@@ -280,6 +299,8 @@ void ModelLoader::TryAddVertex(vector<VertexInputData>& vertexBuffer, vector<int
 		int vBufferIndex = static_cast<int>(vertexBuffer.size() - 1);
 		indexBuffer.push_back(vBufferIndex);
 		vertexMap.emplace(key, vBufferIndex);
+
+		rollingCentroidSum = Add(rollingCentroidSum, m_posList.at(indices.PositionIndex));
 	}
 	else
 	{
@@ -330,7 +351,7 @@ VertexInputData ModelLoader::SetVertexData(ObjFaceVertexIndices i, ObjFaceVertex
 	return vertex;
 }
 
-void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount)
+void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount, float& boundingSphereRadius)
 {
 	ifstream fin;
 	wstring longPath = L"Assets/Models/" + filePath;
@@ -338,6 +359,8 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	if (!fin)
 		throw new std::exception("IO Exception");
+
+	fin.read(reinterpret_cast<char*>(&boundingSphereRadius), sizeof(float));
 
 	fin.read(reinterpret_cast<char*>(&outVertexCount), sizeof(size_t));
 
@@ -354,7 +377,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	for (int32_t i = 0; i < outIndexCount; i++)
 	{		
 		fin.read(reinterpret_cast<char*>(&index), sizeof(int32_t));
-		outIndexBuffer.push_back((int32_t)index);
+		outIndexBuffer.push_back(index);
 	}
 }
 
@@ -439,16 +462,16 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		shared_ptr<Texture> diffuseTex = std::make_shared<Texture>();
 		shared_ptr<Texture> normalTex = std::make_shared<Texture>();		
 
+		// TODO: CHANGE THIS TO NOT BE BISTRO
 		string modelPath = "Bistro/" + modelName + ".model";
 		model->Init(commandList, modelPath);		
 
 		string diffuseTexPath = "Bistro/" + diffuseName;
 		bool hasAlpha;
-		diffuseTex->Init(d3d->GetDevice(), commandList, diffuseTexPath, hasAlpha);
+		diffuseTex->Init(d3d, commandList, diffuseTexPath, hasAlpha);
 
 		string normalTexPath = "Bistro/" + normalName;
-		normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
-		//normalTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
+		normalTex->Init(d3d, commandList, normalTexPath);
 
 		material->AddTexture(d3d, diffuseTex);
 		material->AddTexture(d3d, normalTex);

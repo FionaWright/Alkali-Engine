@@ -25,16 +25,22 @@ void Batch::AddGameObject(shared_ptr<GameObject> go, bool transparent)
 	m_gameObjectList.push_back(go);
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, Frustum& frustum)
 {
 	for (int i = 0; i < m_gameObjectList.size(); i++) 
 	{
-		m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
+		const XMFLOAT3 pos = m_gameObjectList.at(i)->GetTransform().Position;
+		const float radius = m_gameObjectList.at(i)->GetSphereRadius();
+		if (frustum.CheckSphere(pos, radius))
+			m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 
 	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
 	{
-		m_gameObjectListTransparent.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
+		const XMFLOAT3 pos = m_gameObjectList.at(i)->GetTransform().Position;
+		const float radius = m_gameObjectList.at(i)->GetSphereRadius();
+		if (frustum.CheckSphere(pos, radius))
+			m_gameObjectListTransparent.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 }
 
