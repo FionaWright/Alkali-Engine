@@ -112,6 +112,7 @@
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GenerateMipsPSO.cpp" />
     <ClCompile Include="ImGUIManager.cpp" />
     <ClCompile Include="Includes\imgui-master\backends\imgui_impl_dx12.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -172,6 +173,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GenerateMipsPSO.h" />
     <ClInclude Include="ImGUIManager.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Material.h" />
@@ -211,6 +213,23 @@
   <ItemGroup>
     <None Include="Assets\Shaders\PBR.ps" />
     <None Include="Assets\Shaders\PBR.vs" />
+    <FxCompile Include="CreateMipMaps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="CreateMipMapsDebug.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="GenerateMips.hlsl">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

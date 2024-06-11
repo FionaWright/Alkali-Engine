@@ -12,6 +12,8 @@
 #include "CubeScene.h"
 #include "SceneBistro.h"
 
+wstring Application::ms_exeDirectoryPath;
+
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
     , m_windowManager(std::make_shared<WindowManager>())
@@ -22,7 +24,7 @@ Application::Application(HINSTANCE hInst)
     if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
     {
         PathRemoveFileSpecW(path);
-        m_exeDirectoryPath.assign(path);
+        ms_exeDirectoryPath.assign(path);
     }
 
     m_windowManager->Init(hInst);
@@ -194,7 +196,7 @@ void Application::Shutdown()
 
 wstring Application::GetEXEDirectoryPath()
 {
-    return m_exeDirectoryPath;
+    return ms_exeDirectoryPath;
 }
 
 void Application::ChangeScene(wstring sceneID)

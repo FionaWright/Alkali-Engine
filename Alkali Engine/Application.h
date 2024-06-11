@@ -31,7 +31,7 @@ public:
 
     void Shutdown();
 
-    wstring GetEXEDirectoryPath();
+    static wstring GetEXEDirectoryPath();
 
     void ChangeScene(wstring sceneID);
 
@@ -53,7 +53,7 @@ private:
 
     unordered_map<wstring, shared_ptr<Scene>> m_sceneMap;
 
-    wstring m_exeDirectoryPath;
+    static wstring ms_exeDirectoryPath;
 
     double m_fps;
     double m_fpsTimeSinceUpdate;

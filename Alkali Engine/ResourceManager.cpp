@@ -77,9 +77,9 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 	return rootSig;
 }
 
-void ResourceManager::TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
+void ResourceManager::TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, UINT subresource)
 {
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState, subresource);
 	commandList->ResourceBarrier(1, &barrier);
 }
 

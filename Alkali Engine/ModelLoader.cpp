@@ -450,8 +450,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		normalTex->Init(d3d->GetDevice(), commandList, normalTexPath);
 		//normalTex->Init(d3d->GetDevice(), commandList, diffuseTexPath);
 
-		material->AddTexture(d3d->GetDevice(), diffuseTex);
-		material->AddTexture(d3d->GetDevice(), normalTex);
+		material->AddTexture(d3d, diffuseTex);
+		material->AddTexture(d3d, normalTex);
 
 		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
 		batch->AddGameObject(go, hasAlpha);

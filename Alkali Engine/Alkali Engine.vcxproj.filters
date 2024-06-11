@@ -29,6 +29,9 @@
     <Filter Include="Source Files\Data">
       <UniqueIdentifier>{14333052-1d5b-42c5-8cdc-bcf54c8817b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Compute">
+      <UniqueIdentifier>{d1052843-e65d-4379-ab2f-027cb129293e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tutorial2.cpp">
@@ -124,6 +127,9 @@
     <ClCompile Include="SceneBistro.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="GenerateMipsPSO.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -216,6 +222,9 @@
     <ClInclude Include="SceneBistro.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="GenerateMipsPSO.h">
+      <Filter>Source Files\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Alkali Engine.rc">
@@ -245,5 +254,16 @@
     <None Include="Assets\Shaders\PBR.vs">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="GenerateMips.hlsl">
+      <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="CreateMipMaps.hlsl">
+      <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="CreateMipMapsDebug.hlsl">
+      <Filter>Shaders\Compute</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
