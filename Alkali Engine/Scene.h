@@ -13,6 +13,7 @@
 #include "Window.h"
 #include "InputManager.h"
 #include "Camera.h"
+#include "Frustum.h"
 
 using std::unique_ptr;
 using std::wstring;
@@ -64,12 +65,15 @@ protected:
 
     XMMATRIX m_viewMatrix;
     XMMATRIX m_projectionMatrix;
+    XMMATRIX m_viewProjMatrix;
 
     shared_ptr<D3DClass> m_d3dClass;
-
-    unique_ptr<Camera> m_camera;
+    unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
     vector<GameObject*> m_gameObjectList;
+
+    float m_FoV;
+    Frustum m_frustum;
 
 private:    
     bool m_dsvEnabled;
@@ -78,5 +82,6 @@ private:
 
     ComPtr<ID3D12Resource> m_depthBuffer;   
 
-    array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};
+    array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
+    bool m_updatingFrustum = true;
 };

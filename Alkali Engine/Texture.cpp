@@ -5,8 +5,6 @@
 #define BLOCK_SIZE 8
 constexpr int NUM_CHANNELS = 4;
 
-unique_ptr<GenerateMipsPSO> Texture::ms_generateMipsPSO; 
-
 Texture::Texture()
     : m_textureData(0)
 {
@@ -21,17 +19,18 @@ Texture::~Texture()
     }
 }
 
-void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath)
 {
     bool _;
-    Init(device, commandListDirect, filePath, _);
+    Init(d3d, commandListDirect, filePath, _);
 }
 
-void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha)
 {
     hasAlpha = false;
 
     HRESULT hr;
+    auto device = d3d->GetDevice();
 
     size_t dotIndex = filePath.find_last_of('.');
     if (dotIndex == std::string::npos)
@@ -45,8 +44,10 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     else
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
+    bool isTinyTex = m_textureWidth < 8 || m_textureHeight < 8;
+
     m_textureDesc = {};
-    m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
+    m_textureDesc.MipLevels = isTinyTex ? 1 : GLOBAL_MIP_LEVELS;
     m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
@@ -80,16 +81,23 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     m_textureResource->SetName(L"Sample Texture");
 
     UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     delete m_textureData;
     m_textureData = 0;
+
+    if (m_textureDesc.MipLevels > 1)
+    {
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CreateMipMaps(d3d, commandListDirect);
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        return;
+    }
+
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialTexHeap, int srvHeapOffset)
-{
-    CreateMipMaps(d3d);
-
+{   
     auto device = d3d->GetDevice();
 
     UINT incrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -613,7 +621,7 @@ void Texture::LoadJPG(string filePath)
 {
 }
 
-void Texture::CreateMipMaps(D3DClass* d3d)
+void Texture::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect)
 {
 	//Union used for shader constants
 	struct DWParam
@@ -713,14 +721,10 @@ void Texture::CreateMipMaps(D3DClass* d3d)
 	destTextureUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
     destTextureUAVDesc.Format = m_textureDesc.Format;
 
-	//Get a new empty command list in recording state
-    auto commandQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    auto commandList = commandQueue->GetAvailableCommandList();
-
 	//Set root signature, pso and descriptor heap
-	commandList->SetComputeRootSignature(mipMapRootSignature);
-	commandList->SetPipelineState(psoMipMaps);
-	commandList->SetDescriptorHeaps(1, &descriptorHeap);
+    commandListDirect->SetComputeRootSignature(mipMapRootSignature);
+    commandListDirect->SetPipelineState(psoMipMaps);
+    commandListDirect->SetDescriptorHeaps(1, &descriptorHeap);
 
 	//CPU handle for the first descriptor on the descriptor heap, used to fill the heap
 	CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, descriptorSize);
@@ -729,7 +733,7 @@ void Texture::CreateMipMaps(D3DClass* d3d)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, descriptorSize);
 
     //Transition from pixel shader resource to unordered access
-    ResourceManager::TransitionResource(commandList.Get(), m_textureResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     //Loop through the mipmaps copying from the bigger mipmap to the smaller one with downsampling in a compute shader
     for (uint32_t TopMip = 0; TopMip < mipLevels - 1; TopMip++)
@@ -749,27 +753,22 @@ void Texture::CreateMipMaps(D3DClass* d3d)
         currentCPUHandle.Offset(1, descriptorSize);
 
         //Pass the destination texture pixel size to the shader as constants
-        commandList->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstWidth).Uint, 0);
-        commandList->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstHeight).Uint, 1);
+        commandListDirect->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstWidth).Uint, 0);
+        commandListDirect->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstHeight).Uint, 1);
         if (debugMode)
-            commandList->SetComputeRoot32BitConstant(0, TopMip, 2);
+            commandListDirect->SetComputeRoot32BitConstant(0, TopMip, 2);
 
         //Pass the source and destination texture views to the shader via descriptor tables
-        commandList->SetComputeRootDescriptorTable(1, currentGPUHandle);
+        commandListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
         currentGPUHandle.Offset(1, descriptorSize);
-        commandList->SetComputeRootDescriptorTable(2, currentGPUHandle);
+        commandListDirect->SetComputeRootDescriptorTable(2, currentGPUHandle);
         currentGPUHandle.Offset(1, descriptorSize);
 
         //Dispatch the compute shader with one thread per 8x8 pixels
-        commandList->Dispatch(std::max(dstWidth / 8, 1u), std::max(dstHeight / 8, 1u), 1);
+        commandListDirect->Dispatch(std::max(dstWidth / 8, 1u), std::max(dstHeight / 8, 1u), 1);
 
         //Wait for all accesses to the destination texture UAV to be finished before generating the next mipmap, as it will be the source texture for the next mipmap
         auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_textureResource.Get());
-        commandList->ResourceBarrier(1, &uavBarrier);
-    }
-
-    ResourceManager::TransitionResource(commandList.Get(), m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-    commandQueue->WaitForFenceValue(fenceValue);
+        commandListDirect->ResourceBarrier(1, &uavBarrier);
+    }    
 }

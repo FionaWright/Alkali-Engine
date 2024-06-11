@@ -183,3 +183,8 @@ void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& 
 	hs = m_shader->m_HSName;
 	ds = m_shader->m_DSName;
 }
+
+float GameObject::GetSphereRadius()
+{
+	return m_model->GetSphereRadius();
+}

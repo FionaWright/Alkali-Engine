@@ -48,6 +48,7 @@ public:
 	size_t GetModelVertexCount();
 	size_t GetModelIndexCount();
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds);
+	float GetSphereRadius();
 
 	string m_Name;
 

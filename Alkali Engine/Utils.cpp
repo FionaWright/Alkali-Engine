@@ -12,6 +12,11 @@ std::string wstringToString(const std::wstring& wstr)
 	return str;
 }
 
+XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b)
+{
+    return XMFLOAT3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
 XMFLOAT3 Subtract(XMFLOAT3 a, XMFLOAT3 b)
 {
 	return XMFLOAT3(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -26,6 +31,27 @@ XMFLOAT3 Normalize(const XMFLOAT3& v)
 {
 	float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 	return XMFLOAT3(v.x / length, v.y / length, v.z / length);
+}
+
+XMFLOAT3 Divide(const XMFLOAT3& a, float d) 
+{
+    return XMFLOAT3(a.x / d, a.y / d, a.z / d);
+}
+
+XMFLOAT3 Normalize(const XMFLOAT3& v, float& length)
+{
+    length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    return XMFLOAT3(v.x / length, v.y / length, v.z / length);
+}
+
+float Magnitude(const XMFLOAT3& v)
+{
+    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+float Dot(const XMFLOAT3& a, const XMFLOAT3& b) 
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 bool Equals(XMFLOAT3 a, XMFLOAT3 b)

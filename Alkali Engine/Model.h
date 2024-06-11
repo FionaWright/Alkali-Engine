@@ -23,6 +23,7 @@ public:
 
     size_t GetVertexCount();
     size_t GetIndexCount();
+    float GetSphereRadius();
 
 private:
     ComPtr<ID3D12Resource> m_VertexBuffer;
@@ -35,4 +36,6 @@ private:
     ComPtr<ID3D12Resource> m_intermediateIndexBuffer;
 
     size_t m_vertexCount = 0, m_indexCount = 0, m_vertexInputSize = 0;
+
+    float m_boundingSphereRadius;
 };

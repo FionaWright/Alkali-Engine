@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include "GenerateMipsPSO.h"
 #include "D3DClass.h"
 
 using std::ifstream;
@@ -18,8 +17,8 @@ public:
 	Texture();
 	~Texture();
 
-	void Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath);
-	void Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha);
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
@@ -29,11 +28,9 @@ public:
 	void LoadDDS_DXT5(ifstream& fin);
 	void LoadDDS_ATI2(ifstream& fin);
 	void LoadPNG(string filePath);
-	void LoadJPG(string filePath);
+	void LoadJPG(string filePath);	
 
-	void GenerateMips(D3DClass* d3d, ID3D12DescriptorHeap* descHeap);
-
-	void CreateMipMaps(D3DClass* d3d);
+	void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect);
 
 private:
 	int m_textureWidth = -1, m_textureHeight = -1;
@@ -48,8 +45,6 @@ private:
 	D3D12_RESOURCE_DESC m_textureDesc;
 
 	bool m_is2Channel = false;
-
-	static unique_ptr<GenerateMipsPSO> ms_generateMipsPSO; // NEEDS TO BE RESET
 };
 
 

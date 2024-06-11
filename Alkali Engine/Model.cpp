@@ -21,7 +21,7 @@ void Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
 	vector<VertexInputData> vertexBuffer;
 	vector<int32_t> indexBuffer;
 
-	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount);
+	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount, m_boundingSphereRadius);
 
 	Init(commandList, vertexCount, indexCount, sizeof(VertexInputData));
 	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
@@ -76,4 +76,9 @@ size_t Model::GetVertexCount()
 size_t Model::GetIndexCount()
 {
 	return m_indexCount;
+}
+
+float Model::GetSphereRadius()
+{
+	return m_boundingSphereRadius;
 }
