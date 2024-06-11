@@ -11,7 +11,7 @@ public:
 	Material(UINT numSamplers);
 	~Material();
 
-	void AddTexture(ID3D12Device2* device, shared_ptr<Texture> tex);
+	void AddTexture(D3DClass* d3d, shared_ptr<Texture> tex);
 
 	ID3D12DescriptorHeap* GetTextureHeap();
 

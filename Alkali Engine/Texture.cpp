@@ -2,7 +2,10 @@
 #include "Texture.h"
 #include "ResourceManager.h"
 
+#define BLOCK_SIZE 8
 constexpr int NUM_CHANNELS = 4;
+
+unique_ptr<GenerateMipsPSO> Texture::ms_generateMipsPSO; 
 
 Texture::Texture()
     : m_textureData(0)
@@ -43,21 +46,21 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
     m_textureDesc = {};
-    m_textureDesc.MipLevels = 1;
+    m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
     m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    m_textureDesc.Flags = USE_SRGB ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     m_textureDesc.DepthOrArraySize = 1;
     m_textureDesc.SampleDesc.Count = 1;
     m_textureDesc.SampleDesc.Quality = 0;
     m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_texture));
+    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
     ThrowIfFailed(hr);
 
-    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_texture.Get(), 0, 1);
+    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 1);
 
     heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
@@ -74,25 +77,39 @@ void Texture::Init(ID3D12Device2* device, ID3D12GraphicsCommandList2* commandLis
     textureData.RowPitch = bytesPerRow;
     textureData.SlicePitch = totalBytes;
 
-    m_texture->SetName(L"Sample Texture");
+    m_textureResource->SetName(L"Sample Texture");
 
-    UpdateSubresources(commandListDirect, m_texture.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
-    ResourceManager::TransitionResource(commandListDirect, m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     delete m_textureData;
     m_textureData = 0;
 }
 
-void Texture::AddToDescriptorHeap(ID3D12Device2* device, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset)
+void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialTexHeap, int srvHeapOffset)
 {
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = m_textureDesc.Format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
+    CreateMipMaps(d3d);
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(srvHeap->GetCPUDescriptorHandleForHeapStart(), srvHeapOffset, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-    device->CreateShaderResourceView(m_texture.Get(), &srvDesc, srvHandle);
+    auto device = d3d->GetDevice();
+
+    UINT incrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = materialTexHeap->GetCPUDescriptorHandleForHeapStart();
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = materialTexHeap->GetGPUDescriptorHandleForHeapStart();    
+
+    // Assign SRV to material heap
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = m_textureDesc.Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(cpuHandle, srvHeapOffset, incrementSize);
+        device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
+        m_srvGPUHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle, srvHeapOffset, incrementSize);
+    }    
 }
 
 void Texture::LoadTGA(string filePath)
@@ -588,11 +605,171 @@ void Texture::LoadDDS_ATI2(ifstream& fin)
     delete[] blocks;
 }
 
-
 void Texture::LoadPNG(string filePath)
 {
 }
 
 void Texture::LoadJPG(string filePath)
 {
+}
+
+void Texture::CreateMipMaps(D3DClass* d3d)
+{
+	//Union used for shader constants
+	struct DWParam
+	{
+		DWParam(FLOAT f) : Float(f) {}
+		DWParam(UINT u) : Uint(u) {}
+
+		void operator= (FLOAT f) { Float = f; }
+		void operator= (UINT u) { Uint = u; }
+
+		union
+		{
+			FLOAT Float;
+			UINT Uint;
+		};
+	};
+
+    bool debugMode = false;
+
+    int mipLevels = m_textureDesc.MipLevels;
+    auto device = d3d->GetDevice();
+    UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    if (mipLevels <= 1)
+        return;
+
+	//Calculate heap size
+	uint32_t requiredHeapSize = mipLevels - 1;
+
+	//The compute shader expects 2 floats, the source texture and the destination texture
+	CD3DX12_DESCRIPTOR_RANGE srvCbvRanges[2];
+	CD3DX12_ROOT_PARAMETER rootParameters[3];
+	srvCbvRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+	srvCbvRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
+
+	rootParameters[0].InitAsConstants(debugMode ? 3 : 2, 0);
+	rootParameters[1].InitAsDescriptorTable(1, &srvCbvRanges[0]);
+	rootParameters[2].InitAsDescriptorTable(1, &srvCbvRanges[1]);
+
+	//Static sampler used to get the linearly interpolated color for the mipmaps
+	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.MaxAnisotropy = 0;
+	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	samplerDesc.ShaderRegister = 0;
+	samplerDesc.RegisterSpace = 0;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	//Create the root signature for the mipmap compute shader from the parameters and sampler above
+	ID3DBlob* signature;
+	ID3DBlob* error;
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init(_countof(rootParameters), rootParameters, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+
+	ID3D12RootSignature* mipMapRootSignature;
+    device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&mipMapRootSignature));
+
+	//Create the descriptor heap with layout: source texture - destination texture
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.NumDescriptors = 2 * requiredHeapSize;
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	ID3D12DescriptorHeap* descriptorHeap;
+    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap));	
+
+    ComPtr<ID3DBlob> cBlob;
+    wstring path = Application::GetEXEDirectoryPath() + (debugMode ? L"/CreateMipMapsDebug.cso" : L"/CreateMipMaps.cso");
+    HRESULT hr = D3DReadFileToBlob(path.c_str(), &cBlob);
+    ThrowIfFailed(hr);
+
+	//Create pipeline state object for the compute shader using the root signature.
+	D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.pRootSignature = mipMapRootSignature;
+	psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
+
+	ID3D12PipelineState* psoMipMaps;
+    device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&psoMipMaps));
+
+	//Prepare the SRV description for the source texture
+	D3D12_SHADER_RESOURCE_VIEW_DESC srcTextureSRVDesc = {};
+	srcTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srcTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srcTextureSRVDesc.Format = m_textureDesc.Format;
+    srcTextureSRVDesc.Texture2D.MipLevels = 1;
+
+	//Prepare the unordered access view description for the destination texture
+	D3D12_UNORDERED_ACCESS_VIEW_DESC destTextureUAVDesc = {};
+	destTextureUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+    destTextureUAVDesc.Format = m_textureDesc.Format;
+
+	//Get a new empty command list in recording state
+    auto commandQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto commandList = commandQueue->GetAvailableCommandList();
+
+	//Set root signature, pso and descriptor heap
+	commandList->SetComputeRootSignature(mipMapRootSignature);
+	commandList->SetPipelineState(psoMipMaps);
+	commandList->SetDescriptorHeaps(1, &descriptorHeap);
+
+	//CPU handle for the first descriptor on the descriptor heap, used to fill the heap
+	CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, descriptorSize);
+
+	//GPU handle for the first descriptor on the descriptor heap, used to initialize the descriptor tables
+	CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, descriptorSize);
+
+    //Transition from pixel shader resource to unordered access
+    ResourceManager::TransitionResource(commandList.Get(), m_textureResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    //Loop through the mipmaps copying from the bigger mipmap to the smaller one with downsampling in a compute shader
+    for (uint32_t TopMip = 0; TopMip < mipLevels - 1; TopMip++)
+    {
+        //Get mipmap dimensions
+        uint32_t dstWidth = std::max(m_textureWidth >> (TopMip + 1), 1);
+        uint32_t dstHeight = std::max(m_textureHeight >> (TopMip + 1), 1);
+
+        //Create shader resource view for the source texture in the descriptor heap
+        srcTextureSRVDesc.Texture2D.MostDetailedMip = TopMip;
+        device->CreateShaderResourceView(m_textureResource.Get(), &srcTextureSRVDesc, currentCPUHandle);
+        currentCPUHandle.Offset(1, descriptorSize);
+
+        //Create unordered access view for the destination texture in the descriptor heap        
+        destTextureUAVDesc.Texture2D.MipSlice = TopMip + 1;
+        device->CreateUnorderedAccessView(m_textureResource.Get(), nullptr, &destTextureUAVDesc, currentCPUHandle);
+        currentCPUHandle.Offset(1, descriptorSize);
+
+        //Pass the destination texture pixel size to the shader as constants
+        commandList->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstWidth).Uint, 0);
+        commandList->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstHeight).Uint, 1);
+        if (debugMode)
+            commandList->SetComputeRoot32BitConstant(0, TopMip, 2);
+
+        //Pass the source and destination texture views to the shader via descriptor tables
+        commandList->SetComputeRootDescriptorTable(1, currentGPUHandle);
+        currentGPUHandle.Offset(1, descriptorSize);
+        commandList->SetComputeRootDescriptorTable(2, currentGPUHandle);
+        currentGPUHandle.Offset(1, descriptorSize);
+
+        //Dispatch the compute shader with one thread per 8x8 pixels
+        commandList->Dispatch(std::max(dstWidth / 8, 1u), std::max(dstHeight / 8, 1u), 1);
+
+        //Wait for all accesses to the destination texture UAV to be finished before generating the next mipmap, as it will be the source texture for the next mipmap
+        auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_textureResource.Get());
+        commandList->ResourceBarrier(1, &uavBarrier);
+    }
+
+    ResourceManager::TransitionResource(commandList.Get(), m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+    commandQueue->WaitForFenceValue(fenceValue);
 }

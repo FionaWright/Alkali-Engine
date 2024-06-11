@@ -11,7 +11,7 @@ public:
 
 	static ComPtr<ID3D12RootSignature> CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount);
 
-	static void TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
+	static void TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, UINT subresource = 4294967295U);
 
 	static ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 

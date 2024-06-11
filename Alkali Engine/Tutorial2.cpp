@@ -12,28 +12,43 @@ Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
 
 bool Tutorial2::LoadContent()
 {
-	auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	// Models
+	{
+		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+		//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
+		m_modelMadeline = std::make_shared<Model>();
+		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+		m_modelMadeline->Init(commandListCopy.Get(), L"Cube.model");
+		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
 
-	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
-	m_modelMadeline = std::make_shared<Model>();
-	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
-	m_modelMadeline->Init(commandListCopy.Get(), L"Cube.model");
-	//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		commandQueueCopy->WaitForFenceValue(fenceValue);
+	}
 
-	m_texture = std::make_shared<Texture>();
-	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-	m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
+	// Textures
+	{
+		auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	m_normalMap = std::make_shared<Texture>();
-	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+		m_texture = std::make_shared<Texture>();
+		//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
+		m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "White.tga");
 
-	m_material = std::make_shared<Material>(2);
-	m_material->AddTexture(m_d3dClass->GetDevice(), m_texture);
-	m_material->AddTexture(m_d3dClass->GetDevice(), m_normalMap);
+		m_normalMap = std::make_shared<Texture>();
+		m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+
+		auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+		commandQueueDirect->WaitForFenceValue(fenceValue);
+	}
+
+	// Materials
+	{
+		m_material = std::make_shared<Material>(2);
+		m_material->AddTexture(m_d3dClass.get(), m_texture);
+		m_material->AddTexture(m_d3dClass.get(), m_normalMap);
+	}
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	int numDescriptors = 2;
@@ -59,22 +74,24 @@ bool Tutorial2::LoadContent()
 	sampler[0].RegisterSpace = 0;
 	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);	
+	rootSig->SetName(L"Tutorial2 Root Sig");
 
-	m_batch = std::make_shared<Batch>(rootSig);
-
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	// Shaders
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
+		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
 
-	m_shaderCube = std::make_shared<Shader>();
-	m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
-	//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
+		m_shaderCube = std::make_shared<Shader>();
+		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
+		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
+	}
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
 	m_goCube->SetRotation(0, 90, 0);
@@ -85,14 +102,9 @@ bool Tutorial2::LoadContent()
 	refCube->SetPosition(-3, 0, 0);
 	m_gameObjectList.push_back(refCube.get());
 
+	m_batch = std::make_shared<Batch>(rootSig);
 	m_batch->AddGameObject(m_goCube);
 	m_batch->AddGameObject(refCube);
-
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
-
-	fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);

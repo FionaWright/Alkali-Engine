@@ -32,8 +32,8 @@ bool CubeScene::LoadContent()
 	m_normalMap->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 
 	m_material = std::make_shared<Material>(2);
-	m_material->AddTexture(m_d3dClass->GetDevice(), m_texture);
-	m_material->AddTexture(m_d3dClass->GetDevice(), m_normalMap);
+	m_material->AddTexture(m_d3dClass.get(), m_texture);
+	m_material->AddTexture(m_d3dClass.get(), m_normalMap);
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	int numDescriptors = 2;
