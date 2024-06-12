@@ -16,8 +16,8 @@ wstring Application::ms_exeDirectoryPath;
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
-    , m_windowManager(std::make_shared<WindowManager>())
-    , m_d3dClass(std::make_shared<D3DClass>())
+    , m_windowManager(std::make_unique<WindowManager>())
+    , m_d3dClass(std::make_unique<D3DClass>())
 {
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR path[MAX_PATH];
@@ -50,7 +50,7 @@ Application::Application(HINSTANCE hInst)
 
 void Application::InitScene(shared_ptr<Scene> scene)
 {
-    if (!scene->Init(m_d3dClass))
+    if (!scene->Init(m_d3dClass.get()))
         throw new std::exception("Failed to initialise scene");
     m_sceneMap.emplace(scene->m_Name, scene);
 }
@@ -82,7 +82,7 @@ int Application::Run()
         m_renderClock.Tick();
         TimeEventArgs args = m_renderClock.GetTimeArgs();
         m_mainWindow->OnRender(args);        
-    }    
+    }        
 
     return static_cast<int>(msg.wParam);
 }
@@ -192,6 +192,7 @@ void Application::Shutdown()
     DestroyScenes();
     m_mainWindow->Destroy();
     m_sceneMap.clear();
+    m_d3dClass.reset();
 }
 
 wstring Application::GetEXEDirectoryPath()

@@ -15,6 +15,7 @@ class Scene;
 using std::wstring;
 using std::shared_ptr;
 using std::unordered_map;
+using std::unique_ptr;
 
 class Application
 {
@@ -42,8 +43,8 @@ public:
 private:        
     HINSTANCE m_hInstance;
 
-    shared_ptr<D3DClass> m_d3dClass;
-    shared_ptr<WindowManager> m_windowManager;
+    unique_ptr<D3DClass> m_d3dClass;
+    unique_ptr<WindowManager> m_windowManager;
     shared_ptr<Window> m_mainWindow;
 
     HighResolutionClock m_updateClock;

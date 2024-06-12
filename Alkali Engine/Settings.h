@@ -3,7 +3,8 @@
 #define SCREEN_WIDTH 1280.0f
 #define SCREEN_HEIGHT 720.0f
 constexpr bool USING_IM_GUI = true;
-constexpr bool PERMA_FRUSTUM_DEBUG_LINES = true;
+constexpr bool PERMA_FRUSTUM_DEBUG_LINES = false;
+constexpr bool FRUSTUM_CULLING_ENABLED = true;
 
 constexpr float IM_GUI_INDENTATION = 16;
 

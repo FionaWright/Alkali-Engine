@@ -13,7 +13,7 @@ class Shader;
 struct Transform
 {
 	XMFLOAT3 Position;
-	XMFLOAT4 Rotation;
+	XMFLOAT3 Rotation;
 	XMFLOAT3 Scale;
 };
 
@@ -32,7 +32,6 @@ public:
 	void SetPosition(XMFLOAT3 xyz);
 	void SetRotation(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
-	void SetRotation(XMFLOAT4 quat);
 	void SetScale(float x, float y, float z);
 	void SetScale(XMFLOAT3 xyz);
 
@@ -41,9 +40,8 @@ public:
 
 	void RotateBy(float x, float y, float z);
 	void RotateBy(XMFLOAT3 xyz);
-	void RotateBy(XMFLOAT4 quat);
 
-	void UpdateWorldMatrix();	
+	void UpdateWorldMatrix(bool considerCentroid = true);
 
 	size_t GetModelVertexCount();
 	size_t GetModelIndexCount();

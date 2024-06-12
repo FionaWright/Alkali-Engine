@@ -5,6 +5,9 @@
 #include <codecvt>
 #include "Utils.h"
 
+shared_ptr<Model> Scene::ms_sphereModel;
+bool Scene::ms_sphereMode;
+
 Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDSV)
 	: m_Name(name)
 	, m_pWindow(pWindow)
@@ -22,7 +25,7 @@ Scene::~Scene()
 {
 }
 
-bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
+bool Scene::Init(D3DClass* pD3DClass)
 {
     // Check for DirectX Math library support.
 	// Note: Should this be moved to Application/D3DClass?
@@ -48,6 +51,17 @@ bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
 
 bool Scene::LoadContent()
 {
+	{
+		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+
+		ms_sphereModel = std::make_shared<Model>();
+		ms_sphereModel->Init(commandListCopy.Get(), L"Sphere.model");
+
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		commandQueueCopy->WaitForFenceValue(fenceValue);
+	}
+
 	{
 		const int paramCount = 1;
 		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
@@ -116,7 +130,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	
 	bool showLines = PERMA_FRUSTUM_DEBUG_LINES || m_freezeFrustum;
 	if (showLines)
-		m_frustum.CalculateDebugLinePoints(m_d3dClass.get());
+		m_frustum.CalculateDebugLinePoints(m_d3dClass);
 
 	m_frustum.SetDebugLinesEnabled(showLines);
 }
@@ -141,6 +155,8 @@ void Scene::OnRender(TimeEventArgs& e)
 			ImGui::Checkbox("Cull Back", &Shader::ms_CullNone);
 
 			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
+
+			ImGui::Checkbox("Bounding Spheres", &ms_sphereMode);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
@@ -228,15 +244,15 @@ void Scene::OnRender(TimeEventArgs& e)
 				Transform camTrans = m_camera->GetTransform();
 				float pPosCam[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
 				ImGui::InputFloat3("Position##Camera", pPosCam);
-				float pRotCam[4] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z, camTrans.Rotation.w };
-				ImGui::InputFloat4("Rotation##Camera", pRotCam);
+				float pRotCam[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
+				ImGui::InputFloat3("Rotation##Camera", pRotCam);
 				camTrans.Position = XMFLOAT3(pPosCam[0], pPosCam[1], pPosCam[2]);
-				camTrans.Rotation = XMFLOAT4(pRotCam[0], pRotCam[1], pRotCam[2], pRotCam[3]);
+				camTrans.Rotation = XMFLOAT3(pRotCam[0], pRotCam[1], pRotCam[2]);
 
 				if (ImGui::Button("Reset to Default"))
 				{
 					camTrans.Position = XMFLOAT3(0, 0, -10);
-					camTrans.Rotation = XMFLOAT4(0, 0, 0, 1);
+					camTrans.Rotation = XMFLOAT3(0, 0, 0);
 				}
 
 				m_camera->SetTransform(camTrans);
@@ -252,22 +268,22 @@ void Scene::OnRender(TimeEventArgs& e)
 
 					Transform t = m_gameObjectList.at(i)->GetTransform();
 
-					string iStr = std::to_string(i);
+					string iStr = "##" + std::to_string(i);
 
 					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-					ImGui::InputFloat3(("Position##" + iStr).c_str(), pPos);
-					float pRot[4] = { t.Rotation.x, t.Rotation.y, t.Rotation.z, t.Rotation.w };
-					ImGui::InputFloat4(("Rotation##" + iStr).c_str(), pRot);
+					ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
+					float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
+					ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
 					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-					ImGui::InputFloat3(("Scale##" + iStr).c_str(), pScale);
+					ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
 
 					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-					t.Rotation = XMFLOAT4(pRot[0], pRot[1], pRot[2], pRot[3]);
+					t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
 					t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
 
 					m_gameObjectList.at(i)->SetTransform(t);
 
-					if (ImGui::TreeNode("Model Info"))
+					if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -277,17 +293,19 @@ void Scene::OnRender(TimeEventArgs& e)
 						XMFLOAT3 pos;
 						float radius;
 						m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
-						string iRadiStr = "Model Bounding Radius: " + std::to_string(radius);
+						string radiStr = "Model Bounding Radius: " + std::to_string(radius);
+						string centroidStr = "Model Centroid: " + ToString(pos);
 
 						ImGui::Text(vCountStr.c_str());
 						ImGui::Text(iCountStr.c_str());
-						ImGui::Text(iRadiStr.c_str());
+						ImGui::Text(radiStr.c_str());
+						ImGui::Text(centroidStr.c_str());
 
 						ImGui::TreePop();
 						ImGui::Unindent(IM_GUI_INDENTATION);
 					}
 
-					if (ImGui::TreeNode("Shader Info"))
+					if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -332,6 +350,12 @@ void Scene::OnResize(ResizeEventArgs& e)
 
 void Scene::OnWindowDestroy()
 {
+}
+
+bool Scene::IsSphereModeOn(Model*& model)
+{
+	model = ms_sphereModel.get();
+	return ms_sphereMode;
 }
 
 shared_ptr<Window> Scene::GetWindow()
@@ -424,7 +448,7 @@ void Scene::SetDSVForSize(int width, int height)
 
 DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 {
-	auto line = std::make_shared<DebugLine>(m_d3dClass.get(), m_shaderLine, start, end, color);
+	auto line = std::make_shared<DebugLine>(m_d3dClass, m_shaderLine, start, end, color);
 	m_debugLineList.push_back(line);
 	return line.get();
 }

@@ -22,8 +22,8 @@ bool Tutorial2::LoadContent()
 		//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 		m_modelMadeline = std::make_shared<Model>();
 		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
-		m_modelMadeline->Init(commandListCopy.Get(), L"Cube.model");
-		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro.model");
+		//m_modelMadeline->Init(commandListCopy.Get(), L"Madeline.model");
+		m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -36,21 +36,18 @@ bool Tutorial2::LoadContent()
 	{
 		m_texture = std::make_shared<Texture>();
 		//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-		m_texture->Init(m_d3dClass.get(), commandListDirect.Get(), "White.tga");
+		m_texture->Init(m_d3dClass, commandListDirect.Get(), "White.tga");
 
 		m_normalMap = std::make_shared<Texture>();
-		m_normalMap->Init(m_d3dClass.get(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+		m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 	}
 
 	// Materials
 	{
 		m_material = std::make_shared<Material>(2);
-		m_material->AddTexture(m_d3dClass.get(), m_texture);
-		m_material->AddTexture(m_d3dClass.get(), m_normalMap);
+		m_material->AddTexture(m_d3dClass, m_texture);
+		m_material->AddTexture(m_d3dClass, m_normalMap);
 	}
-
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
@@ -109,14 +106,20 @@ bool Tutorial2::LoadContent()
 
 	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelMadeline, m_shaderCube, m_material);
 	refCube->SetPosition(-3, 0, 0);
-	m_gameObjectList.push_back(refCube.get());
+	//m_gameObjectList.push_back(refCube.get());
 
 	m_batch = std::make_shared<Batch>(rootSigPBR);
 	m_batch->AddGameObject(m_goCube);
-	m_batch->AddGameObject(refCube);
+	//m_batch->AddGameObject(refCube);
+
+	ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Robot", m_batch.get(), m_shaderCube);
+	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);
+
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	return true;
 }
