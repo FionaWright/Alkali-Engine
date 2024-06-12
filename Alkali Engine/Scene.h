@@ -15,6 +15,7 @@
 #include "Camera.h"
 #include "Frustum.h"
 #include "DebugLine.h"
+#include "CBuffers.h"
 
 using std::unique_ptr;
 using std::wstring;
@@ -57,6 +58,9 @@ protected:
 
     void SetDSVForSize(int width, int height);
 
+    DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
+    void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
+
     std::shared_ptr<Window> m_pWindow;
 
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
@@ -72,6 +76,7 @@ protected:
     unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
     vector<GameObject*> m_gameObjectList;
+    vector<shared_ptr<DebugLine>> m_debugLineList;
 
     float m_FoV;
     Frustum m_frustum;
@@ -85,4 +90,7 @@ private:
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
     bool m_updatingFrustum = true;
+
+    ComPtr<ID3D12RootSignature> m_rootSigLine;
+    shared_ptr<Shader> m_shaderLine;
 };

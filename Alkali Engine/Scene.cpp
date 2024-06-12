@@ -48,7 +48,42 @@ bool Scene::Init(shared_ptr<D3DClass> pD3DClass)
 
 bool Scene::LoadContent()
 {
-    return false;
+	{
+		const int paramCount = 1;
+		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+		rootParameters[0].InitAsConstants(sizeof(MatricesLineCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = 0;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		m_rootSigLine->SetName(L"Line Root Sig");
+	}
+
+	{
+		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
+		m_shaderLine = std::make_shared<Shader>();
+		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+	}
+
+    return true;
 }
 
 void Scene::UnloadContent()
@@ -373,4 +408,19 @@ void Scene::SetDSVForSize(int width, int height)
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
+}
+
+DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
+{
+	auto line = std::make_shared<DebugLine>(m_d3dClass.get(), m_shaderLine, start, end, color);
+	m_debugLineList.push_back(line);
+	return line.get();
+}
+
+void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv)
+{
+	for (int i = 0; i < m_debugLineList.size(); i++)
+	{
+		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine.Get(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjMatrix);
+	}
 }

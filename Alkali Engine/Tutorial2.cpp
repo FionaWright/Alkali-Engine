@@ -2,7 +2,6 @@
 #include "Tutorial2.h"
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
-#include "CBuffers.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
 	: Scene(name, pWindow, true)	
@@ -11,6 +10,8 @@ Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
 
 bool Tutorial2::LoadContent()
 {
+	Scene::LoadContent();
+
 	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Cube.obj", false);
 
 	// Models
@@ -48,6 +49,9 @@ bool Tutorial2::LoadContent()
 		m_material->AddTexture(m_d3dClass.get(), m_normalMap);
 	}
 
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
+
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
@@ -78,30 +82,6 @@ bool Tutorial2::LoadContent()
 		rootSigPBR->SetName(L"Tutorial2 Root Sig");
 	}
 
-	{
-		const int paramCount = 1;
-		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[0].InitAsConstants(sizeof(MatricesLineCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-		D3D12_STATIC_SAMPLER_DESC sampler[1]; 
-		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = 0;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
-		m_rootSigLine->SetName(L"Line Root Sig");
-	}
-
 	// Shaders
 	{
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
@@ -116,24 +96,11 @@ bool Tutorial2::LoadContent()
 		m_shaderCube = std::make_shared<Shader>();
 		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
-	}
+	}	
 
-	shared_ptr<Shader> shaderLine;
-	{
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		shaderLine = std::make_shared<Shader>();
-		shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), Application::GetEXEDirectoryPath(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
-	}
-
-	m_debugLine = std::make_shared<DebugLine>(m_d3dClass.get(), shaderLine, XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(1, 0, 0));
-
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
+	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
+	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
 	m_goCube->SetRotation(0, 90, 0);
@@ -206,7 +173,7 @@ void Tutorial2::OnRender(TimeEventArgs& e)
 
 	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
 
-	m_debugLine->Render(commandList.Get(), m_rootSigLine.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix);
+	Scene::RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
 	ImGUIManager::Render(commandList.Get());
 

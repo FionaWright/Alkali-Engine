@@ -26,13 +26,13 @@ void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEM
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 	m_preCompiled = true;
 
-	m_VSName = exePath + L"\\" + vsName;
-	m_PSName = exePath + L"\\" + psName;
+	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + vsName;
+	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;
 
 	m_inputLayout = inputLayout;
 	m_inputLayoutCount = inputLayoutCount;
