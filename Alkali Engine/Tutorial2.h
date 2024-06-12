@@ -22,8 +22,5 @@ private:
 	shared_ptr<GameObject> m_goCube;
 	shared_ptr<Shader> m_shaderCube;	
 	shared_ptr<Material> m_material;
-	shared_ptr<Texture> m_texture, m_normalMap;
-	shared_ptr<DebugLine> m_debugLine;
-
-	ComPtr<ID3D12RootSignature> m_rootSigLine;
+	shared_ptr<Texture> m_texture, m_normalMap;	
 };

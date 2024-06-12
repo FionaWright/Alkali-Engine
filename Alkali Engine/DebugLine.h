@@ -11,11 +11,15 @@ public:
 	~DebugLine();
 
 	void SetPositions(D3DClass* d3d, XMFLOAT3 start, XMFLOAT3 end);
+	void SetEnabled(bool enabled);
+
 	void UpdateVertexBuffer(D3DClass* d3d);
 
 	void Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 
 private:
+	bool m_enabled = true;
+
 	XMFLOAT3 m_start, m_end;
 	XMFLOAT3 m_color;
 
