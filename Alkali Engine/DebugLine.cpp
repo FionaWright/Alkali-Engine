@@ -9,18 +9,23 @@ DebugLine::DebugLine(D3DClass* d3d, shared_ptr<Shader> shader, XMFLOAT3 start, X
 	, m_color(color)
 	, m_shader(shader)
 {
-	UpdateVertexBuffer(d3d);
+	InitializeDynamicVertexBuffer(d3d);
+	UpdateDynamicVertexBuffer(d3d);
 }
 
 DebugLine::~DebugLine()
 {
+	if (m_vertexBuffer)
+	{
+		m_vertexBuffer->Unmap(0, nullptr);
+	}
 }
 
 void DebugLine::SetPositions(D3DClass* d3d, XMFLOAT3 start, XMFLOAT3 end)
 {
 	m_start = start;
 	m_end = end;
-	UpdateVertexBuffer(d3d);
+	UpdateDynamicVertexBuffer(d3d);
 }
 
 void DebugLine::SetEnabled(bool enabled)
@@ -28,26 +33,15 @@ void DebugLine::SetEnabled(bool enabled)
 	m_enabled = enabled;
 }
 
-void DebugLine::UpdateVertexBuffer(D3DClass* d3d)
+void DebugLine::InitializeDynamicVertexBuffer(D3DClass* d3d)
 {
-	struct VS_IN
-	{
-		XMFLOAT3 Position;
-		XMFLOAT3 Color;
-	};
-
-	VS_IN vertices[] = {
-		{ m_start, m_color},
-		{ m_end, m_color }
-	};
-
 	// Create a vertex buffer
 	D3D12_HEAP_PROPERTIES heapProps = {};
 	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
 	D3D12_RESOURCE_DESC resourceDesc = {};
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resourceDesc.Width = sizeof(vertices);
+	resourceDesc.Width = sizeof(VS_IN) * 2; // Size for two vertices
 	resourceDesc.Height = 1;
 	resourceDesc.DepthOrArraySize = 1;
 	resourceDesc.MipLevels = 1;
@@ -56,18 +50,21 @@ void DebugLine::UpdateVertexBuffer(D3DClass* d3d)
 
 	d3d->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_vertexBuffer));
 
-	// Copy data to the vertex buffer
-	void* pVertexDataBegin;
-	D3D12_RANGE readRange = { 0, 0 }; // We do not intend to read from this resource on the CPU.
-	m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
-	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
-	m_vertexBuffer->Unmap(0, nullptr);
+	m_vertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedVertexData));
 
-	// Initialize the vertex buffer view
-	m_vertexBufferView = {};
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.StrideInBytes = sizeof(VS_IN);
-	m_vertexBufferView.SizeInBytes = sizeof(vertices);
+	m_vertexBufferView.SizeInBytes = sizeof(VS_IN) * 2;
+}
+
+void DebugLine::UpdateDynamicVertexBuffer(D3DClass* d3d)
+{
+	VS_IN vertices[] = {
+		{ m_start, m_color},
+		{ m_end, m_color }
+	};
+
+	memcpy(m_mappedVertexData, vertices, sizeof(vertices));
 }
 
 void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)

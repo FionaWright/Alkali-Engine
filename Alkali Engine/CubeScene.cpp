@@ -12,6 +12,8 @@ CubeScene::CubeScene(const std::wstring& name, shared_ptr<Window> pWindow)
 
 bool CubeScene::LoadContent()
 {
+	Scene::LoadContent();
+
 	auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 

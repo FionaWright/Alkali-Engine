@@ -16,6 +16,8 @@ XMFLOAT3 Divide(const XMFLOAT3& a, float d);
 
 XMFLOAT3 Normalize(const XMFLOAT3& v, float& length);
 
+XMFLOAT3 Negate(const XMFLOAT3& v);
+
 float Magnitude(const XMFLOAT3& v);
 
 float Dot(const XMFLOAT3& a, const XMFLOAT3& b);

@@ -83,6 +83,12 @@ bool Scene::LoadContent()
 		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
+	vector<DebugLine*> frustumDebugLines;
+	for (int i = 0; i < 12; i++)
+		frustumDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, XMFLOAT3_ONE));
+
+	m_frustum.SetDebugLines(frustumDebugLines);
+
     return true;
 }
 
@@ -105,8 +111,14 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 
-	if (m_updatingFrustum)
+	if (!m_freezeFrustum)
 		m_frustum.UpdateValues(m_viewProjMatrix);
+	
+	bool showLines = PERMA_FRUSTUM_DEBUG_LINES || m_freezeFrustum;
+	if (showLines)
+		m_frustum.CalculateDebugLinePoints(m_d3dClass.get());
+
+	m_frustum.SetDebugLinesEnabled(showLines);
 }
 
 void Scene::OnRender(TimeEventArgs& e)
@@ -128,7 +140,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 			ImGui::Checkbox("Cull Back", &Shader::ms_CullNone);
 
-			ImGui::Checkbox("Freeze Frustum Culling", &m_updatingFrustum);
+			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");

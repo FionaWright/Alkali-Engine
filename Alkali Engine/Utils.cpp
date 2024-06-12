@@ -44,6 +44,11 @@ XMFLOAT3 Normalize(const XMFLOAT3& v, float& length)
     return XMFLOAT3(v.x / length, v.y / length, v.z / length);
 }
 
+XMFLOAT3 Negate(const XMFLOAT3& v) 
+{
+    return XMFLOAT3(-v.x, -v.y, -v.z);
+}
+
 float Magnitude(const XMFLOAT3& v)
 {
     return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);

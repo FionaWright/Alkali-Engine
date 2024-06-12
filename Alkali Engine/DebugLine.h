@@ -4,6 +4,12 @@
 #include "D3DClass.h"
 #include "Shader.h"
 
+struct VS_IN
+{
+	XMFLOAT3 Position;
+	XMFLOAT3 Color;
+};
+
 class DebugLine
 {
 public:
@@ -13,7 +19,9 @@ public:
 	void SetPositions(D3DClass* d3d, XMFLOAT3 start, XMFLOAT3 end);
 	void SetEnabled(bool enabled);
 
-	void UpdateVertexBuffer(D3DClass* d3d);
+	void InitializeDynamicVertexBuffer(D3DClass* d3d);
+
+	void UpdateDynamicVertexBuffer(D3DClass* d3d);
 
 	void Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj);
 
@@ -26,7 +34,7 @@ private:
 	shared_ptr<Shader> m_shader;
 
 	ComPtr<ID3D12Resource> m_vertexBuffer;
-	ComPtr<ID3D12Resource> m_intermediateVertexBuffer;
+	VS_IN* m_mappedVertexData;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 };
 
