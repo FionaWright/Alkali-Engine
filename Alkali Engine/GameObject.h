@@ -48,7 +48,7 @@ public:
 	size_t GetModelVertexCount();
 	size_t GetModelIndexCount();
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds);
-	float GetSphereRadius();
+	void GetBoundingSphere(XMFLOAT3& position, float& radius);
 
 	string m_Name;
 

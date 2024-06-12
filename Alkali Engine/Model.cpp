@@ -21,9 +21,9 @@ void Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
 	vector<VertexInputData> vertexBuffer;
 	vector<int32_t> indexBuffer;
 
-	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount, m_boundingSphereRadius);
+	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount, m_boundingSphereRadius, m_centroid);
 
-	Init(commandList, vertexCount, indexCount, sizeof(VertexInputData));
+	Init(vertexCount, indexCount, sizeof(VertexInputData));
 	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
@@ -33,21 +33,21 @@ void Model::Init(ID3D12GraphicsCommandList2* commandList, string filepath)
 	Init(commandList, wFilePath);
 }
 
-void Model::Init(ID3D12GraphicsCommandList2* commandList, size_t vertexCount, size_t indexCount, size_t vertexInputSize)
+void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize)
 {
 	m_vertexCount = vertexCount;
 	m_indexCount = indexCount;
 	m_vertexInputSize = vertexInputSize;
 
 	ComPtr<ID3D12Resource> intermediateVertexBuffer;
-	ResourceManager::CreateCommittedResource(commandList, m_VertexBuffer, m_vertexCount, m_vertexInputSize);
+	ResourceManager::CreateCommittedResource(m_VertexBuffer, m_vertexCount, m_vertexInputSize);
 
 	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
 	m_VertexBufferView.SizeInBytes = static_cast<UINT>(m_vertexCount * m_vertexInputSize);
 	m_VertexBufferView.StrideInBytes = static_cast<UINT>(m_vertexInputSize);
 
 	ComPtr<ID3D12Resource> intermediateIndexBuffer;
-	ResourceManager::CreateCommittedResource(commandList, m_IndexBuffer, m_indexCount, sizeof(int32_t));
+	ResourceManager::CreateCommittedResource(m_IndexBuffer, m_indexCount, sizeof(int32_t));
 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
@@ -81,4 +81,9 @@ size_t Model::GetIndexCount()
 float Model::GetSphereRadius()
 {
 	return m_boundingSphereRadius;
+}
+
+XMFLOAT3 Model::GetCentroid()
+{
+	return m_centroid;
 }

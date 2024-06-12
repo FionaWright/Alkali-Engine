@@ -14,8 +14,8 @@ public:
 	Shader();
 	~Shader();
 
-	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath);
+	void Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	void InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
 	void Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig);
 
@@ -34,6 +34,7 @@ protected:
 private:
 	D3D12_INPUT_ELEMENT_DESC* m_inputLayout = nullptr;
 	UINT m_inputLayoutCount = 0;
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_topology;
 
 	ComPtr<ID3D12PipelineState> m_pso;
 

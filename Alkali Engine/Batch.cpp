@@ -29,16 +29,20 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewP
 {
 	for (int i = 0; i < m_gameObjectList.size(); i++) 
 	{
-		const XMFLOAT3 pos = m_gameObjectList.at(i)->GetTransform().Position;
-		const float radius = m_gameObjectList.at(i)->GetSphereRadius();
+		XMFLOAT3 pos;
+		float radius;
+		m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
+
 		if (frustum.CheckSphere(pos, radius))
 			m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 
 	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
 	{
-		const XMFLOAT3 pos = m_gameObjectList.at(i)->GetTransform().Position;
-		const float radius = m_gameObjectList.at(i)->GetSphereRadius();
+		XMFLOAT3 pos;
+		float radius;
+		m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
+
 		if (frustum.CheckSphere(pos, radius))
 			m_gameObjectListTransparent.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}

@@ -14,6 +14,7 @@
 #include "InputManager.h"
 #include "Camera.h"
 #include "Frustum.h"
+#include "DebugLine.h"
 
 using std::unique_ptr;
 using std::wstring;

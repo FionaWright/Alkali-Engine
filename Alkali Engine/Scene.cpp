@@ -226,7 +226,11 @@ void Scene::OnRender(TimeEventArgs& e)
 
 						string vCountStr = "Model Vertex Count: " + std::to_string(m_gameObjectList.at(i)->GetModelVertexCount());
 						string iCountStr = "Model Index Count: " + std::to_string(m_gameObjectList.at(i)->GetModelIndexCount());
-						string iRadiStr = "Model Bounding Radius: " + std::to_string(m_gameObjectList.at(i)->GetSphereRadius());
+
+						XMFLOAT3 pos;
+						float radius;
+						m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
+						string iRadiStr = "Model Bounding Radius: " + std::to_string(radius);
 
 						ImGui::Text(vCountStr.c_str());
 						ImGui::Text(iCountStr.c_str());
