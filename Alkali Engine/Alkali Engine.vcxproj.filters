@@ -133,11 +133,11 @@
     <ClCompile Include="HighResolutionClock.cpp">
       <Filter>Source Files\CPU Objects</Filter>
     </ClCompile>
+    <ClCompile Include="DebugLine.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h">
-      <Filter>Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Tutorial2.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
@@ -228,17 +228,23 @@
     <ClInclude Include="HighResolutionClock.h">
       <Filter>Source Files\CPU Objects</Filter>
     </ClInclude>
+    <ClInclude Include="DebugLine.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Resources\resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Alkali Engine.rc">
+    <ResourceCompile Include="Assets\Resources\Alkali Engine.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="icon1.ico">
+    <Image Include="Assets\Resources\AlkaliIcon4.ico">
       <Filter>Resources</Filter>
     </Image>
-    <Image Include="AlkaliIcon4.ico">
+    <Image Include="Assets\Resources\icon1.ico">
       <Filter>Resources</Filter>
     </Image>
   </ItemGroup>
@@ -259,11 +265,17 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="CreateMipMaps.hlsl">
+    <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
       <Filter>Shaders\Compute</Filter>
     </FxCompile>
-    <FxCompile Include="CreateMipMapsDebug.hlsl">
+    <FxCompile Include="Assets\Shaders\CreateMipMapsDebug.hlsl">
       <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Line_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Line_VS.hlsl">
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

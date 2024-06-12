@@ -47,4 +47,4 @@ using namespace DirectX;
 #include "Helpers.h"
 
 // Resources
-#include "resource.h"
+#include "Assets/Resources/resource.h"

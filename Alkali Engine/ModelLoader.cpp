@@ -264,6 +264,7 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 		throw new std::exception("IO Exception (OUTPUT)");
 
 	fout.write(reinterpret_cast<const char*>(&boundingRadiusSq), sizeof(float));
+	fout.write(reinterpret_cast<const char*>(&rollingCentroidSum), sizeof(XMFLOAT3));
 
 	size_t vertexCountUINT = vertexBuffer.size();
 	fout.write(reinterpret_cast<const char*>(&vertexCountUINT), sizeof(size_t));
@@ -351,7 +352,7 @@ VertexInputData ModelLoader::SetVertexData(ObjFaceVertexIndices i, ObjFaceVertex
 	return vertex;
 }
 
-void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount, float& boundingSphereRadius)
+void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, size_t& outVertexCount, size_t& outIndexCount, float& boundingSphereRadius, XMFLOAT3& centroid)
 {
 	ifstream fin;
 	wstring longPath = L"Assets/Models/" + filePath;
@@ -361,6 +362,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 		throw new std::exception("IO Exception");
 
 	fin.read(reinterpret_cast<char*>(&boundingSphereRadius), sizeof(float));
+	fin.read(reinterpret_cast<char*>(&centroid), sizeof(XMFLOAT3));
 
 	fin.read(reinterpret_cast<char*>(&outVertexCount), sizeof(size_t));
 

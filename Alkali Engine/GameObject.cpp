@@ -2,6 +2,7 @@
 #include "GameObject.h"
 #include "Settings.h"
 #include "CBuffers.h"
+#include "Utils.h"
 
 GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial)
 	: m_transform({})
@@ -184,7 +185,8 @@ void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& 
 	ds = m_shader->m_DSName;
 }
 
-float GameObject::GetSphereRadius()
+void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius)
 {
-	return m_model->GetSphereRadius();
+	radius = m_model->GetSphereRadius() * std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
+	position = Add(m_model->GetCentroid(), m_transform.Position);
 }

@@ -13,8 +13,10 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device)
+void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
+	m_topology = topology;
+
 	m_VSName = g_dirPath + vsName;
 	m_PSName = g_dirPath + psName;
 
@@ -24,8 +26,9 @@ void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEM
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, wstring exePath, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
+	m_topology = topology;
 	m_preCompiled = true;
 
 	m_VSName = exePath + L"\\" + vsName;
@@ -107,7 +110,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 
 	pipelineStateStream.pRootSignature = rootSig;
 	pipelineStateStream.InputLayout = { m_inputLayout, m_inputLayoutCount };
-	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineStateStream.PrimitiveTopologyType = m_topology;
 	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
 	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
 	pipelineStateStream.Blend = CD3DX12_BLEND_DESC(blendDesc);

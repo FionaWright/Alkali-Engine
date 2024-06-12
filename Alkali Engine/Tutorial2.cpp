@@ -48,35 +48,59 @@ bool Tutorial2::LoadContent()
 		m_material->AddTexture(m_d3dClass.get(), m_normalMap);
 	}
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	ComPtr<ID3D12RootSignature> rootSigPBR;
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+		int numDescriptors = 2;
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-	int numDescriptors = 2;
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		const int paramCount = 2;
+		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
-	const int paramCount = 2;
-	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-	rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
+		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = 0;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
-	sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler[0].MipLODBias = 0;
-	sampler[0].MaxAnisotropy = 0;
-	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler[0].MinLOD = 0.0f;
-	sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-	sampler[0].ShaderRegister = 0;
-	sampler[0].RegisterSpace = 0;
-	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		rootSigPBR->SetName(L"Tutorial2 Root Sig");
+	}
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);	
-	rootSig->SetName(L"Tutorial2 Root Sig");
+	{
+		const int paramCount = 1;
+		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+		rootParameters[0].InitAsConstants(sizeof(MatricesLineCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+
+		D3D12_STATIC_SAMPLER_DESC sampler[1]; 
+		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = 0;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		m_rootSigLine->SetName(L"Line Root Sig");
+	}
 
 	// Shaders
 	{
@@ -90,9 +114,26 @@ bool Tutorial2::LoadContent()
 		};
 
 		m_shaderCube = std::make_shared<Shader>();
-		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
+		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 	}
+
+	shared_ptr<Shader> shaderLine;
+	{
+		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
+		shaderLine = std::make_shared<Shader>();
+		shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), Application::GetEXEDirectoryPath(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+	}
+
+	m_debugLine = std::make_shared<DebugLine>(m_d3dClass.get(), shaderLine, XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(1, 0, 0));
+
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
 	m_goCube->SetRotation(0, 90, 0);
@@ -103,7 +144,7 @@ bool Tutorial2::LoadContent()
 	refCube->SetPosition(-3, 0, 0);
 	m_gameObjectList.push_back(refCube.get());
 
-	m_batch = std::make_shared<Batch>(rootSig);
+	m_batch = std::make_shared<Batch>(rootSigPBR);
 	m_batch->AddGameObject(m_goCube);
 	m_batch->AddGameObject(refCube);
 
@@ -164,6 +205,8 @@ void Tutorial2::OnRender(TimeEventArgs& e)
 	ClearBackBuffer(commandList.Get());	
 
 	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
+
+	m_debugLine->Render(commandList.Get(), m_rootSigLine.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix);
 
 	ImGUIManager::Render(commandList.Get());
 

@@ -111,6 +111,7 @@
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="D3DClass.cpp" />
+    <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImGUIManager.cpp" />
@@ -164,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="Assets\Resources\resource.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CBuffers.h" />
@@ -171,6 +173,7 @@
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DebugLine.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="GameObject.h" />
@@ -185,7 +188,6 @@
     <ClInclude Include="HighResolutionClock.h" />
     <ClInclude Include="Keycodes.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="SceneBistro.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Shader.h" />
@@ -196,11 +198,11 @@
     <ClInclude Include="WindowManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Alkali Engine.rc" />
+    <ResourceCompile Include="Assets\Resources\Alkali Engine.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="AlkaliIcon4.ico" />
-    <Image Include="icon1.ico" />
+    <Image Include="Assets\Resources\AlkaliIcon4.ico" />
+    <Image Include="Assets\Resources\icon1.ico" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\Normals.ps">
@@ -211,20 +213,32 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\CreateMipMapsDebug.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Line_PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">main</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Line_VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">main</EntryPointName>
+    </FxCompile>
     <None Include="Assets\Shaders\PBR.ps" />
     <None Include="Assets\Shaders\PBR.vs" />
-    <FxCompile Include="CreateMipMaps.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
-    </FxCompile>
-    <FxCompile Include="CreateMipMapsDebug.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

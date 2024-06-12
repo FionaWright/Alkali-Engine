@@ -9,6 +9,11 @@ struct MatricesCB
 	XMMATRIX VP;
 };
 
+struct MatricesLineCB
+{
+	XMMATRIX VP;
+};
+
 struct alignas(16) GenerateMipsCB
 {
     uint32_t SrcMipLevel;           // Texture level of source mip
