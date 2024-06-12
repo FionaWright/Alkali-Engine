@@ -89,7 +89,7 @@ private:
     ComPtr<ID3D12Resource> m_depthBuffer;   
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
-    bool m_updatingFrustum = true;
+    bool m_freezeFrustum = false;
 
     ComPtr<ID3D12RootSignature> m_rootSigLine;
     shared_ptr<Shader> m_shaderLine;

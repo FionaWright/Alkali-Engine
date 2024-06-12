@@ -3,6 +3,7 @@
 #define SCREEN_WIDTH 1280.0f
 #define SCREEN_HEIGHT 720.0f
 constexpr bool USING_IM_GUI = true;
+constexpr bool PERMA_FRUSTUM_DEBUG_LINES = true;
 
 constexpr float IM_GUI_INDENTATION = 16;
 
@@ -28,6 +29,9 @@ constexpr DXGI_FORMAT DSV_FORMAT = DXGI_FORMAT_D32_FLOAT;
 
 constexpr float NEAR_PLANE = 0.1f;
 constexpr float FAR_PLANE = 400;
+
+constexpr XMFLOAT3 XMFLOAT3_ZERO = XMFLOAT3(0, 0, 0);
+constexpr XMFLOAT3 XMFLOAT3_ONE = XMFLOAT3(1, 1, 1);
 
 // GPU Debug
 constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] =

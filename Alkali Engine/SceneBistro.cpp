@@ -12,8 +12,7 @@ SceneBistro::SceneBistro(const std::wstring& name, shared_ptr<Window> pWindow)
 
 bool SceneBistro::LoadContent()
 {
-	auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	Scene::LoadContent();
 
 	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
@@ -62,9 +61,6 @@ bool SceneBistro::LoadContent()
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
-
-	fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);
@@ -116,6 +112,8 @@ void SceneBistro::OnRender(TimeEventArgs& e)
 	ClearBackBuffer(commandList.Get());
 
 	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
+
+	Scene::RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
 	ImGUIManager::Render(commandList.Get());
 
