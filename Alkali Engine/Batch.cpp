@@ -33,7 +33,7 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewP
 		float radius;
 		m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
 
-		if (frustum.CheckSphere(pos, radius))
+		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
 			m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 
@@ -41,9 +41,9 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewP
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
+		m_gameObjectListTransparent.at(i)->GetBoundingSphere(pos, radius);
 
-		if (frustum.CheckSphere(pos, radius))
+		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
 			m_gameObjectListTransparent.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
 	}
 }

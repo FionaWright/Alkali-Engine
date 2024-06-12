@@ -243,6 +243,8 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 	}
 
 	rollingCentroidSum = Divide(rollingCentroidSum, vertexBuffer.size());
+	if (vertexBuffer.size() == 0)
+		rollingCentroidSum = XMFLOAT3_ZERO;
 
 	float boundingRadiusSq = 0;
 
@@ -408,6 +410,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		int illuminationModel = 3;
 		string diffuseName = "";
 		string specularName = "";
+		string specularExpName = "";
+		string reflectionName = "";
 		string normalName = "";
 
 		// TODO: Ambient and emmissive
@@ -457,6 +461,18 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 				normalName = line.substr(line.find_last_of(' ') + 1);
 				continue;
 			}
+
+			if (line.starts_with("map_Ns"))
+			{
+				specularExpName = line.substr(line.find_first_of(' ') + 1);
+				continue;
+			}
+
+			if (line.starts_with("map_refl"))
+			{
+				reflectionName = line.substr(line.find_last_of(' ') + 1);
+				continue;
+			}
 		}	
 
 		shared_ptr<Model> model = std::make_shared<Model>();
@@ -464,15 +480,20 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		shared_ptr<Texture> diffuseTex = std::make_shared<Texture>();
 		shared_ptr<Texture> normalTex = std::make_shared<Texture>();		
 
-		// TODO: CHANGE THIS TO NOT BE BISTRO
-		string modelPath = "Bistro/" + modelName + ".model";
+		string modelPath = name + "/" + modelName + ".model";
 		model->Init(commandList, modelPath);		
+		
+		string diffuseTexPath = name + "/" + diffuseName;
+		if (diffuseName == "")
+			diffuseTexPath = "White.tga";
 
-		string diffuseTexPath = "Bistro/" + diffuseName;
 		bool hasAlpha;
 		diffuseTex->Init(d3d, commandList, diffuseTexPath, hasAlpha);
 
-		string normalTexPath = "Bistro/" + normalName;
+		string normalTexPath = name + "/" + normalName;
+		if (normalName == "")
+			normalTexPath = "RockNormal.tga";
+
 		normalTex->Init(d3d, commandList, normalTexPath);
 
 		material->AddTexture(d3d, diffuseTex);

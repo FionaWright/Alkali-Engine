@@ -141,7 +141,7 @@ void Camera::MoveScroll(TimeEventArgs& e)
 		m_yaw += deltaMouse.x;
 		XMVECTOR rot = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
 		rot = XMQuaternionNormalize(rot);
-		XMStoreFloat4(&m_transform.Rotation, rot);
+		SetRotation(m_pitch, m_yaw, 0);
 
 		XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
 		XMStoreFloat3(&m_forwardVector, direction);

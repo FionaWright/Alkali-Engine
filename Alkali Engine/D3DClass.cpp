@@ -8,6 +8,11 @@ D3DClass::D3DClass()
 
 D3DClass::~D3DClass()
 {
+    if (m_d3d12Device)
+    {
+        m_d3d12Device->Release();
+        m_d3d12Device.Reset();
+    }
 }
 
 void D3DClass::Init()

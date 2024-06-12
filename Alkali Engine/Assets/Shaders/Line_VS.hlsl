@@ -20,7 +20,7 @@ ConstantBuffer<Matrices> MatricesCB : register(b0);
 VS_OUT main(VS_IN input)
 {
     VS_OUT o;
-    o.Position = mul(MatricesCB.VP, float4(input.Position, 1.0f)); // Maybe backwards
+    o.Position = mul(MatricesCB.VP, float4(input.Position, 1.0f)); 
     o.Color = input.Color;
     return o;
 }

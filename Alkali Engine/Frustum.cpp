@@ -75,8 +75,8 @@ void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
         float denom = XMVectorGetX(XMVector3Dot(n1, n2xn3));
         XMVECTOR point = nom / denom;
         XMStoreFloat3(&result, point);
-        return result;
-        //return XMFLOAT3(-result.x, -result.y, -result.z);
+        //return result;
+        return XMFLOAT3(-result.x, -result.y, -result.z);
     };
 
     // Extract the frustum corners by intersecting planes

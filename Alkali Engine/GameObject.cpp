@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "CBuffers.h"
 #include "Utils.h"
+#include "Scene.h"
 
 GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial)
 	: m_transform({})
@@ -45,11 +46,30 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Roo
 		commandListDirect->SetGraphicsRootDescriptorTable(1, texHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
+	Model* sphereModel;
+	bool sphereModeOn = Scene::IsSphereModeOn(sphereModel);	
+	Transform savedTransform = m_transform;
+
+	if (sphereModeOn)
+	{		
+		m_transform.Scale = Mult(m_transform.Scale, m_model->GetSphereRadius());
+		m_transform.Position = Add(m_transform.Position, m_model->GetCentroid());
+		UpdateWorldMatrix(false);
+	}
+
 	MatricesCB matricesCB;
 	matricesCB.M = m_worldMatrix;
 	matricesCB.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
 	matricesCB.VP = viewProj;
 	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matricesCB, 0);
+
+	if (sphereModeOn)
+	{
+		sphereModel->Render(commandListDirect);
+		m_transform = savedTransform;
+		UpdateWorldMatrix();
+		return;
+	}
 
 	m_model->Render(commandListDirect);
 }
@@ -84,21 +104,13 @@ void GameObject::SetRotation(float x, float y, float z)
 	y *= degToRad;
 	z *= degToRad;
 
-	XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(x, y, z);
-	XMStoreFloat4(&m_transform.Rotation, quaternion);
+	m_transform.Rotation = XMFLOAT3(x, y, z);
 	UpdateWorldMatrix();
 }
 
 void GameObject::SetRotation(XMFLOAT3 xyz)
 {
 	SetRotation(xyz.x, xyz.y, xyz.z);
-}
-
-void GameObject::SetRotation(XMFLOAT4 quat)
-{
-	XMVECTOR quaternion = XMLoadFloat4(&quat);
-	XMStoreFloat4(&m_transform.Rotation, quaternion);
-	UpdateWorldMatrix();
 }
 
 void GameObject::SetScale(float x, float y, float z)
@@ -133,12 +145,7 @@ void GameObject::RotateBy(float x, float y, float z)
 	y *= degToRad;
 	z *= degToRad;
 
-	XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(x, y, z);
-	XMVECTOR curRot = XMLoadFloat4(&m_transform.Rotation);
-	curRot = XMQuaternionMultiply(curRot, quaternion);
-	curRot = XMQuaternionNormalize(curRot);
-
-	XMStoreFloat4(&m_transform.Rotation, curRot);
+	m_transform.Rotation = Add(m_transform.Rotation, XMFLOAT3(x, y, z));
 	UpdateWorldMatrix();
 }
 
@@ -147,24 +154,22 @@ void GameObject::RotateBy(XMFLOAT3 xyz)
 	RotateBy(xyz.x, xyz.y, xyz.z);
 }
 
-void GameObject::RotateBy(XMFLOAT4 quat)
+void GameObject::UpdateWorldMatrix(bool considerCentroid)
 {
-	XMVECTOR quaternion = XMLoadFloat4(&quat);
-	XMVECTOR curRot = XMLoadFloat4(&m_transform.Rotation);
-	curRot = XMQuaternionMultiply(curRot, quaternion);
-	curRot = XMQuaternionNormalize(curRot);
+	XMMATRIX C = XMMatrixIdentity();
+	if (considerCentroid && m_model)
+	{
+		XMFLOAT3 centroid = m_model->GetCentroid();
+		if (!Equals(centroid, XMFLOAT3_ZERO))
+			C = XMMatrixTranslation(centroid.x, centroid.y, centroid.z);
+	}
+	XMMATRIX CI = XMMatrixInverse(nullptr, C);
 
-	XMStoreFloat4(&m_transform.Rotation, curRot);
-	UpdateWorldMatrix();
-}
-
-void GameObject::UpdateWorldMatrix()
-{
 	XMMATRIX T = XMMatrixTranslation(m_transform.Position.x, m_transform.Position.y, m_transform.Position.z);
 	XMMATRIX R = XMMatrixRotationRollPitchYaw(m_transform.Rotation.x, m_transform.Rotation.y, m_transform.Rotation.z);
 	XMMATRIX S = XMMatrixScaling(m_transform.Scale.x, m_transform.Scale.y, m_transform.Scale.z);
 
-	m_worldMatrix = XMMatrixMultiply(S, XMMatrixMultiply(R, T));
+	m_worldMatrix = XMMatrixMultiply(CI, XMMatrixMultiply(S, XMMatrixMultiply(R, XMMatrixMultiply(T, C))));
 }
 
 size_t GameObject::GetModelVertexCount()

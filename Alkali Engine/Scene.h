@@ -31,7 +31,7 @@ public:
     Scene(const wstring& name, shared_ptr<Window> pWindow, bool createDSV);
     virtual ~Scene();
 
-    bool Init(shared_ptr<D3DClass> pD3DClass);
+    bool Init(D3DClass* pD3DClass);
     virtual bool LoadContent() = 0;
 
     virtual void UnloadContent() = 0;
@@ -42,6 +42,8 @@ public:
 
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
+
+    static bool IsSphereModeOn(Model*& model);
 
     shared_ptr<Window> GetWindow();
 
@@ -72,7 +74,7 @@ protected:
     XMMATRIX m_projectionMatrix;
     XMMATRIX m_viewProjMatrix;
 
-    shared_ptr<D3DClass> m_d3dClass;
+    D3DClass* m_d3dClass;
     unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
     vector<GameObject*> m_gameObjectList;
@@ -93,4 +95,7 @@ private:
 
     ComPtr<ID3D12RootSignature> m_rootSigLine;
     shared_ptr<Shader> m_shaderLine;
+
+    static shared_ptr<Model> ms_sphereModel;
+    static bool ms_sphereMode;
 };

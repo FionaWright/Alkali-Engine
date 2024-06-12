@@ -56,7 +56,7 @@ bool SceneBistro::LoadContent()
 	m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
 
 	m_batch = std::make_shared<Batch>(rootSig);
-	ModelLoader::LoadSplitModel(m_d3dClass.get(), commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
+	ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);

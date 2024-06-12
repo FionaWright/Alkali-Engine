@@ -28,14 +28,14 @@ bool CubeScene::LoadContent()
 
 	m_texture = std::make_shared<Texture>();
 	//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-	m_texture->Init(m_d3dClass.get(), commandListDirect.Get(), "White.tga");
+	m_texture->Init(m_d3dClass, commandListDirect.Get(), "White.tga");
 
 	m_normalMap = std::make_shared<Texture>();
-	m_normalMap->Init(m_d3dClass.get(), commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+	m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
 
 	m_material = std::make_shared<Material>(2);
-	m_material->AddTexture(m_d3dClass.get(), m_texture);
-	m_material->AddTexture(m_d3dClass.get(), m_normalMap);
+	m_material->AddTexture(m_d3dClass, m_texture);
+	m_material->AddTexture(m_d3dClass, m_normalMap);
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	int numDescriptors = 2;
