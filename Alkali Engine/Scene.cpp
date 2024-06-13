@@ -111,6 +111,11 @@ void Scene::UnloadContent()
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 	m_gameObjectList.clear();
 	m_camera->Reset();
+
+	if (ms_sphereModel)
+	{
+		ms_sphereModel.reset();
+	}
 }
 
 void Scene::Destroy()

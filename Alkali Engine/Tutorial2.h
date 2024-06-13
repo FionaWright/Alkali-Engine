@@ -17,7 +17,7 @@ protected:
 	virtual void OnRender(TimeEventArgs& e) override;
 
 private:
-	shared_ptr<Model> m_modelMadeline;
+	shared_ptr<Model> m_modelTest;
 	shared_ptr<Batch> m_batch;
 	shared_ptr<GameObject> m_goCube;
 	shared_ptr<Shader> m_shaderCube;	

@@ -20,10 +20,10 @@ bool Tutorial2::LoadContent()
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
 		//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
-		m_modelMadeline = std::make_shared<Model>();
+		m_modelTest = std::make_shared<Model>();
 		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
-		//m_modelMadeline->Init(commandListCopy.Get(), L"Madeline.model");
-		m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
+		m_modelTest->Init(commandListCopy.Get(), L"Sphere.model");
+		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -99,18 +99,19 @@ bool Tutorial2::LoadContent()
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
-	m_goCube = std::make_shared<GameObject>("Test", m_modelMadeline, m_shaderCube, m_material);
+	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
 	m_goCube->SetRotation(0, 90, 0);
+	m_goCube->SetPosition(0, 3, 0);
 	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
 	m_gameObjectList.push_back(m_goCube.get());
 
-	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelMadeline, m_shaderCube, m_material);
+	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelTest, m_shaderCube, m_material);
 	refCube->SetPosition(-3, 0, 0);
-	//m_gameObjectList.push_back(refCube.get());
+	m_gameObjectList.push_back(refCube.get());
 
 	m_batch = std::make_shared<Batch>(rootSigPBR);
 	m_batch->AddGameObject(m_goCube);
-	//m_batch->AddGameObject(refCube);
+	m_batch->AddGameObject(refCube);
 
 	ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Robot", m_batch.get(), m_shaderCube);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
@@ -129,7 +130,7 @@ void Tutorial2::UnloadContent()
 	Scene::UnloadContent();
 
 	m_FoV = 45;
-	m_modelMadeline.reset();
+	m_modelTest.reset();
 	m_batch.reset();
 	m_shaderCube.reset();
 	m_goCube.reset();	
