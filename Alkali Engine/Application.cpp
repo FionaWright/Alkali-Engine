@@ -11,6 +11,7 @@
 #include "Utils.h"
 #include "CubeScene.h"
 #include "SceneBistro.h"
+#include "TextureLoader.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -193,6 +194,7 @@ void Application::Shutdown()
     m_mainWindow->Destroy();
     m_sceneMap.clear();
     m_d3dClass.reset();
+    TextureLoader::Shutdown();
 }
 
 wstring Application::GetEXEDirectoryPath()
