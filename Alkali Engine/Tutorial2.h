@@ -5,7 +5,7 @@
 class Tutorial2 : public Scene
 {
 public:
-	Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow);
+	Tutorial2(const std::wstring& name, Window* pWindow);
 
 	virtual bool LoadContent() override;
 

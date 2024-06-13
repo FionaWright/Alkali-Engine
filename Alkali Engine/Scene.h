@@ -28,7 +28,7 @@ class CommandQueue;
 class Scene : public std::enable_shared_from_this<Scene>
 {
 public:
-    Scene(const wstring& name, shared_ptr<Window> pWindow, bool createDSV);
+    Scene(const wstring& name, Window* pWindow, bool createDSV);
     virtual ~Scene();
 
     bool Init(D3DClass* pD3DClass);
@@ -45,7 +45,7 @@ public:
 
     static bool IsSphereModeOn(Model*& model);
 
-    shared_ptr<Window> GetWindow();
+    Window* GetWindow();
 
     wstring m_Name;
     bool m_ContentLoaded = false;
@@ -63,7 +63,7 @@ protected:
     DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
     void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
 
-    std::shared_ptr<Window> m_pWindow;
+    Window* m_pWindow;
 
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 

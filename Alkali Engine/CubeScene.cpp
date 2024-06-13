@@ -4,7 +4,7 @@
 #include "ModelLoader.h"
 #include "CBuffers.h"
 
-CubeScene::CubeScene(const std::wstring& name, shared_ptr<Window> pWindow)
+CubeScene::CubeScene(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
 	, m_FoV(45.0f)
 {
