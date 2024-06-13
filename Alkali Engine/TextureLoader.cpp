@@ -622,7 +622,8 @@ void TextureLoader::Shutdown()
 
     for (int i = 0; i < ms_trackedDescHeaps.size(); i++)
     {
-        ms_trackedDescHeaps.at(i)->Release();
+        if (ms_trackedDescHeaps.at(i))
+            ms_trackedDescHeaps.at(i)->Release();
     }
     ms_trackedDescHeaps.clear();
 }

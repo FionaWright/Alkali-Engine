@@ -5,7 +5,7 @@
 class SceneBistro : public Scene
 {
 public:
-	SceneBistro(const std::wstring& name, shared_ptr<Window> pWindow);
+	SceneBistro(const std::wstring& name, Window* pWindow);
 
 	virtual bool LoadContent() override;
 

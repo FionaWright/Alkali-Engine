@@ -35,13 +35,13 @@ Application::Application(HINSTANCE hInst)
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", SCREEN_WIDTH, SCREEN_HEIGHT, vSync);
     m_mainWindow->Show();
 
-    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow);
+    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow.get());
     InitScene(tut2Scene);
 
-    shared_ptr<CubeScene> cubeScene = std::make_shared<CubeScene>(L"Cube Scene", m_mainWindow);
+    shared_ptr<CubeScene> cubeScene = std::make_shared<CubeScene>(L"Cube Scene", m_mainWindow.get());
     InitScene(cubeScene);
 
-    shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow);
+    shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
     InitScene(bistroScene);
 
     AssignScene(tut2Scene);
@@ -189,12 +189,14 @@ void Application::Shutdown()
     m_d3dClass->Flush();
 
     ImGUIManager::Shutdown();   
-
-    DestroyScenes();
-    m_mainWindow->Destroy();
-    m_sceneMap.clear();
-    m_d3dClass.reset();
     TextureLoader::Shutdown();
+
+    DestroyScenes();    
+    m_mainWindow->Destroy();
+    m_windowManager.reset();
+    m_mainWindow.reset();
+    m_sceneMap.clear();
+    m_d3dClass.reset();    
 }
 
 wstring Application::GetEXEDirectoryPath()
@@ -239,6 +241,8 @@ void Application::AssignScene(shared_ptr<Scene> scene)
 
 void Application::DestroyScenes() 
 {
+    m_currentScene.reset();
+
     for (const auto& pair : m_sceneMap)
     {
         shared_ptr<Scene> scene = pair.second;

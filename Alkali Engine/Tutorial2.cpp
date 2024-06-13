@@ -3,7 +3,7 @@
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
 
-Tutorial2::Tutorial2(const std::wstring& name, shared_ptr<Window> pWindow)
+Tutorial2::Tutorial2(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
 {
 }

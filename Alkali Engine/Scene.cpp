@@ -8,7 +8,7 @@
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
 
-Scene::Scene(const std::wstring& name, shared_ptr<Window> pWindow, bool createDSV)
+Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
 	, m_pWindow(pWindow)
 	, m_dsvEnabled(createDSV)
@@ -363,7 +363,7 @@ bool Scene::IsSphereModeOn(Model*& model)
 	return ms_sphereMode;
 }
 
-shared_ptr<Window> Scene::GetWindow()
+Window* Scene::GetWindow()
 {
 	return m_pWindow;
 }

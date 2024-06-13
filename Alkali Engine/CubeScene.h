@@ -5,7 +5,7 @@
 class CubeScene : public Scene
 {
 public:
-	CubeScene(const std::wstring& name, shared_ptr<Window> pWindow);
+	CubeScene(const std::wstring& name, Window* pWindow);
 
 	virtual bool LoadContent() override;
 
