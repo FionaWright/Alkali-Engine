@@ -21,7 +21,7 @@ bool Tutorial2::LoadContent()
 
 		//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
 		m_modelTest = std::make_shared<Model>();
-		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_01_BLENDSHADER.model");
+		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");
 		m_modelTest->Init(commandListCopy.Get(), L"Sphere.model");
 		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
@@ -35,11 +35,11 @@ bool Tutorial2::LoadContent()
 	// Textures
 	{
 		m_texture = std::make_shared<Texture>();
-		//m_texture->Init(m_d3dClass->GetDevice(), commandListDirect.Get(), "Bistro/Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds");
-		m_texture->Init(m_d3dClass, commandListDirect.Get(), "White.tga");
+		m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
+		//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Celeste.tga");
 
 		m_normalMap = std::make_shared<Texture>();
-		m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Cloth_Normal.dds");
+		m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
 	}
 
 	// Materials
@@ -60,11 +60,12 @@ bool Tutorial2::LoadContent()
 		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
+		D3D12_TEXTURE_ADDRESS_MODE addressMode = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
-		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler[0].AddressU = addressMode;
+		sampler[0].AddressV = addressMode;
+		sampler[0].AddressW = addressMode;
 		sampler[0].MipLODBias = 0;
 		sampler[0].MaxAnisotropy = 0;
 		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -99,22 +100,26 @@ bool Tutorial2::LoadContent()
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
-	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
-	m_goCube->SetRotation(0, 90, 0);
-	m_goCube->SetPosition(0, 3, 0);
-	//m_goCube->SetScale(0.01f, 0.01f, 0.01f);
-	m_gameObjectList.push_back(m_goCube.get());
-
-	shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelTest, m_shaderCube, m_material);
-	refCube->SetPosition(-3, 0, 0);
-	m_gameObjectList.push_back(refCube.get());
-
 	m_batch = std::make_shared<Batch>(rootSigPBR);
-	m_batch->AddGameObject(m_goCube);
-	m_batch->AddGameObject(refCube);
 
-	ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Robot", m_batch.get(), m_shaderCube);
-	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
+	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives", m_batch.get(), m_shaderCube);
+	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, whiteList);
+	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
+	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
+
+	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Madeline", m_batch.get(), m_shaderCube);
+	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
+
+	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
+	m_goCube->SetPosition(0, 10, 0);
+	m_gameObjectList.push_back(m_goCube.get());
+	m_batch->AddGameObject(m_goCube);
+
+	//shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelTest, m_shaderCube, m_material);
+	//refCube->SetPosition(-3, 0, 0);
+	//m_gameObjectList.push_back(refCube.get());
+	//m_batch->AddGameObject(refCube);	
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);

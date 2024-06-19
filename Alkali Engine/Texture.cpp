@@ -45,16 +45,18 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
 
     string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
     if (fileExtension == "tga")
-        TextureLoader::LoadTGA(filePath, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
+        TextureLoader::LoadTGA(filePath, m_textureWidth, m_textureHeight, &m_textureData);
     else if (fileExtension == "dds")
         TextureLoader::LoadDDS(filePath, hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
     else
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
-    bool isTinyTex = m_textureWidth < 8 || m_textureHeight < 8;
+    // NPOT dimensions not currently supported for mip mapping
+    bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
+    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
     m_textureDesc = {};
-    m_textureDesc.MipLevels = isTinyTex ? 1 : GLOBAL_MIP_LEVELS;
+    m_textureDesc.MipLevels = invalidForMipMaps ? 1 : GLOBAL_MIP_LEVELS;
     m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;

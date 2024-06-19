@@ -157,7 +157,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
 
-			ImGui::Checkbox("Cull Back", &Shader::ms_CullNone);
+			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_CullNone);
 
 			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
 

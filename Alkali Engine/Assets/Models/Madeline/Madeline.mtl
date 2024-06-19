@@ -1,0 +1,95 @@
+# Blender 4.1.1 MTL File: 'Madeline.blend'
+# www.blender.org
+
+newmtl Eyes2
+Ka 1.000000 1.000000 1.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Eye_D2.tga
+map_Ks Eye_SPC2.tga
+map_Ns Eye_RGH.tga
+map_Ke Eye_EMM2.tga
+map_Bump -bm 1.000000 Eye_N.tga
+
+newmtl Hair2
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Hair_D2.tga
+map_Ks Hair_SPC.tga
+map_Ns Hair_RGH.tga
+
+newmtl Jacket2
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Jacket_D2.tga
+map_Ks Jacket_SPC.tga
+map_Ns Jacket_RGH.tga
+map_Bump -bm 1.000000 Jacket_N.tga
+
+newmtl Outline2
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.031896 0.005182 0.019382
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Pants2
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Pants_D2.tga
+map_Ks Pants_SPC.tga
+map_Ns Pants_RGH.tga
+
+newmtl Shoes2
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Shoes_D2.tga
+map_Ks Shoes_SPC.tga
+map_Ns Shoes_RGH.tga
+map_Bump -bm 1.000000 Shoes_N.tga
+
+newmtl Skin2
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Skin_D2.tga
+map_Ks Skin_SPC2.tga
+map_Ns Skin_RGH2.tga
+
+newmtl Teeth
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.964686 0.651406 0.462077
+Ks 0.163636 0.163636 0.163636
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl Tongue2
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.310791 0.013493 0.054372
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2

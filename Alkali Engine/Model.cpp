@@ -17,13 +17,14 @@ Model::~Model()
 
 void Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
 {
-	size_t vertexCount = 0, indexCount = 0;
 	vector<VertexInputData> vertexBuffer;
 	vector<int32_t> indexBuffer;
+	float radius;
+	XMFLOAT3 centroid;
 
-	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, vertexCount, indexCount, m_boundingSphereRadius, m_centroid);
+	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
 
-	Init(vertexCount, indexCount, sizeof(VertexInputData));
+	Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), radius, centroid);
 	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
@@ -33,8 +34,11 @@ void Model::Init(ID3D12GraphicsCommandList2* commandList, string filepath)
 	Init(commandList, wFilePath);
 }
 
-void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize)
+void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, float boundingRadius, XMFLOAT3 centroid)
 {
+	m_boundingSphereRadius = boundingRadius;
+	m_centroid = centroid;
+
 	m_vertexCount = vertexCount;
 	m_indexCount = indexCount;
 	m_vertexInputSize = vertexInputSize;

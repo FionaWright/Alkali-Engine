@@ -6,7 +6,7 @@
 class TextureLoader
 {
 public:
-	static void LoadTGA(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel);
+	static void LoadTGA(string filePath, int& width, int& height, uint8_t** pData);
 	static void LoadDDS(string filePath, bool& hasAlpha, int& width, int& height, uint8_t** pData, bool& is2Channel);
 	static void LoadDDS_DXT1(ifstream& fin, int& width, int& height, uint8_t** pData);
 	static void LoadDDS_DXT5(ifstream& fin, int& width, int& height, uint8_t** pData);

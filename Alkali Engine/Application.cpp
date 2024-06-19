@@ -46,7 +46,7 @@ Application::Application(HINSTANCE hInst)
 
     AssignScene(tut2Scene);
 
-    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, TEXTURE_DIFFUSE_DXGI_FORMAT);    
+    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT, TEXTURE_DIFFUSE_DXGI_FORMAT);   
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
