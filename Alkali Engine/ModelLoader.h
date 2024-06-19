@@ -78,7 +78,7 @@ public:
 	static void LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader);
 
 	//static void LoadModelGLTF(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, float& boundingSphereRadius, XMFLOAT3& centroid);
-	static void LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader, vector<string> nameWhiteList = {});
+	static void LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader, vector<string>* optNameWhiteList =  nullptr);
 
 private:
 	static vector<XMFLOAT3> ms_posList;

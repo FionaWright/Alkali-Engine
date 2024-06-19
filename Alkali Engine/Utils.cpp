@@ -64,6 +64,11 @@ XMFLOAT3 Mult(const XMFLOAT3& a, float d)
     return XMFLOAT3(a.x * d, a.y * d, a.z * d);
 }
 
+XMFLOAT3 Mult(const XMFLOAT3& a, const XMFLOAT3& b)
+{
+    return XMFLOAT3(a.x * b.x, a.y * b.y, a.z * b.z);
+}
+
 XMFLOAT3 Normalize(const XMFLOAT3& v, float& length)
 {
     length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
