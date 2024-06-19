@@ -31,6 +31,7 @@ public:
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3 xyz);
 	void SetRotation(float x, float y, float z);
+	void SetRotationRadians(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
 	void SetScale(float x);
 	void SetScale(float x, float y, float z);
@@ -48,6 +49,8 @@ public:
 	size_t GetModelIndexCount();
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds);
 	void GetBoundingSphere(XMFLOAT3& position, float& radius);
+
+	bool IsTransparent();
 
 	string m_Name;
 

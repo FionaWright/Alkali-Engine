@@ -44,6 +44,12 @@
     <Filter Include="Includes\ImGUI">
       <UniqueIdentifier>{2f362c05-6377-42e2-9df3-5dc82ae027c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Includes\spng">
+      <UniqueIdentifier>{82251d63-d4df-4fa5-82d2-1cf816eadd6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes\zlib">
+      <UniqueIdentifier>{2f20234d-0b85-4125-b590-e2c3fea6ee77}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tutorial2.cpp">
@@ -162,6 +168,42 @@
     </ClCompile>
     <ClCompile Include="Includes\SimdJSON\simdjson.cpp">
       <Filter>Includes\SimdJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\spng\spng.c">
+      <Filter>Includes\spng</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\crc32.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\deflate.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\infback.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\inffast.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\inflate.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\zutil.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\inftrees.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\compress.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\adler32.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\zlib\trees.c">
+      <Filter>Includes\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceTracker.cpp">
+      <Filter>Source Files\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -287,6 +329,45 @@
     </ClInclude>
     <ClInclude Include="Includes\SimdJSON\simdjson.h">
       <Filter>Includes\SimdJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\spng\spng.h">
+      <Filter>Includes\spng</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\zconf.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\zlib.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\crc32.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\deflate.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\inffast.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\inffixed.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\inflate.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\zutil.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\inftrees.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\gzguts.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\zlib\trees.h">
+      <Filter>Includes\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceTracker.h">
+      <Filter>Source Files\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -29,3 +29,8 @@ ID3D12DescriptorHeap* Material::GetTextureHeap()
 {
 	return m_textureHeap.Get();
 }
+
+bool Material::GetHasAlpha()
+{
+	return m_textures.at(0)->GetHasAlpha();
+}

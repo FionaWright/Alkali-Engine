@@ -108,6 +108,12 @@ void GameObject::SetRotation(float x, float y, float z)
 	UpdateWorldMatrix();
 }
 
+void GameObject::SetRotationRadians(float x, float y, float z)
+{
+	m_transform.Rotation = XMFLOAT3(x, y, z);
+	UpdateWorldMatrix();
+}
+
 void GameObject::SetRotation(XMFLOAT3 xyz)
 {
 	SetRotation(xyz.x, xyz.y, xyz.z);
@@ -200,4 +206,9 @@ void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius)
 {
 	radius = m_model->GetSphereRadius() * std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
 	position = Add(m_model->GetCentroid(), m_transform.Position);
+}
+
+bool GameObject::IsTransparent()
+{
+	return m_material->GetHasAlpha();
 }

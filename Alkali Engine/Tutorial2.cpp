@@ -2,6 +2,7 @@
 #include "Tutorial2.h"
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
+#include "ResourceTracker.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
@@ -34,12 +35,16 @@ bool Tutorial2::LoadContent()
 
 	// Textures
 	{
-		m_texture = std::make_shared<Texture>();
-		m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
-		//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Celeste.tga");
+		if (!ResourceTracker::TryGetTexture("Baba.png", m_texture))
+		{
+			//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
+			m_texture->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
+		}	
 
-		m_normalMap = std::make_shared<Texture>();
-		m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
+		if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", m_normalMap))
+		{
+			m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
+		}
 	}
 
 	// Materials
@@ -102,10 +107,9 @@ bool Tutorial2::LoadContent()
 
 	m_batch = std::make_shared<Batch>(rootSigPBR);
 
-	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives", m_batch.get(), m_shaderCube);
-	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, whiteList);
-	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
+	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
+	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, whiteList);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.glb", m_batch.get(), m_shaderCube);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Madeline", m_batch.get(), m_shaderCube);

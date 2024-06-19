@@ -12,6 +12,7 @@
 #include "CubeScene.h"
 #include "SceneBistro.h"
 #include "TextureLoader.h"
+#include "ResourceTracker.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -190,6 +191,7 @@ void Application::Shutdown()
 
     ImGUIManager::Shutdown();   
     TextureLoader::Shutdown();
+    ResourceTracker::ReleaseAll();
 
     DestroyScenes();    
     m_mainWindow->Destroy();
