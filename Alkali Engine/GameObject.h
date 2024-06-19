@@ -32,6 +32,7 @@ public:
 	void SetPosition(XMFLOAT3 xyz);
 	void SetRotation(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
+	void SetScale(float x);
 	void SetScale(float x, float y, float z);
 	void SetScale(XMFLOAT3 xyz);
 

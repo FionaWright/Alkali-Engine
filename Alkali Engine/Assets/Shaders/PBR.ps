@@ -13,7 +13,13 @@ SamplerState g_sampler : register(s0);
 
 float4 main(V_OUT input) : SV_Target
 {
+    return float4(frac(input.UV), sign(input.UV.y), 1);
+    //return float4(frac(input.UV), 0, 1);
+    //return float4(input.UV, 0, 1);
+
     float4 tex = g_texture.Sample(g_sampler, input.UV);
+    //return tex;
+
     tex.rgb = pow(tex.rgb, 2.2f);
 
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
@@ -22,12 +28,17 @@ float4 main(V_OUT input) : SV_Target
     normalTangentSpace.xy = bump * 2.0f - 1.0f;
     normalTangentSpace.z = sqrt(1.0f - dot(normalTangentSpace.xy, normalTangentSpace.xy));
 
-    //return float4(input.Normal, 1);
+    //return float4(bump, 0, 1);
+    //return float4(abs(input.Normal), 1);
+    return float4(abs(input.Tangent), 1);
+    //return float4(input.UV, 0, 1);    
 
     float3 normalWorldSpace = normalize(
         normalTangentSpace.x * input.Tangent +
         normalTangentSpace.y * input.Binormal +
         normalTangentSpace.z * input.Normal);
+
+    //return float4(normalWorldSpace, 1);
 
     float3 lightDir = normalize(float3(0.5, -1, -0.1));    
 

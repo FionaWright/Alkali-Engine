@@ -11,12 +11,30 @@ using std::wstring;
 constexpr int NUM_CHANNELS = 4;
 constexpr bool MIP_MAP_DEBUG_MODE = false;
 
+constexpr bool FLIP_DXT1_UPSIDE_DOWN = true;
+constexpr bool FLIP_DXT1_RIGHTSIDE_LEFT = false;
+constexpr bool FLIP_DXT1_BLOCKS_UPSIDE_DOWN = true;
+constexpr bool FLIP_DXT1_BLOCKS_RIGHTSIDE_LEFT = false;
+
+constexpr bool FLIP_DXT5_UPSIDE_DOWN = true;
+constexpr bool FLIP_DXT5_RIGHTSIDE_LEFT = false;
+constexpr bool FLIP_DXT5_BLOCKS_UPSIDE_DOWN = true;
+constexpr bool FLIP_DXT5_BLOCKS_RIGHTSIDE_LEFT = false;
+
+constexpr bool FLIP_ATI2_UPSIDE_DOWN = true;
+constexpr bool FLIP_ATI2_RIGHTSIDE_LEFT = false;
+constexpr bool FLIP_ATI2_BLOCKS_UPSIDE_DOWN = true;
+constexpr bool FLIP_ATI2_BLOCKS_RIGHTSIDE_LEFT = false;
+
+constexpr bool FLIP_TGA_UPSIDE_DOWN = false;
+constexpr bool FLIP_TGA_RIGHTSIDE_LEFT = false;
+
 ID3D12RootSignature* TextureLoader::ms_mipMapRootSig;
 ID3D12PipelineState* TextureLoader::ms_pso;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
 
-void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)
+void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** pData)
 {
     ifstream fin;
     string longPath = "Assets/Textures/" + filePath;
@@ -51,14 +69,12 @@ void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** 
 
     int sPixelIndex = (totalPixelCount * bytesPerPixel) - (width * bytesPerPixel);
 
-    bool flipUpsideDown = false;
-
     // Now copy the targa image data into the targa destination array in the correct order since the targa format is stored upside down and also is not in RGBA order.
     for (int h = 0; h < height; h++)
     {
         for (int w = 0; w < width; w++)
         {
-            int spi = flipUpsideDown ? (h * width + w) * bytesPerPixel : sPixelIndex;
+            int spi = FLIP_TGA_UPSIDE_DOWN ? (h * width + w) * bytesPerPixel : sPixelIndex;
 
             (*pData)[dPixelIndex + 0] = static_cast<uint8_t>(targaData[spi + 2]);  // Red.
             (*pData)[dPixelIndex + 1] = static_cast<uint8_t>(targaData[spi + 1]);  // Green.
@@ -195,9 +211,6 @@ void TextureLoader::LoadDDS_DXT1(ifstream& fin, int& width, int& height, uint8_t
 
     constexpr int BIT_MASK = 0b11;
 
-    constexpr bool flipUpsideDown = true;
-    constexpr bool flipRightsideLeft = false;
-
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
         for (int bX = 0; bX < blockWidth; ++bX)
@@ -212,8 +225,8 @@ void TextureLoader::LoadDDS_DXT1(ifstream& fin, int& width, int& height, uint8_t
             uint8_t g1 = (block.color1 & 0x07E0) >> 3;
             uint8_t b1 = (block.color1 & 0x001F) << 3;
 
-            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+            int dBY = FLIP_DXT1_UPSIDE_DOWN ? blockHeight - 1 - bY : bY;
+            int dBX = FLIP_DXT1_RIGHTSIDE_LEFT ? blockWidth - 1 - bX : bX;
 
             for (int y = 0; y < 4; ++y)
             {
@@ -258,8 +271,11 @@ void TextureLoader::LoadDDS_DXT1(ifstream& fin, int& width, int& height, uint8_t
                     else
                         throw new std::exception("Color block error");
 
-                    int texturePixelYIndex = dBY * 4 + y;
-                    int texturePixelXIndex = dBX * 4 + x;
+                    int dY = FLIP_DXT1_BLOCKS_UPSIDE_DOWN ? 3 - y : y;
+                    int dX = FLIP_DXT1_BLOCKS_RIGHTSIDE_LEFT ? 3 - x : x;
+
+                    int texturePixelYIndex = dBY * 4 + dY;
+                    int texturePixelXIndex = dBX * 4 + dX;
                     int pixelIndex = texturePixelYIndex * width + texturePixelXIndex;
                     int destIndex = pixelIndex * NUM_CHANNELS;
 
@@ -312,9 +328,6 @@ void TextureLoader::LoadDDS_DXT5(ifstream& fin, int& width, int& height, uint8_t
 
     constexpr int BIT_MASK = 0b11;
 
-    constexpr bool flipUpsideDown = true;
-    constexpr bool flipRightsideLeft = false;
-
     for (int bY = 0; bY < blockHeight; ++bY) // Can this be changed to just read colorBlocks linearly?
     {
         for (int bX = 0; bX < blockWidth; ++bX)
@@ -345,8 +358,8 @@ void TextureLoader::LoadDDS_DXT5(ifstream& fin, int& width, int& height, uint8_t
                 alphaValues[7] = 255;
             }
 
-            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+            int dBY = FLIP_DXT5_UPSIDE_DOWN ? blockHeight - 1 - bY : bY;
+            int dBX = FLIP_DXT5_RIGHTSIDE_LEFT ? blockWidth - 1 - bX : bX;
 
             for (int y = 0; y < 4; ++y)
             {
@@ -390,8 +403,11 @@ void TextureLoader::LoadDDS_DXT5(ifstream& fin, int& width, int& height, uint8_t
                     else
                         throw new std::exception("Color block error");
 
-                    int texturePixelYIndex = dBY * 4 + y;
-                    int texturePixelXIndex = dBX * 4 + x;
+                    int dY = FLIP_DXT5_BLOCKS_UPSIDE_DOWN ? 3 - y : y;
+                    int dX = FLIP_DXT5_BLOCKS_RIGHTSIDE_LEFT ? 3 - x : x;
+
+                    int texturePixelYIndex = dBY * 4 + dY;
+                    int texturePixelXIndex = dBX * 4 + dX;
                     int pixelIndex = texturePixelYIndex * width + texturePixelXIndex;
                     int destIndex = pixelIndex * NUM_CHANNELS;
 
@@ -469,9 +485,6 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
 
     fin.read(reinterpret_cast<char*>(blocks), totalBlocks * sizeof(ATI2Block));
 
-    constexpr bool flipUpsideDown = true;
-    constexpr bool flipRightsideLeft = false;
-
     uint8_t decompressedRed[16];
     uint8_t decompressedGreen[16];
 
@@ -489,15 +502,18 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
             ComputeInterpolatedValues(block.red0, block.red1, xValues);
             ComputeInterpolatedValues(block.green0, block.green1, yValues);
 
-            int dBY = flipUpsideDown ? blockHeight - 1 - bY : bY;
-            int dBX = flipRightsideLeft ? blockWidth - 1 - bX : bX;
+            int dBY = FLIP_ATI2_UPSIDE_DOWN ? blockHeight - 1 - bY : bY;
+            int dBX = FLIP_ATI2_RIGHTSIDE_LEFT ? blockWidth - 1 - bX : bX;
 
             for (int y = 0; y < 4; ++y)
             {
                 for (int x = 0; x < 4; ++x)
                 {
-                    int blockPixelIndex = 4 * y + x;
-                    int texturePixelIndex = ((dBY * 4 + y) * width + (dBX * 4 + x)) * 2;
+                    int dY = FLIP_ATI2_BLOCKS_UPSIDE_DOWN ? 3 - y : y;
+                    int dX = FLIP_ATI2_BLOCKS_RIGHTSIDE_LEFT ? 3 - x : x;
+
+                    int blockPixelIndex = 4 * dY + dX;
+                    int texturePixelIndex = ((dBY * 4 + dY) * width + (dBX * 4 + dX)) * 2;
 
                     (*pData)[texturePixelIndex + 0] = xValues[xIndices[blockPixelIndex]];
                     (*pData)[texturePixelIndex + 1] = yValues[yIndices[blockPixelIndex]];

@@ -23,9 +23,6 @@
     <Filter Include="Source Files\Scenes">
       <UniqueIdentifier>{248ac27b-15cc-41ef-a5c3-feee2a161c19}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ImGUI">
-      <UniqueIdentifier>{2f362c05-6377-42e2-9df3-5dc82ae027c3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Data">
       <UniqueIdentifier>{14333052-1d5b-42c5-8cdc-bcf54c8817b5}</UniqueIdentifier>
     </Filter>
@@ -34,6 +31,18 @@
     </Filter>
     <Filter Include="Source Files\CPU Objects">
       <UniqueIdentifier>{64c631fe-9a78-4a37-9fc3-1f20126da675}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{ee14a276-495f-4926-9fff-33fed8a99f0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes\SimdJSON">
+      <UniqueIdentifier>{71b21890-db76-45bf-ab67-42c64e61ee52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes\FastGLTF">
+      <UniqueIdentifier>{abfc9eaa-1d68-4f14-af40-66f42d15378c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes\ImGUI">
+      <UniqueIdentifier>{2f362c05-6377-42e2-9df3-5dc82ae027c3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -83,25 +92,25 @@
       <Filter>Source Files\Managers</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui_demo.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui_draw.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui_tables.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui_widgets.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\backends\imgui_impl_dx12.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\backends\imgui_impl_win32.cpp">
-      <Filter>ImGUI</Filter>
+      <Filter>Includes\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
@@ -138,6 +147,21 @@
     </ClCompile>
     <ClCompile Include="ModelLoader.cpp">
       <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\base64.cpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\fastgltf.cpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\fastgltf.ixx">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\io.cpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClCompile>
+    <ClCompile Include="Includes\SimdJSON\simdjson.cpp">
+      <Filter>Includes\SimdJSON</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -239,6 +263,30 @@
     </ClInclude>
     <ClInclude Include="ModelLoader.h">
       <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\base64.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\core.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\glm_element_traits.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\math.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\tools.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\types.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\util.hpp">
+      <Filter>Includes\FastGLTF</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\SimdJSON\simdjson.h">
+      <Filter>Includes\SimdJSON</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

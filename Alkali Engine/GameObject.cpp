@@ -113,6 +113,12 @@ void GameObject::SetRotation(XMFLOAT3 xyz)
 	SetRotation(xyz.x, xyz.y, xyz.z);
 }
 
+void GameObject::SetScale(float x) 
+{
+	m_transform.Scale = XMFLOAT3(x, x, x);
+	UpdateWorldMatrix();
+}
+
 void GameObject::SetScale(float x, float y, float z)
 {
 	m_transform.Scale = XMFLOAT3(x, y, z);

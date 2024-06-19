@@ -29,6 +29,25 @@ XMFLOAT2 Subtract(XMFLOAT2 a, XMFLOAT2 b)
 	return XMFLOAT2(a.x - b.x, a.y - b.y);
 }
 
+XMFLOAT2 Frac(const XMFLOAT2& a)
+{
+    float fracX = a.x - std::floor(a.x);
+    float fracY = a.y - std::floor(a.y);
+    return XMFLOAT2(fracX, fracY);
+}
+
+XMFLOAT2 NaiveFrac(XMFLOAT2 a)
+{
+    a.x -= a.x < 0 ? std::ceil(a.x) : std::floor(a.x);
+    a.y -= a.y < 0 ? std::ceil(a.y) : std::floor(a.y);
+    return a;
+}
+
+XMFLOAT2 Abs(const XMFLOAT2& a)
+{
+    return XMFLOAT2(std::abs(a.x), std::abs(a.y));
+}
+
 XMFLOAT3 Normalize(const XMFLOAT3& v)
 {
 	float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -64,6 +83,15 @@ float Magnitude(const XMFLOAT3& v)
 float Dot(const XMFLOAT3& a, const XMFLOAT3& b) 
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+XMFLOAT3 Cross(const XMFLOAT3& a, const XMFLOAT3& b)
+{
+    XMFLOAT3 result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+    return result;
 }
 
 bool Equals(XMFLOAT3 a, XMFLOAT3 b)

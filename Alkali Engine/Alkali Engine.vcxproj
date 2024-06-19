@@ -54,7 +54,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -84,7 +84,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -115,6 +115,22 @@
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImGUIManager.cpp" />
+    <ClCompile Include="Includes\fastgltf\src\base64.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\fastgltf.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\fastgltf.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Includes\fastgltf\src\io.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Includes\imgui-master\backends\imgui_impl_dx12.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -140,6 +156,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Includes\imgui-master\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Includes\SimdJSON\simdjson.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -179,6 +199,14 @@
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ImGUIManager.h" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\base64.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\core.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\glm_element_traits.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\math.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\tools.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\types.hpp" />
+    <ClInclude Include="Includes\fastgltf\include\fastgltf\util.hpp" />
+    <ClInclude Include="Includes\SimdJSON\simdjson.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h" />
