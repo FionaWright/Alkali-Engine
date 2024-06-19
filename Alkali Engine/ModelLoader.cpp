@@ -18,6 +18,28 @@ fastgltf::Parser ModelLoader::ms_parser;
 
 constexpr bool RIGHT_HANDED_TO_LEFT = true;
 
+Transform ToTransform(fastgltf::TRS& trs)
+{
+	Transform transform;
+
+	auto& pos = trs.translation;
+	transform.Position = { pos.x(), pos.y(), pos.z() };
+
+	auto& rot = trs.rotation;
+	XMFLOAT4 rotFloat4 = XMFLOAT4(rot.x(), rot.y(), rot.z(), rot.w());
+	XMVECTOR rotVec = XMLoadFloat4(&rotFloat4);
+	XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotVec);
+	float pitch = std::atan2(rotationMatrix.r[1].m128_f32[2], rotationMatrix.r[2].m128_f32[2]);
+	float yaw = std::atan2(-rotationMatrix.r[0].m128_f32[2], std::sqrt(rotationMatrix.r[1].m128_f32[2] * rotationMatrix.r[1].m128_f32[2] + rotationMatrix.r[2].m128_f32[2] * rotationMatrix.r[2].m128_f32[2]));
+	float roll = std::atan2(rotationMatrix.r[0].m128_f32[1], rotationMatrix.r[0].m128_f32[0]);
+	transform.Rotation = { pitch, yaw, roll };
+
+	auto& scale = trs.scale;
+	transform.Scale = { scale.x(), scale.y(), scale.z() };
+
+	return transform;
+}
+
 void ModelLoader::PreprocessObjFile(string filePath, bool split)
 {
 	size_t lastSlashPos = filePath.find_last_of("\\/");
@@ -645,7 +667,147 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	}
 }
 
-void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, vector<string> nameWhiteList)
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, string modelNameExtensionless, fastgltf::Node& node, Transform& transform)
+{
+	vector<VertexInputData> vertexBuffer;
+
+	LoadGLTFVertexData(vertexBuffer, asset, primitive, "POSITION", [](const uint8_t* address, VertexInputData* output) {
+		output->Position = *reinterpret_cast<const XMFLOAT3*>(address);
+		//if (RIGHT_HANDED_TO_LEFT)
+		//	output->Position.x = -output->Position.x;
+	});
+
+	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TEXCOORD_0", [](const uint8_t* address, VertexInputData* output) {
+		output->Texture = *reinterpret_cast<const XMFLOAT2*>(address);
+	});
+
+	LoadGLTFVertexData(vertexBuffer, asset, primitive, "NORMAL", [](const uint8_t* address, VertexInputData* output) {
+		output->Normal = *reinterpret_cast<const XMFLOAT3*>(address);
+		//if (RIGHT_HANDED_TO_LEFT)
+		//	output->Normal.x = -output->Normal.x;
+	});
+
+	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputData* output) {
+		const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
+		float handedness = data->w > 0 ? 1 : -1;
+		output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
+	});
+
+	float boundingRadius = 0;
+	for (size_t j = 0; j < vertexBuffer.size(); ++j)
+	{
+		vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
+
+		float dist = Magnitude(vertexBuffer[j].Position);
+		boundingRadius = std::max(boundingRadius, dist);
+	}
+
+	vector<uint32_t> indexBuffer;
+	LoadGLTFIndices(indexBuffer, asset, primitive);
+
+	shared_ptr<Model> model = std::make_shared<Model>();
+	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadius, XMFLOAT3_ZERO);
+	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
+
+	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
+
+	string diffuseTexPath = "";
+	if (mat.pbrData.baseColorTexture.has_value())
+	{
+		fastgltf::Texture& tex = asset->textures[mat.pbrData.baseColorTexture.value().textureIndex];
+		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+		if (image.data.index() == 2)
+		{
+			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+			size_t slashIndex = texName.find_last_of('/');
+
+			if (slashIndex != std::string::npos)
+				diffuseTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+			else
+				diffuseTexPath = texName;
+		}
+	}
+
+	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
+	if (diffuseTexPath == "")
+		texFullFilePath = "WhitePOT.tga";
+
+	shared_ptr<Texture> diffuseTex;
+	if (!ResourceTracker::TryGetTexture(texFullFilePath, diffuseTex))
+	{
+		diffuseTex->Init(d3d, commandList, texFullFilePath);
+	}
+
+	string normalTexPath = "";
+	string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
+	if (normalTexPath == "")
+		texNormalFullFilePath = "DefaultNormal.tga";
+
+	shared_ptr<Texture> normalTex;
+	if (!ResourceTracker::TryGetTexture(texNormalFullFilePath, normalTex))
+	{
+		normalTex->Init(d3d, commandList, texNormalFullFilePath);
+	}
+
+	shared_ptr<Material> material = std::make_shared<Material>(2);
+	material->AddTexture(d3d, diffuseTex);
+	material->AddTexture(d3d, normalTex);
+
+	string nodeName(node.name);
+	nodeName = modelNameExtensionless + "::" + nodeName;	
+
+	shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
+	go->SetTransform(transform);
+
+	batch->AddGameObject(go);
+}
+
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+{
+	fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
+	Transform transform = ToTransform(trs);
+	transform.Position = Add(transform.Position, rollingTransform.Position);
+	transform.Rotation = Add(transform.Rotation, rollingTransform.Rotation);
+	transform.Scale = Mult(transform.Scale, rollingTransform.Scale);
+
+	size_t childCount = node.children.size();
+	for (size_t i = 0; i < childCount; i++)
+	{
+		fastgltf::Node& childNode = asset->nodes[node.children[i]];
+		LoadNode(d3d, commandList, asset, batch, shader, nameWhiteList, modelNameExtensionless, childNode, transform);
+	}
+
+	if (!node.meshIndex.has_value())
+		return;
+
+	string nodeName(node.name);
+	if (nameWhiteList && nameWhiteList->size() > 0)
+	{
+		bool found = false;
+		for (int j = 0; j < nameWhiteList->size(); j++)
+		{
+			if (nodeName.starts_with(nameWhiteList->at(j)))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			return;
+	}
+
+	size_t meshIndex = node.meshIndex.value();
+	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);	
+
+	for (const auto& primitive : mesh.primitives)
+	{
+		LoadPrimitive(d3d, commandList, asset, primitive, batch, shader, modelNameExtensionless, node, transform);
+	}
+}
+
+void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, vector<string>* nameWhiteList)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -655,11 +817,6 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 
 	string modelNameExtensionless = modelName.substr(0, dotIndex);
 
-	// The GltfDataBuffer class contains static factories which create a buffer for holding the
-	// glTF data. These return Expected<GltfDataBuffer>, which can be checked if an error occurs.
-	// The parser accepts any subtype of GltfDataGetter, which defines an interface for reading
-	// chunks of the glTF file for the Parser to handle. fastgltf provides a few predefined classes
-	// which inherit from GltfDataGetter, so choose whichever fits your usecase the best.
 	fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath(path);
 	if (data.error() != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
@@ -675,136 +832,17 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 	if (error != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
 
-	for (int i = 0; i < asset->nodes.size(); i++)
+	for (int i = 0; i < asset->scenes.size(); i++)
 	{		
-		auto& node = asset->nodes.at(i);		
-		if (!node.meshIndex.has_value())
-			continue;
+		fastgltf::Scene& scene = asset->scenes[i];
 
-		size_t meshIndex = node.meshIndex.value();
-		auto& mesh = asset->meshes.at(meshIndex);
-
-		string nodeName(node.name);
-		if (nameWhiteList.size() > 0)
+		size_t nodeCount = scene.nodeIndices.size();
+		for (size_t n = 0; n < nodeCount; n++)
 		{
-			bool found = false;
-			for (int j = 0; j < nameWhiteList.size(); j++)
-			{
-				if (nodeName.starts_with(nameWhiteList[j]))
-				{
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-				continue;
-		}
-
-		for (const auto& primitive : mesh.primitives)
-		{
-			vector<VertexInputData> vertexBuffer;			
-
-			LoadGLTFVertexData(vertexBuffer, asset, primitive, "POSITION", [](const uint8_t* address, VertexInputData* output) {
-				output->Position = *reinterpret_cast<const XMFLOAT3*>(address);				
-				//if (RIGHT_HANDED_TO_LEFT)
-				//	output->Position.x = -output->Position.x;
-			});
-
-			LoadGLTFVertexData(vertexBuffer, asset, primitive, "TEXCOORD_0", [](const uint8_t* address, VertexInputData* output) {
-				output->Texture = *reinterpret_cast<const XMFLOAT2*>(address);
-			});
-
-			LoadGLTFVertexData(vertexBuffer, asset, primitive, "NORMAL", [](const uint8_t* address, VertexInputData* output) {
-				output->Normal = *reinterpret_cast<const XMFLOAT3*>(address);
-				//if (RIGHT_HANDED_TO_LEFT)
-				//	output->Normal.x = -output->Normal.x;
-			});
-
-			LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputData* output) {
-				const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
-				float handedness = data->w > 0 ? 1 : -1;
-				output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
-			});
-
-			float boundingRadius = 0;
-			for (size_t j = 0; j < vertexBuffer.size(); ++j)
-			{
-				vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
-
-				float dist = Magnitude(vertexBuffer[j].Position);
-				boundingRadius = std::max(boundingRadius, dist);
-			}
-
-			vector<uint32_t> indexBuffer;
-
-			LoadGLTFIndices(indexBuffer, asset, primitive);
-
-			fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];		
-
-			shared_ptr<Model> model = std::make_shared<Model>();
-			shared_ptr<Material> material = std::make_shared<Material>(2);			
-
-			model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadius, XMFLOAT3_ZERO);
-			model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
-
-			string diffuseTexPath = "";
-			if (mat.pbrData.baseColorTexture.has_value())
-			{
-				fastgltf::Texture& tex = asset->textures[mat.pbrData.baseColorTexture.value().textureIndex];
-				fastgltf::Image& image = asset->images[tex.imageIndex.value()];
-
-				string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-				size_t slashIndex = texName.find_last_of('/');
-
-				if (slashIndex != std::string::npos)
-					diffuseTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-				else
-					diffuseTexPath = texName;
-			}					
-
-			string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
-			if (diffuseTexPath == "")
-				texFullFilePath = "WhitePOT.tga";
-
-			shared_ptr<Texture> diffuseTex;
-			if (!ResourceTracker::TryGetTexture(texFullFilePath, diffuseTex))
-			{
-				diffuseTex->Init(d3d, commandList, texFullFilePath);
-			}
-
-			string normalTexPath = "";
-			string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
-			if (normalTexPath == "")
-				texNormalFullFilePath = "DefaultNormal.tga";
-
-			shared_ptr<Texture> normalTex;
-			if (!ResourceTracker::TryGetTexture(texNormalFullFilePath, normalTex))
-			{
-				normalTex->Init(d3d, commandList, texNormalFullFilePath);
-			}
-
-			material->AddTexture(d3d, diffuseTex);
-			material->AddTexture(d3d, normalTex);
-
-			shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
-			auto& pos = std::get<fastgltf::TRS>(node.transform).translation;
-			go->SetPosition(pos.x(), pos.y(), pos.z());
-
-			auto& rot = std::get<fastgltf::TRS>(node.transform).rotation;
-			XMFLOAT4 rotFloat4 = XMFLOAT4(rot.x(), rot.y(), rot.z(), rot.w());
-			XMVECTOR rotVec = XMLoadFloat4(&rotFloat4);
-			XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotVec);
-			float pitch = std::atan2(rotationMatrix.r[1].m128_f32[2], rotationMatrix.r[2].m128_f32[2]);
-			float yaw = std::atan2(-rotationMatrix.r[0].m128_f32[2], std::sqrt(rotationMatrix.r[1].m128_f32[2] * rotationMatrix.r[1].m128_f32[2] + rotationMatrix.r[2].m128_f32[2] * rotationMatrix.r[2].m128_f32[2]));
-			float roll = std::atan2(rotationMatrix.r[0].m128_f32[1], rotationMatrix.r[0].m128_f32[0]);
-			go->SetRotationRadians(pitch, yaw, roll);
-
-			auto& scale = std::get<fastgltf::TRS>(node.transform).scale;
-			go->SetScale(scale.x(), scale.y(), scale.z());
-			//go->SetScale(0.05f);
-
-			batch->AddGameObject(go);
-		}
+			int nodeIndex = scene.nodeIndices[n];
+			fastgltf::Node& node = asset->nodes[nodeIndex];
+			Transform defTransform = {};
+			LoadNode(d3d, commandList, asset, batch, shader, nameWhiteList, modelNameExtensionless, node, defTransform);
+		}		
 	}
 }

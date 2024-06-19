@@ -13,9 +13,6 @@ GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader>
 	, m_Name(name)
 	, m_material(pMaterial)
 {
-	SetPosition(0, 0, 0);
-	SetRotation(0, 0, 0);
-	SetScale(1, 1, 1);
 }
 
 GameObject::~GameObject()

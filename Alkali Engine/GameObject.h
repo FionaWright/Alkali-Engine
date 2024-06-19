@@ -12,9 +12,9 @@ class Shader;
 
 struct Transform
 {
-	XMFLOAT3 Position;
-	XMFLOAT3 Rotation;
-	XMFLOAT3 Scale;
+	XMFLOAT3 Position = XMFLOAT3_ZERO;
+	XMFLOAT3 Rotation = XMFLOAT3_ZERO;
+	XMFLOAT3 Scale = XMFLOAT3_ONE;
 };
 
 class GameObject

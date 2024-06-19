@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+struct Transform;
+
 std::string wstringToString(const std::wstring& wstr);
 
 XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b);
@@ -21,6 +23,8 @@ XMFLOAT3 Normalize(const XMFLOAT3& v);
 XMFLOAT3 Divide(const XMFLOAT3& a, float d);
 
 XMFLOAT3 Mult(const XMFLOAT3& a, float d);
+
+XMFLOAT3 Mult(const XMFLOAT3& a, const XMFLOAT3& b);
 
 XMFLOAT3 Normalize(const XMFLOAT3& v, float& length);
 

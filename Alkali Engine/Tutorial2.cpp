@@ -109,7 +109,7 @@ bool Tutorial2::LoadContent()
 
 	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
 	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.glb", m_batch.get(), m_shaderCube);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Madeline", m_batch.get(), m_shaderCube);
