@@ -28,26 +28,22 @@ Texture::~Texture()
 
 void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath)
 {
-    bool _;
-    Init(d3d, commandListDirect, filePath, _);
-}
-
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool& hasAlpha)
-{
-    hasAlpha = false;
-
     HRESULT hr;
     auto device = d3d->GetDevice();
 
+    string longPath = "Assets/Textures/" + filePath;
+
     size_t dotIndex = filePath.find_last_of('.');
     if (dotIndex == std::string::npos)
-        throw new std::exception("Invalid file path");
+        throw new std::exception("Invalid file path");    
 
     string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
     if (fileExtension == "tga")
-        TextureLoader::LoadTGA(filePath, m_textureWidth, m_textureHeight, &m_textureData);
+        TextureLoader::LoadTGA(longPath, m_textureWidth, m_textureHeight, &m_textureData);
     else if (fileExtension == "dds")
-        TextureLoader::LoadDDS(filePath, hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
+        TextureLoader::LoadDDS(longPath, m_hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
+    else if (fileExtension == "png")
+        TextureLoader::LoadPNG(longPath, m_hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
     else
         throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 
@@ -127,4 +123,9 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialT
         device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
         m_srvGPUHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle, srvHeapOffset, incrementSize);
     }    
+}
+
+bool Texture::GetHasAlpha()
+{
+    return m_hasAlpha;
 }

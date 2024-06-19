@@ -15,6 +15,8 @@ public:
 
 	ID3D12DescriptorHeap* GetTextureHeap();
 
+	bool GetHasAlpha();
+
 private:
 	vector<shared_ptr<Texture>> m_textures; // Not sure if I like this, it's just to keep them in memory
 	ComPtr<ID3D12DescriptorHeap> m_textureHeap;

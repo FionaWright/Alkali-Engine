@@ -13,7 +13,7 @@ SamplerState g_sampler : register(s0);
 
 float4 main(V_OUT input) : SV_Target
 {
-    return float4(frac(input.UV), sign(input.UV.y), 1);
+    //return float4(frac(input.UV), sign(input.UV.y), 1);
     //return float4(frac(input.UV), 0, 1);
     //return float4(input.UV, 0, 1);
 
@@ -30,7 +30,7 @@ float4 main(V_OUT input) : SV_Target
 
     //return float4(bump, 0, 1);
     //return float4(abs(input.Normal), 1);
-    return float4(abs(input.Tangent), 1);
+    //return float4(abs(input.Tangent), 1);
     //return float4(input.UV, 0, 1);    
 
     float3 normalWorldSpace = normalize(

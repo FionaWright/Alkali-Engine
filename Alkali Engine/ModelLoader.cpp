@@ -4,6 +4,8 @@
 #include <direct.h>
 #include <filesystem>
 
+#include "ResourceTracker.h"
+
 #include "fastgltf/include/fastgltf/tools.hpp"
 
 namespace filesystem = std::filesystem;
@@ -485,9 +487,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		}	
 
 		shared_ptr<Model> model = std::make_shared<Model>();
-		shared_ptr<Material> material = std::make_shared<Material>(2);
-		shared_ptr<Texture> diffuseTex = std::make_shared<Texture>();
-		shared_ptr<Texture> normalTex = std::make_shared<Texture>();		
+		shared_ptr<Material> material = std::make_shared<Material>(2);		
 
 		string modelPath = name + "/" + modelName + ".model";
 		model->Init(commandList, modelPath);		
@@ -496,20 +496,27 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		if (diffuseName == "")
 			diffuseTexPath = "WhitePOT.tga";
 
-		bool hasAlpha;
-		diffuseTex->Init(d3d, commandList, diffuseTexPath, hasAlpha);
+		shared_ptr<Texture> diffuseTex;
+		if (!ResourceTracker::TryGetTexture(diffuseTexPath, diffuseTex))
+		{
+			diffuseTex->Init(d3d, commandList, diffuseTexPath);
+		}
 
 		string normalTexPath = name + "/" + normalName;
 		if (normalName == "")
 			normalTexPath = "DefaultNormal.tga";
 
-		normalTex->Init(d3d, commandList, normalTexPath);
+		shared_ptr<Texture> normalTex;
+		if (!ResourceTracker::TryGetTexture(normalTexPath, normalTex))
+		{
+			normalTex->Init(d3d, commandList, normalTexPath);
+		}
 
 		material->AddTexture(d3d, diffuseTex);
 		material->AddTexture(d3d, normalTex);
 
 		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
-		batch->AddGameObject(go, hasAlpha);
+		batch->AddGameObject(go);
 	}
 
 	fin.close();
@@ -518,9 +525,13 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 template<typename Func>
 void LoadGLTFVertexData(vector<VertexInputData>& vBuffer, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, const char* attribute, Func func)
 {
-	const auto& accessor = asset->accessors[primitive.findAttribute(attribute)->second];
-	const auto& bufferView = asset->bufferViews[*accessor.bufferViewIndex];
-	const auto& bufferData = asset->buffers[bufferView.bufferIndex].data;
+	const auto attributeObj = primitive.findAttribute(attribute);
+	if (attributeObj == primitive.attributes.cend())
+		throw std::exception("Err");
+
+	const auto& accessor = asset->accessors.at(attributeObj->second);
+	const auto& bufferView = asset->bufferViews.at(*accessor.bufferViewIndex);
+	const auto& bufferData = asset->buffers.at(bufferView.bufferIndex).data;
 
 	const size_t dataOffset = bufferView.byteOffset + accessor.byteOffset;
 	const size_t byteSize = fastgltf::getElementByteSize(accessor.type, accessor.componentType);
@@ -634,9 +645,15 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	}
 }
 
-void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader, vector<string> nameWhiteList)
+void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, vector<string> nameWhiteList)
 {
-	string path = "Assets/Models/" + name;
+	string path = "Assets/Models/" + modelName;
+
+	size_t dotIndex = modelName.find_last_of('.');
+	if (dotIndex == string::npos)
+		throw std::exception("Invalid model name");
+
+	string modelNameExtensionless = modelName.substr(0, dotIndex);
 
 	// The GltfDataBuffer class contains static factories which create a buffer for holding the
 	// glTF data. These return Expected<GltfDataBuffer>, which can be checked if an error occurs.
@@ -667,13 +684,13 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 		size_t meshIndex = node.meshIndex.value();
 		auto& mesh = asset->meshes.at(meshIndex);
 
-		string name(node.name);
+		string nodeName(node.name);
 		if (nameWhiteList.size() > 0)
 		{
 			bool found = false;
 			for (int j = 0; j < nameWhiteList.size(); j++)
 			{
-				if (name.starts_with(nameWhiteList[j]))
+				if (nodeName.starts_with(nameWhiteList[j]))
 				{
 					found = true;
 					break;
@@ -686,11 +703,10 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 
 		for (const auto& primitive : mesh.primitives)
 		{
-			vector<VertexInputData> vertexBuffer;
+			vector<VertexInputData> vertexBuffer;			
 
 			LoadGLTFVertexData(vertexBuffer, asset, primitive, "POSITION", [](const uint8_t* address, VertexInputData* output) {
-				// TODO: Calculate bounding sphere stuff 
-				output->Position = *reinterpret_cast<const XMFLOAT3*>(address);
+				output->Position = *reinterpret_cast<const XMFLOAT3*>(address);				
 				//if (RIGHT_HANDED_TO_LEFT)
 				//	output->Position.x = -output->Position.x;
 			});
@@ -711,9 +727,13 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 				output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
 			});
 
+			float boundingRadius = 0;
 			for (size_t j = 0; j < vertexBuffer.size(); ++j)
 			{
 				vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
+
+				float dist = Magnitude(vertexBuffer[j].Position);
+				boundingRadius = std::max(boundingRadius, dist);
 			}
 
 			vector<uint32_t> indexBuffer;
@@ -723,41 +743,68 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 			fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];		
 
 			shared_ptr<Model> model = std::make_shared<Model>();
-			shared_ptr<Material> material = std::make_shared<Material>(2);
-			shared_ptr<Texture> diffuseTex = std::make_shared<Texture>();
-			shared_ptr<Texture> normalTex = std::make_shared<Texture>();
+			shared_ptr<Material> material = std::make_shared<Material>(2);			
 
-			model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), 999999999999, XMFLOAT3_ZERO);
+			model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadius, XMFLOAT3_ZERO);
 			model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 
 			string diffuseTexPath = "";
-			if (diffuseTexPath == "")
-				diffuseTexPath = "WhitePOT.tga";
+			if (mat.pbrData.baseColorTexture.has_value())
+			{
+				fastgltf::Texture& tex = asset->textures[mat.pbrData.baseColorTexture.value().textureIndex];
+				fastgltf::Image& image = asset->images[tex.imageIndex.value()];
 
-			bool hasAlpha;
-			diffuseTex->Init(d3d, commandList, diffuseTexPath, hasAlpha);
+				string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+				size_t slashIndex = texName.find_last_of('/');
+
+				if (slashIndex != std::string::npos)
+					diffuseTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+				else
+					diffuseTexPath = texName;
+			}					
+
+			string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
+			if (diffuseTexPath == "")
+				texFullFilePath = "WhitePOT.tga";
+
+			shared_ptr<Texture> diffuseTex;
+			if (!ResourceTracker::TryGetTexture(texFullFilePath, diffuseTex))
+			{
+				diffuseTex->Init(d3d, commandList, texFullFilePath);
+			}
 
 			string normalTexPath = "";
+			string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
 			if (normalTexPath == "")
-				normalTexPath = "DefaultNormal.tga";
+				texNormalFullFilePath = "DefaultNormal.tga";
 
-			normalTex->Init(d3d, commandList, normalTexPath);
+			shared_ptr<Texture> normalTex;
+			if (!ResourceTracker::TryGetTexture(texNormalFullFilePath, normalTex))
+			{
+				normalTex->Init(d3d, commandList, texNormalFullFilePath);
+			}
 
 			material->AddTexture(d3d, diffuseTex);
 			material->AddTexture(d3d, normalTex);
 
-			shared_ptr<GameObject> go = std::make_shared<GameObject>(name, model, shader, material);
+			shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
 			auto& pos = std::get<fastgltf::TRS>(node.transform).translation;
 			go->SetPosition(pos.x(), pos.y(), pos.z());
 
 			auto& rot = std::get<fastgltf::TRS>(node.transform).rotation;
-			//go->SetRotation(rot.x(), rot.y(), rot.z());
+			XMFLOAT4 rotFloat4 = XMFLOAT4(rot.x(), rot.y(), rot.z(), rot.w());
+			XMVECTOR rotVec = XMLoadFloat4(&rotFloat4);
+			XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotVec);
+			float pitch = std::atan2(rotationMatrix.r[1].m128_f32[2], rotationMatrix.r[2].m128_f32[2]);
+			float yaw = std::atan2(-rotationMatrix.r[0].m128_f32[2], std::sqrt(rotationMatrix.r[1].m128_f32[2] * rotationMatrix.r[1].m128_f32[2] + rotationMatrix.r[2].m128_f32[2] * rotationMatrix.r[2].m128_f32[2]));
+			float roll = std::atan2(rotationMatrix.r[0].m128_f32[1], rotationMatrix.r[0].m128_f32[0]);
+			go->SetRotationRadians(pitch, yaw, roll);
 
-			auto& scale = std::get<fastgltf::TRS>(node.transform).rotation;
-			//go->SetScale(scale.x(), scale.y(), scale.z());
-			go->SetScale(0.05f);
+			auto& scale = std::get<fastgltf::TRS>(node.transform).scale;
+			go->SetScale(scale.x(), scale.y(), scale.z());
+			//go->SetScale(0.05f);
 
-			batch->AddGameObject(go, hasAlpha);
+			batch->AddGameObject(go);
 		}
 	}
 }

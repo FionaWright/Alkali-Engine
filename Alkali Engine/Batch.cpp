@@ -13,9 +13,9 @@ Batch::Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
 {
 }
 
-void Batch::AddGameObject(shared_ptr<GameObject> go, bool transparent)
+void Batch::AddGameObject(shared_ptr<GameObject> go)
 {
-	if (transparent)
+	if (go->IsTransparent())
 	{
 		m_gameObjectListTransparent.push_back(go);
 		return;

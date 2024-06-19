@@ -4,6 +4,8 @@
 #include "Application.h"
 #include "ResourceManager.h"
 
+#include "spng/spng.h"
+
 #include <string>
 using std::wstring;
 
@@ -36,9 +38,8 @@ vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
 
 void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** pData)
 {
-    ifstream fin;
-    string longPath = "Assets/Textures/" + filePath;
-    fin.open(longPath, std::ios::binary);
+    ifstream fin;    
+    fin.open(filePath, std::ios::binary);
 
     if (!fin)
         throw new std::exception("IO Exception");
@@ -101,8 +102,7 @@ void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** 
 void TextureLoader::LoadDDS(string filePath, bool& hasAlpha, int& width, int& height, uint8_t** pData, bool& is2Channel)
 {
     ifstream fin;
-    string longPath = "Assets/Textures/" + filePath;
-    fin.open(longPath, std::ios::binary);
+    fin.open(filePath, std::ios::binary);
 
     if (!fin)
         throw new std::exception("IO Exception");
@@ -525,8 +525,36 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
     delete[] blocks;
 }
 
-void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)
+void TextureLoader::LoadPNG(string filePath, bool& hasAlpha, int& width, int& height, uint8_t** pData, bool& is2Channel)
 {
+    FILE* file; 
+    fopen_s(&file, filePath.c_str(), "rb");
+    if (!file)
+    {
+        std::cerr << "Error opening file: " << filePath << std::endl;
+        return;
+    }
+
+    spng_ctx* ctx = spng_ctx_new(0);
+
+    spng_set_png_file(ctx, file);
+
+    size_t outSize;
+    spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &outSize);
+    *pData = new uint8_t[outSize];
+
+    spng_decode_image(ctx, *pData, outSize, SPNG_FMT_RGBA8, 0);
+
+    spng_ihdr ihdr;
+    spng_get_ihdr(ctx, &ihdr);
+
+    width = ihdr.width;
+    height = ihdr.height;
+    is2Channel = false;
+    hasAlpha = (ihdr.color_type == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA || ihdr.color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA);
+
+    spng_ctx_free(ctx);
+    fclose(file);
 }
 
 void TextureLoader::LoadJPG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)

@@ -4,7 +4,7 @@
 #define SCREEN_HEIGHT 720.0f
 constexpr bool USING_IM_GUI = true;
 constexpr bool PERMA_FRUSTUM_DEBUG_LINES = false;
-constexpr bool FRUSTUM_CULLING_ENABLED = false;
+constexpr bool FRUSTUM_CULLING_ENABLED = true;
 
 constexpr float IM_GUI_INDENTATION = 16;
 
@@ -18,7 +18,7 @@ constexpr bool USE_BARRIER_WARP = false;
 
 constexpr bool USE_SRGB = false; // Leave off, breaks stuff
 
-constexpr int GLOBAL_MIP_LEVELS = 1;
+constexpr int GLOBAL_MIP_LEVELS = 3;
 
 constexpr DXGI_FORMAT SWAP_CHAIN_DXGI_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
