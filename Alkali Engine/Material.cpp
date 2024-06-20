@@ -34,3 +34,8 @@ bool Material::GetHasAlpha()
 {
 	return m_textures.at(0)->GetHasAlpha();
 }
+
+vector<shared_ptr<Texture>>& Material::GetTextures()
+{
+	return m_textures;
+}

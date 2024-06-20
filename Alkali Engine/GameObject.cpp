@@ -208,6 +208,11 @@ void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius)
 	position = Add(centroidScaled, m_transform.Position);
 }
 
+Material* GameObject::GetMaterial()
+{
+	return m_material.get();
+}
+
 bool GameObject::IsTransparent()
 {
 	return m_material->GetHasAlpha();

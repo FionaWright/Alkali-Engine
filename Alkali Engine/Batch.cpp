@@ -1,16 +1,16 @@
 #include "pch.h"
 #include "Batch.h"
 
-Batch::Batch(ComPtr<ID3D12RootSignature> pRootSig)
-	:
-	m_rootSignature(pRootSig)
+void Batch::Init(string name, ComPtr<ID3D12RootSignature> pRootSig)
 {
+	m_Name = name;
+	m_rootSignature = pRootSig;
 }
 
-Batch::Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
-	:
-	m_rootSignature(ResourceManager::CreateRootSignature(params, paramCount, nullptr, 0))
+void Batch::Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
 {
+	m_Name = name;
+	m_rootSignature = ResourceManager::CreateRootSignature(params, paramCount, nullptr, 0);
 }
 
 void Batch::AddGameObject(shared_ptr<GameObject> go)
@@ -48,15 +48,12 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewP
 	}
 }
 
-void Batch::AddHeldGameObjectsToList(vector<GameObject*>& list) 
+vector<shared_ptr<GameObject>> Batch::GetOpaques()
 {
-	for (size_t i = 0; i < m_gameObjectList.size(); i++)
-	{
-		list.push_back(m_gameObjectList.at(i).get());
-	}
+	return m_gameObjectList;
+}
 
-	for (size_t i = 0; i < m_gameObjectListTransparent.size(); i++)
-	{
-		list.push_back(m_gameObjectListTransparent.at(i).get());
-	}
+vector<shared_ptr<GameObject>> Batch::GetTrans()
+{
+	return m_gameObjectListTransparent;
 }

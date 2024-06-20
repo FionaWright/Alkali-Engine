@@ -3,6 +3,7 @@
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
 #include "CBuffers.h"
+#include "ResourceTracker.h"
 
 SceneBistro::SceneBistro(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
@@ -27,12 +28,12 @@ bool SceneBistro::LoadContent()
 	rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler[1]; 
-	sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+	sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+	sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+	sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
 	sampler[0].MipLODBias = 0;
-	sampler[0].MaxAnisotropy = 0;
+	sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
 	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	sampler[0].MinLOD = 0.0f;
@@ -55,9 +56,13 @@ bool SceneBistro::LoadContent()
 	m_shaderPBR = std::make_shared<Shader>();
 	m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSig.Get(), m_d3dClass->GetDevice());
 
-	m_batch = std::make_shared<Batch>(rootSig);
-	ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	m_batch->AddHeldGameObjectsToList(m_gameObjectList);
+	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
+	{
+		m_batch->Init("PBR Basic", rootSig);
+	}
+
+	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderPBR);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);

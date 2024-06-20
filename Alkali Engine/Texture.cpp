@@ -31,6 +31,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     HRESULT hr;
     auto device = d3d->GetDevice();
 
+    m_filePath = filePath;
     string longPath = "Assets/Textures/" + filePath;
 
     size_t dotIndex = filePath.find_last_of('.');
@@ -134,4 +135,14 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialT
 bool Texture::GetHasAlpha()
 {
     return m_hasAlpha;
+}
+
+string Texture::GetFilePath()
+{
+    return m_filePath;
+}
+
+int Texture::GetMipLevels()
+{
+    return m_textureDesc.MipLevels;
 }

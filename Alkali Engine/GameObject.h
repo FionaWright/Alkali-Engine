@@ -49,7 +49,7 @@ public:
 	size_t GetModelIndexCount();
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds);
 	void GetBoundingSphere(XMFLOAT3& position, float& radius);
-
+	Material* GetMaterial();
 	bool IsTransparent();
 
 	string m_Name;

@@ -129,6 +129,11 @@ ComPtr<ID3D12PipelineState> Shader::GetPSO()
 	return m_pso;
 }
 
+bool Shader::IsPreCompiled()
+{
+	return m_preCompiled;
+}
+
 ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target)
 {
 	ComPtr<ID3DBlob> shaderBlob;

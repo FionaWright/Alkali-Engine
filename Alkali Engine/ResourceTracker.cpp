@@ -2,6 +2,10 @@
 #include "ResourceTracker.h"
 
 unordered_map<string, shared_ptr<Texture>> ResourceTracker::ms_textureMap;
+unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
+unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
+vector<shared_ptr<GameObject>> ResourceTracker::ms_goList;
+unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
 
 void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 {
@@ -24,7 +28,114 @@ bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 	return true;
 }
 
+unordered_map<string, shared_ptr<Texture>>& ResourceTracker::GetTextures()
+{
+	return ms_textureMap;
+}
+
+void ResourceTracker::AddModel(string filePath, shared_ptr<Model> model)
+{
+	if (ms_modelMap.contains(filePath))
+		return;
+
+	ms_modelMap.emplace(filePath, model);
+}
+
+bool ResourceTracker::TryGetModel(string filePath, shared_ptr<Model>& model)
+{
+	if (!ms_modelMap.contains(filePath))
+	{
+		model = std::make_shared<Model>();
+		AddModel(filePath, model);
+		return false;
+	}
+
+	model = ms_modelMap.at(filePath);
+	return true;
+}
+
+unordered_map<string, shared_ptr<Model>>& ResourceTracker::GetModels()
+{
+	return ms_modelMap;
+}
+
+void ResourceTracker::AddShader(string filePath, shared_ptr<Shader> shader)
+{
+	if (ms_shaderMap.contains(filePath))
+		return;
+
+	ms_shaderMap.emplace(filePath, shader);
+}
+
+bool ResourceTracker::TryGetShader(string filePath, shared_ptr<Shader>& shader)
+{
+	if (!ms_shaderMap.contains(filePath))
+	{
+		shader = std::make_shared<Shader>();
+		AddShader(filePath, shader);
+		return false;
+	}
+
+	shader = ms_shaderMap.at(filePath);
+	return true;
+}
+
+unordered_map<string, shared_ptr<Shader>>& ResourceTracker::GetShaders()
+{
+	return ms_shaderMap;
+}
+
+void ResourceTracker::AddGameObject(shared_ptr<GameObject> go)
+{
+	ms_goList.push_back(go);
+}
+
+vector<shared_ptr<GameObject>>& ResourceTracker::GetGoList()
+{
+	return ms_goList;
+}
+
+void ResourceTracker::ClearGoList()
+{
+	ms_goList.clear();
+}
+
+void ResourceTracker::AddBatch(string filePath, shared_ptr<Batch> batch)
+{
+	if (ms_batchMap.contains(filePath))
+		return;
+
+	ms_batchMap.emplace(filePath, batch);
+}
+
+bool ResourceTracker::TryGetBatch(string filePath, shared_ptr<Batch>& batch)
+{
+	if (!ms_batchMap.contains(filePath))
+	{
+		batch = std::make_shared<Batch>();
+		AddBatch(filePath, batch);
+		return false;
+	}
+
+	batch = ms_batchMap.at(filePath);
+	return true;
+}
+
+unordered_map<string, shared_ptr<Batch>>& ResourceTracker::GetBatches()
+{
+	return ms_batchMap;
+}
+
+void ResourceTracker::ClearBatchList()
+{
+	ms_batchMap.clear();
+}
+
 void ResourceTracker::ReleaseAll()
 {
 	ms_textureMap.clear();
+	ms_modelMap.clear();
+	ms_shaderMap.clear();
+	ms_goList.clear();
+	ms_batchMap.clear();
 }

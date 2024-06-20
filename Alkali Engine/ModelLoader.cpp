@@ -538,6 +538,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		material->AddTexture(d3d, normalTex);
 
 		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
+		ResourceTracker::AddGameObject(go);
 		batch->AddGameObject(go);
 	}
 
@@ -701,7 +702,7 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	}
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, string modelNameExtensionless, fastgltf::Node& node, Transform& transform)
+void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model)
 {
 	vector<VertexInputData> vertexBuffer;
 
@@ -764,9 +765,17 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	vector<uint32_t> indexBuffer;
 	LoadGLTFIndices(indexBuffer, asset, primitive);
 
-	shared_ptr<Model> model = std::make_shared<Model>();
 	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadiusSq, centroidFloat3);
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
+}
+
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+{
+	shared_ptr<Model> model;
+	if (!ResourceTracker::TryGetModel(id, model))
+	{
+		LoadModel(d3d, commandList, asset, primitive, model);
+	}
 
 	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
 
@@ -839,6 +848,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 
 	shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
 	go->SetTransform(transform);
+	ResourceTracker::AddGameObject(go);
 
 	batch->AddGameObject(go);
 }
@@ -881,9 +891,10 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	size_t meshIndex = node.meshIndex.value();
 	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
 
-	for (const auto& primitive : mesh.primitives)
+	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
-		LoadPrimitive(d3d, commandList, asset, primitive, batch, shader, modelNameExtensionless, node, transform);
+		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
+		LoadPrimitive(d3d, commandList, asset, mesh.primitives[i], batch, shader, modelNameExtensionless, node, transform, id);
 	}
 }
 

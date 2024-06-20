@@ -121,9 +121,6 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CubeScene.cpp">
-      <Filter>Source Files\Scenes</Filter>
-    </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Source Files\GPU Resources</Filter>
     </ClCompile>
@@ -263,9 +260,6 @@
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CubeScene.h">
-      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Source Files\GPU Resources</Filter>
