@@ -18,7 +18,9 @@ constexpr bool USE_BARRIER_WARP = false;
 
 constexpr bool USE_SRGB = false; // Leave off, breaks stuff
 
-constexpr int GLOBAL_MIP_LEVELS = 3;
+constexpr int GLOBAL_MIP_LEVELS = 5;
+constexpr bool AUTO_MIP_LEVELS = true;
+constexpr bool MIP_MAP_DEBUG_MODE = false;
 
 constexpr bool CENTROID_BASED_WORLD_MATRIX_ENABLED = false;
 

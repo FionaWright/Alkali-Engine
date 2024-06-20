@@ -83,18 +83,18 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 	while (fin.get(input))
 	{
 		if (input == 'f')
-		{		
+		{
 			if (fin.peek() != ' ')
 				continue;
 
 			ObjFaceVertexIndices indices;
 
 			for (int i = 0; i < 3; i++)
-			{			
+			{
 				indices = {};
 
 				fin >> indices.PositionIndex;
-				indices.PositionIndex--;			
+				indices.PositionIndex--;
 
 				if (fin.peek() == '/')
 					fin.get();
@@ -118,7 +118,7 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 			{
 				auto firstIndices = ms_indexList.at(objectIndex).IndexList.at(ms_indexList.at(objectIndex).IndexList.size() - 3);
 				ms_indexList.at(objectIndex).IndexList.push_back(firstIndices);
-				ms_indexList.at(objectIndex).IndexList.push_back(indices);				
+				ms_indexList.at(objectIndex).IndexList.push_back(indices);
 
 				fin >> indices.PositionIndex;
 				indices.PositionIndex--;
@@ -137,8 +137,8 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 
 				fin >> indices.NormalIndex;
 				indices.NormalIndex--;
-				
-				ms_indexList.at(objectIndex).IndexList.push_back(indices);							
+
+				ms_indexList.at(objectIndex).IndexList.push_back(indices);
 			}
 
 			continue;
@@ -176,7 +176,7 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 		if (input != 'v')
 			continue;
 
-		fin.get(input);		
+		fin.get(input);
 
 		if (input == 't')
 		{
@@ -205,9 +205,9 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 			vec.x = -vec.x;
 
 		if (input == 'n')
-		{		
+		{
 			ms_norList.push_back(vec);
-		}			
+		}
 		else
 			ms_posList.push_back(vec);
 	}
@@ -241,14 +241,14 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 	ms_norList.clear();
 }
 
-void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices) 
+void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices)
 {
 	size_t vertexCount = objIndices.size();
 
 	vector<VertexInputData> vertexBuffer;
 	unordered_map<VertexKey, int32_t> vertexMap;
 	vector<int32_t> indexBuffer;
-	
+
 	XMFLOAT3 rollingCentroidSum = XMFLOAT3(0, 0, 0);
 
 	for (int32_t i = 0; i < vertexCount - 2; i += 3)
@@ -403,7 +403,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	VertexInputData data;
 	for (int32_t i = 0; i < vertexCount; i++)
-	{		
+	{
 		fin.read(reinterpret_cast<char*>(&data), sizeof(VertexInputData));
 		outVertexBuffer.push_back(data);
 	}
@@ -412,7 +412,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	int32_t index;
 	for (int32_t i = 0; i < indexCount; i++)
-	{		
+	{
 		fin.read(reinterpret_cast<char*>(&index), sizeof(int32_t));
 		outIndexBuffer.push_back(index);
 	}
@@ -452,12 +452,12 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		{
 			if (line.empty())
 				break;
-			
+
 			if (line.starts_with("Ns"))
 			{
 				specularExponent = std::stof(line.substr(line.find_first_of(' ') + 1));
 				continue;
-			}		
+			}
 
 			if (line.starts_with("Ni"))
 			{
@@ -506,14 +506,14 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 				reflectionName = line.substr(line.find_last_of(' ') + 1);
 				continue;
 			}
-		}	
+		}
 
 		shared_ptr<Model> model = std::make_shared<Model>();
-		shared_ptr<Material> material = std::make_shared<Material>(2);		
+		shared_ptr<Material> material = std::make_shared<Material>(2);
 
 		string modelPath = name + "/" + modelName + ".model";
-		model->Init(commandList, modelPath);		
-		
+		model->Init(commandList, modelPath);
+
 		string diffuseTexPath = name + "/" + diffuseName;
 		if (diffuseName == "")
 			diffuseTexPath = "WhitePOT.tga";
@@ -592,7 +592,7 @@ void LoadGLTFVertexData(vector<VertexInputData>& vBuffer, fastgltf::Expected<fas
 		vBuffer.resize(accessor.count);
 
 	for (size_t i = 0; i < vBuffer.size(); ++i)
-	{	
+	{
 		auto address = pData + i * dataStride;
 		func(address, &vBuffer[i]);
 	}
@@ -604,7 +604,7 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	const auto& bufferView = asset->bufferViews[*accessor.bufferViewIndex];
 	const auto& bufferData = asset->buffers[bufferView.bufferIndex].data;
 
-    const size_t dataOffset = bufferView.byteOffset + accessor.byteOffset;
+	const size_t dataOffset = bufferView.byteOffset + accessor.byteOffset;
 	const size_t indexByteSize = fastgltf::getElementByteSize(accessor.type, accessor.componentType);
 	const size_t dataStride = bufferView.byteStride.value_or(indexByteSize);
 
@@ -618,7 +618,7 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 		auto& uri = std::get<fastgltf::sources::URI>(bufferData);
 		string path(uri.uri.path());
 		std::ifstream file("Assets/Models/" + path, std::ios::binary);
-		
+
 		if (!file.is_open())
 			throw std::runtime_error("Failed to open file");
 
@@ -639,26 +639,60 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 
 	iBuffer.resize(accessor.count);
 
-	if (indexByteSize == 4)
+	if (!RIGHT_HANDED_TO_LEFT && indexByteSize == 4)
 	{
 		std::memcpy(iBuffer.data(), pData, accessor.count * 4);
 		return;
 	}
 
-	for (size_t i = 0; i < iBuffer.size(); ++i)
+	for (size_t i = 0; i < iBuffer.size(); i += 3)
 	{
-		const uint8_t* const indexData = pData + i * dataStride;
+		const uint8_t* const indexData0 = pData + (i + 0) * dataStride;
+		const uint8_t* const indexData1 = pData + (i + 1) * dataStride;
+		const uint8_t* const indexData2 = pData + (i + 2) * dataStride;
 
 		switch (indexByteSize)
 		{
 		case 1:
-			iBuffer[i] = *indexData;
+			if (RIGHT_HANDED_TO_LEFT)
+			{
+				iBuffer[i + 2] = *indexData0;
+				iBuffer[i + 1] = *indexData1;
+				iBuffer[i + 0] = *indexData2;
+				break;
+			}
+
+			iBuffer[i + 0] = *indexData0;
+			iBuffer[i + 1] = *indexData1;
+			iBuffer[i + 2] = *indexData2;
 			break;
 
 		case 2:
 			uint16_t value16;
-			std::memcpy(&value16, indexData, sizeof(uint16_t));
-			iBuffer[i] = value16;
+
+			if (RIGHT_HANDED_TO_LEFT)
+			{
+				std::memcpy(&value16, indexData0, sizeof(uint16_t));
+				iBuffer[i + 2] = value16;
+				std::memcpy(&value16, indexData1, sizeof(uint16_t));
+				iBuffer[i + 1] = value16;
+				std::memcpy(&value16, indexData2, sizeof(uint16_t));
+				iBuffer[i + 0] = value16;
+				break;
+			}
+
+			std::memcpy(&value16, indexData0, sizeof(uint16_t));
+			iBuffer[i + 0] = value16;
+			std::memcpy(&value16, indexData1, sizeof(uint16_t));
+			iBuffer[i + 1] = value16;
+			std::memcpy(&value16, indexData2, sizeof(uint16_t));
+			iBuffer[i + 2] = value16;
+			break;
+		
+		case 4: // Only reached when converting RHS -> LHS
+			std::memcpy(&iBuffer[i + 2], indexData0, sizeof(uint32_t));
+			std::memcpy(&iBuffer[i + 1], indexData1, sizeof(uint32_t));
+			std::memcpy(&iBuffer[i + 0], indexData2, sizeof(uint32_t));
 			break;
 
 		default:
@@ -673,9 +707,9 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "POSITION", [](const uint8_t* address, VertexInputData* output) {
 		output->Position = *reinterpret_cast<const XMFLOAT3*>(address);
-		//if (RIGHT_HANDED_TO_LEFT)
-		//	output->Position.x = -output->Position.x;
-	});
+		if (RIGHT_HANDED_TO_LEFT)
+			output->Position.x = -output->Position.x;
+		});
 
 	size_t vertexCount = vertexBuffer.size();
 	if (vertexCount == 0)
@@ -683,26 +717,26 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TEXCOORD_0", [](const uint8_t* address, VertexInputData* output) {
 		output->Texture = *reinterpret_cast<const XMFLOAT2*>(address);
-	});
+		});
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "NORMAL", [](const uint8_t* address, VertexInputData* output) {
 		output->Normal = *reinterpret_cast<const XMFLOAT3*>(address);
-		//if (RIGHT_HANDED_TO_LEFT)
-		//	output->Normal.x = -output->Normal.x;
-	});
+		if (RIGHT_HANDED_TO_LEFT)
+			output->Normal.x = -output->Normal.x;
+		});
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputData* output) {
 		const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
 		float handedness = data->w > 0 ? 1 : -1;
 		output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
-	});
+		});
 
 	float boundingRadiusSq = 0;
 	struct Double3
 	{
-		double X=0, Y=0, Z=0;
+		double X = 0, Y = 0, Z = 0;
 	} rollingCentroidSum;
-	
+
 	for (size_t j = 0; j < vertexCount; j++)
 	{
 		vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
@@ -752,6 +786,28 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 			else
 				diffuseTexPath = texName;
 		}
+		else
+			throw std::exception("No support for this type of texture");
+	}
+
+	string normalTexPath = "";
+	if (mat.normalTexture.has_value())
+	{
+		fastgltf::Texture& tex = asset->textures[mat.normalTexture.value().textureIndex];
+		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+		if (image.data.index() == 2)
+		{
+			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+			size_t slashIndex = texName.find_last_of('/');
+
+			if (slashIndex != std::string::npos)
+				normalTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+			else
+				normalTexPath = texName;
+		}
+		else
+			throw std::exception("No support for this type of texture");
 	}
 
 	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
@@ -763,8 +819,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	{
 		diffuseTex->Init(d3d, commandList, texFullFilePath);
 	}
-
-	string normalTexPath = "";
+	
 	string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
 	if (normalTexPath == "")
 		texNormalFullFilePath = "DefaultNormal.tga";
@@ -780,7 +835,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	material->AddTexture(d3d, normalTex);
 
 	string nodeName(node.name);
-	nodeName = modelNameExtensionless + "::" + nodeName;	
+	nodeName = modelNameExtensionless + "::" + nodeName;
 
 	shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
 	go->SetTransform(transform);
@@ -824,7 +879,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	}
 
 	size_t meshIndex = node.meshIndex.value();
-	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);	
+	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
 
 	for (const auto& primitive : mesh.primitives)
 	{
@@ -852,13 +907,13 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 	auto error = asset.error();
 	if (error != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
-	
+
 	error = fastgltf::validate(asset.get());
 	if (error != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
 
 	for (int i = 0; i < asset->scenes.size(); i++)
-	{		
+	{
 		fastgltf::Scene& scene = asset->scenes[i];
 
 		size_t nodeCount = scene.nodeIndices.size();
@@ -868,6 +923,6 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 			fastgltf::Node& node = asset->nodes[nodeIndex];
 			Transform defTransform = {};
 			LoadNode(d3d, commandList, asset, batch, shader, nameWhiteList, modelNameExtensionless, node, defTransform);
-		}		
+		}
 	}
 }

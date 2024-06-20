@@ -67,15 +67,15 @@ bool Tutorial2::LoadContent()
 
 		D3D12_TEXTURE_ADDRESS_MODE addressMode = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
-		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler[0].Filter = D3D12_FILTER_ANISOTROPIC;
 		sampler[0].AddressU = addressMode;
 		sampler[0].AddressV = addressMode;
 		sampler[0].AddressW = addressMode;
 		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = 0;
+		sampler[0].MaxAnisotropy = 16;
 		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
+		sampler[0].MinLOD = 0;
 		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
 		sampler[0].ShaderRegister = 0;
 		sampler[0].RegisterSpace = 0;
@@ -107,13 +107,12 @@ bool Tutorial2::LoadContent()
 
 	m_batch = std::make_shared<Batch>(rootSigPBR);
 
-	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_35_NormalFix_11" };
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, &whiteList);
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderCube);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
 
-	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Madeline", m_batch.get(), m_shaderCube);
+	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
