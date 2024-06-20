@@ -141,6 +141,8 @@ void Application::RenderImGuiScenes()
 
         if (ImGui::TreeNode("Model Preprocessing"))
         {
+            ImGui::Indent(IM_GUI_INDENTATION);
+
             string fileDir = "C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\";
             string msg = "Using directory: " + fileDir;
             ImGui::Text(msg.c_str());
@@ -159,14 +161,26 @@ void Application::RenderImGuiScenes()
             }
 
             ImGui::TreePop();
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
         }
 
         if (ImGui::TreeNode("Object Creation"))
         {
+            ImGui::Indent(IM_GUI_INDENTATION);
+
+            static char numObjectsStr[256];
+            ImGui::InputText("Number", numObjectsStr, 256, 0);
+
             if (ImGui::Button("Instantiate Cube"))
-            {
-                
+            {                
+                int num = std::atoi(numObjectsStr);
+                m_currentScene->InstantiateCubes(num);
             }
+
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+            ImGui::TreePop();
         }
 
         ImGui::Unindent(IM_GUI_INDENTATION);

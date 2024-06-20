@@ -25,13 +25,16 @@ public:
 
 	XMMATRIX GetViewMatrix();	
 
+	float& GetSpeedLVal();
+	float& GetRotSpeedLVal();
+
 private:
 	void MoveFirstPerson(TimeEventArgs& e);
 	void MoveScroll(TimeEventArgs& e);
 
 	CameraMode m_currentMode;
-	float m_speed = 3;
-	float m_rotationSpeed = 2;
+	float m_speed = 0.0225f;
+	float m_rotationSpeed = 0.015f;
 
 	XMFLOAT3 m_upVector, m_forwardVector, m_rightVector;
 	float m_pitch, m_yaw;
