@@ -17,7 +17,7 @@ public:
 	void Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
 
 	void AddGameObject(shared_ptr<GameObject> go);
-	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, Frustum& frustum);
+	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, XMMATRIX& viewProj, Frustum& frustum);
 
 	vector<shared_ptr<GameObject>> GetOpaques();
 	vector<shared_ptr<GameObject>> GetTrans();

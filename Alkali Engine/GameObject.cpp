@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "GameObject.h"
 #include "Settings.h"
-#include "CBuffers.h"
 #include "Utils.h"
 #include "Scene.h"
 
@@ -19,7 +18,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, MatricesCB& matrices)
 {
 	if (!m_model || !m_shader)
 		return;
@@ -43,32 +42,29 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Roo
 		commandListDirect->SetGraphicsRootDescriptorTable(1, texHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
-	Model* sphereModel;
-	bool sphereModeOn = Scene::IsSphereModeOn(sphereModel);	
-	Transform savedTransform = m_transform;
-
-	if (sphereModeOn)
+	Model* sphereModel = nullptr;	
+	if (Scene::IsSphereModeOn(&sphereModel))
 	{		
+		Transform savedTransform = m_transform;
 		XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
 		float maxScale = std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
 		m_transform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		m_transform.Position = Add(m_transform.Position, centroidScaled);
 		UpdateWorldMatrix(false);
-	}
 
-	MatricesCB matricesCB;
-	matricesCB.M = m_worldMatrix;
-	matricesCB.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
-	matricesCB.VP = viewProj;
-	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matricesCB, 0);
+		matrices.M = m_worldMatrix;
+		matrices.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
+		commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matrices, 0);
 
-	if (sphereModeOn)
-	{
 		sphereModel->Render(commandListDirect);
 		m_transform = savedTransform;
 		UpdateWorldMatrix();
 		return;
 	}
+
+	matrices.M = m_worldMatrix;
+	matrices.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
+	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matrices, 0);
 
 	m_model->Render(commandListDirect);
 }

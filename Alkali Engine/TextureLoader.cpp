@@ -529,10 +529,7 @@ void TextureLoader::LoadPNG(string filePath, bool& hasAlpha, int& width, int& he
     FILE* file; 
     fopen_s(&file, filePath.c_str(), "rb");
     if (!file)
-    {
-        std::cerr << "Error opening file: " << filePath << std::endl;
-        return;
-    }
+        throw std::exception("I/O Error");
 
     spng_ctx* ctx = spng_ctx_new(0);
 

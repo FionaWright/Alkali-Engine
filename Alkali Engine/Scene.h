@@ -45,7 +45,7 @@ public:
 
     void InstantiateCubes(int count);
 
-    static bool IsSphereModeOn(Model*& model);
+    static bool IsSphereModeOn(Model** model);
 
     Window* GetWindow();
 

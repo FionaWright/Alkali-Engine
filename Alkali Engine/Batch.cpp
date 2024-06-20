@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Batch.h"
+#include "CBuffers.h"
 
 void Batch::Init(string name, ComPtr<ID3D12RootSignature> pRootSig)
 {
@@ -25,26 +26,29 @@ void Batch::AddGameObject(shared_ptr<GameObject> go)
 	m_gameObjectList.push_back(go);
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, Frustum& frustum)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, XMMATRIX& viewProj, Frustum& frustum)
 {
+	MatricesCB matrices;
+	matrices.VP = viewProj;
+
 	for (int i = 0; i < m_gameObjectList.size(); i++) 
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
+		m_gameObjectList[i]->GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectList.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
+			m_gameObjectList[i]->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, matrices);
 	}
 
 	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectListTransparent.at(i)->GetBoundingSphere(pos, radius);
+		m_gameObjectListTransparent[i]->GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectListTransparent.at(i)->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, viewProj);
+			m_gameObjectListTransparent[i]->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, matrices);
 	}
 }
 
