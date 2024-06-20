@@ -52,7 +52,13 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
     m_textureDesc = {};
-    m_textureDesc.MipLevels = invalidForMipMaps ? 1 : GLOBAL_MIP_LEVELS;
+    if (invalidForMipMaps)
+        m_textureDesc.MipLevels = 1;
+    else if (AUTO_MIP_LEVELS)
+        m_textureDesc.MipLevels = std::log2(std::max(m_textureWidth, m_textureHeight)) + 1;
+    else
+        m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
+
     m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;

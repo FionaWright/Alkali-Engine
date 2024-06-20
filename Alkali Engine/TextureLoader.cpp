@@ -11,7 +11,6 @@ using std::wstring;
 
 #define BLOCK_SIZE 8
 constexpr int NUM_CHANNELS = 4;
-constexpr bool MIP_MAP_DEBUG_MODE = false;
 
 constexpr bool FLIP_DXT1_UPSIDE_DOWN = true;
 constexpr bool FLIP_DXT1_RIGHTSIDE_LEFT = false;
