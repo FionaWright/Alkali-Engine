@@ -13,12 +13,16 @@ class GameObject;
 class Batch
 {
 public:
-	Batch(ComPtr<ID3D12RootSignature> pRootSig);
-	Batch(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
+	void Init(string name, ComPtr<ID3D12RootSignature> pRootSig);
+	void Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
+
 	void AddGameObject(shared_ptr<GameObject> go);
 	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, Frustum& frustum);
 
-	void AddHeldGameObjectsToList(vector<GameObject*>& list);
+	vector<shared_ptr<GameObject>> GetOpaques();
+	vector<shared_ptr<GameObject>> GetTrans();
+
+	string m_Name;
 
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;

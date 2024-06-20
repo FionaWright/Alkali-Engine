@@ -43,6 +43,8 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
+    void InstantiateCubes(int count);
+
     static bool IsSphereModeOn(Model*& model);
 
     Window* GetWindow();
@@ -62,6 +64,7 @@ protected:
 
     DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
     void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
+    void RenderImGui();
 
     Window* m_pWindow;
 
@@ -77,7 +80,6 @@ protected:
     D3DClass* m_d3dClass;
     unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
-    vector<GameObject*> m_gameObjectList;
     vector<shared_ptr<DebugLine>> m_debugLineList;
 
     float m_FoV;

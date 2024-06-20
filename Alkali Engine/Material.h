@@ -17,8 +17,10 @@ public:
 
 	bool GetHasAlpha();
 
+	vector<shared_ptr<Texture>>& GetTextures();
+
 private:
-	vector<shared_ptr<Texture>> m_textures; // Not sure if I like this, it's just to keep them in memory
+	vector<shared_ptr<Texture>> m_textures; // Not sure if I like this, it's just to keep them in memory. And now also for ImGui stuff
 	ComPtr<ID3D12DescriptorHeap> m_textureHeap;
 	int m_expectedTextureCount;
 	int m_texturesAddedCount;

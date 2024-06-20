@@ -109,7 +109,6 @@
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
-    <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="DebugLine.cpp" />
     <ClCompile Include="Frustum.cpp" />
@@ -236,7 +235,6 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CBuffers.h" />
     <ClInclude Include="CommandQueue.h" />
-    <ClInclude Include="CubeScene.h" />
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugLine.h" />

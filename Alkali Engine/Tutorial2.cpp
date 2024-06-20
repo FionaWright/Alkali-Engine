@@ -13,8 +13,6 @@ bool Tutorial2::LoadContent()
 {
 	Scene::LoadContent();
 
-	//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Cube.obj", false);
-
 	// Models
 	{
 		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -65,17 +63,16 @@ bool Tutorial2::LoadContent()
 		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
-		D3D12_TEXTURE_ADDRESS_MODE addressMode = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		D3D12_STATIC_SAMPLER_DESC sampler[1]; // Change this to return from a texture creation
-		sampler[0].Filter = D3D12_FILTER_ANISOTROPIC;
-		sampler[0].AddressU = addressMode;
-		sampler[0].AddressV = addressMode;
-		sampler[0].AddressW = addressMode;
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
 		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = 16;
+		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
 		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0;
+		sampler[0].MinLOD = 0.0f;
 		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
 		sampler[0].ShaderRegister = 0;
 		sampler[0].RegisterSpace = 0;
@@ -86,6 +83,7 @@ bool Tutorial2::LoadContent()
 	}
 
 	// Shaders
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderCube))
 	{
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
@@ -99,25 +97,27 @@ bool Tutorial2::LoadContent()
 		m_shaderCube = std::make_shared<Shader>();
 		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
-	}	
+	}
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
-	m_batch = std::make_shared<Batch>(rootSigPBR);
+	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
+	{
+		m_batch->Init("PBR Basic", rootSigPBR);
+	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, &whiteList);
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderCube);
-	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
 	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
 	m_goCube->SetPosition(0, 10, 0);
-	m_gameObjectList.push_back(m_goCube.get());
+	ResourceTracker::AddGameObject(m_goCube);
 	m_batch->AddGameObject(m_goCube);
 
 	//shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelTest, m_shaderCube, m_material);
@@ -174,21 +174,4 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 void Tutorial2::OnRender(TimeEventArgs& e)
 {
 	Scene::OnRender(e);	
-
-	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandList = commandQueue->GetAvailableCommandList();
-	
-	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
-	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	ClearBackBuffer(commandList.Get());	
-
-	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
-
-	Scene::RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
-
-	ImGUIManager::Render(commandList.Get());
-
-	Present(commandList.Get(), commandQueue);
 }

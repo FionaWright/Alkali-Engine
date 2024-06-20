@@ -9,7 +9,6 @@
 #include "ModelLoader.h"
 #include "ImGUIManager.h"
 #include "Utils.h"
-#include "CubeScene.h"
 #include "SceneBistro.h"
 #include "TextureLoader.h"
 #include "ResourceTracker.h"
@@ -38,9 +37,6 @@ Application::Application(HINSTANCE hInst)
 
     shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow.get());
     InitScene(tut2Scene);
-
-    shared_ptr<CubeScene> cubeScene = std::make_shared<CubeScene>(L"Cube Scene", m_mainWindow.get());
-    InitScene(cubeScene);
 
     shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
     InitScene(bistroScene);
@@ -163,6 +159,14 @@ void Application::RenderImGuiScenes()
             }
 
             ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Object Creation"))
+        {
+            if (ImGui::Button("Instantiate Cube"))
+            {
+                
+            }
         }
 
         ImGui::Unindent(IM_GUI_INDENTATION);

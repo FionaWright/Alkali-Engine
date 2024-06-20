@@ -22,6 +22,8 @@ public:
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
 	bool GetHasAlpha();
+	string GetFilePath();
+	int GetMipLevels();
 
 private:
 	int m_textureWidth = -1, m_textureHeight = -1;
@@ -37,6 +39,8 @@ private:
 
 	bool m_is2Channel = false;
 	bool m_hasAlpha = false;
+
+	string m_filePath;
 };
 
 

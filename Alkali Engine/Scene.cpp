@@ -4,6 +4,7 @@
 #include <locale>
 #include <codecvt>
 #include "Utils.h"
+#include "ResourceTracker.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
@@ -86,6 +87,7 @@ bool Scene::LoadContent()
 		m_rootSigLine->SetName(L"Line Root Sig");
 	}
 
+	if (!ResourceTracker::TryGetShader("Line_VS.cso - Line_PS.cso", m_shaderLine))
 	{
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
@@ -93,7 +95,6 @@ bool Scene::LoadContent()
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
-		m_shaderLine = std::make_shared<Shader>();
 		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
@@ -109,7 +110,7 @@ bool Scene::LoadContent()
 void Scene::UnloadContent()
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
-	m_gameObjectList.clear();
+	ResourceTracker::ClearGoList();
 	m_camera->Reset();
 
 	if (ms_sphereModel)
@@ -142,207 +143,26 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 void Scene::OnRender(TimeEventArgs& e)
 {
-    if (ImGui::CollapsingHeader("Settings"))
-    {
-		ImGui::Indent(IM_GUI_INDENTATION);
+	RenderImGui();
 
-        if (ImGui::TreeNode("Engine##2"))
-        {		
-            ImGui::SeparatorText("DX12");
-			ImGui::Indent(IM_GUI_INDENTATION);
+	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandList = commandQueue->GetAvailableCommandList();
 
-			bool vSync = m_pWindow->IsVSync();
-            ImGui::Checkbox("VSync", &vSync);
-			m_pWindow->SetVSync(vSync);
+	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
+	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
+	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
+	ClearBackBuffer(commandList.Get());
 
-			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_CullNone);
+	auto& batchList = ResourceTracker::GetBatches();
+	for (auto& it : batchList)
+		it.second->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
 
-			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
+	RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
-			ImGui::Checkbox("Bounding Spheres", &ms_sphereMode);
+	ImGUIManager::Render(commandList.Get());
 
-			ImGui::Unindent(IM_GUI_INDENTATION);
-			ImGui::SeparatorText("Window");
-			ImGui::Indent(IM_GUI_INDENTATION);
-
-			bool fullScreen = m_pWindow->IsFullScreen();
-			ImGui::Checkbox("Fullscreen", &fullScreen);
-			m_pWindow->SetFullscreen(fullScreen);
-
-			ImGui::Unindent(IM_GUI_INDENTATION);
-			ImGui::SeparatorText("ImGUI");
-			ImGui::Indent(IM_GUI_INDENTATION);
-
-			ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
-
-			ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::TreePop();
-            ImGui::Spacing();			
-        }
-
-		if (ImGui::TreeNode("Scene##2"))
-		{		
-			ImGui::SeparatorText("Visuals");
-			ImGui::Indent(IM_GUI_INDENTATION);
-
-			ImGui::ColorEdit4("Background Color", m_backgroundColor, ImGuiColorEditFlags_DisplayHex);			
-
-			ImGui::Unindent(IM_GUI_INDENTATION);
-			ImGui::SeparatorText("Rendering");
-			ImGui::Indent(IM_GUI_INDENTATION);
-
-			ImGui::Checkbox("DSV", &m_dsvEnabled);
-
-			ImGui::TreePop();
-			ImGui::Spacing();
-			ImGui::Unindent(IM_GUI_INDENTATION);
-		}
-
-		ImGui::Unindent(IM_GUI_INDENTATION);
-    }
-
-	ImGui::Spacing();
-
-	if (ImGui::CollapsingHeader("Current Scene"))
-	{
-		ImGui::Indent(IM_GUI_INDENTATION);
-
-		if (ImGui::CollapsingHeader("GameObjects##2"))
-		{
-			ImGui::Indent(IM_GUI_INDENTATION);
-
-			if (ImGui::CollapsingHeader("Camera"))
-			{
-				ImGui::Indent(IM_GUI_INDENTATION);
-
-				ImGui::SeparatorText("Camera Controls");
-				ImGui::Indent(IM_GUI_INDENTATION);
-
-				bool usingFP = m_camera->GetMode() == CameraMode::CAMERA_MODE_FP;
-				if (!usingFP)
-					ImGui::BeginDisabled(true);
-
-				if (ImGui::Button("Scroll Mode"))
-				{
-					m_camera->SetMode(CameraMode::CAMERA_MODE_SCROLL);
-				}
-
-				if (!usingFP)
-					ImGui::EndDisabled();
-
-				if (usingFP)
-					ImGui::BeginDisabled(true);
-
-				if (ImGui::Button("WASD Mode"))
-				{
-					m_camera->SetMode(CameraMode::CAMERA_MODE_FP);
-				}
-
-				if (usingFP)
-					ImGui::EndDisabled();
-
-				ImGui::Spacing();
-				ImGui::Unindent(IM_GUI_INDENTATION);
-
-				Transform camTrans = m_camera->GetTransform();
-				float pPosCam[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
-				ImGui::InputFloat3("Position##Camera", pPosCam);
-				float pRotCam[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
-				ImGui::InputFloat3("Rotation##Camera", pRotCam);
-				camTrans.Position = XMFLOAT3(pPosCam[0], pPosCam[1], pPosCam[2]);
-				camTrans.Rotation = XMFLOAT3(pRotCam[0], pRotCam[1], pRotCam[2]);
-
-				if (ImGui::Button("Reset to Default"))
-				{
-					camTrans.Position = XMFLOAT3(0, 0, -10);
-					camTrans.Rotation = XMFLOAT3(0, 0, 0);
-				}
-
-				m_camera->SetTransform(camTrans);
-
-				ImGui::Unindent(IM_GUI_INDENTATION);
-			}
-
-			for (size_t i = 0; i < m_gameObjectList.size(); i++)
-			{
-				if (ImGui::CollapsingHeader(m_gameObjectList.at(i)->m_Name.c_str()))
-				{
-					ImGui::Indent(IM_GUI_INDENTATION);
-
-					Transform t = m_gameObjectList.at(i)->GetTransform();
-
-					string iStr = "##" + std::to_string(i);
-
-					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-					ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
-					float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
-					ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
-					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-					ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
-
-					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-					t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
-					t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
-
-					m_gameObjectList.at(i)->SetTransform(t);
-
-					if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
-					{
-						ImGui::Indent(IM_GUI_INDENTATION);
-
-						string vCountStr = "Model Vertex Count: " + std::to_string(m_gameObjectList.at(i)->GetModelVertexCount());
-						string iCountStr = "Model Index Count: " + std::to_string(m_gameObjectList.at(i)->GetModelIndexCount());
-
-						XMFLOAT3 pos;
-						float radius;
-						m_gameObjectList.at(i)->GetBoundingSphere(pos, radius);
-						string radiStr = "Model Bounding Radius: " + std::to_string(radius);
-						string centroidStr = "Model Centroid: " + ToString(pos);
-
-						ImGui::Text(vCountStr.c_str());
-						ImGui::Text(iCountStr.c_str());
-						ImGui::Text(radiStr.c_str());
-						ImGui::Text(centroidStr.c_str());
-
-						ImGui::TreePop();
-						ImGui::Unindent(IM_GUI_INDENTATION);
-					}
-
-					if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
-					{
-						ImGui::Indent(IM_GUI_INDENTATION);
-
-						wstring vs, ps, hs, ds;
-						m_gameObjectList.at(i)->GetShaderNames(vs, ps, hs, ds);
-						vs = L"VS: " + vs;
-						ps = L"PS: " + ps;
-						hs = L"HS: " + hs;
-						ds = L"DS: " + ds;
-						ImGui::Text(wstringToString(vs).c_str());
-						ImGui::Text(wstringToString(ps).c_str());
-						ImGui::Text(wstringToString(hs).c_str());
-						ImGui::Text(wstringToString(ds).c_str());
-
-						ImGui::TreePop();
-						ImGui::Unindent(IM_GUI_INDENTATION);
-					}
-
-					ImGui::Spacing();
-					ImGui::Unindent(IM_GUI_INDENTATION);
-				}
-			}
-
-			ImGui::Spacing();
-			ImGui::Unindent(IM_GUI_INDENTATION);
-		}
-
-		ImGui::Unindent(IM_GUI_INDENTATION);
-	}
-
-	if (m_showImGUIDemo)
-		ImGui::ShowDemoWindow(); // Show demo window! :)
+	Present(commandList.Get(), commandQueue); 
 }
 
 void Scene::OnResize(ResizeEventArgs& e)
@@ -355,6 +175,100 @@ void Scene::OnResize(ResizeEventArgs& e)
 
 void Scene::OnWindowDestroy()
 {
+}
+
+void Scene::InstantiateCubes(int count)
+{
+	shared_ptr<Model> model;
+	if (!ResourceTracker::TryGetModel("Cube", model))
+	{
+		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+
+		model->Init(commandListCopy.Get(), L"Cube.model");
+
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		commandQueueCopy->WaitForFenceValue(fenceValue);
+	}
+
+	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
+	shared_ptr<Texture> texture;
+	shared_ptr<Texture> normalMap;
+	if (!ResourceTracker::TryGetTexture("Baba.png", texture))
+	{
+		texture->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
+	}
+
+	if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", normalMap))
+	{
+		normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
+	}
+
+	// Materials
+	auto material = std::make_shared<Material>(2);
+	material->AddTexture(m_d3dClass, texture);
+	material->AddTexture(m_d3dClass, normalMap);
+
+	ComPtr<ID3D12RootSignature> rootSigPBR;
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+		int numDescriptors = 2;
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+		const int paramCount = 2;
+		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		rootSigPBR->SetName(L"Tutorial2 Root Sig");
+	}
+
+	shared_ptr<Shader> shader;
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", shader))
+	{
+		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		
+		shader->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSigPBR.Get(), m_d3dClass->GetDevice());
+	}
+
+	shared_ptr<Batch> batch;
+	if (!ResourceTracker::TryGetBatch("PBR Basic", batch))
+	{
+		batch->Init("PBR Basic", rootSigPBR);
+	}
+
+	for (int i = 0; i < count; i++)
+	{
+		string id = "Cube_" + std::to_string(i);
+		auto go = std::make_shared<GameObject>(id, model, shader, material);
+		ResourceTracker::AddGameObject(go);
+		batch->AddGameObject(go);
+	}
 }
 
 bool Scene::IsSphereModeOn(Model*& model)
@@ -464,4 +378,354 @@ void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D1
 	{
 		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine.Get(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjMatrix);
 	}
+}
+
+void Scene::RenderImGui() 
+{
+	if (ImGui::CollapsingHeader("Settings"))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		if (ImGui::TreeNode("Engine##2"))
+		{
+			ImGui::SeparatorText("DX12");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			bool vSync = m_pWindow->IsVSync();
+			ImGui::Checkbox("VSync", &vSync);
+			m_pWindow->SetVSync(vSync);
+
+			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
+
+			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_CullNone);
+
+			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
+
+			ImGui::Checkbox("Bounding Spheres", &ms_sphereMode);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("Window");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			bool fullScreen = m_pWindow->IsFullScreen();
+			ImGui::Checkbox("Fullscreen", &fullScreen);
+			m_pWindow->SetFullscreen(fullScreen);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("ImGUI");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::TreePop();
+			ImGui::Spacing();
+		}
+
+		if (ImGui::TreeNode("Scene##2"))
+		{
+			ImGui::SeparatorText("Visuals");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			ImGui::ColorEdit4("Background Color", m_backgroundColor, ImGuiColorEditFlags_DisplayHex);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("Rendering");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			ImGui::Checkbox("DSV", &m_dsvEnabled);
+
+			ImGui::TreePop();
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+	}
+
+	ImGui::Spacing();
+
+	if (ImGui::CollapsingHeader("Current Scene"))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		if (ImGui::CollapsingHeader("Camera"))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			ImGui::SeparatorText("Camera Controls");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			bool usingFP = m_camera->GetMode() == CameraMode::CAMERA_MODE_FP;
+			if (!usingFP)
+				ImGui::BeginDisabled(true);
+
+			if (ImGui::Button("Scroll Mode"))
+			{
+				m_camera->SetMode(CameraMode::CAMERA_MODE_SCROLL);
+			}
+
+			if (!usingFP)
+				ImGui::EndDisabled();
+
+			if (usingFP)
+				ImGui::BeginDisabled(true);
+
+			if (ImGui::Button("WASD Mode"))
+			{
+				m_camera->SetMode(CameraMode::CAMERA_MODE_FP);
+			}
+
+			if (usingFP)
+				ImGui::EndDisabled();
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+
+			Transform camTrans = m_camera->GetTransform();
+			float pPosCam[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
+			ImGui::InputFloat3("Position##Camera", pPosCam);
+			float pRotCam[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
+			ImGui::InputFloat3("Rotation##Camera", pRotCam);
+			camTrans.Position = XMFLOAT3(pPosCam[0], pPosCam[1], pPosCam[2]);
+			camTrans.Rotation = XMFLOAT3(pRotCam[0], pRotCam[1], pRotCam[2]);
+
+			if (ImGui::Button("Reset to Default"))
+			{
+				camTrans.Position = XMFLOAT3(0, 0, -10);
+				camTrans.Rotation = XMFLOAT3(0, 0, 0);
+			}
+
+			m_camera->SetTransform(camTrans);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		auto& goList = ResourceTracker::GetGoList();
+		string goTag = "GameObjects (" + std::to_string(goList.size()) + ")";
+		if (ImGui::CollapsingHeader(goTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);			
+			
+			for (size_t i = 0; i < goList.size(); i++)
+			{
+				if (ImGui::CollapsingHeader(goList[i]->m_Name.c_str()))
+				{
+					ImGui::Indent(IM_GUI_INDENTATION);
+
+					Transform t = goList[i]->GetTransform();
+
+					string iStr = "##" + std::to_string(i);
+
+					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
+					ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
+					float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
+					ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
+					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
+					ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
+
+					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
+					t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+					t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
+
+					goList[i]->SetTransform(t);
+
+					if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						string vCountStr = "Model Vertex Count: " + std::to_string(goList[i]->GetModelVertexCount());
+						string iCountStr = "Model Index Count: " + std::to_string(goList[i]->GetModelIndexCount());
+
+						XMFLOAT3 pos;
+						float radius;
+						goList[i]->GetBoundingSphere(pos, radius);
+						string radiStr = "Model Bounding Radius: " + std::to_string(radius);
+						string centroidStr = "Model Centroid: " + ToString(pos);
+
+						ImGui::Text(vCountStr.c_str());
+						ImGui::Text(iCountStr.c_str());
+						ImGui::Text(radiStr.c_str());
+						ImGui::Text(centroidStr.c_str());
+
+						ImGui::TreePop();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						wstring vs, ps, hs, ds;
+						goList[i]->GetShaderNames(vs, ps, hs, ds);
+						vs = L"VS: " + vs;
+						ps = L"PS: " + ps;
+						hs = L"HS: " + hs;
+						ds = L"DS: " + ds;
+						ImGui::Text(wstringToString(vs).c_str());
+						ImGui::Text(wstringToString(ps).c_str());
+						ImGui::Text(wstringToString(hs).c_str());
+						ImGui::Text(wstringToString(ds).c_str());
+
+						ImGui::TreePop();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						auto& textures = goList[i]->GetMaterial()->GetTextures();
+						for (int i = 0; i < textures.size(); i++)
+						{
+							ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
+
+							ImGui::Indent(IM_GUI_INDENTATION);
+							ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						ImGui::TreePop();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					ImGui::Spacing();
+					ImGui::Unindent(IM_GUI_INDENTATION);
+				}
+			}			
+		}
+
+		auto& batchList = ResourceTracker::GetBatches();
+		string batchTag = "Batches (" + std::to_string(batchList.size()) + ")";
+		if (ImGui::CollapsingHeader(batchTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (auto& it : batchList)
+			{
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				if (ImGui::CollapsingHeader(it.second->m_Name.c_str()))
+				{
+					ImGui::Indent(IM_GUI_INDENTATION);
+
+					auto opaques = it.second->GetOpaques();
+					string tag = "Opaques (" + std::to_string(opaques.size()) + ")##" + it.first;
+					if (ImGui::CollapsingHeader(tag.c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						for (int i = 0; i < opaques.size(); i++)
+						{
+							ImGui::Text(opaques[i]->m_Name.c_str());
+						}
+
+						ImGui::Spacing();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					auto trans = it.second->GetTrans();
+					tag = "Transparents (" + std::to_string(trans.size()) + ")##" + it.first;
+					if (ImGui::CollapsingHeader(tag.c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						for (int i = 0; i < trans.size(); i++)
+						{
+							ImGui::Text(trans[i]->m_Name.c_str());
+						}
+
+						ImGui::Spacing();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					ImGui::Spacing();
+					ImGui::Unindent(IM_GUI_INDENTATION);
+				}
+
+				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		auto& texList = ResourceTracker::GetTextures();
+		string texTag = "Textures (" + std::to_string(texList.size()) + ")";
+		if (ImGui::CollapsingHeader(texTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (auto& it : texList)
+			{
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				ImGui::Text(it.first.c_str());
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+				ImGui::Text(("Mip Levels: " + std::to_string(it.second->GetMipLevels())).c_str());
+				ImGui::Unindent(IM_GUI_INDENTATION);
+
+				ImGui::Spacing();
+				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		auto& modelList = ResourceTracker::GetModels();
+		string modelTag = "Models (" + std::to_string(modelList.size()) + ")";
+		if (ImGui::CollapsingHeader(modelTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (auto& it : modelList)
+			{
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				ImGui::Text(it.first.c_str());
+
+				ImGui::Spacing();
+				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		auto& shaderList = ResourceTracker::GetShaders();
+		string shaderTag = "Shaders (" + std::to_string(shaderList.size()) + ")";
+		if (ImGui::CollapsingHeader(shaderTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (auto& it : shaderList)
+			{
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				ImGui::Text(it.first.c_str());
+
+				if (it.second->IsPreCompiled())
+				{
+					ImGui::Indent(IM_GUI_INDENTATION);
+
+					ImGui::Text("Precompiled: TRUE");
+
+					ImGui::Unindent(IM_GUI_INDENTATION);
+				}
+
+				ImGui::Spacing();
+				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+	}
+
+	if (m_showImGUIDemo)
+		ImGui::ShowDemoWindow(); // Show demo window! :)
 }
