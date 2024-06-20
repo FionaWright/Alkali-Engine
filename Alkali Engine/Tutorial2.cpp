@@ -107,9 +107,10 @@ bool Tutorial2::LoadContent()
 
 	m_batch = std::make_shared<Batch>(rootSigPBR);
 
-	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube);
+	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_35_NormalFix_11" };
+	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, &whiteList);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderCube);
 	m_batch->AddHeldGameObjectsToList(m_gameObjectList); // Shit code, change
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Madeline", m_batch.get(), m_shaderCube);

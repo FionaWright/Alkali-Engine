@@ -677,6 +677,10 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 		//	output->Position.x = -output->Position.x;
 	});
 
+	size_t vertexCount = vertexBuffer.size();
+	if (vertexCount == 0)
+		return;
+
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TEXCOORD_0", [](const uint8_t* address, VertexInputData* output) {
 		output->Texture = *reinterpret_cast<const XMFLOAT2*>(address);
 	});
@@ -693,20 +697,41 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 		output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
 	});
 
-	float boundingRadius = 0;
-	for (size_t j = 0; j < vertexBuffer.size(); ++j)
+	float boundingRadiusSq = 0;
+	struct Double3
+	{
+		double X=0, Y=0, Z=0;
+	} rollingCentroidSum;
+	
+	for (size_t j = 0; j < vertexCount; j++)
 	{
 		vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
 
-		float dist = Magnitude(vertexBuffer[j].Position);
-		boundingRadius = std::max(boundingRadius, dist);
+		rollingCentroidSum.X += vertexBuffer[j].Position.x;
+		rollingCentroidSum.Y += vertexBuffer[j].Position.y;
+		rollingCentroidSum.Z += vertexBuffer[j].Position.z;
 	}
+
+	rollingCentroidSum.X /= vertexCount;
+	rollingCentroidSum.Y /= vertexCount;
+	rollingCentroidSum.Z /= vertexCount;
+	XMFLOAT3 centroidFloat3 = XMFLOAT3(rollingCentroidSum.X, rollingCentroidSum.Y, rollingCentroidSum.Z);
+
+	for (size_t j = 0; j < vertexCount; j++)
+	{
+		XMFLOAT3 diff = Subtract(centroidFloat3, vertexBuffer[j].Position);
+		float magSq = Dot(diff, diff);
+		if (magSq > boundingRadiusSq)
+			boundingRadiusSq = magSq;
+	}
+
+	boundingRadiusSq = std::sqrt(boundingRadiusSq);
 
 	vector<uint32_t> indexBuffer;
 	LoadGLTFIndices(indexBuffer, asset, primitive);
 
 	shared_ptr<Model> model = std::make_shared<Model>();
-	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadius, XMFLOAT3_ZERO);
+	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadiusSq, centroidFloat3);
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 
 	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
