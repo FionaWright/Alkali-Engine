@@ -8,8 +8,10 @@ using std::shared_ptr;
 class Material
 {
 public:
-	Material(UINT numSamplers);
+	Material();
 	~Material();
+
+	void Init(UINT numSamplers);
 
 	void AddTexture(D3DClass* d3d, shared_ptr<Texture> tex);
 

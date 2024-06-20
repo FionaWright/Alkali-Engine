@@ -27,6 +27,10 @@ public:
 	static bool TryGetShader(string filePath, shared_ptr<Shader>& shader);
 	static unordered_map<string, shared_ptr<Shader>>& GetShaders();
 
+	static void AddMaterial(string filePath, shared_ptr<Material> material);
+	static bool TryGetMaterial(string filePath, shared_ptr<Material>& material);
+	static unordered_map<string, shared_ptr<Material>>& GetMaterials();
+
 	static void AddGameObject(shared_ptr<GameObject> go);
 	static vector<shared_ptr<GameObject>>& GetGoList();
 	static void ClearGoList();
@@ -42,6 +46,7 @@ private:
 	static unordered_map<string, shared_ptr<Texture>> ms_textureMap;
 	static unordered_map<string, shared_ptr<Model>> ms_modelMap;
 	static unordered_map<string, shared_ptr<Shader>> ms_shaderMap;
+	static unordered_map<string, shared_ptr<Material>> ms_materialMap;
 	static vector<shared_ptr<GameObject>> ms_goList;
 	static unordered_map<string, shared_ptr<Batch>> ms_batchMap;
 };

@@ -206,10 +206,14 @@ void Scene::InstantiateCubes(int count)
 		normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
 	}
 
-	// Materials
-	auto material = std::make_shared<Material>(2);
-	material->AddTexture(m_d3dClass, texture);
-	material->AddTexture(m_d3dClass, normalMap);
+	shared_ptr<Material> material;
+	string matID = texture->GetFilePath() + " - " + normalMap->GetFilePath();
+	if (!ResourceTracker::TryGetMaterial(matID, material))
+	{
+		material->Init(2);
+		material->AddTexture(m_d3dClass, texture);
+		material->AddTexture(m_d3dClass, normalMap);
+	}
 
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
@@ -271,10 +275,13 @@ void Scene::InstantiateCubes(int count)
 	}
 }
 
-bool Scene::IsSphereModeOn(Model*& model)
+bool Scene::IsSphereModeOn(Model** model)
 {
-	model = ms_sphereModel.get();
-	return ms_sphereMode;
+	if (!ms_sphereMode)
+		return false;
+
+	*model = ms_sphereModel.get();
+	return true;
 }
 
 Window* Scene::GetWindow()
@@ -720,6 +727,21 @@ void Scene::RenderImGui()
 
 				ImGui::Spacing();
 				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		auto& matList = ResourceTracker::GetMaterials();
+		string matTag = "Materials (" + std::to_string(matList.size()) + ")";
+		if (ImGui::CollapsingHeader(matTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (auto& it : matList)
+			{
+				ImGui::Text(it.first.c_str());
 			}
 
 			ImGui::Spacing();

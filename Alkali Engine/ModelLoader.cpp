@@ -509,7 +509,6 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		}
 
 		shared_ptr<Model> model = std::make_shared<Model>();
-		shared_ptr<Material> material = std::make_shared<Material>(2);
 
 		string modelPath = name + "/" + modelName + ".model";
 		model->Init(commandList, modelPath);
@@ -534,8 +533,14 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 			normalTex->Init(d3d, commandList, normalTexPath);
 		}
 
-		material->AddTexture(d3d, diffuseTex);
-		material->AddTexture(d3d, normalTex);
+		shared_ptr<Material> material;
+		string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
+		if (!ResourceTracker::TryGetMaterial(matID, material))
+		{
+			material->Init(2);
+			material->AddTexture(d3d, diffuseTex);
+			material->AddTexture(d3d, normalTex);
+		}
 
 		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
 		ResourceTracker::AddGameObject(go);
@@ -839,9 +844,14 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 		normalTex->Init(d3d, commandList, texNormalFullFilePath);
 	}
 
-	shared_ptr<Material> material = std::make_shared<Material>(2);
-	material->AddTexture(d3d, diffuseTex);
-	material->AddTexture(d3d, normalTex);
+	shared_ptr<Material> material;
+	string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
+	if (!ResourceTracker::TryGetMaterial(matID, material))
+	{
+		material->Init(2);
+		material->AddTexture(d3d, diffuseTex);
+		material->AddTexture(d3d, normalTex);
+	}	
 
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;

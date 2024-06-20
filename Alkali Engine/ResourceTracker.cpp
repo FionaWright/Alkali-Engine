@@ -4,6 +4,7 @@
 unordered_map<string, shared_ptr<Texture>> ResourceTracker::ms_textureMap;
 unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
 unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
+unordered_map<string, shared_ptr<Material>> ResourceTracker::ms_materialMap;
 vector<shared_ptr<GameObject>> ResourceTracker::ms_goList;
 unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
 
@@ -85,6 +86,32 @@ unordered_map<string, shared_ptr<Shader>>& ResourceTracker::GetShaders()
 	return ms_shaderMap;
 }
 
+void ResourceTracker::AddMaterial(string filePath, shared_ptr<Material> material)
+{
+	if (ms_materialMap.contains(filePath))
+		return;
+
+	ms_materialMap.emplace(filePath, material);
+}
+
+bool ResourceTracker::TryGetMaterial(string filePath, shared_ptr<Material>& material)
+{
+	if (!ms_materialMap.contains(filePath))
+	{
+		material = std::make_shared<Material>();
+		AddMaterial(filePath, material);
+		return false;
+	}
+
+	material = ms_materialMap.at(filePath);
+	return true;
+}
+
+unordered_map<string, shared_ptr<Material>>& ResourceTracker::GetMaterials()
+{
+	return ms_materialMap;
+}
+
 void ResourceTracker::AddGameObject(shared_ptr<GameObject> go)
 {
 	ms_goList.push_back(go);
@@ -136,6 +163,7 @@ void ResourceTracker::ReleaseAll()
 	ms_textureMap.clear();
 	ms_modelMap.clear();
 	ms_shaderMap.clear();
+	ms_materialMap.clear();
 	ms_goList.clear();
 	ms_batchMap.clear();
 }

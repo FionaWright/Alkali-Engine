@@ -45,9 +45,10 @@ bool Tutorial2::LoadContent()
 		}
 	}
 
-	// Materials
+	string matID = m_texture->GetFilePath() + " - " + m_normalMap->GetFilePath();
+	if (!ResourceTracker::TryGetMaterial(matID, m_material))
 	{
-		m_material = std::make_shared<Material>(2);
+		m_material->Init(2);
 		m_material->AddTexture(m_d3dClass, m_texture);
 		m_material->AddTexture(m_d3dClass, m_normalMap);
 	}
