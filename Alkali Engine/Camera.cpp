@@ -133,9 +133,8 @@ void Camera::MoveScroll(TimeEventArgs& e)
 	if (InputManager::IsMouseRight())
 	{
 		XMFLOAT2 deltaMouse = InputManager::GetMousePosDelta();
-		float rotationSpeed = 1.5f * e.ElapsedTime * m_rotationSpeed;
-		deltaMouse.x *= rotationSpeed;
-		deltaMouse.y *= rotationSpeed;
+		deltaMouse.x *= m_rotationSpeed;
+		deltaMouse.y *= m_rotationSpeed;
 
 		m_pitch += deltaMouse.y;
 		m_yaw += deltaMouse.x;
@@ -157,7 +156,7 @@ void Camera::MoveScroll(TimeEventArgs& e)
 	if (InputManager::IsMouseMiddle())
 	{
 		XMFLOAT2 deltaMouse = InputManager::GetMousePosDelta();
-		float panSpeed = -3.5f * e.ElapsedTime * m_speed;
+		float panSpeed = -3.5f * m_speed;
 		deltaMouse.x *= panSpeed;
 		deltaMouse.y *= panSpeed;
 
@@ -170,7 +169,7 @@ void Camera::MoveScroll(TimeEventArgs& e)
 	}
 
 	float mouseWheelDelta = InputManager::GetMouseWheelDelta();
-	mouseWheelDelta *= 230 * e.ElapsedTime * m_speed;
+	mouseWheelDelta *= 230 * m_speed;
 	XMFLOAT3 forwardTranslation = XMFLOAT3(m_forwardVector.x * mouseWheelDelta, m_forwardVector.y * mouseWheelDelta, m_forwardVector.z * mouseWheelDelta);
 	AddPosition(forwardTranslation);
 }
@@ -202,4 +201,14 @@ XMMATRIX Camera::GetViewMatrix()
 	XMVECTOR positionVector = XMLoadFloat3(&m_transform.Position);
 
 	return XMMatrixLookToLH(positionVector, dir, up);
+}
+
+float& Camera::GetSpeedLVal()
+{
+	return m_speed;
+}
+
+float& Camera::GetRotSpeedLVal()
+{
+	return m_rotationSpeed;
 }

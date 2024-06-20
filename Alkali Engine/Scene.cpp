@@ -479,6 +479,9 @@ void Scene::RenderImGui()
 			if (usingFP)
 				ImGui::EndDisabled();
 
+			ImGui::InputFloat("Camera Speed", &m_camera->GetSpeedLVal());
+			ImGui::InputFloat("Camera Rotation Speed", &m_camera->GetRotSpeedLVal());
+
 			ImGui::Spacing();
 			ImGui::Unindent(IM_GUI_INDENTATION);
 
