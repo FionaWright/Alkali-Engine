@@ -49,8 +49,10 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Roo
 
 	if (sphereModeOn)
 	{		
-		m_transform.Scale = Mult(m_transform.Scale, m_model->GetSphereRadius());
-		m_transform.Position = Add(m_transform.Position, m_model->GetCentroid());
+		XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
+		float maxScale = std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
+		m_transform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
+		m_transform.Position = Add(m_transform.Position, centroidScaled);
 		UpdateWorldMatrix(false);
 	}
 
@@ -166,7 +168,7 @@ void GameObject::RotateBy(XMFLOAT3 xyz)
 void GameObject::UpdateWorldMatrix(bool considerCentroid)
 {
 	XMMATRIX C = XMMatrixIdentity();
-	if (considerCentroid && m_model)
+	if (CENTROID_BASED_WORLD_MATRIX_ENABLED && considerCentroid && m_model)
 	{
 		XMFLOAT3 centroid = m_model->GetCentroid();
 		if (!Equals(centroid, XMFLOAT3_ZERO))
@@ -202,7 +204,8 @@ void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& 
 void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius)
 {
 	radius = m_model->GetSphereRadius() * std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
-	position = Add(m_model->GetCentroid(), m_transform.Position);
+	XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
+	position = Add(centroidScaled, m_transform.Position);
 }
 
 bool GameObject::IsTransparent()
