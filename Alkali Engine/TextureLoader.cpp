@@ -7,7 +7,9 @@
 #include "spng/spng.h"
 
 #include <string>
+#include <filesystem>
 using std::wstring;
+using std::ofstream;
 
 #define BLOCK_SIZE 8
 constexpr int NUM_CHANNELS = 4;
@@ -34,6 +36,93 @@ ID3D12RootSignature* TextureLoader::ms_mipMapRootSig;
 ID3D12PipelineState* TextureLoader::ms_pso;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
+
+void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
+{
+    size_t dotIndex = filePath.find_last_of('.');
+    if (dotIndex == std::string::npos)
+        throw new std::exception("Invalid file path");
+
+    string binTexPath = filePath.substr(0, dotIndex) + ".binTex";
+    bool binTexAlternativeExists = std::filesystem::exists(binTexPath);
+
+    string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
+    if (binTexAlternativeExists || fileExtension == "binTex")
+    {
+        LoadBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        return;
+    }
+
+    if (fileExtension == "tga")
+    {
+        is2Channel = false;
+        LoadTGA(filePath, width, height, pData);
+
+        hasAlpha = ManuallyDetermineHasAlpha(width * height * 4, 4, *pData);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        return;
+    }        
+
+    if (fileExtension == "dds")
+    {
+        LoadDDS(filePath, width, height, pData, hasAlpha, is2Channel);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        return;
+    }        
+
+    if (fileExtension == "png")
+    {        
+        LoadPNG(filePath, width, height, pData, is2Channel);
+
+        int channels = is2Channel ? 2 : 4;
+        hasAlpha = ManuallyDetermineHasAlpha(width * height * channels, channels, *pData);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        return;
+    }        
+    
+    throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
+}
+
+void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel)
+{
+    ofstream fout;
+    std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
+    fout.open(filePath, openFlags);
+    if (!fout)
+        throw new std::exception("IO Exception (OUTPUT)");
+
+    fout.write(reinterpret_cast<const char*>(&width), sizeof(int));
+    fout.write(reinterpret_cast<const char*>(&height), sizeof(int));
+    fout.write(reinterpret_cast<const char*>(&hasAlpha), sizeof(bool));
+    fout.write(reinterpret_cast<const char*>(&is2Channel), sizeof(bool));
+
+    int channels = is2Channel ? 2 : 4;
+    size_t bytes = width * height * channels;
+    fout.write(reinterpret_cast<const char*>(*pData), bytes);
+
+    fout.close();
+
+    if (!fout.good())
+        throw new std::exception("IO Exception (OUTPUT)");
+}
+
+void TextureLoader::LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
+{
+    ifstream fin;
+    fin.open(filePath, std::ios::binary);
+    if (!fin)
+        throw new std::exception("IO Exception");
+
+    fin.read(reinterpret_cast<char*>(&width), sizeof(int));
+    fin.read(reinterpret_cast<char*>(&height), sizeof(int));
+    fin.read(reinterpret_cast<char*>(&hasAlpha), sizeof(bool));
+    fin.read(reinterpret_cast<char*>(&is2Channel), sizeof(bool));
+
+    int channels = is2Channel ? 2 : 4;
+    size_t bytes = width * height * channels;
+    *pData = new uint8_t[bytes];
+    fin.read(reinterpret_cast<char*>(*pData), bytes);
+}
 
 void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** pData)
 {
@@ -98,7 +187,7 @@ void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** 
     fin.close();
 }
 
-void TextureLoader::LoadDDS(string filePath, bool& hasAlpha, int& width, int& height, uint8_t** pData, bool& is2Channel)
+void TextureLoader::LoadDDS(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
 {
     ifstream fin;
     fin.open(filePath, std::ios::binary);
@@ -524,7 +613,7 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
     delete[] blocks;
 }
 
-void TextureLoader::LoadPNG(string filePath, bool& hasAlpha, int& width, int& height, uint8_t** pData, bool& is2Channel)
+void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)
 {
     FILE* file; 
     fopen_s(&file, filePath.c_str(), "rb");
@@ -547,7 +636,6 @@ void TextureLoader::LoadPNG(string filePath, bool& hasAlpha, int& width, int& he
     width = ihdr.width;
     height = ihdr.height;
     is2Channel = false;
-    hasAlpha = (ihdr.color_type == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA || ihdr.color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA);
 
     spng_ctx_free(ctx);
     fclose(file);
@@ -715,4 +803,15 @@ void TextureLoader::InitComputeShader(ID3D12Device2* device)
     psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
 
     device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_pso));
+}
+
+bool TextureLoader::ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData)
+{
+    for (size_t i = channels - 1; i < bytes; i += channels)
+    {
+        uint8_t a = pData[i];
+        if (a < UINT8_MAX)
+            return true;
+    }
+    return false;
 }

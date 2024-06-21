@@ -19,7 +19,7 @@ protected:
 private:
 	shared_ptr<Model> m_modelTest;
 	shared_ptr<Batch> m_batch;
-	shared_ptr<GameObject> m_goCube;
+	GameObject* m_goCube;
 	shared_ptr<Shader> m_shaderCube;	
 	shared_ptr<Material> m_material;
 	shared_ptr<Texture> m_texture, m_normalMap;	

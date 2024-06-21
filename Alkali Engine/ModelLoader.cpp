@@ -401,21 +401,13 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	fin.read(reinterpret_cast<char*>(&vertexCount), sizeof(size_t));
 
-	VertexInputData data;
-	for (int32_t i = 0; i < vertexCount; i++)
-	{
-		fin.read(reinterpret_cast<char*>(&data), sizeof(VertexInputData));
-		outVertexBuffer.push_back(data);
-	}
+	outVertexBuffer.resize(vertexCount);
+	fin.read(reinterpret_cast<char*>(outVertexBuffer.data()), sizeof(VertexInputData) * vertexCount);
 
 	fin.read(reinterpret_cast<char*>(&indexCount), sizeof(size_t));
 
-	int32_t index;
-	for (int32_t i = 0; i < indexCount; i++)
-	{
-		fin.read(reinterpret_cast<char*>(&index), sizeof(int32_t));
-		outIndexBuffer.push_back(index);
-	}
+	outIndexBuffer.resize(indexCount);
+	fin.read(reinterpret_cast<char*>(outIndexBuffer.data()), sizeof(int32_t) * indexCount);
 }
 
 void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
@@ -542,8 +534,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 			material->AddTexture(d3d, normalTex);
 		}
 
-		shared_ptr<GameObject> go = std::make_shared<GameObject>(modelName, model, shader, material);
-		ResourceTracker::AddGameObject(go);
+		GameObject go(modelName, model, shader, material);
 		batch->AddGameObject(go);
 	}
 
@@ -856,9 +847,8 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;
 
-	shared_ptr<GameObject> go = std::make_shared<GameObject>(nodeName, model, shader, material);
-	go->SetTransform(transform);
-	ResourceTracker::AddGameObject(go);
+	GameObject go(nodeName, model, shader, material);
+	go.SetTransform(transform);
 
 	batch->AddGameObject(go);
 }

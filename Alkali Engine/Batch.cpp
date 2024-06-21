@@ -14,16 +14,17 @@ void Batch::Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
 	m_rootSignature = ResourceManager::CreateRootSignature(params, paramCount, nullptr, 0);
 }
 
-void Batch::AddGameObject(shared_ptr<GameObject> go)
+GameObject* Batch::AddGameObject(GameObject go)
 {
-	if (go->IsTransparent())
+	if (go.IsTransparent())
 	{
-		m_gameObjectListTransparent.push_back(go);
-		return;
+		m_gameObjectListTransparent.push_back(go);		
+		return &m_gameObjectListTransparent[m_gameObjectListTransparent.size() - 1];
 	}
 
 	// TODO: Sorting
 	m_gameObjectList.push_back(go);
+	return &m_gameObjectList[m_gameObjectList.size() - 1];
 }
 
 void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, XMMATRIX& viewProj, Frustum& frustum)
@@ -44,29 +45,29 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& view
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectList[i]->GetBoundingSphere(pos, radius);
+		m_gameObjectList[i].GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectList[i]->Render(commandList, matrices);
+			m_gameObjectList[i].Render(commandList, matrices);
 	}
 
 	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectListTransparent[i]->GetBoundingSphere(pos, radius);
+		m_gameObjectListTransparent[i].GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectListTransparent[i]->Render(commandList, matrices);
+			m_gameObjectListTransparent[i].Render(commandList, matrices);
 	}
 }
 
-vector<shared_ptr<GameObject>> Batch::GetOpaques()
+vector<GameObject>& Batch::GetOpaques()
 {
 	return m_gameObjectList;
 }
 
-vector<shared_ptr<GameObject>> Batch::GetTrans()
+vector<GameObject>& Batch::GetTrans()
 {
 	return m_gameObjectListTransparent;
 }

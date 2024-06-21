@@ -5,7 +5,6 @@ unordered_map<string, shared_ptr<Texture>> ResourceTracker::ms_textureMap;
 unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
 unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
 unordered_map<string, shared_ptr<Material>> ResourceTracker::ms_materialMap;
-vector<shared_ptr<GameObject>> ResourceTracker::ms_goList;
 unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
 
 void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
@@ -112,21 +111,6 @@ unordered_map<string, shared_ptr<Material>>& ResourceTracker::GetMaterials()
 	return ms_materialMap;
 }
 
-void ResourceTracker::AddGameObject(shared_ptr<GameObject> go)
-{
-	ms_goList.push_back(go);
-}
-
-vector<shared_ptr<GameObject>>& ResourceTracker::GetGoList()
-{
-	return ms_goList;
-}
-
-void ResourceTracker::ClearGoList()
-{
-	ms_goList.clear();
-}
-
 void ResourceTracker::AddBatch(string filePath, shared_ptr<Batch> batch)
 {
 	if (ms_batchMap.contains(filePath))
@@ -164,6 +148,5 @@ void ResourceTracker::ReleaseAll()
 	ms_modelMap.clear();
 	ms_shaderMap.clear();
 	ms_materialMap.clear();
-	ms_goList.clear();
 	ms_batchMap.clear();
 }

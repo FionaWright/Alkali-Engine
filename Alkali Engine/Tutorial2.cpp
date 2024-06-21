@@ -15,20 +15,29 @@ bool Tutorial2::LoadContent()
 
 	// Models
 	{
-		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		CommandQueue* commandQueueCopy = nullptr;
+		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!commandQueueCopy)
+			throw std::exception("Command Queue Error");
+
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		//ModelLoader::PreprocessObjFile("C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\Robot.obj", false);
-		m_modelTest = std::make_shared<Model>();
-		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");
-		m_modelTest->Init(commandListCopy.Get(), L"Sphere.model");
+		if (!ResourceTracker::TryGetModel("Sphere.model", m_modelTest))
+		{
+			m_modelTest->Init(commandListCopy.Get(), L"Sphere.model");
+		}
+		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");		
 		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	CommandQueue* commandQueueDirect = nullptr;
+	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueueDirect)
+		throw std::exception("Command Queue Error");
+
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	// Textures
@@ -115,15 +124,9 @@ bool Tutorial2::LoadContent()
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	m_goCube = std::make_shared<GameObject>("Test", m_modelTest, m_shaderCube, m_material);
-	m_goCube->SetPosition(0, 10, 0);
-	ResourceTracker::AddGameObject(m_goCube);
-	m_batch->AddGameObject(m_goCube);
-
-	//shared_ptr<GameObject> refCube = std::make_shared<GameObject>("Ref", m_modelTest, m_shaderCube, m_material);
-	//refCube->SetPosition(-3, 0, 0);
-	//m_gameObjectList.push_back(refCube.get());
-	//m_batch->AddGameObject(refCube);	
+	GameObject go("Test", m_modelTest, m_shaderCube, m_material);
+	go.SetPosition(0, 10, 0);
+	m_goCube = m_batch->AddGameObject(go);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);
@@ -142,7 +145,6 @@ void Tutorial2::UnloadContent()
 	m_modelTest.reset();
 	m_batch.reset();
 	m_shaderCube.reset();
-	m_goCube.reset();	
 }
 
 void Tutorial2::OnUpdate(TimeEventArgs& e)
