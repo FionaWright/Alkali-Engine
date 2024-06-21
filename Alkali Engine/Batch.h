@@ -26,8 +26,8 @@ public:
 
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
-	vector<shared_ptr<GameObject>> m_gameObjectList; // Sorted by PipelineState then Model
-	vector<shared_ptr<GameObject>> m_gameObjectListTransparent; // Sorted by PipelineState then Model
+	vector<shared_ptr<GameObject>> m_gameObjectList;
+	vector<shared_ptr<GameObject>> m_gameObjectListTransparent;
 	// Add option to sort by depth value as well
 };
 

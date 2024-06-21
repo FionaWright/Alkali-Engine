@@ -18,20 +18,12 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, MatricesCB& matrices)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB& matrices)
 {
 	if (!m_model || !m_shader)
 		return;
 
-	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
-	commandListDirect->SetGraphicsRootSignature(rootSig);
-	commandListDirect->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	commandListDirect->RSSetViewports(1, &viewPort);
-	commandListDirect->RSSetScissorRects(1, &scissorRect);
-
-	UINT numRenderTargets = 1;
-	commandListDirect->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
+	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());	
 
 	if (m_material)
 	{

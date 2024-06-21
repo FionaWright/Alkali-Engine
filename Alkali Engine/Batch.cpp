@@ -31,6 +31,15 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& view
 	MatricesCB matrices;
 	matrices.VP = viewProj;
 
+	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	commandList->RSSetViewports(1, &viewPort);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
+	UINT numRenderTargets = 1;
+	commandList->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
+
 	for (int i = 0; i < m_gameObjectList.size(); i++) 
 	{
 		XMFLOAT3 pos;
@@ -38,7 +47,7 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& view
 		m_gameObjectList[i]->GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectList[i]->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, matrices);
+			m_gameObjectList[i]->Render(commandList, matrices);
 	}
 
 	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
@@ -48,7 +57,7 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& view
 		m_gameObjectListTransparent[i]->GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectListTransparent[i]->Render(commandList, m_rootSignature.Get(), viewPort, scissorRect, rtv, dsv, matrices);
+			m_gameObjectListTransparent[i]->Render(commandList, matrices);
 	}
 }
 
