@@ -3,6 +3,7 @@
 #include "ResourceManager.h"
 
 ComPtr<ID3D12DescriptorHeap> ImGUIManager::ms_descHeapSRV;
+bool ImGUIManager::ms_currentlyRendering;
 
 void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DXGI_FORMAT format)
 {
@@ -25,7 +26,7 @@ void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DX
 
 void ImGUIManager::Begin()
 {
-	if (!USING_IM_GUI)
+	if (!USING_IM_GUI || ms_currentlyRendering)
 		return;	
 
 	ImGui_ImplDX12_NewFrame();
@@ -36,11 +37,13 @@ void ImGUIManager::Begin()
 	ImGui::SetNextWindowSize(ImVec2(500, 800), ImGuiCond_FirstUseEver);
 
 	ImGui::Begin("Alkali Engine GUI", nullptr, ImGuiWindowFlags_None);
+
+	ms_currentlyRendering = true;
 }
 
 void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (!USING_IM_GUI)
+	if (!USING_IM_GUI || !ms_currentlyRendering)
 		return;
 
 	ImGui::End();
@@ -50,6 +53,8 @@ void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 	commandList->SetDescriptorHeaps(1, &pDescHeap);
 
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+
+	ms_currentlyRendering = false;
 }
 
 void ImGUIManager::Shutdown()
@@ -62,4 +67,6 @@ void ImGUIManager::Shutdown()
 	ImGui::DestroyContext();
 
 	ms_descHeapSRV.Reset();
+
+	ms_currentlyRendering = false;
 }

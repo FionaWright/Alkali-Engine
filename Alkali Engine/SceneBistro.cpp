@@ -15,7 +15,11 @@ bool SceneBistro::LoadContent()
 {
 	Scene::LoadContent();
 
-	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	CommandQueue* commandQueueDirect = nullptr;
+	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueueDirect)
+		throw std::exception("Command Queue Error");
+
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
@@ -109,21 +113,4 @@ void SceneBistro::OnUpdate(TimeEventArgs& e)
 void SceneBistro::OnRender(TimeEventArgs& e)
 {
 	Scene::OnRender(e);
-
-	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandList = commandQueue->GetAvailableCommandList();
-
-	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
-	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	ClearBackBuffer(commandList.Get());
-
-	m_batch->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
-
-	Scene::RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
-
-	ImGUIManager::Render(commandList.Get());
-
-	Present(commandList.Get(), commandQueue);
 }

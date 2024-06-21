@@ -34,19 +34,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     m_filePath = filePath;
     string longPath = "Assets/Textures/" + filePath;
 
-    size_t dotIndex = filePath.find_last_of('.');
-    if (dotIndex == std::string::npos)
-        throw new std::exception("Invalid file path");    
-
-    string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
-    if (fileExtension == "tga")
-        TextureLoader::LoadTGA(longPath, m_textureWidth, m_textureHeight, &m_textureData);
-    else if (fileExtension == "dds")
-        TextureLoader::LoadDDS(longPath, m_hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
-    else if (fileExtension == "png")
-        TextureLoader::LoadPNG(longPath, m_hasAlpha, m_textureWidth, m_textureHeight, &m_textureData, m_is2Channel);
-    else
-        throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
+    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_is2Channel);
 
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);

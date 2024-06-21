@@ -18,4 +18,5 @@ public:
 
 private:
 	static ComPtr<ID3D12DescriptorHeap> ms_descHeapSRV;
+	static bool ms_currentlyRendering;
 };

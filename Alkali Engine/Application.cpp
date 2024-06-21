@@ -233,6 +233,8 @@ void Application::ChangeScene(wstring sceneID)
 
 void Application::AssignScene(shared_ptr<Scene> scene)
 {
+    auto startTimeProfiler = std::chrono::high_resolution_clock::now();
+
     m_d3dClass->Flush();
 
     if (m_currentScene && m_currentScene->m_ContentLoaded)
@@ -257,6 +259,10 @@ void Application::AssignScene(shared_ptr<Scene> scene)
 
     scene->m_ContentLoaded = true;
     m_currentScene = scene;
+
+    std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
+    wstring output = L"Time taken to load " + m_currentScene->m_Name + L" was " + std::to_wstring(timeTaken.count()) + L" ms";
+    OutputDebugStringW(output.c_str());
 }
 
 void Application::DestroyScenes() 

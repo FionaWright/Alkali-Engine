@@ -53,7 +53,11 @@ bool Scene::Init(D3DClass* pD3DClass)
 bool Scene::LoadContent()
 {
 	{
-		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		CommandQueue* commandQueueCopy = nullptr;
+		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!commandQueueCopy)
+			throw std::exception("Command Queue Error");
+
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
 		ms_sphereModel = std::make_shared<Model>();
@@ -110,7 +114,7 @@ bool Scene::LoadContent()
 void Scene::UnloadContent()
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
-	ResourceTracker::ClearGoList();
+	ResourceTracker::ClearBatchList();
 	m_camera->Reset();
 
 	if (ms_sphereModel)
@@ -145,7 +149,11 @@ void Scene::OnRender(TimeEventArgs& e)
 {
 	RenderImGui();
 
-	auto commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	CommandQueue* commandQueue = nullptr;
+	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueue)
+		return;
+
 	auto commandList = commandQueue->GetAvailableCommandList();
 
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
@@ -182,7 +190,11 @@ void Scene::InstantiateCubes(int count)
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel("Cube", model))
 	{
-		auto commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		CommandQueue* commandQueueCopy = nullptr;
+	    commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!commandQueueCopy)
+			throw std::exception("Command Queue Error");
+
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
 		model->Init(commandListCopy.Get(), L"Cube.model");
@@ -191,7 +203,11 @@ void Scene::InstantiateCubes(int count)
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	auto commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	CommandQueue* commandQueueDirect = nullptr;
+	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueueDirect)
+		throw std::exception("Command Queue Error");
+
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	shared_ptr<Texture> texture;
@@ -269,8 +285,7 @@ void Scene::InstantiateCubes(int count)
 	for (int i = 0; i < count; i++)
 	{
 		string id = "Cube_" + std::to_string(i);
-		auto go = std::make_shared<GameObject>(id, model, shader, material);
-		ResourceTracker::AddGameObject(go);
+		auto go = GameObject(id, model, shader, material);		
 		batch->AddGameObject(go);
 	}
 }
@@ -511,101 +526,199 @@ void Scene::RenderImGui()
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
 
-		auto& goList = ResourceTracker::GetGoList();
-		string goTag = "GameObjects (" + std::to_string(goList.size()) + ")";
+		size_t goCount = 0;
+		auto& batchList = ResourceTracker::GetBatches();
+		for (auto& it : batchList)
+		{
+			goCount += it.second->GetOpaques().size();
+			goCount += it.second->GetTrans().size();
+		}
+
+		string goTag = "GameObjects (" + std::to_string(goCount) + ")";
 		if (ImGui::CollapsingHeader(goTag.c_str()))
 		{
 			ImGui::Indent(IM_GUI_INDENTATION);			
 			
-			for (size_t i = 0; i < goList.size(); i++)
+			for (auto& it : batchList)
 			{
-				if (ImGui::CollapsingHeader(goList[i]->m_Name.c_str()))
+				auto& trans = it.second->GetOpaques();
+				for (size_t i = 0; i < trans.size(); i++)
 				{
-					ImGui::Indent(IM_GUI_INDENTATION);
-
-					Transform t = goList[i]->GetTransform();
-
-					string iStr = "##" + std::to_string(i);
-
-					float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-					ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
-					float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
-					ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
-					float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-					ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
-
-					t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-					t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
-					t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
-
-					goList[i]->SetTransform(t);
-
-					if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
+					if (ImGui::CollapsingHeader(trans[i].m_Name.c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						string vCountStr = "Model Vertex Count: " + std::to_string(goList[i]->GetModelVertexCount());
-						string iCountStr = "Model Index Count: " + std::to_string(goList[i]->GetModelIndexCount());
+						Transform t = trans[i].GetTransform();
 
-						XMFLOAT3 pos;
-						float radius;
-						goList[i]->GetBoundingSphere(pos, radius);
-						string radiStr = "Model Bounding Radius: " + std::to_string(radius);
-						string centroidStr = "Model Centroid: " + ToString(pos);
+						string iStr = "##" + std::to_string(i);
 
-						ImGui::Text(vCountStr.c_str());
-						ImGui::Text(iCountStr.c_str());
-						ImGui::Text(radiStr.c_str());
-						ImGui::Text(centroidStr.c_str());
+						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
+						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
+						float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
+						ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
+						float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
+						ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
 
-						ImGui::TreePop();
-						ImGui::Unindent(IM_GUI_INDENTATION);
-					}
+						t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
+						t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
 
-					if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
-					{
-						ImGui::Indent(IM_GUI_INDENTATION);
+						trans[i].SetTransform(t);
 
-						wstring vs, ps, hs, ds;
-						goList[i]->GetShaderNames(vs, ps, hs, ds);
-						vs = L"VS: " + vs;
-						ps = L"PS: " + ps;
-						hs = L"HS: " + hs;
-						ds = L"DS: " + ds;
-						ImGui::Text(wstringToString(vs).c_str());
-						ImGui::Text(wstringToString(ps).c_str());
-						ImGui::Text(wstringToString(hs).c_str());
-						ImGui::Text(wstringToString(ds).c_str());
-
-						ImGui::TreePop();
-						ImGui::Unindent(IM_GUI_INDENTATION);
-					}
-
-					if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
-					{
-						ImGui::Indent(IM_GUI_INDENTATION);
-
-						auto& textures = goList[i]->GetMaterial()->GetTextures();
-						for (int i = 0; i < textures.size(); i++)
+						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
 						{
-							ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
-
 							ImGui::Indent(IM_GUI_INDENTATION);
-							ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
+
+							string vCountStr = "Model Vertex Count: " + std::to_string(trans[i].GetModelVertexCount());
+							string iCountStr = "Model Index Count: " + std::to_string(trans[i].GetModelIndexCount());
+
+							XMFLOAT3 pos;
+							float radius;
+							trans[i].GetBoundingSphere(pos, radius);
+							string radiStr = "Model Bounding Radius: " + std::to_string(radius);
+							string centroidStr = "Model Centroid: " + ToString(pos);
+
+							ImGui::Text(vCountStr.c_str());
+							ImGui::Text(iCountStr.c_str());
+							ImGui::Text(radiStr.c_str());
+							ImGui::Text(centroidStr.c_str());
+
+							ImGui::TreePop();
 							ImGui::Unindent(IM_GUI_INDENTATION);
 						}
 
-						ImGui::TreePop();
+						if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
+						{
+							ImGui::Indent(IM_GUI_INDENTATION);
+
+							wstring vs, ps, hs, ds;
+							trans[i].GetShaderNames(vs, ps, hs, ds);
+							vs = L"VS: " + vs;
+							ps = L"PS: " + ps;
+							hs = L"HS: " + hs;
+							ds = L"DS: " + ds;
+							ImGui::Text(wstringToString(vs).c_str());
+							ImGui::Text(wstringToString(ps).c_str());
+							ImGui::Text(wstringToString(hs).c_str());
+							ImGui::Text(wstringToString(ds).c_str());
+
+							ImGui::TreePop();
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
+						{
+							ImGui::Indent(IM_GUI_INDENTATION);
+
+							auto& textures = trans[i].GetMaterial()->GetTextures();
+							for (int i = 0; i < textures.size(); i++)
+							{
+								ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
+
+								ImGui::Indent(IM_GUI_INDENTATION);
+								ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
+								ImGui::Unindent(IM_GUI_INDENTATION);
+							}
+
+							ImGui::TreePop();
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						ImGui::Spacing();
 						ImGui::Unindent(IM_GUI_INDENTATION);
 					}
-
-					ImGui::Spacing();
-					ImGui::Unindent(IM_GUI_INDENTATION);
 				}
-			}			
+
+				auto& transGos = it.second->GetTrans();
+				for (size_t i = 0; i < transGos.size(); i++)
+				{
+					if (ImGui::CollapsingHeader(transGos[i].m_Name.c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						Transform t = transGos[i].GetTransform();
+
+						string iStr = "##" + std::to_string(i);
+
+						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
+						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
+						float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
+						ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
+						float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
+						ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
+
+						t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
+						t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
+
+						transGos[i].SetTransform(t);
+
+						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
+						{
+							ImGui::Indent(IM_GUI_INDENTATION);
+
+							string vCountStr = "Model Vertex Count: " + std::to_string(transGos[i].GetModelVertexCount());
+							string iCountStr = "Model Index Count: " + std::to_string(transGos[i].GetModelIndexCount());
+
+							XMFLOAT3 pos;
+							float radius;
+							transGos[i].GetBoundingSphere(pos, radius);
+							string radiStr = "Model Bounding Radius: " + std::to_string(radius);
+							string centroidStr = "Model Centroid: " + ToString(pos);
+
+							ImGui::Text(vCountStr.c_str());
+							ImGui::Text(iCountStr.c_str());
+							ImGui::Text(radiStr.c_str());
+							ImGui::Text(centroidStr.c_str());
+
+							ImGui::TreePop();
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
+						{
+							ImGui::Indent(IM_GUI_INDENTATION);
+
+							wstring vs, ps, hs, ds;
+							transGos[i].GetShaderNames(vs, ps, hs, ds);
+							vs = L"VS: " + vs;
+							ps = L"PS: " + ps;
+							hs = L"HS: " + hs;
+							ds = L"DS: " + ds;
+							ImGui::Text(wstringToString(vs).c_str());
+							ImGui::Text(wstringToString(ps).c_str());
+							ImGui::Text(wstringToString(hs).c_str());
+							ImGui::Text(wstringToString(ds).c_str());
+
+							ImGui::TreePop();
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
+						{
+							ImGui::Indent(IM_GUI_INDENTATION);
+
+							auto& textures = transGos[i].GetMaterial()->GetTextures();
+							for (int i = 0; i < textures.size(); i++)
+							{
+								ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
+
+								ImGui::Indent(IM_GUI_INDENTATION);
+								ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
+								ImGui::Unindent(IM_GUI_INDENTATION);
+							}
+
+							ImGui::TreePop();
+							ImGui::Unindent(IM_GUI_INDENTATION);
+						}
+
+						ImGui::Spacing();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+				}
+			}					
 		}
 
-		auto& batchList = ResourceTracker::GetBatches();
 		string batchTag = "Batches (" + std::to_string(batchList.size()) + ")";
 		if (ImGui::CollapsingHeader(batchTag.c_str()))
 		{
@@ -627,7 +740,7 @@ void Scene::RenderImGui()
 
 						for (int i = 0; i < opaques.size(); i++)
 						{
-							ImGui::Text(opaques[i]->m_Name.c_str());
+							ImGui::Text(opaques[i].m_Name.c_str());
 						}
 
 						ImGui::Spacing();
@@ -642,7 +755,7 @@ void Scene::RenderImGui()
 
 						for (int i = 0; i < trans.size(); i++)
 						{
-							ImGui::Text(trans[i]->m_Name.c_str());
+							ImGui::Text(trans[i].m_Name.c_str());
 						}
 
 						ImGui::Spacing();
@@ -674,6 +787,9 @@ void Scene::RenderImGui()
 
 				ImGui::Indent(IM_GUI_INDENTATION);
 				ImGui::Text(("Mip Levels: " + std::to_string(it.second->GetMipLevels())).c_str());
+				if (it.second->GetHasAlpha())
+					ImGui::Text("Transparent: TRUE");
+
 				ImGui::Unindent(IM_GUI_INDENTATION);
 
 				ImGui::Spacing();
