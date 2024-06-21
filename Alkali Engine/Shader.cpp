@@ -13,7 +13,7 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 
@@ -21,12 +21,11 @@ void Shader::Init(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEM
 	m_PSName = g_dirPath + psName;
 
 	m_inputLayout = inputLayout;
-	m_inputLayoutCount = inputLayoutCount;
 
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12_INPUT_ELEMENT_DESC* inputLayout, UINT inputLayoutCount, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 	m_preCompiled = true;
@@ -35,7 +34,6 @@ void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12
 	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;
 
 	m_inputLayout = inputLayout;
-	m_inputLayoutCount = inputLayoutCount;
 
 	Compile(device, rootSig);
 }
@@ -43,6 +41,8 @@ void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, D3D12
 void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 {
 	HRESULT hr;
+
+	m_rootSig = rootSig;
 
 	ComPtr<ID3DBlob> vBlob;
 	ComPtr<ID3DBlob> pBlob;
@@ -91,37 +91,29 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 		D3D12_LOGIC_OP_NOOP,            // LogicOp
 		D3D12_COLOR_WRITE_ENABLE_ALL    // RenderTargetWriteMask
 	};
-	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;
+	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;	
 
-	// For full list of fields (Order matters!)
-	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type
-	struct PipelineStateStream
-	{
-		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
-		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC Blend;
-		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
-		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;		
-	} pipelineStateStream;
+	UINT inputLayoutCount = m_inputLayout.size();
 
-	pipelineStateStream.pRootSignature = rootSig;
-	pipelineStateStream.InputLayout = { m_inputLayout, m_inputLayoutCount };
-	pipelineStateStream.PrimitiveTopologyType = m_topology;
-	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
-	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
-	pipelineStateStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
-	pipelineStateStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
-	pipelineStateStream.DSVFormat = DSV_FORMAT;
-	pipelineStateStream.RTVFormats = rtvFormats;	
+	m_psoStream.pRootSignature = m_rootSig;
+	m_psoStream.InputLayout = { m_inputLayout.data(), inputLayoutCount };
+	m_psoStream.PrimitiveTopologyType = m_topology;
+	m_psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
+	m_psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
+	m_psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
+	m_psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
+	m_psoStream.DSVFormat = DSV_FORMAT;
+	m_psoStream.RTVFormats = rtvFormats;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &pipelineStateStream };
+	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &m_psoStream };
 
 	hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso));
 	ThrowIfFailed(hr);
+}
+
+void Shader::Recompile(ID3D12Device2* device)
+{
+	Compile(device, m_rootSig);
 }
 
 ComPtr<ID3D12PipelineState> Shader::GetPSO()

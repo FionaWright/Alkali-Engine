@@ -93,13 +93,13 @@ bool Scene::LoadContent()
 
 	if (!ResourceTracker::TryGetShader("Line_VS.cso - Line_PS.cso", m_shaderLine))
 	{
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
-		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, _countof(inputLayout), m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
 	vector<DebugLine*> frustumDebugLines;
@@ -264,7 +264,7 @@ void Scene::InstantiateCubes(int count)
 	shared_ptr<Shader> shader;
 	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", shader))
 	{
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -273,7 +273,7 @@ void Scene::InstantiateCubes(int count)
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 		
-		shader->Init(L"PBR.vs", L"PBR.ps", inputLayout, _countof(inputLayout), rootSigPBR.Get(), m_d3dClass->GetDevice());
+		shader->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
 	}
 
 	shared_ptr<Batch> batch;
@@ -404,6 +404,8 @@ void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D1
 
 void Scene::RenderImGui() 
 {
+	auto& shaderList = ResourceTracker::GetShaders();
+
 	if (ImGui::CollapsingHeader("Settings"))
 	{
 		ImGui::Indent(IM_GUI_INDENTATION);
@@ -417,9 +419,19 @@ void Scene::RenderImGui()
 			ImGui::Checkbox("VSync", &vSync);
 			m_pWindow->SetVSync(vSync);
 
+			bool prevWireFrame = Shader::ms_FillWireframeMode;
 			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
 
+			bool prevBackCull = Shader::ms_CullNone;
 			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_CullNone);
+
+			if (prevWireFrame != Shader::ms_FillWireframeMode || prevBackCull != Shader::ms_CullNone)
+			{
+				for (auto& it : shaderList)
+				{
+					it.second->UpdateRasterizerDesc(m_d3dClass->GetDevice());
+				}
+			}
 
 			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
 
@@ -716,7 +728,10 @@ void Scene::RenderImGui()
 						ImGui::Unindent(IM_GUI_INDENTATION);
 					}
 				}
-			}					
+			}		
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::Spacing();
 		}
 
 		string batchTag = "Batches (" + std::to_string(batchList.size()) + ")";
@@ -726,8 +741,6 @@ void Scene::RenderImGui()
 
 			for (auto& it : batchList)
 			{
-				ImGui::Indent(IM_GUI_INDENTATION);
-
 				if (ImGui::CollapsingHeader(it.second->m_Name.c_str()))
 				{
 					ImGui::Indent(IM_GUI_INDENTATION);
@@ -765,8 +778,6 @@ void Scene::RenderImGui()
 					ImGui::Spacing();
 					ImGui::Unindent(IM_GUI_INDENTATION);
 				}
-
-				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 
 			ImGui::Spacing();
@@ -781,8 +792,6 @@ void Scene::RenderImGui()
 
 			for (auto& it : texList)
 			{
-				ImGui::Indent(IM_GUI_INDENTATION);
-
 				ImGui::Text(it.first.c_str());
 
 				ImGui::Indent(IM_GUI_INDENTATION);
@@ -790,9 +799,6 @@ void Scene::RenderImGui()
 				if (it.second->GetHasAlpha())
 					ImGui::Text("Transparent: TRUE");
 
-				ImGui::Unindent(IM_GUI_INDENTATION);
-
-				ImGui::Spacing();
 				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 
@@ -808,19 +814,13 @@ void Scene::RenderImGui()
 
 			for (auto& it : modelList)
 			{
-				ImGui::Indent(IM_GUI_INDENTATION);
-
 				ImGui::Text(it.first.c_str());
-
-				ImGui::Spacing();
-				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 
 			ImGui::Spacing();
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
-
-		auto& shaderList = ResourceTracker::GetShaders();
+		
 		string shaderTag = "Shaders (" + std::to_string(shaderList.size()) + ")";
 		if (ImGui::CollapsingHeader(shaderTag.c_str()))
 		{
@@ -828,8 +828,6 @@ void Scene::RenderImGui()
 
 			for (auto& it : shaderList)
 			{
-				ImGui::Indent(IM_GUI_INDENTATION);
-
 				ImGui::Text(it.first.c_str());
 
 				if (it.second->IsPreCompiled())
@@ -840,9 +838,6 @@ void Scene::RenderImGui()
 
 					ImGui::Unindent(IM_GUI_INDENTATION);
 				}
-
-				ImGui::Spacing();
-				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 
 			ImGui::Spacing();
