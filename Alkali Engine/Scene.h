@@ -61,6 +61,7 @@ protected:
     void Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue);
 
     void SetDSVForSize(int width, int height);
+    void SetDSVFlags(D3D12_DSV_FLAGS flags);
 
     DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
     void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
@@ -95,9 +96,13 @@ private:
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
     bool m_freezeFrustum = false;
 
-    ComPtr<ID3D12RootSignature> m_rootSigLine;
-    shared_ptr<Shader> m_shaderLine;
+    ComPtr<ID3D12RootSignature> m_rootSigLine, m_rootSigDepth;
+    shared_ptr<Shader> m_shaderLine, m_shaderDepth;
+
+    unique_ptr<GameObject> m_goDepthTex;
+    shared_ptr<Material> m_matDepthTex;
 
     static shared_ptr<Model> ms_sphereModel;
     static bool ms_sphereMode;
+    static bool ms_visualizeDSV;
 };

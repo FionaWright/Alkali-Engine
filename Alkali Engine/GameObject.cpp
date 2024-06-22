@@ -4,13 +4,14 @@
 #include "Utils.h"
 #include "Scene.h"
 
-GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial)
+GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
 	, m_worldMatrix(XMMatrixIdentity())
 	, m_model(pModel)
 	, m_shader(pShader)
 	, m_Name(name)
 	, m_material(pMaterial)
+	, m_orthographic(orthographic)
 {
 }
 
@@ -18,10 +19,10 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB& matrices)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices)
 {
 	if (!m_model || !m_shader)
-		return;
+		return;	
 
 	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());	
 
@@ -31,8 +32,17 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 		ID3D12DescriptorHeap* ppHeaps[] = { texHeap };
 		commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		commandListDirect->SetGraphicsRootDescriptorTable(1, texHeap->GetGPUDescriptorHandleForHeapStart());
+		commandListDirect->SetGraphicsRootDescriptorTable(m_material->GetRootParamIndex(), texHeap->GetGPUDescriptorHandleForHeapStart());
 	}
+
+	if (m_orthographic)
+	{
+		m_model->Render(commandListDirect);
+		return;
+	}
+
+	if (!matrices)
+		throw std::exception("Matrices not given");
 
 	Model* sphereModel = nullptr;	
 	if (Scene::IsSphereModeOn(&sphereModel))
@@ -44,9 +54,9 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 		m_transform.Position = Add(m_transform.Position, centroidScaled);
 		UpdateWorldMatrix(false);
 
-		matrices.M = m_worldMatrix;
-		matrices.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
-		commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matrices, 0);
+		matrices->M = m_worldMatrix;
+		matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
+		commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, matrices, 0);
 
 		sphereModel->Render(commandListDirect);
 		m_transform = savedTransform;
@@ -54,9 +64,9 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 		return;
 	}
 
-	matrices.M = m_worldMatrix;
-	matrices.InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
-	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, &matrices, 0);
+	matrices->M = m_worldMatrix;
+	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
+	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, matrices, 0);
 
 	m_model->Render(commandListDirect);
 }
@@ -204,4 +214,9 @@ Material* GameObject::GetMaterial()
 bool GameObject::IsTransparent()
 {
 	return m_material->GetHasAlpha();
+}
+
+bool GameObject::IsOrthographic()
+{
+	return m_orthographic;
 }

@@ -116,7 +116,6 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialT
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(cpuHandle, srvHeapOffset, incrementSize);
         device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
-        m_srvGPUHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuHandle, srvHeapOffset, incrementSize);
     }    
 }
 

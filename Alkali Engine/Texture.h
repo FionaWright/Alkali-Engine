@@ -32,9 +32,6 @@ private:
 	ComPtr<ID3D12Resource> m_textureUploadHeap;
 	ComPtr<ID3D12Resource> m_textureResource;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE m_srvGPUHandle;
-	vector<D3D12_GPU_DESCRIPTOR_HANDLE> m_uavGPUHandles;
-
 	D3D12_RESOURCE_DESC m_textureDesc;
 
 	bool m_is2Channel = false;

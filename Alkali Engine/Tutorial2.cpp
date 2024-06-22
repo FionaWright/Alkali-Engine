@@ -14,6 +14,7 @@ bool Tutorial2::LoadContent()
 	Scene::LoadContent();
 
 	// Models
+	shared_ptr<Model> modelSphere, modelPlane;
 	{
 		CommandQueue* commandQueueCopy = nullptr;
 		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -22,10 +23,16 @@ bool Tutorial2::LoadContent()
 
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		if (!ResourceTracker::TryGetModel("Sphere.model", m_modelTest))
+		if (!ResourceTracker::TryGetModel("Sphere.model", modelSphere))
 		{
-			m_modelTest->Init(commandListCopy.Get(), L"Sphere.model");
+			modelSphere->Init(commandListCopy.Get(), L"Sphere.model");
 		}
+
+		if (!ResourceTracker::TryGetModel("Plane.model", modelPlane))
+		{
+			modelPlane->Init(commandListCopy.Get(), L"Plane.model");
+		}
+
 		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");		
 		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
@@ -41,25 +48,27 @@ bool Tutorial2::LoadContent()
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	// Textures
+	shared_ptr<Texture> baseTex, normalTex;
 	{
-		if (!ResourceTracker::TryGetTexture("Baba.png", m_texture))
+		if (!ResourceTracker::TryGetTexture("Baba.png", baseTex))
 		{
 			//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
-			m_texture->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
+			baseTex->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
 		}	
 
-		if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", m_normalMap))
+		if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", normalTex))
 		{
-			m_normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
+			normalTex->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
 		}
 	}
 
-	string matID = m_texture->GetFilePath() + " - " + m_normalMap->GetFilePath();
-	if (!ResourceTracker::TryGetMaterial(matID, m_material))
+	string matID = baseTex->GetFilePath() + " - " + normalTex->GetFilePath();
+	shared_ptr<Material> matPBR;
+	if (!ResourceTracker::TryGetMaterial(matID, matPBR))
 	{
-		m_material->Init(2);
-		m_material->AddTexture(m_d3dClass, m_texture);
-		m_material->AddTexture(m_d3dClass, m_normalMap);
+		matPBR->Init(2, 1);
+		matPBR->AddTexture(m_d3dClass, baseTex);
+		matPBR->AddTexture(m_d3dClass, normalTex);
 	}
 
 	ComPtr<ID3D12RootSignature> rootSigPBR;
@@ -93,7 +102,8 @@ bool Tutorial2::LoadContent()
 	}
 
 	// Shaders
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
+	shared_ptr<Shader> shaderPBR, shaderPBRCullOff;
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", shaderPBR))
 	{
 		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 		{
@@ -104,11 +114,11 @@ bool Tutorial2::LoadContent()
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
+		shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 	}
 
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps --CullOff", m_shaderPBR_CullOff))
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps --CullOff", shaderPBRCullOff))
 	{
 		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 		{
@@ -119,31 +129,37 @@ bool Tutorial2::LoadContent()
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
+		shaderPBRCullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
 	}
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
-	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
+	shared_ptr<Batch> batch;
+	if (!ResourceTracker::TryGetBatch("PBR Basic", batch))
 	{
-		m_batch->Init("PBR Basic", rootSigPBR);
+		batch->Init("PBR Basic", rootSigPBR);
 	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderPBR, m_shaderPBR_CullOff, &whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderPBR);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", m_modelTest, m_shaderPBR_CullOff, m_material);
+	GameObject go("Test", modelSphere, shaderPBRCullOff, matPBR);
 	go.SetPosition(0, 10, 0);
-	m_goTest = m_batch->AddGameObject(go);
+	m_goTest = batch->AddGameObject(go);
 
-	m_camera->SetPosition(0, 0, -10);
-	m_camera->SetRotation(0, 0, 0);
+	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR, true);
+	//go2.SetPosition(16.1f, 6, -5);
+	//go2.SetRotation(-90, 0, 0);
+	m_goPlane = batch->AddGameObject(go2);
+
+	m_camera->SetPosition(16, 6, -5);
+	m_camera->SetRotation(0, -90, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
@@ -156,9 +172,6 @@ void Tutorial2::UnloadContent()
 	Scene::UnloadContent();
 
 	m_FoV = 45;
-	m_modelTest.reset();
-	m_batch.reset();
-	m_shaderPBR.reset();
 }
 
 void Tutorial2::OnUpdate(TimeEventArgs& e)

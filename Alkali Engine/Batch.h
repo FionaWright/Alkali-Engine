@@ -17,7 +17,8 @@ public:
 	void Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
 
 	GameObject* AddGameObject(GameObject go);
-	void Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, XMMATRIX& viewProj, Frustum& frustum);
+	void Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
+	void RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
 
 	vector<GameObject>& GetOpaques();
 	vector<GameObject>& GetTrans();
@@ -26,8 +27,8 @@ public:
 
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
-	vector<GameObject> m_gameObjectList;
-	vector<GameObject> m_gameObjectListTransparent;
+	vector<GameObject> m_goList;
+	vector<GameObject> m_goListTrans;
 	// Add option to sort by depth value as well
 };
 
