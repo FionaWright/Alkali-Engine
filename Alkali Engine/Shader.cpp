@@ -13,29 +13,30 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 	m_cullNone = cullNone;
+	m_disableDSV = disableDSV;
+	m_inputLayout = inputLayout;
 
 	m_VSName = g_dirPath + vsName;
-	m_PSName = g_dirPath + psName;
-
-	m_inputLayout = inputLayout;
+	m_PSName = g_dirPath + psName;	
 
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
-	m_topology = topology;
-	m_preCompiled = true;
+	m_topology = topology;	
 	m_cullNone = cullNone;
+	m_disableDSV = disableDSV;
+	m_inputLayout = inputLayout;
+
+	m_preCompiled = true;
 
 	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + vsName;
-	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;
-
-	m_inputLayout = inputLayout;
+	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;	
 
 	Compile(device, rootSig);
 }
@@ -95,6 +96,25 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	};
 	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;	
 
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = m_disableDSV ? FALSE : TRUE;
+	depthStencilDesc.DepthWriteMask = m_cullNone ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL; 
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+
+	depthStencilDesc.StencilEnable = m_cullNone || m_disableDSV ? FALSE : TRUE;
+	depthStencilDesc.StencilWriteMask = 0xFF;
+	depthStencilDesc.StencilReadMask = 0xFF;
+
+	depthStencilDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+	depthStencilDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
 	UINT inputLayoutCount = m_inputLayout.size();
 
 	m_psoStream.pRootSignature = m_rootSig;
@@ -104,6 +124,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	m_psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
 	m_psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	m_psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
+	m_psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 	m_psoStream.DSVFormat = DSV_FORMAT;
 	m_psoStream.RTVFormats = rtvFormats;
 

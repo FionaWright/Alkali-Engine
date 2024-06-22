@@ -18,16 +18,16 @@ GameObject* Batch::AddGameObject(GameObject go)
 {
 	if (go.IsTransparent())
 	{
-		m_gameObjectListTransparent.push_back(go);		
-		return &m_gameObjectListTransparent[m_gameObjectListTransparent.size() - 1];
+		m_goListTrans.push_back(go);		
+		return &m_goListTrans[m_goListTrans.size() - 1];
 	}
 
 	// TODO: Sorting
-	m_gameObjectList.push_back(go);
-	return &m_gameObjectList[m_gameObjectList.size() - 1];
+	m_goList.push_back(go);
+	return &m_goList[m_goList.size() - 1];
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& viewPort, D3D12_RECT& scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE& rtv, D3D12_CPU_DESCRIPTOR_HANDLE& dsv, XMMATRIX& viewProj, Frustum& frustum)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
@@ -35,39 +35,42 @@ void Batch::Render(ID3D12GraphicsCommandList2* commandList, D3D12_VIEWPORT& view
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	commandList->RSSetViewports(1, &viewPort);
-	commandList->RSSetScissorRects(1, &scissorRect);
-
-	UINT numRenderTargets = 1;
-	commandList->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
-
-	for (int i = 0; i < m_gameObjectList.size(); i++) 
+	for (int i = 0; i < m_goList.size(); i++) 
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectList[i].GetBoundingSphere(pos, radius);
+		m_goList[i].GetBoundingSphere(pos, radius);
 
-		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectList[i].Render(commandList, matrices);
+		if (!FRUSTUM_CULLING_ENABLED || m_goList[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
+			m_goList[i].Render(commandList, &matrices);
 	}
+}
 
-	for (int i = 0; i < m_gameObjectListTransparent.size(); i++)
+void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+{
+	MatricesCB matrices;
+	matrices.VP = viewProj;
+
+	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	for (int i = 0; i < m_goListTrans.size(); i++)
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_gameObjectListTransparent[i].GetBoundingSphere(pos, radius);
+		m_goListTrans[i].GetBoundingSphere(pos, radius);
 
-		if (!FRUSTUM_CULLING_ENABLED || frustum.CheckSphere(pos, radius))
-			m_gameObjectListTransparent[i].Render(commandList, matrices);
+		if (!FRUSTUM_CULLING_ENABLED || m_goListTrans[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
+			m_goListTrans[i].Render(commandList, &matrices);
 	}
 }
 
 vector<GameObject>& Batch::GetOpaques()
 {
-	return m_gameObjectList;
+	return m_goList;
 }
 
 vector<GameObject>& Batch::GetTrans()
 {
-	return m_gameObjectListTransparent;
+	return m_goListTrans;
 }

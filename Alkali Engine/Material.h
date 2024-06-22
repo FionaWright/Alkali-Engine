@@ -11,13 +11,16 @@ public:
 	Material();
 	~Material();
 
-	void Init(UINT numSamplers);
+	void Init(UINT numSamplers, UINT rootParamIndex);
 
 	void AddTexture(D3DClass* d3d, shared_ptr<Texture> tex);
+
+	void AssignTextureResourceManually(D3DClass* d3d, int offset, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	ID3D12DescriptorHeap* GetTextureHeap();
 
 	bool GetHasAlpha();
+	UINT GetRootParamIndex();
 
 	vector<shared_ptr<Texture>>& GetTextures();
 
@@ -26,5 +29,6 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_textureHeap;
 	int m_expectedTextureCount;
 	int m_texturesAddedCount;
+	UINT m_rootParamIndex = -1;
 };
 

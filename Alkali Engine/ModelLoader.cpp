@@ -529,7 +529,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 		string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
 		if (!ResourceTracker::TryGetMaterial(matID, material))
 		{
-			material->Init(2);
+			material->Init(2, 1);
 			material->AddTexture(d3d, diffuseTex);
 			material->AddTexture(d3d, normalTex);
 		}
@@ -839,7 +839,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
 	if (!ResourceTracker::TryGetMaterial(matID, material))
 	{
-		material->Init(2);
+		material->Init(2, 1);
 		material->AddTexture(d3d, diffuseTex);
 		material->AddTexture(d3d, normalTex);
 	}	

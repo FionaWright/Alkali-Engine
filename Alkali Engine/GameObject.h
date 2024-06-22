@@ -21,10 +21,10 @@ struct Transform
 class GameObject
 {
 public:
-	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr);
+	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
 	~GameObject();
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB& matrices);
+	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices = nullptr);
 
 	Transform GetTransform();
 	void SetTransform(Transform t);
@@ -52,6 +52,7 @@ public:
 	void GetBoundingSphere(XMFLOAT3& position, float& radius);
 	Material* GetMaterial();
 	bool IsTransparent();
+	bool IsOrthographic();
 
 	string m_Name;
 
@@ -63,5 +64,7 @@ protected:
 	Transform m_transform;
 
 	XMMATRIX m_worldMatrix;
+
+	bool m_orthographic;
 };
 

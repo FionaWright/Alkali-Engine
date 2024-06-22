@@ -8,6 +8,7 @@
 
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
+bool Scene::ms_visualizeDSV;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -52,6 +53,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 
 bool Scene::LoadContent()
 {
+	shared_ptr<Model> modelPlane;
 	{
 		CommandQueue* commandQueueCopy = nullptr;
 		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -60,8 +62,15 @@ bool Scene::LoadContent()
 
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		ms_sphereModel = std::make_shared<Model>();
-		ms_sphereModel->Init(commandListCopy.Get(), L"Sphere.model");
+		if (!ResourceTracker::TryGetModel("Sphere.model", ms_sphereModel))
+		{
+			ms_sphereModel->Init(commandListCopy.Get(), L"Sphere.model");
+		}
+		
+		if (!ResourceTracker::TryGetModel("Plane.model", modelPlane))
+		{
+			modelPlane->Init(commandListCopy.Get(), L"Plane.model");
+		}
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -99,14 +108,60 @@ bool Scene::LoadContent()
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
-		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
-	vector<DebugLine*> frustumDebugLines;
-	for (int i = 0; i < 12; i++)
-		frustumDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, XMFLOAT3_ONE));
+	{
+		vector<DebugLine*> frustumDebugLines;
+		for (int i = 0; i < 12; i++)
+			frustumDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, XMFLOAT3_ONE));
 
-	m_frustum.SetDebugLines(frustumDebugLines);
+		m_frustum.SetDebugLines(frustumDebugLines);
+	}
+
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+		int numDescriptors = 1;
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+		const int paramCount = 1;
+		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
+		rootParameters[0].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = 0;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		m_rootSigDepth = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		m_rootSigDepth->SetName(L"Depth Buffer Tex Root Sig");
+	}
+
+	if (!ResourceTracker::TryGetShader("Depth_VS.cso - Depth_PS.cso", m_shaderDepth))
+	{
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
+		m_shaderDepth->InitPreCompiled(L"Depth_VS.cso", L"Depth_PS.cso", inputLayout, m_rootSigDepth.Get(), m_d3dClass->GetDevice(), true, true);
+	}
+
+	m_matDepthTex = std::make_shared<Material>();
+	m_matDepthTex->Init(1, 0);
+
+	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_matDepthTex, true);
+	m_goDepthTex->SetRotation(90, 0, 0);
 
     return true;
 }
@@ -162,15 +217,55 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	ClearBackBuffer(commandList.Get());
 
+	commandList->RSSetViewports(1, &m_viewport);
+	commandList->RSSetScissorRects(1, &m_scissorRect);
+
+	UINT numRenderTargets = 1;
+	commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+
 	auto& batchList = ResourceTracker::GetBatches();
 	for (auto& it : batchList)
-		it.second->Render(commandList.Get(), m_viewport, m_scissorRect, rtvCPUDesc, dsvCPUDesc, m_viewProjMatrix, m_frustum);
+		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum);
+
+	//SetDSVFlags(D3D12_DSV_FLAG_READ_ONLY_DEPTH);
+
+	for (auto& it : batchList)
+		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
+
+	//SetDSVFlags(D3D12_DSV_FLAG_NONE);
 
 	RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
+	if (ms_visualizeDSV && m_goDepthTex)
+	{
+		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, nullptr); // Disable DSV
+
+		commandList->SetGraphicsRootSignature(m_rootSigDepth.Get());
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// Convert DSV to SRV and assign as a texture to be read in the shader
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBuffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_matDepthTex->AssignTextureResourceManually(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBuffer.Get());
+
+		m_goDepthTex->Render(commandList.Get());
+		
+		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+	}
+
 	ImGUIManager::Render(commandList.Get());
 
+	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(commandList.Get(), commandQueue); 
+	
+	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
+	if (ms_visualizeDSV)
+	{
+		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
+
+		auto commandList = commandQueue->GetAvailableCommandList();
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		commandQueue->ExecuteCommandList(commandList);
+	}
 }
 
 void Scene::OnResize(ResizeEventArgs& e)
@@ -226,7 +321,7 @@ void Scene::InstantiateCubes(int count)
 	string matID = texture->GetFilePath() + " - " + normalMap->GetFilePath();
 	if (!ResourceTracker::TryGetMaterial(matID, material))
 	{
-		material->Init(2);
+		material->Init(2, 1);
 		material->AddTexture(m_d3dClass, texture);
 		material->AddTexture(m_d3dClass, normalMap);
 	}
@@ -376,12 +471,25 @@ void Scene::SetDSVForSize(int width, int height)
 	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
 	ThrowIfFailed(hr);
 
-	// Update the depth-stencil view.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 	dsv.Format = DSV_FORMAT;
 	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsv.Texture2D.MipSlice = 0;
 	dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
+}
+
+void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags) 
+{
+	auto device = m_d3dClass->GetDevice();
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+	dsv.Format = DSV_FORMAT;
+	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsv.Texture2D.MipSlice = 0;
+	dsv.Flags = flags;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
@@ -435,7 +543,9 @@ void Scene::RenderImGui()
 
 			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
 
-			ImGui::Checkbox("Bounding Spheres", &ms_sphereMode);
+			ImGui::Checkbox("Show Bounding Spheres", &ms_sphereMode);
+
+			ImGui::Checkbox("Show DSV", &ms_visualizeDSV);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
