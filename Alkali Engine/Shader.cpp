@@ -2,8 +2,8 @@
 #include "Shader.h"
 #include <iostream>
 
-bool Shader::ms_FillWireframeMode;
-bool Shader::ms_CullNone;
+bool Shader::ms_GlobalFillWireframeMode;
+bool Shader::ms_GlobalCullNone;
 
 Shader::Shader()
 {
@@ -13,9 +13,10 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
+	m_cullNone = cullNone;
 
 	m_VSName = g_dirPath + vsName;
 	m_PSName = g_dirPath + psName;
@@ -25,10 +26,11 @@ void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INP
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 	m_preCompiled = true;
+	m_cullNone = cullNone;
 
 	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + vsName;
 	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;
@@ -63,8 +65,8 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	rtvFormats.RTFormats[0] = RTV_FORMAT;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
-	rasterizerDesc.FillMode = ms_FillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = ms_CullNone ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_BACK;
+	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
+	rasterizerDesc.CullMode = ms_GlobalCullNone || m_cullNone ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;

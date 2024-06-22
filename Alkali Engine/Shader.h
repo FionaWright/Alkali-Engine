@@ -30,11 +30,11 @@ public:
 	Shader();
 	~Shader();
 
-	void Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	void Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	void InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
 	void Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig);
-	void UpdateRasterizerDesc(ID3D12Device2* device);
+	void Recompile(ID3D12Device2* device);
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 
@@ -42,8 +42,8 @@ public:
 
 	wstring m_VSName, m_PSName, m_HSName, m_DSName;
 
-	static bool ms_FillWireframeMode;
-	static bool ms_CullNone;
+	static bool ms_GlobalFillWireframeMode;
+	static bool ms_GlobalCullNone;
 
 protected:
 	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target);
@@ -59,5 +59,6 @@ private:
 	ComPtr<ID3D12PipelineState> m_pso;
 
 	bool m_preCompiled = false;
+	bool m_cullNone = false;
 };
 

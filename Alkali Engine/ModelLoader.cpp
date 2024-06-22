@@ -765,7 +765,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
@@ -847,13 +847,14 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;
 
-	GameObject go(nodeName, model, shader, material);
+	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
+	GameObject go(nodeName, model, shaderUsed, material);
 	go.SetTransform(transform);
 
 	batch->AddGameObject(go);
 }
 
-void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
 	fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
 	Transform transform = ToTransform(trs);
@@ -865,7 +866,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, commandList, asset, batch, shader, nameWhiteList, modelNameExtensionless, childNode, transform);
+		LoadNode(d3d, commandList, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -894,11 +895,11 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, commandList, asset, mesh.primitives[i], batch, shader, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, commandList, asset, mesh.primitives[i], batch, shader, shaderCullOff, modelNameExtensionless, node, transform, id);
 	}
 }
 
-void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, vector<string>* nameWhiteList)
+void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -933,7 +934,7 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 			int nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
 			Transform defTransform = {};
-			LoadNode(d3d, commandList, asset, batch, shader, nameWhiteList, modelNameExtensionless, node, defTransform);
+			LoadNode(d3d, commandList, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defTransform);
 		}
 	}
 }
