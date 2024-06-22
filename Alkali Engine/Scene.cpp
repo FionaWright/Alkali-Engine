@@ -99,7 +99,7 @@ bool Scene::LoadContent()
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
-		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
 	vector<DebugLine*> frustumDebugLines;
@@ -419,17 +419,17 @@ void Scene::RenderImGui()
 			ImGui::Checkbox("VSync", &vSync);
 			m_pWindow->SetVSync(vSync);
 
-			bool prevWireFrame = Shader::ms_FillWireframeMode;
-			ImGui::Checkbox("Wireframe", &Shader::ms_FillWireframeMode);
+			bool prevWireFrame = Shader::ms_GlobalFillWireframeMode;
+			ImGui::Checkbox("Wireframe", &Shader::ms_GlobalFillWireframeMode);
 
-			bool prevBackCull = Shader::ms_CullNone;
-			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_CullNone);
+			bool prevBackCull = Shader::ms_GlobalCullNone;
+			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_GlobalCullNone);
 
-			if (prevWireFrame != Shader::ms_FillWireframeMode || prevBackCull != Shader::ms_CullNone)
+			if (prevWireFrame != Shader::ms_GlobalFillWireframeMode || prevBackCull != Shader::ms_GlobalCullNone)
 			{
 				for (auto& it : shaderList)
 				{
-					it.second->UpdateRasterizerDesc(m_d3dClass->GetDevice());
+					it.second->Recompile(m_d3dClass->GetDevice());
 				}
 			}
 

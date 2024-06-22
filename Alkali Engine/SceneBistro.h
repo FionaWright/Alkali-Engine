@@ -20,5 +20,5 @@ private:
 	float m_FoV;
 
 	shared_ptr<Batch> m_batch;
-	shared_ptr<Shader> m_shaderPBR;
+	shared_ptr<Shader> m_shaderPBR, m_shaderPBR_CullOff;
 };

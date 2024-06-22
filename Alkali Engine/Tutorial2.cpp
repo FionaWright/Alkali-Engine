@@ -93,7 +93,7 @@ bool Tutorial2::LoadContent()
 	}
 
 	// Shaders
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderCube))
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
 	{
 		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 		{
@@ -104,8 +104,22 @@ bool Tutorial2::LoadContent()
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		m_shaderCube->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
+		m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
+	}
+
+	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps --CullOff", m_shaderPBR_CullOff))
+	{
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
 	}
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
@@ -118,15 +132,15 @@ bool Tutorial2::LoadContent()
 	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderCube, &whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderCube);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderPBR, m_shaderPBR_CullOff, &whiteList);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", m_batch.get(), m_shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", m_modelTest, m_shaderCube, m_material);
+	GameObject go("Test", m_modelTest, m_shaderPBR_CullOff, m_material);
 	go.SetPosition(0, 10, 0);
-	m_goCube = m_batch->AddGameObject(go);
+	m_goTest = m_batch->AddGameObject(go);
 
 	m_camera->SetPosition(0, 0, -10);
 	m_camera->SetRotation(0, 0, 0);
@@ -144,7 +158,7 @@ void Tutorial2::UnloadContent()
 	m_FoV = 45;
 	m_modelTest.reset();
 	m_batch.reset();
-	m_shaderCube.reset();
+	m_shaderPBR.reset();
 }
 
 void Tutorial2::OnUpdate(TimeEventArgs& e)
