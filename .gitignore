@@ -395,4 +395,15 @@ FodyWeavers.xsd
 *.msp
 
 # JetBrains Rider
-*.sln.iml
+*.sln.iml.git/objects/ed/e57058fe9630f40abea5a26dbbbfc0d08b4b31
+.git/objects/pack/pack-f2fa662727ff86514cf2a8da00f3224dbcd36b9e.pack
+.vs/Alkali Engine/v17/ipch/19fd2573679cad12.ipch
+.vs/Alkali Engine/v17/ipch/5f2f875cc1b7e46a.ipch
+.vs/Alkali Engine/v17/ipch/AutoPCH/91786c0f32cd5b62/BASE64.ipch
+.vs/Alkali Engine/v17/ipch/AutoPCH/bbca28a9a0ca5c59/IO.ipch
+.vs/Alkali Engine/v17/ipch/AutoPCH/e4496a6141e5121e/FASTGLTF.ipch
+Alkali Engine/Assets/Models/Bistro.bin
+Alkali Engine/Assets/Models/Bistro.glb
+Alkali Engine/x64/Debug/Alkali Engine.pch
+Alkali Engine/x64/Release/Alkali Engine.pch
+x64/Debug/Alkali Engine.pdb
