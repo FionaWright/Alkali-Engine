@@ -23,14 +23,16 @@ bool Tutorial2::LoadContent()
 
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		if (!ResourceTracker::TryGetModel("Sphere.model", modelSphere))
+		string modelName1 = "Sphere.model";
+		if (!ResourceTracker::TryGetModel(modelName1, modelSphere))
 		{
-			modelSphere->Init(commandListCopy.Get(), L"Sphere.model");
+			modelSphere->Init(commandListCopy.Get(), modelName1);
 		}
 
-		if (!ResourceTracker::TryGetModel("Plane.model", modelPlane))
+		string modelName2 = "Plane.model";
+		if (!ResourceTracker::TryGetModel(modelName2, modelPlane))
 		{
-			modelPlane->Init(commandListCopy.Get(), L"Plane.model");
+			modelPlane->Init(commandListCopy.Get(), modelName2);
 		}
 
 		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");		
@@ -142,9 +144,11 @@ bool Tutorial2::LoadContent()
 		batch->Init("PBR Basic", rootSigPBR);
 	}
 
-	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
+	vector<string> whiteList = { "Bistro_Research_Exterior__lod0_Italian_Cypress1" };
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
+	whiteList = { "Bistro_Research_Exterior__lod0_Italian_Cypress2" };
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);

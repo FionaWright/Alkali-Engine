@@ -90,6 +90,12 @@ float Dot(const XMFLOAT3& a, const XMFLOAT3& b)
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+float SqDist(const XMFLOAT3& a, const XMFLOAT3& b)
+{
+    XMFLOAT3 a_b = Subtract(a, b);
+    return Dot(a_b, a_b);
+}
+
 XMFLOAT3 Cross(const XMFLOAT3& a, const XMFLOAT3& b)
 {
     XMFLOAT3 result;

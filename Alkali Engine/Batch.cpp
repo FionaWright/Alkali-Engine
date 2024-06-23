@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Batch.h"
 #include "CBuffers.h"
+#include "Utils.h"
 
 void Batch::Init(string name, ComPtr<ID3D12RootSignature> pRootSig)
 {
@@ -63,6 +64,21 @@ void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewP
 		if (!FRUSTUM_CULLING_ENABLED || m_goListTrans[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
 			m_goListTrans[i].Render(commandList, &matrices);
 	}
+}
+
+void Batch::SortObjects(const XMFLOAT3& camPos) 
+{
+	std::sort(m_goList.begin(), m_goList.end(), [&camPos](const GameObject& a, const GameObject& b) {
+		float distSqA = SqDist(a.GetWorldPosition(), camPos);
+		float distSqB = SqDist(b.GetWorldPosition(), camPos);
+		return distSqA > distSqB;
+	});
+
+	std::sort(m_goListTrans.begin(), m_goListTrans.end(), [&camPos](const GameObject& a, const GameObject& b) {
+		float distSqA = SqDist(a.GetWorldPosition(), camPos);
+		float distSqB = SqDist(b.GetWorldPosition(), camPos);
+		return distSqA > distSqB;
+	});
 }
 
 vector<GameObject>& Batch::GetOpaques()

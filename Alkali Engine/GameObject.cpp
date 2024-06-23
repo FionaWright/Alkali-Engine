@@ -71,7 +71,7 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 	m_model->Render(commandListDirect);
 }
 
-Transform GameObject::GetTransform()
+Transform GameObject::GetTransform() const
 {
 	return m_transform;
 }
@@ -181,17 +181,17 @@ void GameObject::UpdateWorldMatrix(bool considerCentroid)
 	m_worldMatrix = XMMatrixMultiply(CI, XMMatrixMultiply(S, XMMatrixMultiply(R, XMMatrixMultiply(T, C))));
 }
 
-size_t GameObject::GetModelVertexCount()
+size_t GameObject::GetModelVertexCount() const
 {
 	return m_model->GetVertexCount();
 }
 
-size_t GameObject::GetModelIndexCount()
+size_t GameObject::GetModelIndexCount() const
 {
 	return m_model->GetIndexCount();
 }
 
-void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds)
+void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const
 {
 	vs = m_shader->m_VSName;
 	ps = m_shader->m_PSName;
@@ -199,24 +199,29 @@ void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& 
 	ds = m_shader->m_DSName;
 }
 
-void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius)
+void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius) const
 {
 	radius = m_model->GetSphereRadius() * std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
-	XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
-	position = Add(centroidScaled, m_transform.Position);
+	position = GetWorldPosition();
 }
 
-Material* GameObject::GetMaterial()
+XMFLOAT3 GameObject::GetWorldPosition() const
+{
+	XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
+	return Add(centroidScaled, m_transform.Position);
+}
+
+Material* GameObject::GetMaterial() const
 {
 	return m_material.get();
 }
 
-bool GameObject::IsTransparent()
+bool GameObject::IsTransparent() const
 {
 	return m_material->GetHasAlpha();
 }
 
-bool GameObject::IsOrthographic()
+bool GameObject::IsOrthographic() const
 {
 	return m_orthographic;
 }

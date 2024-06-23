@@ -9,6 +9,7 @@
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
 bool Scene::ms_visualizeDSV;
+bool Scene::ms_sortBatchGos;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -198,6 +199,13 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		m_frustum.CalculateDebugLinePoints(m_d3dClass);
 
 	m_frustum.SetDebugLinesEnabled(showLines);
+
+	if (ms_sortBatchGos)
+	{
+		auto& batchList = ResourceTracker::GetBatches();
+		for (auto& it : batchList)
+			it.second->SortObjects(m_camera->GetTransform().Position);
+	}
 }
 
 void Scene::OnRender(TimeEventArgs& e)
@@ -545,7 +553,7 @@ void Scene::RenderImGui()
 
 			ImGui::Checkbox("Show Bounding Spheres", &ms_sphereMode);
 
-			ImGui::Checkbox("Show DSV", &ms_visualizeDSV);
+			ImGui::Checkbox("Show DSV", &ms_visualizeDSV);			
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
@@ -578,6 +586,8 @@ void Scene::RenderImGui()
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			ImGui::Checkbox("DSV", &m_dsvEnabled);
+
+			ImGui::Checkbox("Sort By Depth", &ms_sortBatchGos);
 
 			ImGui::TreePop();
 			ImGui::Spacing();
