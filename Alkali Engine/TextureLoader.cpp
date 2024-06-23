@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "Application.h"
 #include "ResourceManager.h"
+#include "Scene.h"
 
 #include "spng/spng.h"
 
@@ -37,7 +38,7 @@ ID3D12PipelineState* TextureLoader::ms_pso;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
 
-void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
+void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel, bool flipUpsideDown)
 {
     size_t dotIndex = filePath.find_last_of('.');
     if (dotIndex == std::string::npos)
@@ -47,7 +48,7 @@ void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** 
     bool binTexAlternativeExists = std::filesystem::exists(binTexPath);
 
     string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
-    if (binTexAlternativeExists || fileExtension == "binTex")
+    if ((!Scene::IsForceReloadBinTex() && binTexAlternativeExists) || fileExtension == "binTex")
     {
         LoadBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
         return;
@@ -59,14 +60,14 @@ void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** 
         LoadTGA(filePath, width, height, pData);
 
         hasAlpha = ManuallyDetermineHasAlpha(width * height * 4, 4, *pData);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
         return;
     }        
 
     if (fileExtension == "dds")
     {
         LoadDDS(filePath, width, height, pData, hasAlpha, is2Channel);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
         return;
     }        
 
@@ -76,14 +77,14 @@ void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** 
 
         int channels = is2Channel ? 2 : 4;
         hasAlpha = ManuallyDetermineHasAlpha(width * height * channels, channels, *pData);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
         return;
     }        
     
     throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 }
 
-void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel)
+void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel, bool flipUpsideDown)
 {
     ofstream fout;
     std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
@@ -98,7 +99,22 @@ void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t*
 
     int channels = is2Channel ? 2 : 4;
     size_t bytes = width * height * channels;
-    fout.write(reinterpret_cast<const char*>(*pData), bytes);
+
+    if (flipUpsideDown)
+    {
+        uint8_t* flippedData = new uint8_t[bytes];
+        size_t rowBytes = width * channels;
+
+        for (int y = 0; y < height; y++)
+        {
+            std::memcpy(flippedData + y * rowBytes, (*pData) + (height - 1 - y) * rowBytes, rowBytes);
+        }
+
+        fout.write(reinterpret_cast<const char*>(flippedData), bytes);
+        delete[] flippedData;
+    }
+    else
+        fout.write(reinterpret_cast<const char*>(*pData), bytes);
 
     fout.close();
 
@@ -720,7 +736,7 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
 
         commandListDirect->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstWidth).Uint, 0);
         commandListDirect->SetComputeRoot32BitConstant(0, DWParam(1.0f / dstHeight).Uint, 1);
-        if (MIP_MAP_DEBUG_MODE)
+        if (Scene::IsMipMapDebugMode())
             commandListDirect->SetComputeRoot32BitConstant(0, TopMip, 2);
 
         commandListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
@@ -741,11 +757,13 @@ void TextureLoader::Shutdown()
     if (ms_mipMapRootSig)
     {
         ms_mipMapRootSig->Release();
+        ms_mipMapRootSig = 0;
     }
 
     if (ms_pso)
     {
         ms_pso->Release();
+        ms_pso = 0;
     }
 
     for (int i = 0; i < ms_trackedDescHeaps.size(); i++)
@@ -766,7 +784,8 @@ void TextureLoader::InitComputeShader(ID3D12Device2* device)
     srvCbvRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
     srvCbvRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
 
-    rootParameters[0].InitAsConstants(MIP_MAP_DEBUG_MODE ? 3 : 2, 0);
+    int constantsCount = Scene::IsMipMapDebugMode() ? 3 : 2;
+    rootParameters[0].InitAsConstants(constantsCount, 0);
     rootParameters[1].InitAsDescriptorTable(1, &srvCbvRanges[0]);
     rootParameters[2].InitAsDescriptorTable(1, &srvCbvRanges[1]);
 
@@ -794,7 +813,7 @@ void TextureLoader::InitComputeShader(ID3D12Device2* device)
     device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&ms_mipMapRootSig));
 
     ComPtr<ID3DBlob> cBlob;
-    wstring path = Application::GetEXEDirectoryPath() + (MIP_MAP_DEBUG_MODE ? L"/CreateMipMapsDebug.cso" : L"/CreateMipMaps.cso");
+    wstring path = Application::GetEXEDirectoryPath() + (Scene::IsMipMapDebugMode() ? L"/CreateMipMapsDebug.cso" : L"/CreateMipMaps.cso");
     HRESULT hr = D3DReadFileToBlob(path.c_str(), &cBlob);
     ThrowIfFailed(hr);
 

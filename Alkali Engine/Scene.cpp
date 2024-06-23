@@ -5,11 +5,14 @@
 #include <codecvt>
 #include "Utils.h"
 #include "ResourceTracker.h"
+#include "TextureLoader.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
 bool Scene::ms_visualizeDSV;
 bool Scene::ms_sortBatchGos;
+bool Scene::ms_forceReloadBinTex;
+bool Scene::ms_mipMapDebugMode;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -404,6 +407,16 @@ bool Scene::IsSphereModeOn(Model** model)
 	return true;
 }
 
+bool Scene::IsForceReloadBinTex()
+{
+	return ms_forceReloadBinTex;
+}
+
+bool Scene::IsMipMapDebugMode()
+{
+	return ms_mipMapDebugMode;
+}
+
 Window* Scene::GetWindow()
 {
 	return m_pWindow;
@@ -533,43 +546,70 @@ void Scene::RenderImGui()
 			ImGui::SeparatorText("DX12");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			bool vSync = m_pWindow->IsVSync();
-			ImGui::Checkbox("VSync", &vSync);
-			m_pWindow->SetVSync(vSync);
-
-			bool prevWireFrame = Shader::ms_GlobalFillWireframeMode;
-			ImGui::Checkbox("Wireframe", &Shader::ms_GlobalFillWireframeMode);
-
-			bool prevBackCull = Shader::ms_GlobalCullNone;
-			ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_GlobalCullNone);
-
-			if (prevWireFrame != Shader::ms_GlobalFillWireframeMode || prevBackCull != Shader::ms_GlobalCullNone)
 			{
-				for (auto& it : shaderList)
+				bool prevWireFrame = Shader::ms_GlobalFillWireframeMode;
+				ImGui::Checkbox("Wireframe", &Shader::ms_GlobalFillWireframeMode);
+
+				bool prevBackCull = Shader::ms_GlobalCullNone;
+				ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_GlobalCullNone);
+
+				if (prevWireFrame != Shader::ms_GlobalFillWireframeMode || prevBackCull != Shader::ms_GlobalCullNone)
 				{
-					it.second->Recompile(m_d3dClass->GetDevice());
+					for (auto& it : shaderList)
+					{
+						it.second->Recompile(m_d3dClass->GetDevice());
+					}
 				}
-			}
 
-			ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
+				ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
 
-			ImGui::Checkbox("Show Bounding Spheres", &ms_sphereMode);
+				ImGui::Checkbox("Show Bounding Spheres", &ms_sphereMode);
 
-			ImGui::Checkbox("Show DSV", &ms_visualizeDSV);			
+				ImGui::Checkbox("Show DSV", &ms_visualizeDSV);
+
+				bool prevMipMapDebugMode = ms_mipMapDebugMode;
+				ImGui::Checkbox("Mip Map Debug Mode", &ms_mipMapDebugMode);
+				if (prevMipMapDebugMode != ms_mipMapDebugMode)
+				{
+					ResourceTracker::ClearTexAndMatLists();
+					TextureLoader::Shutdown();
+					UnloadContent();
+					LoadContent();
+				}
+			}	
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			bool fullScreen = m_pWindow->IsFullScreen();
-			ImGui::Checkbox("Fullscreen", &fullScreen);
-			m_pWindow->SetFullscreen(fullScreen);
+			{
+				bool fullScreen = m_pWindow->IsFullScreen();
+				ImGui::Checkbox("Fullscreen", &fullScreen);
+				m_pWindow->SetFullscreen(fullScreen);
+
+				bool vSync = m_pWindow->IsVSync();
+				ImGui::Checkbox("VSync", &vSync);
+				m_pWindow->SetVSync(vSync);
+			}
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("Assets");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			{
+				bool prevForceReload = ms_forceReloadBinTex;
+				ImGui::Checkbox("Force reload all binTex", &ms_forceReloadBinTex);
+				if (!prevForceReload && ms_forceReloadBinTex)
+					ResourceTracker::ClearTexAndMatLists();
+			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("ImGUI");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
+			{
+				ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
+			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::TreePop();
@@ -587,7 +627,7 @@ void Scene::RenderImGui()
 			ImGui::SeparatorText("Rendering");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			ImGui::Checkbox("DSV", &m_dsvEnabled);
+			ImGui::Checkbox("DSV enabled", &m_dsvEnabled);
 
 			ImGui::Checkbox("Sort By Depth", &ms_sortBatchGos);
 

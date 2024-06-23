@@ -33,6 +33,12 @@ unordered_map<string, shared_ptr<Texture>>& ResourceTracker::GetTextures()
 	return ms_textureMap;
 }
 
+void ResourceTracker::ClearTexAndMatLists()
+{
+	ms_textureMap.clear();
+	ms_materialMap.clear();
+}
+
 void ResourceTracker::AddModel(string filePath, shared_ptr<Model> model)
 {
 	if (ms_modelMap.contains(filePath))

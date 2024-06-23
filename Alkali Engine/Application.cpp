@@ -178,6 +178,13 @@ void Application::RenderImGuiScenes()
                 m_currentScene->InstantiateCubes(num);
             }
 
+            ImGui::Spacing();
+
+            if (ImGui::Button("Clear Resource Tracker"))
+            {
+                ResourceTracker::ReleaseAll();
+            }
+
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
             ImGui::TreePop();

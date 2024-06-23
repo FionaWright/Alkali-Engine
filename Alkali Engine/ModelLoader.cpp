@@ -817,7 +817,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 
 	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
 	if (diffuseTexPath == "")
-		texFullFilePath = "WhitePOT.tga";
+		texFullFilePath = "WhitePOT.png";
 
 	shared_ptr<Texture> diffuseTex;
 	if (!ResourceTracker::TryGetTexture(texFullFilePath, diffuseTex))

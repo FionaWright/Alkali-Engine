@@ -26,7 +26,7 @@ Texture::~Texture()
     }
 }
 
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown)
 {
     HRESULT hr;
     auto device = d3d->GetDevice();
@@ -34,7 +34,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     m_filePath = filePath;
     string longPath = "Assets/Textures/" + filePath;
 
-    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_is2Channel);
+    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_is2Channel, flipUpsideDown);
 
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
