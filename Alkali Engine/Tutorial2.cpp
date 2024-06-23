@@ -144,11 +144,9 @@ bool Tutorial2::LoadContent()
 		batch->Init("PBR Basic", rootSigPBR);
 	}
 
-	vector<string> whiteList = { "Bistro_Research_Exterior__lod0_Italian_Cypress1" };
+	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
 	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	whiteList = { "Bistro_Research_Exterior__lod0_Italian_Cypress2" };
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	//ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
+	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
