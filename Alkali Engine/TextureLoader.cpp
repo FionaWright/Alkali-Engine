@@ -113,6 +113,28 @@ void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t*
         }
     }    
 
+    if (isNormalMap && channels == 2 && CONVERT_NORMAL_CHANNELS_2_TO_3)
+    {
+        int newChannels = 4;
+        size_t pixelCount = width * height;
+        size_t destBytes = pixelCount * newChannels;
+
+        channels = 3;
+
+        dataSrc = new uint8_t[destBytes];
+
+        for (int i = 0; i < pixelCount; i++)
+        {
+            float R = pData[i * 2 + 0] * 2.0f - 1.0f;
+            float G = pData[i * 2 + 1] * 2.0f - 1.0f;
+            float Z = std::sqrt(1.0f - (R * R + G * G));
+            dataSrc[i * 4 + 0] = static_cast<uint8_t>((R + 1.0f) * 0.5f);
+            dataSrc[i * 4 + 1] = static_cast<uint8_t>((G + 1.0f) * 0.5f);
+            dataSrc[i * 4 + 2] = static_cast<uint8_t>((Z + 1.0f) * 0.5f);
+            dataSrc[i * 4 + 3] = UINT8_MAX;
+        }
+    }
+
     int physicalChannels = channels == 3 ? 4 : channels;
 
     fout.write(reinterpret_cast<const char*>(&channels), sizeof(int));

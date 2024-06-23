@@ -59,7 +59,7 @@ bool Tutorial2::LoadContent()
 			baseTex->Init(m_d3dClass, commandListDirect.Get(), texName, true);
 		}	
 
-		string normalName = "EarthNormal.png";
+		string normalName = "Bistro/Pavement_Cobble_Leaves_BLENDSHADER_Normal.dds";
 		if (!ResourceTracker::TryGetTexture(normalName, normalTex))
 		{
 			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, true, true);
