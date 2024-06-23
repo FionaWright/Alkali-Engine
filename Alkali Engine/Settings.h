@@ -6,8 +6,8 @@ constexpr bool USING_IM_GUI = true;
 constexpr bool PERMA_FRUSTUM_DEBUG_LINES = false;
 constexpr bool FRUSTUM_CULLING_ENABLED = true;
 
-constexpr bool CONVERT_NORMAL_CHANNELS_2_TO_3 = false;
-constexpr bool CONVERT_NORMAL_CHANNELS_3_TO_2 = true;
+constexpr bool CONVERT_NORMAL_CHANNELS_2_TO_3 = true;
+constexpr bool CONVERT_NORMAL_CHANNELS_3_TO_2 = false;
 
 constexpr float IM_GUI_INDENTATION = 16;
 
