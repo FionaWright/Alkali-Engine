@@ -105,4 +105,5 @@ private:
     static shared_ptr<Model> ms_sphereModel;
     static bool ms_sphereMode;
     static bool ms_visualizeDSV;
+    static bool ms_sortBatchGos;
 };

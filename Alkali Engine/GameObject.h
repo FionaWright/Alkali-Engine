@@ -26,7 +26,7 @@ public:
 
 	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices = nullptr);
 
-	Transform GetTransform();
+	Transform GetTransform() const;
 	void SetTransform(Transform t);
 
 	void SetPosition(float x, float y, float z);
@@ -46,13 +46,14 @@ public:
 
 	void UpdateWorldMatrix(bool considerCentroid = true);
 
-	size_t GetModelVertexCount();
-	size_t GetModelIndexCount();
-	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds);
-	void GetBoundingSphere(XMFLOAT3& position, float& radius);
-	Material* GetMaterial();
-	bool IsTransparent();
-	bool IsOrthographic();
+	size_t GetModelVertexCount() const;
+	size_t GetModelIndexCount() const;
+	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const;
+	void GetBoundingSphere(XMFLOAT3& position, float& radius) const;
+	XMFLOAT3 GetWorldPosition() const;
+	Material* GetMaterial() const;
+	bool IsTransparent() const;
+	bool IsOrthographic() const;
 
 	string m_Name;
 

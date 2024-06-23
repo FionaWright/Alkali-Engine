@@ -20,6 +20,8 @@ public:
 	void Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
 	void RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
 
+	void SortObjects(const XMFLOAT3& camPos);
+
 	vector<GameObject>& GetOpaques();
 	vector<GameObject>& GetTrans();
 

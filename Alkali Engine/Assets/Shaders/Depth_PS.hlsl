@@ -9,9 +9,7 @@ SamplerState Sampler : register(s0);
 float4 main(V_OUT input) : SV_TARGET
 {
     input.Position.xy /= input.Position.w;
-    //input.Position.xy = (input.Position.xy + 1) * 0.5f;
     input.Position.xy /= float2(1280, 720);
-    //return float4(input.Position.xy, 0, 1);
     
     float depth = DepthTexture.Sample(Sampler, input.Position.xy).r;
     depth -= 0.98f;
