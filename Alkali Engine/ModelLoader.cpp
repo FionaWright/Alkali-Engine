@@ -832,7 +832,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	shared_ptr<Texture> normalTex;
 	if (!ResourceTracker::TryGetTexture(texNormalFullFilePath, normalTex))
 	{
-		normalTex->Init(d3d, commandList, texNormalFullFilePath);
+		normalTex->Init(d3d, commandList, texNormalFullFilePath, false, true);
 	}
 
 	shared_ptr<Material> material;

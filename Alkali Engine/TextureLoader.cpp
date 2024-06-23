@@ -38,7 +38,7 @@ ID3D12PipelineState* TextureLoader::ms_pso;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
 
-void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel, bool flipUpsideDown)
+void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels, bool flipUpsideDown, bool isNormalMap)
 {
     size_t dotIndex = filePath.find_last_of('.');
     if (dotIndex == std::string::npos)
@@ -50,41 +50,40 @@ void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** 
     string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
     if ((!Scene::IsForceReloadBinTex() && binTexAlternativeExists) || fileExtension == "binTex")
     {
-        LoadBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel);
+        LoadBinTex(binTexPath, width, height, pData, hasAlpha, channels);
         return;
     }
 
     if (fileExtension == "tga")
     {
-        is2Channel = false;
         LoadTGA(filePath, width, height, pData);
 
-        hasAlpha = ManuallyDetermineHasAlpha(width * height * 4, 4, *pData);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
+        hasAlpha = ManuallyDetermineHasAlpha(width * height * channels, channels, *pData);
+        channels = hasAlpha ? 4 : 3;
+        StoreBinTex(binTexPath, width, height, *pData, hasAlpha, channels, flipUpsideDown, isNormalMap);
         return;
     }        
 
     if (fileExtension == "dds")
     {
-        LoadDDS(filePath, width, height, pData, hasAlpha, is2Channel);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
+        LoadDDS(filePath, width, height, pData, hasAlpha, channels);
+        StoreBinTex(binTexPath, width, height, *pData, hasAlpha, channels, flipUpsideDown, isNormalMap);
         return;
     }        
 
     if (fileExtension == "png")
     {        
-        LoadPNG(filePath, width, height, pData, is2Channel);
+        LoadPNG(filePath, width, height, pData, channels);
 
-        int channels = is2Channel ? 2 : 4;
         hasAlpha = ManuallyDetermineHasAlpha(width * height * channels, channels, *pData);
-        StoreBinTex(binTexPath, width, height, pData, hasAlpha, is2Channel, flipUpsideDown);
+        StoreBinTex(binTexPath, width, height, *pData, hasAlpha, channels, flipUpsideDown, isNormalMap);
         return;
     }        
     
     throw new std::exception(("Invalid texture file type: ." + fileExtension).c_str());
 }
 
-void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel, bool flipUpsideDown)
+void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t* pData, bool hasAlpha, int channels, bool flipUpsideDown, bool isNormalMap)
 {
     ofstream fout;
     std::ios_base::openmode openFlags = std::ios::binary | std::ios::out | std::ios::trunc;
@@ -94,35 +93,58 @@ void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t*
 
     fout.write(reinterpret_cast<const char*>(&width), sizeof(int));
     fout.write(reinterpret_cast<const char*>(&height), sizeof(int));
-    fout.write(reinterpret_cast<const char*>(&hasAlpha), sizeof(bool));
-    fout.write(reinterpret_cast<const char*>(&is2Channel), sizeof(bool));
+    fout.write(reinterpret_cast<const char*>(&hasAlpha), sizeof(bool));        
 
-    int channels = is2Channel ? 2 : 4;
-    size_t bytes = width * height * channels;
+    uint8_t* dataSrc = pData;
+
+    if (isNormalMap && channels == 3 && CONVERT_NORMAL_CHANNELS_3_TO_2)
+    {
+        int newChannels = 2;
+        size_t pixelCount = width * height;
+        size_t destBytes = pixelCount * newChannels;
+
+        channels = newChannels;
+
+        dataSrc = new uint8_t[destBytes];
+
+        for (int i = 0; i < pixelCount; i++)
+        {
+            std::memcpy(dataSrc + i * 2, pData + i * 4, sizeof(uint8_t) * newChannels);
+        }
+    }    
+
+    int physicalChannels = channels == 3 ? 4 : channels;
+
+    fout.write(reinterpret_cast<const char*>(&channels), sizeof(int));
+
+    size_t bytes = width * height * physicalChannels;
 
     if (flipUpsideDown)
     {
         uint8_t* flippedData = new uint8_t[bytes];
-        size_t rowBytes = width * channels;
+        size_t rowBytes = width * physicalChannels;
 
         for (int y = 0; y < height; y++)
         {
-            std::memcpy(flippedData + y * rowBytes, (*pData) + (height - 1 - y) * rowBytes, rowBytes);
+            std::memcpy(flippedData + y * rowBytes, dataSrc + (height - 1 - y) * rowBytes, rowBytes);
         }
 
         fout.write(reinterpret_cast<const char*>(flippedData), bytes);
         delete[] flippedData;
     }
     else
-        fout.write(reinterpret_cast<const char*>(*pData), bytes);
+        fout.write(reinterpret_cast<const char*>(dataSrc), bytes);
 
     fout.close();
 
     if (!fout.good())
         throw new std::exception("IO Exception (OUTPUT)");
+
+    if (dataSrc != pData)
+        delete[] dataSrc;
 }
 
-void TextureLoader::LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
+void TextureLoader::LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels)
 {
     ifstream fin;
     fin.open(filePath, std::ios::binary);
@@ -132,10 +154,11 @@ void TextureLoader::LoadBinTex(string filePath, int& width, int& height, uint8_t
     fin.read(reinterpret_cast<char*>(&width), sizeof(int));
     fin.read(reinterpret_cast<char*>(&height), sizeof(int));
     fin.read(reinterpret_cast<char*>(&hasAlpha), sizeof(bool));
-    fin.read(reinterpret_cast<char*>(&is2Channel), sizeof(bool));
+    fin.read(reinterpret_cast<char*>(&channels), sizeof(int));
 
-    int channels = is2Channel ? 2 : 4;
-    size_t bytes = width * height * channels;
+    int realChannels = channels == 3 ? 4 : channels;
+
+    size_t bytes = width * height * realChannels;
     *pData = new uint8_t[bytes];
     fin.read(reinterpret_cast<char*>(*pData), bytes);
 }
@@ -203,7 +226,7 @@ void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** 
     fin.close();
 }
 
-void TextureLoader::LoadDDS(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel)
+void TextureLoader::LoadDDS(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels)
 {
     ifstream fin;
     fin.open(filePath, std::ios::binary);
@@ -262,7 +285,22 @@ void TextureLoader::LoadDDS(string filePath, int& width, int& height, uint8_t** 
     case '1TXD': // DXT1
         format = DXGI_FORMAT_BC1_UNORM;
         LoadDDS_DXT1(fin, width, height, pData);
+        channels = 4;
         break;
+
+    case '5TXD': // DXT5
+        hasAlpha = true;
+        format = DXGI_FORMAT_BC3_UNORM;
+        LoadDDS_DXT5(fin, width, height, pData);
+        channels = 4;
+        break;
+
+    case '2ITA': // ATI2
+        format = DXGI_FORMAT_BC5_UNORM;
+        LoadDDS_ATI2(fin, width, height, pData);
+        channels = 2;
+        break;
+
     case '2TXD': // DXT2
         __debugbreak();
         throw new std::exception("DXT2 not supported");
@@ -272,19 +310,9 @@ void TextureLoader::LoadDDS(string filePath, int& width, int& height, uint8_t** 
     case '4TXD': // DXT4
         __debugbreak();
         throw new std::exception("DXT4 not supported");
-    case '5TXD': // DXT5
-        hasAlpha = true;
-        format = DXGI_FORMAT_BC3_UNORM;
-        LoadDDS_DXT5(fin, width, height, pData);
-        break;
     case '01XD': // DXT10
         __debugbreak();
         throw new std::exception("DX10 not supported");
-    case '2ITA': // ATI2
-        is2Channel = true;
-        format = DXGI_FORMAT_BC5_UNORM;
-        LoadDDS_ATI2(fin, width, height, pData);
-        break;
     default:
         throw new std::exception("Unsupported DDS format");
     }
@@ -629,7 +657,26 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
     delete[] blocks;
 }
 
-void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)
+int GetChannelsFromColorType(int color_type)
+{
+    switch (color_type)
+    {
+    case SPNG_COLOR_TYPE_GRAYSCALE:
+        return 1; // 1 channel: grayscale
+    case SPNG_COLOR_TYPE_GRAYSCALE_ALPHA:
+        return 2; // 2 channels: grayscale + alpha
+    case SPNG_COLOR_TYPE_TRUECOLOR:
+        return 3; // 3 channels: RGB
+    case SPNG_COLOR_TYPE_INDEXED:
+        return 3; // 3 channels: RGB (palette)
+    case SPNG_COLOR_TYPE_TRUECOLOR_ALPHA:
+        return 4; // 4 channels: RGBA
+    default:
+        throw std::runtime_error("Unknown color type");
+    }
+}
+
+void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** pData, int& channels)
 {
     FILE* file; 
     fopen_s(&file, filePath.c_str(), "rb");
@@ -640,24 +687,30 @@ void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** 
 
     spng_set_png_file(ctx, file);
 
-    size_t outSize;
-    spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &outSize);
-    *pData = new uint8_t[outSize];
-
-    spng_decode_image(ctx, *pData, outSize, SPNG_FMT_RGBA8, 0);
-
     spng_ihdr ihdr;
     spng_get_ihdr(ctx, &ihdr);
 
     width = ihdr.width;
     height = ihdr.height;
-    is2Channel = false;
+    channels = GetChannelsFromColorType(ihdr.color_type);
+
+    spng_format format = 
+        channels == 4 ? SPNG_FMT_RGBA8 :
+        channels == 3 ? SPNG_FMT_RGBA8 : // No existing RGB8 DXGI format so we have to leave the alpha empty
+        channels == 2 ? SPNG_FMT_GA8 : 
+        SPNG_FMT_G8;
+
+    size_t outSize;
+    spng_decoded_image_size(ctx, format, &outSize);
+    *pData = new uint8_t[outSize];
+
+    spng_decode_image(ctx, *pData, outSize, format, 0);
 
     spng_ctx_free(ctx);
     fclose(file);
 }
 
-void TextureLoader::LoadJPG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel)
+void TextureLoader::LoadJPG(string filePath, int& width, int& height, uint8_t** pData, int& channels)
 {
 }
 
@@ -826,6 +879,9 @@ void TextureLoader::InitComputeShader(ID3D12Device2* device)
 
 bool TextureLoader::ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData)
 {
+    if (channels != 4)
+        return false;
+
     for (size_t i = channels - 1; i < bytes; i += channels)
     {
         uint8_t a = pData[i];
