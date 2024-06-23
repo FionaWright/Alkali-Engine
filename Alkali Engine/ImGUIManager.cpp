@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "ImGUIManager.h"
 #include "ResourceManager.h"
+#include "InputManager.h"
 
 ComPtr<ID3D12DescriptorHeap> ImGUIManager::ms_descHeapSRV;
 bool ImGUIManager::ms_currentlyRendering;
+ImVec2 ImGUIManager::ms_windowSize;
 
 void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DXGI_FORMAT format)
 {
@@ -34,9 +36,10 @@ void ImGUIManager::Begin()
 	ImGui::NewFrame();	
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(500, 800), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(500, 800), ImGuiCond_FirstUseEver);	
 
 	ImGui::Begin("Alkali Engine GUI", nullptr, ImGuiWindowFlags_None);
+	ms_windowSize = ImGui::GetWindowSize();
 
 	ms_currentlyRendering = true;
 }
@@ -55,6 +58,12 @@ void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
 	ms_currentlyRendering = false;
+}
+
+bool ImGUIManager::MouseHoveringImGui()
+{
+	XMFLOAT2 mousePos = InputManager::GetMousePos();
+	return mousePos.x < ms_windowSize.x && mousePos.y < ms_windowSize.y;
 }
 
 void ImGUIManager::Shutdown()

@@ -14,9 +14,12 @@ public:
 	static void Begin();
 	static void Render(ID3D12GraphicsCommandList* commandList);
 
+	static bool MouseHoveringImGui();
+
 	static void Shutdown();	
 
 private:
 	static ComPtr<ID3D12DescriptorHeap> ms_descHeapSRV;
 	static bool ms_currentlyRendering;
+	static ImVec2 ms_windowSize;
 };

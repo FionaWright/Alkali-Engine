@@ -22,6 +22,7 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	, m_FoV(45.0f)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
+	ms_sortBatchGos = true;
 }
 
 Scene::~Scene()
@@ -185,7 +186,8 @@ void Scene::Destroy()
 
 void Scene::OnUpdate(TimeEventArgs& e)
 {
-	m_camera->Update(e);
+	if (!ImGUIManager::MouseHoveringImGui())
+		m_camera->Update(e);
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
