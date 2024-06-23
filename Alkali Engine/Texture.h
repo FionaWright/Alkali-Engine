@@ -17,7 +17,7 @@ public:
 	Texture();
 	~Texture();
 
-	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false);
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 

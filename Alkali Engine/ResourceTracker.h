@@ -18,6 +18,7 @@ public:
 	static void AddTexture(string filePath, shared_ptr<Texture> tex);
 	static bool TryGetTexture(string filePath, shared_ptr<Texture>& tex);
 	static unordered_map<string, shared_ptr<Texture>>& GetTextures();
+	static void ClearTexAndMatLists();
 
 	static void AddModel(string filePath, shared_ptr<Model> model);
 	static bool TryGetModel(string filePath, shared_ptr<Model>& model);

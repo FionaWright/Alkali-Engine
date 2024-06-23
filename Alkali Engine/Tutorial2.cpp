@@ -52,15 +52,17 @@ bool Tutorial2::LoadContent()
 	// Textures
 	shared_ptr<Texture> baseTex, normalTex;
 	{
-		if (!ResourceTracker::TryGetTexture("Baba.png", baseTex))
+		string texName = "EarthDay.png";
+		if (!ResourceTracker::TryGetTexture(texName, baseTex))
 		{
 			//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
-			baseTex->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
+			baseTex->Init(m_d3dClass, commandListDirect.Get(), texName, true);
 		}	
 
-		if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", normalTex))
+		string normalName = "EarthNormal.png";
+		if (!ResourceTracker::TryGetTexture(normalName, normalTex))
 		{
-			normalTex->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
+			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, true);
 		}
 	}
 
@@ -151,14 +153,14 @@ bool Tutorial2::LoadContent()
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", modelSphere, shaderPBRCullOff, matPBR);
-	go.SetPosition(0, 10, 0);
+	GameObject go("Test", modelSphere, shaderPBR, matPBR);
+	go.SetPosition(-50, 3, -10);
+	go.SetScale(20);
 	m_goTest = batch->AddGameObject(go);
 
-	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR, true);
-	//go2.SetPosition(16.1f, 6, -5);
-	//go2.SetRotation(-90, 0, 0);
+	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR);
 	m_goPlane = batch->AddGameObject(go2);
+	m_goPlane->SetPosition(3, 3, 0);
 
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);

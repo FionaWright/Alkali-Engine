@@ -46,6 +46,8 @@ public:
     void InstantiateCubes(int count);
 
     static bool IsSphereModeOn(Model** model);
+    static bool IsForceReloadBinTex();
+    static bool IsMipMapDebugMode();
 
     Window* GetWindow();
 
@@ -106,4 +108,6 @@ private:
     static bool ms_sphereMode;
     static bool ms_visualizeDSV;
     static bool ms_sortBatchGos;
+    static bool ms_forceReloadBinTex;
+    static bool ms_mipMapDebugMode;
 };

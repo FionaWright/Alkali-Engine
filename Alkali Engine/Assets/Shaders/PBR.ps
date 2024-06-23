@@ -1,3 +1,5 @@
+#define BUMP_2_CHANNEL 1
+
 struct V_OUT
 {
     float4 Position : SV_Position;
@@ -22,11 +24,16 @@ float4 main(V_OUT input) : SV_Target
 
     tex.rgb = pow(tex.rgb, 2.2f);
 
+#if BUMP_2_CHANNEL
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
 
     float3 normalTangentSpace;
     normalTangentSpace.xy = bump * 2.0f - 1.0f;
     normalTangentSpace.z = sqrt(1.0f - dot(normalTangentSpace.xy, normalTangentSpace.xy));
+#else
+    float3 normalTangentSpace = g_normalMap.Sample(g_sampler, input.UV).rgb;
+    normalTangentSpace.xyz = normalTangentSpace.xyz * 2.0f - 1.0f;
+#endif
 
     //return float4(bump, 0, 1);
     //return float4(abs(input.Normal), 1);

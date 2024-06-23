@@ -6,9 +6,9 @@
 class TextureLoader
 {
 public:
-	static void LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel);
+	static void LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel, bool flipUpsideDown = false);
 
-	static void StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel);
+	static void StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel, bool flipUpsideDown);
 	static void LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel);
 
 	static void LoadTGA(string filePath, int& width, int& height, uint8_t** pData);
