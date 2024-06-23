@@ -26,6 +26,7 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 	ms_sortBatchGos = true;
+	//ms_forceReloadBinTex = true; // TEMPORARY
 }
 
 Scene::~Scene()
@@ -958,6 +959,7 @@ void Scene::RenderImGui()
 
 				ImGui::Indent(IM_GUI_INDENTATION);
 				ImGui::Text(("Mip Levels: " + std::to_string(it.second->GetMipLevels())).c_str());
+				ImGui::Text(("Channels: " + std::to_string(it.second->GetChannels())).c_str());
 				if (it.second->GetHasAlpha())
 					ImGui::Text("Transparent: TRUE");
 

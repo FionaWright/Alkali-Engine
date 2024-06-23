@@ -26,7 +26,7 @@ Texture::~Texture()
     }
 }
 
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
 {
     HRESULT hr;
     auto device = d3d->GetDevice();
@@ -34,7 +34,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     m_filePath = filePath;
     string longPath = "Assets/Textures/" + filePath;
 
-    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_is2Channel, flipUpsideDown);
+    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);
 
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
@@ -48,7 +48,13 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     else
         m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
 
-    m_textureDesc.Format = m_is2Channel ? TEXTURE_NORMAL_MAP_DXGI_FORMAT : TEXTURE_DIFFUSE_DXGI_FORMAT;
+    DXGI_FORMAT format =
+        m_channels == 4 ? DXGI_FORMAT_R8G8B8A8_UNORM :
+        m_channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM :
+        m_channels == 2 ? DXGI_FORMAT_R8G8_UNORM :
+        DXGI_FORMAT_R8_UNORM;
+
+    m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
     m_textureDesc.Flags = USE_SRGB ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -68,8 +74,8 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
     ThrowIfFailed(hr);
 
-    int numChannels = m_is2Channel ? 2 : NUM_CHANNELS;
-    int channelsPerRow = m_textureWidth * numChannels;
+    int realChannels = m_channels == 3 ? 4 : m_channels;
+    int channelsPerRow = m_textureWidth * realChannels;
     int bytesPerRow = channelsPerRow * sizeof(uint8_t);
     int totalBytes = bytesPerRow * m_textureHeight;
 
@@ -132,4 +138,9 @@ string Texture::GetFilePath()
 int Texture::GetMipLevels()
 {
     return m_textureDesc.MipLevels;
+}
+
+int Texture::GetChannels()
+{
+    return m_channels;
 }

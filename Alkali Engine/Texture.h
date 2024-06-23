@@ -17,13 +17,14 @@ public:
 	Texture();
 	~Texture();
 
-	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false);
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
 	bool GetHasAlpha();
 	string GetFilePath();
 	int GetMipLevels();
+	int GetChannels();
 
 private:
 	int m_textureWidth = -1, m_textureHeight = -1;
@@ -34,7 +35,7 @@ private:
 
 	D3D12_RESOURCE_DESC m_textureDesc;
 
-	bool m_is2Channel = false;
+	int m_channels;
 	bool m_hasAlpha = false;
 
 	string m_filePath;

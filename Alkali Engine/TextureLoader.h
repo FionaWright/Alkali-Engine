@@ -6,18 +6,18 @@
 class TextureLoader
 {
 public:
-	static void LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel, bool flipUpsideDown = false);
+	static void LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels, bool flipUpsideDown = false, bool isNormalMap = false);
 
-	static void StoreBinTex(string filePath, int width, int height, uint8_t** pData, bool hasAlpha, bool is2Channel, bool flipUpsideDown);
-	static void LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel);
+	static void StoreBinTex(string filePath, int width, int height, uint8_t* pData, bool hasAlpha, int channels, bool flipUpsideDown, bool isNormalMap);
+	static void LoadBinTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels);
 
 	static void LoadTGA(string filePath, int& width, int& height, uint8_t** pData);
-	static void LoadDDS(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, bool& is2Channel);
+	static void LoadDDS(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels);
 	static void LoadDDS_DXT1(ifstream& fin, int& width, int& height, uint8_t** pData);
 	static void LoadDDS_DXT5(ifstream& fin, int& width, int& height, uint8_t** pData);
 	static void LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t** pData);
-	static void LoadPNG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel);
-	static void LoadJPG(string filePath, int& width, int& height, uint8_t** pData, bool& is2Channel);
+	static void LoadPNG(string filePath, int& width, int& height, uint8_t** pData, int& channels);
+	static void LoadJPG(string filePath, int& width, int& height, uint8_t** pData, int& channels);
 
 	static void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
 

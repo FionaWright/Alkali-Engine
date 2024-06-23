@@ -62,7 +62,7 @@ bool Tutorial2::LoadContent()
 		string normalName = "EarthNormal.png";
 		if (!ResourceTracker::TryGetTexture(normalName, normalTex))
 		{
-			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, true);
+			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, true, true);
 		}
 	}
 

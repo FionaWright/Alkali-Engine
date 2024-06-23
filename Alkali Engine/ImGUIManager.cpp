@@ -7,7 +7,7 @@ ComPtr<ID3D12DescriptorHeap> ImGUIManager::ms_descHeapSRV;
 bool ImGUIManager::ms_currentlyRendering;
 ImVec2 ImGUIManager::ms_windowSize;
 
-void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DXGI_FORMAT format)
+void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight)
 {
 	if (!USING_IM_GUI)
 		return;
@@ -23,7 +23,7 @@ void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight, DX
 	ms_descHeapSRV = ResourceManager::CreateDescriptorHeap(backBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX12_Init(device, framesInFlight, format, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
+	ImGui_ImplDX12_Init(device, framesInFlight, RTV_FORMAT, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
 }
 
 void ImGUIManager::Begin()
