@@ -26,20 +26,11 @@ bool Tutorial2::LoadContent()
 		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, commandListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
 
-		//string modelName1 = "Sphere.model";
-		//if (!ResourceTracker::TryGetModel(modelName1, modelSphere))
-		//{
-		//	modelSphere->Init(commandListCopy.Get(), modelName1);
-		//}
-
 		string modelName2 = "Plane.model";
 		if (!ResourceTracker::TryGetModel(modelName2, modelPlane))
 		{
 			modelPlane->Init(commandListCopy.Get(), modelName2);
 		}
-
-		//m_modelTest->Init(commandListCopy.Get(), L"Bistro/Pavement_Cobblestone_Big_BLENDSHADER.model");		
-		//m_modelMadeline->Init(commandListCopy.Get(), L"Bistro/Foliage_Bux_Hedges46.DoubleSided.model");
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -69,25 +60,15 @@ bool Tutorial2::LoadContent()
 		}
 	}
 
-	string matID = baseTex->GetFilePath() + " - " + normalTex->GetFilePath();
-	shared_ptr<Material> matPBR;
-	if (!ResourceTracker::TryGetMaterial(matID, matPBR))
-	{
-		matPBR->Init(2, 1);
-		matPBR->AddTexture(m_d3dClass, baseTex);
-		matPBR->AddTexture(m_d3dClass, normalTex);
-	}
-
 	ComPtr<ID3D12RootSignature> rootSigPBR;
+	int numCBV = 3, numSRV = 2;
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		int numDescriptors = 2;
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-
-		const int paramCount = 2;
-		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];		
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+			
+		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+		rootParameters[0].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -104,8 +85,20 @@ bool Tutorial2::LoadContent()
 		sampler[0].RegisterSpace = 0;
 		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, _countof(sampler));
 		rootSigPBR->SetName(L"Tutorial2 Root Sig");
+	}
+
+	string matID = baseTex->GetFilePath() + " - " + normalTex->GetFilePath();
+	shared_ptr<Material> matPBR;
+	if (!ResourceTracker::TryGetMaterial(matID, matPBR))
+	{
+		matPBR->Init(numSRV, numCBV);
+		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
+		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
+		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
+		matPBR->AddTexture(m_d3dClass, baseTex);
+		matPBR->AddTexture(m_d3dClass, normalTex);
 	}
 
 	// Shaders
@@ -189,6 +182,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	float angle = static_cast<float>(e.ElapsedTime * 50.0);
 	//m_goCube->RotateBy(0, angle, 0);
+	//m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(cos(angle), -0.5f, sin(angle));
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{

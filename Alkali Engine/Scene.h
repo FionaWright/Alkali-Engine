@@ -87,6 +87,7 @@ protected:
 
     float m_FoV;
     Frustum m_frustum;
+    PerFrameCBuffers m_perFrameCBuffers;
 
 private:    
     bool m_dsvEnabled;

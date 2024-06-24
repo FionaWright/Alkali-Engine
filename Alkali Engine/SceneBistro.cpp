@@ -26,10 +26,12 @@ bool SceneBistro::LoadContent()
 	int numDescriptors = 2;
 	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC); // 2 Textures
 
-	const int paramCount = 2;
+	const int paramCount = 3;
+	const int matRPI = 2;
 	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
 	rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[1].InitAsConstants(sizeof(CameraCB) / 4, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[matRPI].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler[1]; 
 	sampler[0].Filter = DEFAULT_SAMPLER_FILTER;

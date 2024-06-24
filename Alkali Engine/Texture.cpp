@@ -84,7 +84,8 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     textureData.RowPitch = bytesPerRow;
     textureData.SlicePitch = totalBytes;
 
-    m_textureResource->SetName(L"Sample Texture");
+    wstring debugName(filePath.begin(), filePath.end());
+    m_textureResource->SetName(debugName.c_str());
 
     UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
 
@@ -95,21 +96,20 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SRV_FINAL_STATE);
 }
 
-void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialTexHeap, int srvHeapOffset)
+void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, int heapOffset)
 {   
     auto device = d3d->GetDevice();
 
     UINT incrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = materialTexHeap->GetCPUDescriptorHandleForHeapStart();
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = materialTexHeap->GetGPUDescriptorHandleForHeapStart();    
+    D3D12_CPU_DESCRIPTOR_HANDLE heapStart = heap->GetCPUDescriptorHandleForHeapStart(); 
 
     // Assign SRV to material heap
     {
@@ -120,7 +120,7 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* materialT
         srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
         srvDesc.Texture2D.MostDetailedMip = 0;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(cpuHandle, srvHeapOffset, incrementSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(heapStart, heapOffset, incrementSize);
         device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
     }    
 }

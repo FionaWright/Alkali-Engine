@@ -843,7 +843,10 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 	string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
 	if (!ResourceTracker::TryGetMaterial(matID, material))
 	{
-		material->Init(2, 1);
+		material->Init(2, 3);
+		material->AddCBuffer(d3d, commandList, sizeof(MatricesCB));
+		material->AddCBuffer(d3d, commandList, sizeof(CameraCB));
+		material->AddCBuffer(d3d, commandList, sizeof(DirectionalLightCB));
 		material->AddTexture(d3d, diffuseTex);
 		material->AddTexture(d3d, normalTex);
 	}	
