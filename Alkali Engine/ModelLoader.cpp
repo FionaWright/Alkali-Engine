@@ -717,7 +717,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 		});
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "NORMAL", [](const uint8_t* address, VertexInputData* output) {
-		output->Normal = *reinterpret_cast<const XMFLOAT3*>(address);
+		output->Normal = Normalize(*reinterpret_cast<const XMFLOAT3*>(address));
 		if (RIGHT_HANDED_TO_LEFT)
 			output->Normal.x = -output->Normal.x;
 		});
@@ -725,7 +725,9 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputData* output) {
 		const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
 		float handedness = data->w > 0 ? 1 : -1;
-		output->Tangent = Mult(XMFLOAT3(data->x, data->y, data->z), handedness);
+		output->Tangent = Normalize(Mult(XMFLOAT3(data->x, data->y, data->z), handedness));
+		if (RIGHT_HANDED_TO_LEFT)
+			output->Tangent.x = -output->Tangent.x;
 		});
 
 	float boundingRadiusSq = 0;
@@ -736,7 +738,9 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 
 	for (size_t j = 0; j < vertexCount; j++)
 	{
-		vertexBuffer[j].Binormal = Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal);
+		vertexBuffer[j].Binormal = Normalize(Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal));	
+		//if (Dot(Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Binormal), vertexBuffer[j].Normal) < 0.0f)
+		//	vertexBuffer[j].Binormal = Negate(vertexBuffer[j].Binormal);
 
 		rollingCentroidSum.X += vertexBuffer[j].Position.x;
 		rollingCentroidSum.Y += vertexBuffer[j].Position.y;
@@ -899,7 +903,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	}
 }
 
-void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -937,4 +941,75 @@ void ModelLoader::LoadModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 			LoadNode(d3d, commandList, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defTransform);
 		}
 	}
+}
+
+void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList)
+{
+	size_t childCount = node.children.size();
+	for (size_t i = 0; i < childCount; i++)
+	{
+		fastgltf::Node& childNode = asset->nodes[node.children[i]];
+		LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, childNode, modelList);
+	}
+
+	if (!node.meshIndex.has_value())
+		return;
+
+	size_t meshIndex = node.meshIndex.value();
+	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
+
+	for (size_t i = 0; i < mesh.primitives.size(); i++)
+	{
+		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
+		
+		shared_ptr<Model> model;
+		if (!ResourceTracker::TryGetModel(id, model))
+		{
+			LoadModel(d3d, commandList, asset, mesh.primitives[i], model);
+		}
+		modelList.push_back(model);
+	}
+}
+
+vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName)
+{
+	string path = "Assets/Models/" + modelName;
+
+	size_t dotIndex = modelName.find_last_of('.');
+	if (dotIndex == string::npos)
+		throw std::exception("Invalid model name");
+
+	string modelNameExtensionless = modelName.substr(0, dotIndex);
+
+	fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath(path);
+	if (data.error() != fastgltf::Error::None)
+		throw new std::exception("FastGLTF error");
+
+	fastgltf::Options options = fastgltf::Options::None;
+
+	fastgltf::Expected<fastgltf::Asset> asset = ms_parser.loadGltf(data.get(), path, options);
+	auto error = asset.error();
+	if (error != fastgltf::Error::None)
+		throw new std::exception("FastGLTF error");
+
+	error = fastgltf::validate(asset.get());
+	if (error != fastgltf::Error::None)
+		throw new std::exception("FastGLTF error");
+
+	vector<shared_ptr<Model>> modelList;
+
+	for (int i = 0; i < asset->scenes.size(); i++)
+	{
+		fastgltf::Scene& scene = asset->scenes[i];
+
+		size_t nodeCount = scene.nodeIndices.size();
+		for (size_t n = 0; n < nodeCount; n++)
+		{
+			int nodeIndex = scene.nodeIndices[n];
+			fastgltf::Node& node = asset->nodes[nodeIndex];
+			LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, node, modelList);
+		}
+	}
+
+	return modelList;
 }

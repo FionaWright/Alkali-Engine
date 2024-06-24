@@ -23,11 +23,14 @@ bool Tutorial2::LoadContent()
 
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		string modelName1 = "Sphere.model";
-		if (!ResourceTracker::TryGetModel(modelName1, modelSphere))
-		{
-			modelSphere->Init(commandListCopy.Get(), modelName1);
-		}
+		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, commandListCopy.Get(), "Sphere.gltf");
+		modelSphere = sphereList.at(0);
+
+		//string modelName1 = "Sphere.model";
+		//if (!ResourceTracker::TryGetModel(modelName1, modelSphere))
+		//{
+		//	modelSphere->Init(commandListCopy.Get(), modelName1);
+		//}
 
 		string modelName2 = "Plane.model";
 		if (!ResourceTracker::TryGetModel(modelName2, modelPlane))
@@ -56,13 +59,13 @@ bool Tutorial2::LoadContent()
 		if (!ResourceTracker::TryGetTexture(texName, baseTex))
 		{
 			//m_texture->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds");
-			baseTex->Init(m_d3dClass, commandListDirect.Get(), texName, true);
+			baseTex->Init(m_d3dClass, commandListDirect.Get(), texName);
 		}	
 
-		string normalName = "Bistro/Pavement_Cobble_Leaves_BLENDSHADER_Normal.dds";
+		string normalName = "EarthNormal.png";
 		if (!ResourceTracker::TryGetTexture(normalName, normalTex))
 		{
-			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, true, true);
+			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, false, true);
 		}
 	}
 
@@ -147,8 +150,8 @@ bool Tutorial2::LoadContent()
 	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
