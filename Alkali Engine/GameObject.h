@@ -24,7 +24,9 @@ public:
 	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
 	~GameObject();
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices = nullptr);
+	void Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB = nullptr, MatricesCB* matrices = nullptr);
+
+	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
 
 	Transform GetTransform() const;
 	void SetTransform(Transform t);
@@ -44,7 +46,7 @@ public:
 	void RotateBy(float x, float y, float z);
 	void RotateBy(XMFLOAT3 xyz);
 
-	void UpdateWorldMatrix(bool considerCentroid = true);
+	void UpdateWorldMatrix(bool considerCentroid = true);	
 
 	size_t GetModelVertexCount() const;
 	size_t GetModelIndexCount() const;
@@ -58,6 +60,8 @@ public:
 	string m_Name;
 
 protected:	
+	XMMATRIX TransformToWorldMatrix(const Transform& transform);
+
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
 	shared_ptr<Material> m_material;

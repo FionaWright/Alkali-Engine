@@ -28,42 +28,33 @@ GameObject* Batch::AddGameObject(GameObject go)
 	return &m_goList[m_goList.size() - 1];
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
 
-	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	commandList->SetGraphicsRootSignature(rootSig);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	for (int i = 0; i < m_goList.size(); i++) 
+	for (int i = 0; i < list.size(); i++)
 	{
 		XMFLOAT3 pos;
 		float radius;
-		m_goList[i].GetBoundingSphere(pos, radius);
+		list[i].GetBoundingSphere(pos, radius);
 
-		if (!FRUSTUM_CULLING_ENABLED || m_goList[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
-			m_goList[i].Render(commandList, &matrices);
+		if (!FRUSTUM_CULLING_ENABLED || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
+			list[i].Render(commandList, perFrameCB, &matrices);
 	}
 }
 
-void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
 {
-	MatricesCB matrices;
-	matrices.VP = viewProj;
+	RenderFromList(m_goList, m_rootSignature.Get(), commandList, viewProj, frustum, perFrameCB);
+}
 
-	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	for (int i = 0; i < m_goListTrans.size(); i++)
-	{
-		XMFLOAT3 pos;
-		float radius;
-		m_goListTrans[i].GetBoundingSphere(pos, radius);
-
-		if (!FRUSTUM_CULLING_ENABLED || m_goListTrans[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
-			m_goListTrans[i].Render(commandList, &matrices);
-	}
+void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
+{
+	RenderFromList(m_goListTrans, m_rootSignature.Get(), commandList, viewProj, frustum, perFrameCB);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

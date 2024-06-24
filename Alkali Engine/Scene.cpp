@@ -51,6 +51,11 @@ bool Scene::Init(D3DClass* pD3DClass)
 	float height = m_pWindow->GetClientHeight();
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
+	m_perFrameCBuffers.DirectionalLight.AmbientColor = XMFLOAT3(0.15f, 0.15f, 0.15f);
+	m_perFrameCBuffers.DirectionalLight.LightDiffuse = XMFLOAT3(1, 1, 1);
+	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
+	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
+
 	if (m_dsvEnabled)
 		SetDSVForSize(width, height);
 
@@ -191,7 +196,10 @@ void Scene::Destroy()
 void Scene::OnUpdate(TimeEventArgs& e)
 {
 	if (!ImGUIManager::MouseHoveringImGui())
+	{
 		m_camera->Update(e);
+		m_perFrameCBuffers.Camera.CameraPosition = m_camera->GetWorldPosition();
+	}
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
@@ -239,14 +247,10 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	auto& batchList = ResourceTracker::GetBatches();
 	for (auto& it : batchList)
-		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum);
-
-	//SetDSVFlags(D3D12_DSV_FLAG_READ_ONLY_DEPTH);
+		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum, &m_perFrameCBuffers);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
-
-	//SetDSVFlags(D3D12_DSV_FLAG_NONE);
+		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum, &m_perFrameCBuffers);
 
 	RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
@@ -272,7 +276,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	Present(commandList.Get(), commandQueue); 
 	
 	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
-	if (ms_visualizeDSV)
+	if (ms_visualizeDSV && m_goDepthTex)
 	{
 		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
 

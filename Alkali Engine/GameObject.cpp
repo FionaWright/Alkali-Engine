@@ -19,21 +19,12 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices)
 {
 	if (!m_model || !m_shader)
-		return;	
+		throw std::exception("Missing components");
 
 	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());	
-
-	if (m_material)
-	{
-		auto texHeap = m_material->GetTextureHeap();
-		ID3D12DescriptorHeap* ppHeaps[] = { texHeap };
-		commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-		commandListDirect->SetGraphicsRootDescriptorTable(m_material->GetRootParamIndex(), texHeap->GetGPUDescriptorHandleForHeapStart());
-	}
 
 	if (m_orthographic)
 	{
@@ -47,28 +38,41 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 	Model* sphereModel = nullptr;	
 	if (Scene::IsSphereModeOn(&sphereModel))
 	{		
-		Transform savedTransform = m_transform;
+		Transform modifiedTransform = m_transform;
 		XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
 		float maxScale = std::max(std::max(m_transform.Scale.x, m_transform.Scale.y), m_transform.Scale.z);
-		m_transform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
-		m_transform.Position = Add(m_transform.Position, centroidScaled);
-		UpdateWorldMatrix(false);
+		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
+		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		matrices->M = m_worldMatrix;
-		matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
-		commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, matrices, 0);
-
-		sphereModel->Render(commandListDirect);
-		m_transform = savedTransform;
-		UpdateWorldMatrix();
+		RenderModel(commandListDirect, perFrameCB, matrices, sphereModel, &modifiedTransform);
 		return;
 	}
 
-	matrices->M = m_worldMatrix;
-	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, m_worldMatrix));
-	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesCB) / 4, matrices, 0);
+	RenderModel(commandListDirect, perFrameCB, matrices, m_model.get());
+}
 
-	m_model->Render(commandListDirect);
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices, Model* model, Transform* transform)
+{
+	XMMATRIX& worldMatrix = m_worldMatrix;
+	if (transform)
+		worldMatrix = TransformToWorldMatrix(*transform);
+
+	matrices->M = worldMatrix;
+	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
+	m_material->SetCBuffer(0, matrices, sizeof(MatricesCB));
+
+	if (perFrameCB)
+	{
+		m_material->SetCBuffer(1, &perFrameCB->Camera, sizeof(CameraCB));
+		m_material->SetCBuffer(2, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
+	}
+
+	auto matHeap = m_material->Get_SRV_CBV_UAV_Heap();
+	ID3D12DescriptorHeap* ppHeaps[] = { matHeap };
+	commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	commandListDirect->SetGraphicsRootDescriptorTable(0, matHeap->GetGPUDescriptorHandleForHeapStart());
+
+	model->Render(commandListDirect);
 }
 
 Transform GameObject::GetTransform() const
@@ -181,6 +185,15 @@ void GameObject::UpdateWorldMatrix(bool considerCentroid)
 	m_worldMatrix = XMMatrixMultiply(CI, XMMatrixMultiply(S, XMMatrixMultiply(R, XMMatrixMultiply(T, C))));
 }
 
+XMMATRIX GameObject::TransformToWorldMatrix(const Transform& transform) 
+{
+	XMMATRIX T = XMMatrixTranslation(transform.Position.x, transform.Position.y, transform.Position.z);
+	XMMATRIX R = XMMatrixRotationRollPitchYaw(transform.Rotation.x, transform.Rotation.y, transform.Rotation.z);
+	XMMATRIX S = XMMatrixScaling(transform.Scale.x, transform.Scale.y, transform.Scale.z);
+
+	return XMMatrixMultiply(S, XMMatrixMultiply(R, T));
+}
+
 size_t GameObject::GetModelVertexCount() const
 {
 	return m_model->GetVertexCount();
@@ -207,6 +220,9 @@ void GameObject::GetBoundingSphere(XMFLOAT3& position, float& radius) const
 
 XMFLOAT3 GameObject::GetWorldPosition() const
 {
+	if (!m_model)
+		return m_transform.Position;
+
 	XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
 	return Add(centroidScaled, m_transform.Position);
 }

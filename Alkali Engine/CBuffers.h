@@ -14,11 +14,24 @@ struct MatricesLineCB
 	XMMATRIX VP;
 };
 
-struct alignas(16) GenerateMipsCB
+struct CameraCB
 {
-    uint32_t SrcMipLevel;           // Texture level of source mip
-    uint32_t NumMipLevels;          // Number of OutMips to write: [1-4]
-    uint32_t SrcDimension;          // Width and height of the source texture are even or odd.
-    uint32_t IsSRGB;                // Must apply gamma correction to sRGB textures.
-    XMFLOAT2 TexelSize;    // 1.0 / OutMip1.Dimensions
+    XMFLOAT3 CameraPosition;
+    float p;
+};
+
+struct DirectionalLightCB
+{
+    XMFLOAT3 AmbientColor;
+    XMFLOAT3 LightDirection;
+    XMFLOAT3 LightDiffuse;
+    float SpecularPower;
+
+    XMFLOAT2 p;
+};
+
+struct PerFrameCBuffers
+{
+    CameraCB Camera;
+    DirectionalLightCB DirectionalLight;
 };
