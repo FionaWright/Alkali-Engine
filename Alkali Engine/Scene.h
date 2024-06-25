@@ -84,6 +84,7 @@ protected:
     unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
     vector<shared_ptr<DebugLine>> m_debugLineList;
+    DebugLine* m_debugLineLightDir;
 
     float m_FoV;
     Frustum m_frustum;

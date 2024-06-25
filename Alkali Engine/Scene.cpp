@@ -128,6 +128,9 @@ bool Scene::LoadContent()
 			frustumDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, XMFLOAT3_ONE));
 
 		m_frustum.SetDebugLines(frustumDebugLines);
+
+		XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
+		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
 	}
 
 	{
@@ -213,6 +216,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		m_frustum.CalculateDebugLinePoints(m_d3dClass);
 
 	m_frustum.SetDebugLinesEnabled(showLines);
+
+	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
+	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
 	if (ms_sortBatchGos)
 	{
