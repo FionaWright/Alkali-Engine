@@ -101,7 +101,7 @@ void ResourceTracker::AddMaterial(string filePath, shared_ptr<Material> material
 
 bool ResourceTracker::TryGetMaterial(string filePath, shared_ptr<Material>& material)
 {
-	if (!ms_materialMap.contains(filePath))
+	if (!MATERIAL_SHARING_ENABLED || !ms_materialMap.contains(filePath))
 	{
 		material = std::make_shared<Material>();
 		AddMaterial(filePath, material);

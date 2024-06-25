@@ -23,11 +23,13 @@ struct CameraCB
 struct DirectionalLightCB
 {
     XMFLOAT3 AmbientColor;
+    float p1;
+
     XMFLOAT3 LightDirection;
+    float p2;
+
     XMFLOAT3 LightDiffuse;
     float SpecularPower;
-
-    XMFLOAT2 p;
 };
 
 struct PerFrameCBuffers
