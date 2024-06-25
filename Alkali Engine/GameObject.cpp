@@ -59,18 +59,15 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerF
 
 	matrices->M = worldMatrix;
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
-	m_material->SetCBuffer(0, matrices, sizeof(MatricesCB));
+	m_material->SetCBV(0, matrices, sizeof(MatricesCB));
 
 	if (perFrameCB)
 	{
-		m_material->SetCBuffer(1, &perFrameCB->Camera, sizeof(CameraCB));
-		m_material->SetCBuffer(2, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
+		m_material->SetCBV(1, &perFrameCB->Camera, sizeof(CameraCB));
+		m_material->SetCBV(2, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
 	}
 
-	auto matHeap = m_material->Get_SRV_CBV_UAV_Heap();
-	ID3D12DescriptorHeap* ppHeaps[] = { matHeap };
-	commandListDirect->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	commandListDirect->SetGraphicsRootDescriptorTable(0, matHeap->GetGPUDescriptorHandleForHeapStart());
+	m_material->AssignMaterial(commandListDirect);
 
 	model->Render(commandListDirect);
 }

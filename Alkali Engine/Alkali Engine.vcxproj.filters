@@ -202,6 +202,9 @@
     <ClCompile Include="ResourceTracker.cpp">
       <Filter>Source Files\Managers</Filter>
     </ClCompile>
+    <ClCompile Include="DescriptorManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tutorial2.h">
@@ -363,6 +366,7 @@
     <ClInclude Include="ResourceTracker.h">
       <Filter>Source Files\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="DescriptorManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Assets\Resources\Alkali Engine.rc">

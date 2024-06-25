@@ -93,9 +93,7 @@ protected:
 private:    
     bool m_dsvEnabled;
     bool m_showImGUIDemo = false;
-    float m_backgroundColor[4];
-
-    ComPtr<ID3D12Resource> m_depthBuffer;   
+    float m_backgroundColor[4];    
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
     bool m_freezeFrustum = false;
@@ -103,8 +101,9 @@ private:
     ComPtr<ID3D12RootSignature> m_rootSigLine, m_rootSigDepth;
     shared_ptr<Shader> m_shaderLine, m_shaderDepth;
 
+    ComPtr<ID3D12Resource> m_depthBufferResource;
     unique_ptr<GameObject> m_goDepthTex;
-    shared_ptr<Material> m_matDepthTex;
+    shared_ptr<Material> m_depthBufferMat;
 
     static shared_ptr<Model> ms_sphereModel;
     static bool ms_sphereMode;

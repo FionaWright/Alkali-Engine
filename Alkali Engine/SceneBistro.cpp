@@ -22,16 +22,15 @@ bool SceneBistro::LoadContent()
 
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-	int numDescriptors = 2;
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC); // 2 Textures
+	int numCBV = 3, numSRV = 2;
 
-	const int paramCount = 3;
-	const int matRPI = 2;
-	CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-	rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsConstants(sizeof(CameraCB) / 4, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[matRPI].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+	rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler[1]; 
 	sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -48,7 +47,7 @@ bool SceneBistro::LoadContent()
 	sampler[0].RegisterSpace = 0;
 	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);	
+	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
 
 	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
 	{

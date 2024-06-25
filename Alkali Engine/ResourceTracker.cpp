@@ -4,7 +4,6 @@
 unordered_map<string, shared_ptr<Texture>> ResourceTracker::ms_textureMap;
 unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
 unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
-unordered_map<string, shared_ptr<Material>> ResourceTracker::ms_materialMap;
 unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
 
 void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
@@ -33,10 +32,9 @@ unordered_map<string, shared_ptr<Texture>>& ResourceTracker::GetTextures()
 	return ms_textureMap;
 }
 
-void ResourceTracker::ClearTexAndMatLists()
+void ResourceTracker::ClearTexList()
 {
 	ms_textureMap.clear();
-	ms_materialMap.clear();
 }
 
 void ResourceTracker::AddModel(string filePath, shared_ptr<Model> model)
@@ -91,32 +89,6 @@ unordered_map<string, shared_ptr<Shader>>& ResourceTracker::GetShaders()
 	return ms_shaderMap;
 }
 
-void ResourceTracker::AddMaterial(string filePath, shared_ptr<Material> material)
-{
-	if (ms_materialMap.contains(filePath))
-		return;
-
-	ms_materialMap.emplace(filePath, material);
-}
-
-bool ResourceTracker::TryGetMaterial(string filePath, shared_ptr<Material>& material)
-{
-	if (!MATERIAL_SHARING_ENABLED || !ms_materialMap.contains(filePath))
-	{
-		material = std::make_shared<Material>();
-		AddMaterial(filePath, material);
-		return false;
-	}
-
-	material = ms_materialMap.at(filePath);
-	return true;
-}
-
-unordered_map<string, shared_ptr<Material>>& ResourceTracker::GetMaterials()
-{
-	return ms_materialMap;
-}
-
 void ResourceTracker::AddBatch(string filePath, shared_ptr<Batch> batch)
 {
 	if (ms_batchMap.contains(filePath))
@@ -153,6 +125,5 @@ void ResourceTracker::ReleaseAll()
 	ms_textureMap.clear();
 	ms_modelMap.clear();
 	ms_shaderMap.clear();
-	ms_materialMap.clear();
 	ms_batchMap.clear();
 }

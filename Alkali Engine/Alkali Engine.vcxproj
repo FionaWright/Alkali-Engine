@@ -111,6 +111,7 @@
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="DebugLine.cpp" />
+    <ClCompile Include="DescriptorManager.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImGUIManager.cpp" />
@@ -238,6 +239,7 @@
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugLine.h" />
+    <ClInclude Include="DescriptorManager.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="GameObject.h" />

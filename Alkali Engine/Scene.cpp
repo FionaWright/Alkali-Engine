@@ -6,6 +6,7 @@
 #include "Utils.h"
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
+#include "DescriptorManager.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
@@ -45,6 +46,8 @@ bool Scene::Init(D3DClass* pD3DClass)
 
 	m_d3dClass = pD3DClass;
 
+	//ms_forceReloadBinTex = true;
+
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 
 	float width = m_pWindow->GetClientWidth();
@@ -55,6 +58,8 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.DirectionalLight.LightDiffuse = XMFLOAT3(1, 1, 1);
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
+
+	DescriptorManager::Init(m_d3dClass, DESCRIPTOR_HEAP_SIZE);
 
 	if (m_dsvEnabled)
 		SetDSVForSize(width, height);
@@ -171,10 +176,10 @@ bool Scene::LoadContent()
 		m_shaderDepth->InitPreCompiled(L"Depth_VS.cso", L"Depth_PS.cso", inputLayout, m_rootSigDepth.Get(), m_d3dClass->GetDevice(), true, true);
 	}
 
-	m_matDepthTex = std::make_shared<Material>();
-	m_matDepthTex->Init(1, 0);
+	m_depthBufferMat = std::make_shared<Material>();
+	m_depthBufferMat->AddDynamicSRVs(1);
 
-	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_matDepthTex, true);
+	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_depthBufferMat, true);
 	m_goDepthTex->SetRotation(90, 0, 0);
 
     return true;
@@ -248,6 +253,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
+	auto globalHeap = DescriptorManager::GetHeap();
+	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
 	UINT numRenderTargets = 1;
 	commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
 
@@ -268,8 +277,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Convert DSV to SRV and assign as a texture to be read in the shader
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBuffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_matDepthTex->AssignTextureResourceManually(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBuffer.Get());
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_depthBufferMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 
 		m_goDepthTex->Render(commandList.Get());
 		
@@ -287,7 +296,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
 
 		auto commandList = commandQueue->GetAvailableCommandList();
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		commandQueue->ExecuteCommandList(commandList);
 	}
 }
@@ -341,14 +350,12 @@ void Scene::InstantiateCubes(int count)
 		normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
 	}
 
-	shared_ptr<Material> material;
-	string matID = texture->GetFilePath() + " - " + normalMap->GetFilePath();
-	if (!ResourceTracker::TryGetMaterial(matID, material))
-	{
-		material->Init(2, 1);
-		material->AddTexture(m_d3dClass, texture);
-		material->AddTexture(m_d3dClass, normalMap);
-	}
+	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<Texture*> textures = { texture.get(), normalMap.get() };
+
+	shared_ptr<Material> material = std::make_shared<Material>();
+	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);
+	material->AddSRVs(m_d3dClass, textures);
 
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
@@ -502,7 +509,7 @@ void Scene::SetDSVForSize(int width, int height)
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DSV_FORMAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBuffer));
+	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBufferResource));
 	ThrowIfFailed(hr);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
@@ -512,7 +519,7 @@ void Scene::SetDSVForSize(int width, int height)
 	dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
+	device->CreateDepthStencilView(m_depthBufferResource.Get(), &dsv, heapStartHandle);
 }
 
 void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags) 
@@ -526,7 +533,7 @@ void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags)
 	dsv.Flags = flags;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, heapStartHandle);
+	device->CreateDepthStencilView(m_depthBufferResource.Get(), &dsv, heapStartHandle);
 }
 
 DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
@@ -582,7 +589,7 @@ void Scene::RenderImGui()
 				ImGui::Checkbox("Mip Map Debug Mode", &ms_mipMapDebugMode);
 				if (prevMipMapDebugMode != ms_mipMapDebugMode)
 				{
-					ResourceTracker::ClearTexAndMatLists();
+					ResourceTracker::ClearTexList();
 					TextureLoader::Shutdown();
 					UnloadContent();
 					LoadContent();
@@ -611,7 +618,7 @@ void Scene::RenderImGui()
 				bool prevForceReload = ms_forceReloadBinTex;
 				ImGui::Checkbox("Force reload all binTex", &ms_forceReloadBinTex);
 				if (!prevForceReload && ms_forceReloadBinTex)
-					ResourceTracker::ClearTexAndMatLists();
+					ResourceTracker::ClearTexList();
 			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
@@ -1018,20 +1025,20 @@ void Scene::RenderImGui()
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
 
-		auto& matList = ResourceTracker::GetMaterials();
-		string matTag = "Materials (" + std::to_string(matList.size()) + ")";
-		if (ImGui::CollapsingHeader(matTag.c_str()))
-		{
-			ImGui::Indent(IM_GUI_INDENTATION);
+		//auto& matList = ResourceTracker::GetMaterials();
+		//string matTag = "Materials (" + std::to_string(matList.size()) + ")";
+		//if (ImGui::CollapsingHeader(matTag.c_str()))
+		//{
+		//	ImGui::Indent(IM_GUI_INDENTATION);
 
-			for (auto& it : matList)
-			{
-				ImGui::Text(it.first.c_str());
-			}
+		//	for (auto& it : matList)
+		//	{
+		//		ImGui::Text(it.first.c_str());
+		//	}
 
-			ImGui::Spacing();
-			ImGui::Unindent(IM_GUI_INDENTATION);
-		}
+		//	ImGui::Spacing();
+		//	ImGui::Unindent(IM_GUI_INDENTATION);
+		//}
 
 		ImGui::Unindent(IM_GUI_INDENTATION);
 	}
