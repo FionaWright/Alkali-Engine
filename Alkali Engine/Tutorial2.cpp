@@ -90,16 +90,24 @@ bool Tutorial2::LoadContent()
 	}
 
 	string matID = baseTex->GetFilePath() + " - " + normalTex->GetFilePath();
-	shared_ptr<Material> matPBR;
-	if (!ResourceTracker::TryGetMaterial(matID, matPBR))
+	shared_ptr<Material> matPBR1, matPBR2;
+	if (!ResourceTracker::TryGetMaterial(matID, matPBR1))
 	{
-		matPBR->Init(numSRV, numCBV);
-		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
-		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
-		matPBR->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
-		matPBR->AddTexture(m_d3dClass, baseTex);
-		matPBR->AddTexture(m_d3dClass, normalTex);
+		matPBR1->Init(numSRV, numCBV);
+		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
+		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
+		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
+		matPBR1->AddTexture(m_d3dClass, baseTex);
+		matPBR1->AddTexture(m_d3dClass, normalTex);
 	}
+
+	matPBR2 = std::make_shared<Material>();
+	matPBR2->Init(numSRV, numCBV);
+	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
+	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
+	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
+	matPBR2->AddTexture(m_d3dClass, baseTex);
+	matPBR2->AddTexture(m_d3dClass, normalTex);
 
 	// Shaders
 	shared_ptr<Shader> shaderPBR, shaderPBRCullOff;
@@ -149,12 +157,12 @@ bool Tutorial2::LoadContent()
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", modelSphere, shaderPBR, matPBR);
+	GameObject go("Test", modelSphere, shaderPBR, matPBR1);
 	go.SetPosition(-50, 3, -10);
 	go.SetScale(20);
 	m_goTest = batch->AddGameObject(go);
 
-	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR);
+	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR2);
 	m_goPlane = batch->AddGameObject(go2);
 	m_goPlane->SetPosition(3, 3, 0);
 
