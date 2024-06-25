@@ -67,8 +67,9 @@ bool Tutorial2::LoadContent()
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[0].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+		rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -89,25 +90,16 @@ bool Tutorial2::LoadContent()
 		rootSigPBR->SetName(L"Tutorial2 Root Sig");
 	}
 
-	string matID = baseTex->GetFilePath() + " - " + normalTex->GetFilePath();
-	shared_ptr<Material> matPBR1, matPBR2;
-	if (!ResourceTracker::TryGetMaterial(matID, matPBR1))
-	{
-		matPBR1->Init(numSRV, numCBV);
-		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
-		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
-		matPBR1->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
-		matPBR1->AddTexture(m_d3dClass, baseTex);
-		matPBR1->AddTexture(m_d3dClass, normalTex);
-	}
+	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<Texture*> textures = { baseTex.get(), normalTex.get() };
 
-	matPBR2 = std::make_shared<Material>();
-	matPBR2->Init(numSRV, numCBV);
-	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(MatricesCB));
-	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(CameraCB));
-	matPBR2->AddCBuffer(m_d3dClass, commandListDirect.Get(), sizeof(DirectionalLightCB));
-	matPBR2->AddTexture(m_d3dClass, baseTex);
-	matPBR2->AddTexture(m_d3dClass, normalTex);
+	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
+	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);	
+	matPBR1->AddSRVs(m_d3dClass, textures);
+
+	shared_ptr<Material> matPBR2 = std::make_shared<Material>();
+	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);
+	matPBR2->AddSRVs(m_d3dClass, textures);
 
 	// Shaders
 	shared_ptr<Shader> shaderPBR, shaderPBRCullOff;

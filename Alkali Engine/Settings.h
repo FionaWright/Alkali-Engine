@@ -19,6 +19,7 @@ constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12 Alkali Engine Window";
 // DX12
 constexpr UINT BACK_BUFFER_COUNT = 3;
 constexpr bool USE_BARRIER_WARP = false;
+constexpr UINT DESCRIPTOR_HEAP_SIZE = 10000;
 
 constexpr bool USE_SRGB = false; // Leave off, breaks stuff
 

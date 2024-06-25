@@ -525,14 +525,12 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 			normalTex->Init(d3d, commandList, normalTexPath);
 		}
 
-		shared_ptr<Material> material;
-		string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
-		if (!ResourceTracker::TryGetMaterial(matID, material))
-		{
-			material->Init(2, 1);
-			material->AddTexture(d3d, diffuseTex);
-			material->AddTexture(d3d, normalTex);
-		}
+		vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+		vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
+
+		shared_ptr<Material> material = std::make_shared<Material>();
+		material->AddCBVs(d3d, commandList, cbvSizes);
+		material->AddSRVs(d3d, textures);
 
 		GameObject go(modelName, model, shader, material);
 		batch->AddGameObject(go);
@@ -839,17 +837,12 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 		normalTex->Init(d3d, commandList, texNormalFullFilePath, false, true);
 	}
 
-	shared_ptr<Material> material;
-	string matID = diffuseTex->GetFilePath() + " - " + normalTex->GetFilePath();
-	if (!ResourceTracker::TryGetMaterial(matID, material))
-	{
-		material->Init(2, 3);
-		material->AddCBuffer(d3d, commandList, sizeof(MatricesCB));
-		material->AddCBuffer(d3d, commandList, sizeof(CameraCB));
-		material->AddCBuffer(d3d, commandList, sizeof(DirectionalLightCB));
-		material->AddTexture(d3d, diffuseTex);
-		material->AddTexture(d3d, normalTex);
-	}	
+	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
+
+	shared_ptr<Material> material = std::make_shared<Material>();
+	material->AddCBVs(d3d, commandList, cbvSizes);
+	material->AddSRVs(d3d, textures);
 
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;

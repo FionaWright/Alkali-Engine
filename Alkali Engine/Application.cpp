@@ -12,6 +12,7 @@
 #include "SceneBistro.h"
 #include "TextureLoader.h"
 #include "ResourceTracker.h"
+#include "DescriptorManager.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -85,117 +86,6 @@ int Application::Run()
     return static_cast<int>(msg.wParam);
 }
 
-void Application::RenderImGuiScenes() 
-{
-    ImGui::SeparatorText("Stats");
-    ImGui::Indent(IM_GUI_INDENTATION);
-
-    string fpsTxt = "FPS: " + std::to_string(m_fps);
-    ImGui::Text(fpsTxt.c_str());
-
-    XMFLOAT2 mousePos = InputManager::GetMousePos();
-    string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
-    ImGui::Text(mouseTxt.c_str());
-
-    XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
-    string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
-    ImGui::Text(mouseDeltaTxt.c_str());
-
-    ImGui::Spacing();
-    ImGui::Unindent(IM_GUI_INDENTATION);
-
-    if (ImGui::CollapsingHeader("Scenes"))
-    {
-        ImGui::Indent(IM_GUI_INDENTATION);
-
-        for (const auto& pair : m_sceneMap)
-        {            
-            bool disabled = pair.second == m_currentScene;
-            if (disabled)
-                ImGui::BeginDisabled(true);
-
-            if (ImGui::Button(wstringToString(pair.first).c_str()))
-            {
-                AssignScene(pair.second);
-            }
-
-            if (disabled)
-                ImGui::EndDisabled();
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Reset current scene"))
-        {
-            AssignScene(m_currentScene);
-        }
-
-        ImGui::Unindent(IM_GUI_INDENTATION);
-    }
-
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Tools"))
-    {
-        ImGui::Indent(IM_GUI_INDENTATION);
-
-        if (ImGui::TreeNode("Model Preprocessing"))
-        {
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            string fileDir = "C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\";
-            string msg = "Using directory: " + fileDir;
-            ImGui::Text(msg.c_str());
-
-            static char fileName[256];
-            ImGui::InputText("File name (.obj)", fileName, 256, 0);
-
-            static bool split = true;
-            ImGui::Checkbox("Split Model", &split);
-
-            if (ImGui::Button("Import"))
-            {
-                string fileNameStr(fileName);
-                string filePath = fileDir + fileNameStr + ".obj";
-                ModelLoader::PreprocessObjFile(filePath, split);
-            }
-
-            ImGui::TreePop();
-            ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::Spacing();
-        }
-
-        if (ImGui::TreeNode("Object Creation"))
-        {
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            static char numObjectsStr[256];
-            ImGui::InputText("Number", numObjectsStr, 256, 0);
-
-            if (ImGui::Button("Instantiate Cube"))
-            {                
-                int num = std::atoi(numObjectsStr);
-                m_currentScene->InstantiateCubes(num);
-            }
-
-            ImGui::Spacing();
-
-            if (ImGui::Button("Clear Resource Tracker"))
-            {
-                ResourceTracker::ReleaseAll();
-            }
-
-            ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::Spacing();
-            ImGui::TreePop();
-        }
-
-        ImGui::Unindent(IM_GUI_INDENTATION);
-    }
-
-    ImGui::Spacing();
-}
-
 void Application::CalculateFPS(float deltaTime) 
 {
     m_fpsTimeSinceUpdate += deltaTime;
@@ -217,6 +107,7 @@ void Application::Shutdown()
     ImGUIManager::Shutdown();   
     TextureLoader::Shutdown();
     ResourceTracker::ReleaseAll();
+    DescriptorManager::Shutdown();
 
     DestroyScenes();    
     m_mainWindow->Destroy();
@@ -283,4 +174,115 @@ void Application::DestroyScenes()
         scene->UnloadContent();
         scene->Destroy();
     }
+}
+
+void Application::RenderImGuiScenes()
+{
+    ImGui::SeparatorText("Stats");
+    ImGui::Indent(IM_GUI_INDENTATION);
+
+    string fpsTxt = "FPS: " + std::to_string(m_fps);
+    ImGui::Text(fpsTxt.c_str());
+
+    XMFLOAT2 mousePos = InputManager::GetMousePos();
+    string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
+    ImGui::Text(mouseTxt.c_str());
+
+    XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
+    string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
+    ImGui::Text(mouseDeltaTxt.c_str());
+
+    ImGui::Spacing();
+    ImGui::Unindent(IM_GUI_INDENTATION);
+
+    if (ImGui::CollapsingHeader("Scenes"))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        for (const auto& pair : m_sceneMap)
+        {
+            bool disabled = pair.second == m_currentScene;
+            if (disabled)
+                ImGui::BeginDisabled(true);
+
+            if (ImGui::Button(wstringToString(pair.first).c_str()))
+            {
+                AssignScene(pair.second);
+            }
+
+            if (disabled)
+                ImGui::EndDisabled();
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Reset current scene"))
+        {
+            AssignScene(m_currentScene);
+        }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Tools"))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        if (ImGui::TreeNode("Model Preprocessing"))
+        {
+            ImGui::Indent(IM_GUI_INDENTATION);
+
+            string fileDir = "C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\";
+            string msg = "Using directory: " + fileDir;
+            ImGui::Text(msg.c_str());
+
+            static char fileName[256];
+            ImGui::InputText("File name (.obj)", fileName, 256, 0);
+
+            static bool split = true;
+            ImGui::Checkbox("Split Model", &split);
+
+            if (ImGui::Button("Import"))
+            {
+                string fileNameStr(fileName);
+                string filePath = fileDir + fileNameStr + ".obj";
+                ModelLoader::PreprocessObjFile(filePath, split);
+            }
+
+            ImGui::TreePop();
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
+        if (ImGui::TreeNode("Object Creation"))
+        {
+            ImGui::Indent(IM_GUI_INDENTATION);
+
+            static char numObjectsStr[256];
+            ImGui::InputText("Number", numObjectsStr, 256, 0);
+
+            if (ImGui::Button("Instantiate Cube"))
+            {
+                int num = std::atoi(numObjectsStr);
+                m_currentScene->InstantiateCubes(num);
+            }
+
+            ImGui::Spacing();
+
+            if (ImGui::Button("Clear Resource Tracker"))
+            {
+                ResourceTracker::ReleaseAll();
+            }
+
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+            ImGui::TreePop();
+        }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
+    ImGui::Spacing();
 }

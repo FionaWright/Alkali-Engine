@@ -11,26 +11,21 @@ public:
 	Material();
 	~Material();
 
-	void Init(UINT numSamplers, UINT rootParamIndex);
+	void AddSRVs(D3DClass* d3d, vector<Texture*> textures);	
+	void AddDynamicSRVs(UINT count);	
+	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes);
 
-	void AddTexture(D3DClass* d3d, shared_ptr<Texture> tex);
-	void AssignTextureResourceManually(D3DClass* d3d, int offset, DXGI_FORMAT format, ID3D12Resource* resource);
-	ID3D12DescriptorHeap* Get_SRV_CBV_UAV_Heap();
+	void SetCBV(UINT registerIndex, void* data, size_t dataSize);
+	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
+
+	void AssignMaterial(ID3D12GraphicsCommandList2* commandList);
 
 	bool GetHasAlpha();
-
-	void AddCBuffer(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, size_t sizeOfCBuffer);
-
-	void SetCBuffer(UINT index, void* data, size_t dataSize);
-
-	vector<shared_ptr<Texture>>& GetTextures();
+	vector<Texture*>& GetTextures();
 
 private:
-	vector<ID3D12Resource*> m_cbvResources;	
-	ComPtr<ID3D12DescriptorHeap> m_srv_cbv_uav_Heap;
-	int m_expectedDescriptors = -1;
-	int m_nextDescriptorIndex = 0;
-
-	vector<shared_ptr<Texture>> m_textures; // Not sure if I like this, it's just to keep them in memory. And now also for ImGui stuff
+	UINT m_srvHeapIndex = -1, m_cbvHeapIndex = -1;
+	vector<ID3D12Resource*> m_cbvResources;		
+	vector<Texture*> m_textures;
 };
 
