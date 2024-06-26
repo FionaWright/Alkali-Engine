@@ -24,14 +24,19 @@ public:
 
 	static ID3D12DescriptorHeap* GetHeap();
 	static UINT GetIncrementSize();
+	static vector<string>& GetDebugHeapStrings();
 
 	static void Shutdown();
+
+	static bool ms_DebugHeapEnabled;
 
 private:
 	static unordered_map<string, UINT> ms_descriptorIndexMap;
 	static ComPtr<ID3D12DescriptorHeap> ms_srv_cbv_uav_Heap;
 	static UINT ms_nextDescriptorIndex;
 	static UINT ms_descriptorIncrementSize;
+
+	static vector<string> ms_debugHeapList;
 
 	static bool ms_initialised;
 };

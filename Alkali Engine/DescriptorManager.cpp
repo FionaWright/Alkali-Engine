@@ -6,6 +6,8 @@ ComPtr<ID3D12DescriptorHeap> DescriptorManager::ms_srv_cbv_uav_Heap;
 UINT DescriptorManager::ms_nextDescriptorIndex;
 UINT DescriptorManager::ms_descriptorIncrementSize;
 bool DescriptorManager::ms_initialised;
+vector<string> DescriptorManager::ms_debugHeapList;
+bool DescriptorManager::ms_DebugHeapEnabled;
 
 void DescriptorManager::Init(D3DClass* d3d, UINT numDescriptors)
 {
@@ -14,6 +16,7 @@ void DescriptorManager::Init(D3DClass* d3d, UINT numDescriptors)
 	ms_srv_cbv_uav_Heap = ResourceManager::CreateDescriptorHeap(numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	ms_initialised = true;
+	ms_DebugHeapEnabled = DEBUG_HEAP_ENABLED_DEFAULT;
 }
 
 UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<Texture*>& textures)
@@ -39,7 +42,10 @@ UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<Texture*>& textures)
 	for (size_t i = 0; i < textures.size(); i++)
 	{
 		textures[i]->AddToDescriptorHeap(d3d, ms_srv_cbv_uav_Heap.Get(), heapStart + i);
-	}
+
+		if (ms_DebugHeapEnabled)
+			ms_debugHeapList.push_back("SRV: " + textures[i]->GetFilePath());
+	} 
 
 	ms_descriptorIndexMap.emplace(id, heapStart);
 	return heapStart;
@@ -49,6 +55,12 @@ UINT DescriptorManager::AddDynamicSRVs(UINT count)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
+
+	if (ms_DebugHeapEnabled)
+	{
+		for (UINT i = 0; i < count; i++)
+			ms_debugHeapList.push_back("Dynamic SRV: " + std::to_string(i));
+	}
 
 	UINT heapStart = ms_nextDescriptorIndex;
 	ms_nextDescriptorIndex += count;
@@ -72,9 +84,11 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 	if (sharing && ms_descriptorIndexMap.contains(id))
 		return ms_descriptorIndexMap.at(id);
 
-	UINT heapStart = ms_nextDescriptorIndex;
-	ms_descriptorIndexMap.emplace(id, heapStart);
+	UINT heapStart = ms_nextDescriptorIndex;	
 	ms_nextDescriptorIndex += sizes.size();
+
+	if (sharing)
+		ms_descriptorIndexMap.emplace(id, heapStart);
 
 	for (size_t i = 0; i < sizes.size(); i++)
 	{
@@ -113,6 +127,12 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 		d3d->GetDevice()->CreateConstantBufferView(&cbvDesc, cbvHandle);
 
 		ResourceManager::TransitionResource(commandListDirect, cbufferResource, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+		if (ms_DebugHeapEnabled)
+		{
+			string shareStr = sharing ? "(PerFrame)" : "(PerDraw)";
+			ms_debugHeapList.push_back("CBV: { size: " + std::to_string(sizes[i]) + " }, { Flags: " + shareStr + " }");
+		}			
 	}
 
 	return heapStart;
@@ -157,6 +177,11 @@ UINT DescriptorManager::GetIncrementSize()
 		throw std::exception("Uninitialised Descriptor Manager");
 
 	return ms_descriptorIncrementSize;
+}
+
+vector<string>& DescriptorManager::GetDebugHeapStrings()
+{
+	return ms_debugHeapList;
 }
 
 void DescriptorManager::Shutdown()

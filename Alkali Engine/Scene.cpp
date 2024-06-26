@@ -1079,6 +1079,27 @@ void Scene::RenderImGui()
 		//	ImGui::Unindent(IM_GUI_INDENTATION);
 		//}
 
+		if (!DescriptorManager::ms_DebugHeapEnabled)
+			ImGui::BeginDisabled(true);
+
+		if (ImGui::CollapsingHeader("Heap View"))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			auto list = DescriptorManager::GetDebugHeapStrings();
+
+			for (size_t i = 0; i < list.size(); i++)
+			{
+				ImGui::Text((std::to_string(i) + ". " + list[i]).c_str());
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
+
+		if (!DescriptorManager::ms_DebugHeapEnabled)
+			ImGui::EndDisabled();
+
 		ImGui::Unindent(IM_GUI_INDENTATION);
 	}
 
