@@ -113,4 +113,5 @@ private:
     static bool ms_sortBatchGos;
     static bool ms_forceReloadBinTex;
     static bool ms_mipMapDebugMode;
+    static bool ms_renderDebugLines;
 };

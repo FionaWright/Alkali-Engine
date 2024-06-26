@@ -14,6 +14,7 @@ bool Scene::ms_visualizeDSV;
 bool Scene::ms_sortBatchGos;
 bool Scene::ms_forceReloadBinTex;
 bool Scene::ms_mipMapDebugMode;
+bool Scene::ms_renderDebugLines;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -47,6 +48,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_d3dClass = pD3DClass;
 
 	//ms_forceReloadBinTex = true;
+	ms_renderDebugLines = true;
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 
@@ -298,7 +300,8 @@ void Scene::OnRender(TimeEventArgs& e)
 	for (auto& it : batchList)
 		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
 
-	RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
+	if (ms_renderDebugLines)
+		RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
 	if (ms_visualizeDSV && m_goDepthTex)
 	{
@@ -382,7 +385,7 @@ void Scene::InstantiateCubes(int count)
 	}
 
 	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
-	vector<Texture*> textures = { texture.get(), normalMap.get() };
+	vector<shared_ptr<Texture>> textures = { texture, normalMap };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes, false);
@@ -682,7 +685,9 @@ void Scene::RenderImGui()
 			ImGui::SeparatorText("Visuals");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			ImGui::ColorEdit4("Background Color", m_backgroundColor, ImGuiColorEditFlags_DisplayHex);
+			ImGui::ColorEdit4("Background Color", m_backgroundColor);
+
+			ImGui::Checkbox("Debug Lines", &ms_renderDebugLines);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Rendering");
@@ -691,6 +696,18 @@ void Scene::RenderImGui()
 			ImGui::Checkbox("DSV enabled", &m_dsvEnabled);
 
 			ImGui::Checkbox("Sort By Depth", &ms_sortBatchGos);
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("Directional Light CBV");
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			ImGui::InputFloat3("Direction", reinterpret_cast<float*>(&m_perFrameCBuffers.DirectionalLight.LightDirection));
+			m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(m_perFrameCBuffers.DirectionalLight.LightDirection);
+
+			ImGui::ColorEdit4("Light Colour", reinterpret_cast<float*>(&m_perFrameCBuffers.DirectionalLight.LightDiffuse));
+			ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&m_perFrameCBuffers.DirectionalLight.AmbientColor));
+
+			ImGui::InputFloat("Specular Power", &m_perFrameCBuffers.DirectionalLight.SpecularPower);
 
 			ImGui::TreePop();
 			ImGui::Spacing();

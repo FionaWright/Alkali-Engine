@@ -8,8 +8,8 @@ constexpr bool FRUSTUM_CULLING_ENABLED = true;
 constexpr bool MATERIAL_SHARING_ENABLED = false; // Breaks stuff, keep off
 constexpr bool DEBUG_HEAP_ENABLED_DEFAULT = false;
 
-constexpr bool CONVERT_NORMAL_CHANNELS_2_TO_3 = true;
-constexpr bool CONVERT_NORMAL_CHANNELS_3_TO_2 = false;
+constexpr bool CONVERT_NORMAL_CHANNELS_2_TO_3 = false;
+constexpr bool CONVERT_NORMAL_CHANNELS_3_TO_2 = true;
 
 constexpr float IM_GUI_INDENTATION = 16;
 
