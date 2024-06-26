@@ -43,7 +43,7 @@ void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDir
 void Material::SetCBV_PerFrame(UINT registerIndex, void* srcData, size_t dataSize) 
 {
     if (m_cbvResources_perFrame.size() <= registerIndex)
-        return;
+        throw std::exception("Material does not have ownership of that resource");
 
     void* dstData = nullptr;
     D3D12_RANGE readRange = {};
@@ -57,7 +57,7 @@ void Material::SetCBV_PerFrame(UINT registerIndex, void* srcData, size_t dataSiz
 void Material::SetCBV_PerDraw(UINT registerIndex, void* srcData, size_t dataSize)
 {
     if (m_cbvResources_perDraw.size() <= registerIndex)
-        return;
+        throw std::exception("Material does not have ownership of that resource");
 
     void* dstData = nullptr;
     D3D12_RANGE readRange = {};

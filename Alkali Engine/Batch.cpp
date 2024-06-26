@@ -28,7 +28,7 @@ GameObject* Batch::AddGameObject(GameObject go)
 	return &m_goList[m_goList.size() - 1];
 }
 
-void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
+void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
@@ -43,18 +43,18 @@ void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D
 		list[i].GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
-			list[i].Render(commandList, perFrameCB, &matrices);
+			list[i].Render(commandList, &matrices);
 	}
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
+void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
-	RenderFromList(m_goList, m_rootSignature.Get(), commandList, viewProj, frustum, perFrameCB);
+	RenderFromList(m_goList, m_rootSignature.Get(), commandList, viewProj, frustum);
 }
 
-void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB)
+void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
-	RenderFromList(m_goListTrans, m_rootSignature.Get(), commandList, viewProj, frustum, perFrameCB);
+	RenderFromList(m_goListTrans, m_rootSignature.Get(), commandList, viewProj, frustum);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

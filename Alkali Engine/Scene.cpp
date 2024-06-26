@@ -293,10 +293,10 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	auto& batchList = ResourceTracker::GetBatches();
 	for (auto& it : batchList)
-		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum, &m_perFrameCBuffers);
+		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum, &m_perFrameCBuffers);
+		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
 
 	RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
@@ -629,6 +629,7 @@ void Scene::RenderImGui()
 				if (prevMipMapDebugMode != ms_mipMapDebugMode)
 				{
 					ResourceTracker::ClearTexList();
+					ResourceTracker::ClearMatList();
 					TextureLoader::Shutdown();
 					UnloadContent();
 					LoadContent();
@@ -657,7 +658,10 @@ void Scene::RenderImGui()
 				bool prevForceReload = ms_forceReloadBinTex;
 				ImGui::Checkbox("Force reload all binTex", &ms_forceReloadBinTex);
 				if (!prevForceReload && ms_forceReloadBinTex)
+				{
 					ResourceTracker::ClearTexList();
+					ResourceTracker::ClearMatList();
+				}					
 			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
@@ -1079,9 +1083,12 @@ void Scene::RenderImGui()
 
 				ImGui::Indent(IM_GUI_INDENTATION);
 				
-				ImGui::Text(("CBV Index (PerFrame): " + std::to_string(cbvFrame)).c_str());
-				ImGui::Text(("CBV Index (PerDraw): " + std::to_string(cbvDraw)).c_str());
-				ImGui::Text(("SRV Index: " + std::to_string(srv)).c_str());
+				if (cbvFrame != -1)
+					ImGui::Text(("CBV Index (PerFrame): " + std::to_string(cbvFrame)).c_str());
+				if (cbvDraw != -1)
+					ImGui::Text(("CBV Index (PerDraw): " + std::to_string(cbvDraw)).c_str());
+				if (srv != -1)
+					ImGui::Text(("SRV Index: " + std::to_string(srv)).c_str());
 
 				ImGui::Indent(IM_GUI_INDENTATION);
 
