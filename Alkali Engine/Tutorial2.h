@@ -18,4 +18,5 @@ protected:
 
 private:
 	GameObject* m_goTest, * m_goPlane;
+	shared_ptr<Material> m_perFramePBRMat;
 };

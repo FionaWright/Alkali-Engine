@@ -38,9 +38,9 @@ public:
 	GameObject(string name);
 	~GameObject();
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB = nullptr, MatricesCB* matrices = nullptr);
+	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices = nullptr);
 
-	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
+	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
 
 	Transform GetTransform() const;
 	void SetTransform(Transform t);

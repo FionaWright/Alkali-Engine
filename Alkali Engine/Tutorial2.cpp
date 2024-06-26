@@ -102,6 +102,10 @@ bool Tutorial2::LoadContent()
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
 	vector<Texture*> textures = { baseTex.get(), normalTex.get() };
 
+	m_perFramePBRMat = std::make_shared<Material>();
+	m_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+	ResourceTracker::AddMaterial(m_perFramePBRMat);
+
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
@@ -212,6 +216,9 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
+
+	m_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
+	m_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
 }
 
 void Tutorial2::OnRender(TimeEventArgs& e)

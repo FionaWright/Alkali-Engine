@@ -17,8 +17,8 @@ public:
 	void Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount);
 
 	GameObject* AddGameObject(GameObject go);
-	void Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB);
-	void RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum, PerFrameCBuffers* perFrameCB);
+	void Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
+	void RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
 
 	void SortObjects(const XMFLOAT3& camPos);
 

@@ -31,7 +31,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices)
 {
 	if (!m_model || !m_shader)
 		throw std::exception("Missing components");
@@ -56,14 +56,14 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameC
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(commandListDirect, perFrameCB, matrices, sphereModel, &modifiedTransform);
+		RenderModel(commandListDirect, matrices, sphereModel, &modifiedTransform);
 		return;
 	}
 
-	RenderModel(commandListDirect, perFrameCB, matrices, m_model.get());
+	RenderModel(commandListDirect, matrices, m_model.get());
 }
 
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB, MatricesCB* matrices, Model* model, Transform* transform)
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices, Model* model, Transform* transform)
 {
 	XMMATRIX& worldMatrix = m_worldMatrix;
 	if (transform)
@@ -72,12 +72,6 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerF
 	matrices->M = worldMatrix;
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
 	m_material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
-
-	if (perFrameCB)
-	{
-		m_material->SetCBV_PerFrame(0, &perFrameCB->Camera, sizeof(CameraCB));
-		m_material->SetCBV_PerFrame(1, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
-	}
 
 	m_material->AssignMaterial(commandListDirect, m_rootParamInfo);
 
