@@ -5,6 +5,7 @@ unordered_map<string, shared_ptr<Texture>> ResourceTracker::ms_textureMap;
 unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
 unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
 unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
+vector<shared_ptr<Material>> ResourceTracker::ms_matList;
 
 void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 {
@@ -120,10 +121,26 @@ void ResourceTracker::ClearBatchList()
 	ms_batchMap.clear();
 }
 
+void ResourceTracker::AddMaterial(shared_ptr<Material> mat)
+{
+	ms_matList.push_back(mat);
+}
+
+vector<shared_ptr<Material>>& ResourceTracker::GetMaterials()
+{
+	return ms_matList;
+}
+
+void ResourceTracker::ClearMatList()
+{
+	ms_matList.clear();
+}
+
 void ResourceTracker::ReleaseAll()
 {
 	ms_textureMap.clear();
 	ms_modelMap.clear();
 	ms_shaderMap.clear();
 	ms_batchMap.clear();
+	ms_matList.clear();
 }

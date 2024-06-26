@@ -30,8 +30,12 @@ public:
 
 	static void AddBatch(string filePath, shared_ptr<Batch> batch);
 	static bool TryGetBatch(string filePath, shared_ptr<Batch>& batch);
-	static unordered_map<string, shared_ptr<Batch>>& GetBatches();
+	static unordered_map<string, shared_ptr<Batch>>& GetBatches();	
 	static void ClearBatchList();
+
+	static void AddMaterial(shared_ptr<Material> mat);
+	static vector<shared_ptr<Material>>& GetMaterials();
+	static void ClearMatList();
 
 	static void ReleaseAll();
 
@@ -40,5 +44,6 @@ private:
 	static unordered_map<string, shared_ptr<Model>> ms_modelMap;
 	static unordered_map<string, shared_ptr<Shader>> ms_shaderMap;
 	static unordered_map<string, shared_ptr<Batch>> ms_batchMap;
+	static vector<shared_ptr<Material>> ms_matList;
 };
 

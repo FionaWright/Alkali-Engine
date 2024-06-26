@@ -1064,20 +1064,40 @@ void Scene::RenderImGui()
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
 
-		//auto& matList = ResourceTracker::GetMaterials();
-		//string matTag = "Materials (" + std::to_string(matList.size()) + ")";
-		//if (ImGui::CollapsingHeader(matTag.c_str()))
-		//{
-		//	ImGui::Indent(IM_GUI_INDENTATION);
+		auto& matList = ResourceTracker::GetMaterials();
+		string matTag = "Materials (" + std::to_string(matList.size()) + ")";
+		if (ImGui::CollapsingHeader(matTag.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
 
-		//	for (auto& it : matList)
-		//	{
-		//		ImGui::Text(it.first.c_str());
-		//	}
+			for (size_t i = 0; i < matList.size(); i++)
+			{
+				UINT srv, cbvFrame, cbvDraw;
+				matList[i]->GetIndices(srv, cbvFrame, cbvDraw);
 
-		//	ImGui::Spacing();
-		//	ImGui::Unindent(IM_GUI_INDENTATION);
-		//}
+				ImGui::Text(("Material: " + std::to_string(i)).c_str());
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+				
+				ImGui::Text(("CBV Index (PerFrame): " + std::to_string(cbvFrame)).c_str());
+				ImGui::Text(("CBV Index (PerDraw): " + std::to_string(cbvDraw)).c_str());
+				ImGui::Text(("SRV Index: " + std::to_string(srv)).c_str());
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				auto& matTexList = matList[i]->GetTextures();
+				for (size_t t = 0; t < matTexList.size(); t++)
+				{
+					ImGui::Text(("SRV " + std::to_string(t) + ": " + matTexList[t]->GetFilePath()).c_str());
+				}
+				
+				ImGui::Unindent(IM_GUI_INDENTATION);
+				ImGui::Unindent(IM_GUI_INDENTATION);
+			}
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+		}
 
 		if (!DescriptorManager::ms_DebugHeapEnabled)
 			ImGui::BeginDisabled(true);

@@ -533,6 +533,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 		material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 		material->AddSRVs(d3d, textures);
+		ResourceTracker::AddMaterial(material);
 
 		GameObject go(modelName, rpi, model, shader, material);
 		batch->AddGameObject(go);
@@ -847,6 +848,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
+	ResourceTracker::AddMaterial(material);
 
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;

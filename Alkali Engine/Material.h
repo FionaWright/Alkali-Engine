@@ -25,6 +25,7 @@ public:
 
 	bool GetHasAlpha();
 	vector<Texture*>& GetTextures();
+	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw);
 
 private:
 	UINT m_srvHeapIndex = -1, m_cbvHeapIndex_perFrame = -1, m_cbvHeapIndex_perDraw = -1;

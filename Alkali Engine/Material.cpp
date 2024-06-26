@@ -107,3 +107,10 @@ vector<Texture*>& Material::GetTextures()
 {
 	return m_textures;
 }
+
+void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw)
+{
+    srv = m_srvHeapIndex;
+    cbvFrame = m_cbvHeapIndex_perFrame;
+    cbvDraw = m_cbvHeapIndex_perDraw;
+}

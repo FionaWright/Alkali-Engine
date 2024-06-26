@@ -106,11 +106,13 @@ bool Tutorial2::LoadContent()
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
+	ResourceTracker::AddMaterial(matPBR1);
 
 	shared_ptr<Material> matPBR2 = std::make_shared<Material>();
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
+	ResourceTracker::AddMaterial(matPBR2);
 
 	// Shaders
 	shared_ptr<Shader> shaderPBR, shaderPBRCullOff;
