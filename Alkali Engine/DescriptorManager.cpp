@@ -19,7 +19,7 @@ void DescriptorManager::Init(D3DClass* d3d, UINT numDescriptors)
 	ms_DebugHeapEnabled = DEBUG_HEAP_ENABLED_DEFAULT;
 }
 
-UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<Texture*>& textures)
+UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<shared_ptr<Texture>>& textures)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");

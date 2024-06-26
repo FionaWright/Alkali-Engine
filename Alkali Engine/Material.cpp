@@ -21,7 +21,7 @@ Material::~Material()
     }
 }
 
-void Material::AddSRVs(D3DClass* d3d, vector<Texture*> textures)
+void Material::AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures)
 {
     m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, textures);
     m_textures = textures;
@@ -91,7 +91,7 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParam
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexCBV_PerFrame, cbvHandle);
     }
 
-    if (m_srvHeapIndex != -1 && rootParamInfo.NumSRV > 0 && rootParamInfo.ParamIndexSRV >= 0)
+    if (m_srvHeapIndex != -1 && rootParamInfo.NumSRV > 0 && rootParamInfo.ParamIndexSRV >= 0 && m_textures.size() > 0)
     {
         CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(gpuHandle, m_srvHeapIndex, incrementSize);
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexSRV, srvHandle);
@@ -103,7 +103,7 @@ bool Material::GetHasAlpha()
     return m_textures.at(0)->GetHasAlpha();
 }
 
-vector<Texture*>& Material::GetTextures()
+vector<shared_ptr<Texture>>& Material::GetTextures()
 {
 	return m_textures;
 }
@@ -113,4 +113,9 @@ void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw)
     srv = m_srvHeapIndex;
     cbvFrame = m_cbvHeapIndex_perFrame;
     cbvDraw = m_cbvHeapIndex_perDraw;
+}
+
+void Material::ClearTextures()
+{
+    m_textures.clear();
 }

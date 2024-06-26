@@ -527,7 +527,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-		vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
+		vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
 
 		shared_ptr<Material> material = std::make_shared<Material>();
 		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
@@ -842,7 +842,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
+	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);

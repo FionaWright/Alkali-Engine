@@ -13,7 +13,7 @@ public:
 	Material();
 	~Material();
 
-	void AddSRVs(D3DClass* d3d, vector<Texture*> textures);	
+	void AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures);
 	void AddDynamicSRVs(UINT count);	
 	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame);
 
@@ -24,13 +24,15 @@ public:
 	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParamInfo& rootParamInfo);
 
 	bool GetHasAlpha();
-	vector<Texture*>& GetTextures();
+	vector<shared_ptr<Texture>>& GetTextures();
 	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw);
+
+	void ClearTextures();
 
 private:
 	UINT m_srvHeapIndex = -1, m_cbvHeapIndex_perFrame = -1, m_cbvHeapIndex_perDraw = -1;
 	vector<ID3D12Resource*> m_cbvResources_perFrame;		
 	vector<ID3D12Resource*> m_cbvResources_perDraw;		
-	vector<Texture*> m_textures;
+	vector<shared_ptr<Texture>> m_textures;
 };
 

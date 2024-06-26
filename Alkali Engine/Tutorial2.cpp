@@ -3,6 +3,7 @@
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
 #include "ResourceTracker.h"
+#include "Utils.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
@@ -100,7 +101,7 @@ bool Tutorial2::LoadContent()
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<Texture*> textures = { baseTex.get(), normalTex.get() };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex };
 
 	m_perFramePBRMat = std::make_shared<Material>();
 	m_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
@@ -199,7 +200,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	float angle = static_cast<float>(e.TotalTime * 2.0f);
 	//m_goCube->RotateBy(0, angle, 0);
-	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(cos(angle), -0.5f, sin(angle));
+	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
