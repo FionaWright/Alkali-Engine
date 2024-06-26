@@ -3,7 +3,7 @@
 #include "InputManager.h"
 
 Camera::Camera(CameraMode mode)
-	: GameObject("Camera", nullptr, nullptr)
+	: GameObject("Camera")
 	, m_currentMode(mode)
 	, m_upVector(XMFLOAT3(0, 1, 0))
 	, m_forwardVector(XMFLOAT3(0, 0, 1))

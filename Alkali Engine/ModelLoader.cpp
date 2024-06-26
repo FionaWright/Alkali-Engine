@@ -410,7 +410,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	fin.read(reinterpret_cast<char*>(outIndexBuffer.data()), sizeof(int32_t) * indexCount);
 }
 
-void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
+void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
 {
 	string mtlFilePath = "Assets/Models/" + name + "/" + name + ".mtl";
 
@@ -525,14 +525,16 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* comm
 			normalTex->Init(d3d, commandList, normalTexPath);
 		}
 
-		vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+		vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
 		vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
 
 		shared_ptr<Material> material = std::make_shared<Material>();
-		material->AddCBVs(d3d, commandList, cbvSizes);
+		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
+		material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 		material->AddSRVs(d3d, textures);
 
-		GameObject go(modelName, model, shader, material);
+		GameObject go(modelName, rpi, model, shader, material);
 		batch->AddGameObject(go);
 	}
 
@@ -767,7 +769,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
@@ -837,24 +839,26 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastg
 		normalTex->Init(d3d, commandList, texNormalFullFilePath, false, true);
 	}
 
-	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
 	vector<Texture*> textures = { diffuseTex.get(), normalTex.get() };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
-	material->AddCBVs(d3d, commandList, cbvSizes);
+	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
+	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
 
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;
 
 	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
-	GameObject go(nodeName, model, shaderUsed, material);
+	GameObject go(nodeName, rpi, model, shaderUsed, material);
 	go.SetTransform(transform);
 
 	batch->AddGameObject(go);
 }
 
-void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
 	fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
 	Transform transform = ToTransform(trs);
@@ -866,7 +870,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, commandList, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
+		LoadNode(d3d, commandList, rpi, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -895,11 +899,11 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, commandList, asset, mesh.primitives[i], batch, shader, shaderCullOff, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, commandList, rpi, asset, mesh.primitives[i], batch, shader, shaderCullOff, modelNameExtensionless, node, transform, id);
 	}
 }
 
-void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -934,7 +938,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 			int nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
 			Transform defTransform = {};
-			LoadNode(d3d, commandList, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defTransform);
+			LoadNode(d3d, commandList, rpi, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defTransform);
 		}
 	}
 }

@@ -40,7 +40,6 @@ bool Tutorial2::LoadContent()
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
-
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	// Textures
@@ -60,16 +59,25 @@ bool Tutorial2::LoadContent()
 		}
 	}
 
+	RootParamInfo rootParamInfo;
+	rootParamInfo.NumCBV_PerFrame = 2;
+	rootParamInfo.NumCBV_PerDraw = 1;
+	rootParamInfo.NumSRV = 2;
+	rootParamInfo.ParamIndexCBV_PerDraw = 0;
+	rootParamInfo.ParamIndexCBV_PerFrame = 1;
+	rootParamInfo.ParamIndexSRV = 2;
+
 	ComPtr<ID3D12RootSignature> rootSigPBR;
-	int numCBV = 3, numSRV = 2;
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];		
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[3];		
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			
-		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
-		rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-		rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
+		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[rootParamInfo.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -90,15 +98,18 @@ bool Tutorial2::LoadContent()
 		rootSigPBR->SetName(L"Tutorial2 Root Sig");
 	}
 
-	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
 	vector<Texture*> textures = { baseTex.get(), normalTex.get() };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
-	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);	
+	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
 
 	shared_ptr<Material> matPBR2 = std::make_shared<Material>();
-	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);
+	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
 
 	// Shaders
@@ -143,18 +154,18 @@ bool Tutorial2::LoadContent()
 	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", batch.get(), shaderPBR);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", modelSphere, shaderPBR, matPBR1);
+	GameObject go("Test", rootParamInfo, modelSphere, shaderPBR, matPBR1);
 	go.SetPosition(-50, 3, -10);
 	go.SetScale(20);
 	m_goTest = batch->AddGameObject(go);
 
-	GameObject go2("Plane", modelPlane, shaderPBRCullOff, matPBR2);
+	GameObject go2("Plane", rootParamInfo, modelPlane, shaderPBRCullOff, matPBR2);
 	m_goPlane = batch->AddGameObject(go2);
 	m_goPlane->SetPosition(3, 3, 0);
 

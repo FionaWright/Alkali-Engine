@@ -3,11 +3,13 @@
 #include "ResourceManager.h"
 #include "CBuffers.h"
 
-DebugLine::DebugLine(D3DClass* d3d, shared_ptr<Shader> shader, XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
+DebugLine::DebugLine(D3DClass* d3d, RootParamInfo& rpi, shared_ptr<Shader> shader, shared_ptr<Material> material, XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 	: m_start(start)
 	, m_end(end)
 	, m_color(color)
 	, m_shader(shader)
+	, m_material(material)
+	, m_rootParamInfo(rpi)
 {
 	InitializeDynamicVertexBuffer(d3d);
 	UpdateDynamicVertexBuffer(d3d);
@@ -86,7 +88,9 @@ void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Root
 
 	MatricesLineCB matricesCB;
 	matricesCB.VP = viewProj;
-	commandListDirect->SetGraphicsRoot32BitConstants(0, sizeof(MatricesLineCB) / 4, &matricesCB, 0);
+
+	m_material->SetCBV_PerDraw(0, &matricesCB, sizeof(MatricesLineCB));
+	m_material->AssignMaterial(commandListDirect, m_rootParamInfo);
 
 	commandListDirect->DrawInstanced(2, 1, 0, 0);
 }

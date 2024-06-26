@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include "Scene.h"
 
-GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
+GameObject::GameObject(string name, RootParamInfo& rpi, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
 	, m_worldMatrix(XMMatrixIdentity())
 	, m_model(pModel)
@@ -12,6 +12,18 @@ GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader>
 	, m_Name(name)
 	, m_material(pMaterial)
 	, m_orthographic(orthographic)
+	, m_rootParamInfo(rpi)
+{
+}
+
+GameObject::GameObject(string name)
+	: m_transform({})
+	, m_worldMatrix(XMMatrixIdentity())
+	, m_model(nullptr)
+	, m_shader(nullptr)
+	, m_Name(name)
+	, m_material(nullptr)
+	, m_orthographic(false)
 {
 }
 
@@ -59,15 +71,15 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, PerF
 
 	matrices->M = worldMatrix;
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
-	m_material->SetCBV(0, matrices, sizeof(MatricesCB));
+	m_material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
 
 	if (perFrameCB)
 	{
-		m_material->SetCBV(1, &perFrameCB->Camera, sizeof(CameraCB));
-		m_material->SetCBV(2, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
+		m_material->SetCBV_PerFrame(0, &perFrameCB->Camera, sizeof(CameraCB));
+		m_material->SetCBV_PerFrame(1, &perFrameCB->DirectionalLight, sizeof(DirectionalLightCB));
 	}
 
-	m_material->AssignMaterial(commandListDirect);
+	m_material->AssignMaterial(commandListDirect, m_rootParamInfo);
 
 	model->Render(commandListDirect);
 }

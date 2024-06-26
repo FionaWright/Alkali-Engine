@@ -55,12 +55,10 @@ UINT DescriptorManager::AddDynamicSRVs(UINT count)
 	return heapStart;
 }
 
-UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources)
+UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
-
-	// TODO: Sharing?
 
 	string id = "";
 	for (size_t i = 0; i < sizes.size(); i++)
@@ -70,6 +68,9 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 
 		id += std::to_string(sizes[i]);
 	}
+
+	if (sharing && ms_descriptorIndexMap.contains(id))
+		return ms_descriptorIndexMap.at(id);
 
 	UINT heapStart = ms_nextDescriptorIndex;
 	ms_descriptorIndexMap.emplace(id, heapStart);
