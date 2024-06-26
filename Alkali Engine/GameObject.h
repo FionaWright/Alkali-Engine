@@ -18,10 +18,24 @@ struct Transform
 	XMFLOAT3 Scale = XMFLOAT3_ONE;
 };
 
+struct RootParamInfo
+{
+	UINT ParamCount;
+
+	UINT NumCBV_PerFrame;
+	UINT NumCBV_PerDraw;
+	UINT NumSRV;
+
+	UINT ParamIndexCBV_PerFrame;
+	UINT ParamIndexCBV_PerDraw;
+	UINT ParamIndexSRV;
+};
+
 class GameObject
 {
 public:
-	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
+	GameObject(string name, RootParamInfo& rpi, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
+	GameObject(string name);
 	~GameObject();
 
 	void Render(ID3D12GraphicsCommandList2* commandListDirect, PerFrameCBuffers* perFrameCB = nullptr, MatricesCB* matrices = nullptr);
@@ -69,6 +83,7 @@ protected:
 	Transform m_transform;
 
 	XMMATRIX m_worldMatrix;
+	RootParamInfo m_rootParamInfo;
 
 	bool m_orthographic;
 };

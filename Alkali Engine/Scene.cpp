@@ -92,10 +92,25 @@ bool Scene::LoadContent()
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
+	CommandQueue* commandQueueDirect = nullptr;
+	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueueDirect)
+		throw std::exception("Command Queue Error");
+	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
+	m_rpiLine.NumCBV_PerFrame = 0;
+	m_rpiLine.NumCBV_PerDraw = 1;
+	m_rpiLine.NumSRV = 0;
+	m_rpiLine.ParamIndexCBV_PerDraw = 0;
+	m_rpiLine.ParamIndexCBV_PerFrame = -1;
+	m_rpiLine.ParamIndexSRV = -1;
+
 	{
-		const int paramCount = 1;
-		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[0].InitAsConstants(sizeof(MatricesLineCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, m_rpiLine.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+		rootParameters[m_rpiLine.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -112,7 +127,7 @@ bool Scene::LoadContent()
 		sampler[0].RegisterSpace = 0;
 		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
 		m_rootSigLine->SetName(L"Line Root Sig");
 	}
 
@@ -128,6 +143,13 @@ bool Scene::LoadContent()
 	}
 
 	{
+		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
+
+		m_matLine = std::make_shared<Material>();
+		m_matLine->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	}
+
+	{
 		vector<DebugLine*> frustumDebugLines;
 		for (int i = 0; i < 12; i++)
 			frustumDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, XMFLOAT3_ONE));
@@ -138,14 +160,20 @@ bool Scene::LoadContent()
 		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
 	}
 
+	RootParamInfo rootParamInfoDepth;
+	rootParamInfoDepth.NumCBV_PerFrame = 0;
+	rootParamInfoDepth.NumCBV_PerDraw = 0;
+	rootParamInfoDepth.NumSRV = 1;
+	rootParamInfoDepth.ParamIndexCBV_PerDraw = 0;
+	rootParamInfoDepth.ParamIndexCBV_PerFrame = -1;
+	rootParamInfoDepth.ParamIndexSRV = -1;
+
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		int numDescriptors = 1;
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfoDepth.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-		const int paramCount = 1;
-		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[0].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+		rootParameters[rootParamInfoDepth.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -162,7 +190,7 @@ bool Scene::LoadContent()
 		sampler[0].RegisterSpace = 0;
 		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-		m_rootSigDepth = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
+		m_rootSigDepth = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
 		m_rootSigDepth->SetName(L"Depth Buffer Tex Root Sig");
 	}
 
@@ -179,8 +207,11 @@ bool Scene::LoadContent()
 	m_depthBufferMat = std::make_shared<Material>();
 	m_depthBufferMat->AddDynamicSRVs(1);
 
-	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_depthBufferMat, true);
+	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", rootParamInfoDepth, modelPlane, m_shaderDepth, m_depthBufferMat, true);
 	m_goDepthTex->SetRotation(90, 0, 0);
+
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	commandQueueDirect->WaitForFenceValue(fenceValue);
 
     return true;
 }
@@ -350,23 +381,31 @@ void Scene::InstantiateCubes(int count)
 		normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
 	}
 
-	vector<UINT> cbvSizes = { sizeof(MatricesCB), sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
 	vector<Texture*> textures = { texture.get(), normalMap.get() };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
-	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes);
+	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes, false);
 	material->AddSRVs(m_d3dClass, textures);
+
+	RootParamInfo rootParamInfo;
+	rootParamInfo.NumCBV_PerFrame = 0;
+	rootParamInfo.NumCBV_PerDraw = 1;
+	rootParamInfo.NumSRV = 2;
+	rootParamInfo.ParamIndexCBV_PerDraw = 0;
+	rootParamInfo.ParamIndexCBV_PerFrame = -1;
+	rootParamInfo.ParamIndexSRV = 1;
 
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		int numDescriptors = 2;
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 		const int paramCount = 2;
 		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[0].InitAsConstants(sizeof(MatricesCB) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-		rootParameters[1].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -411,7 +450,7 @@ void Scene::InstantiateCubes(int count)
 	for (int i = 0; i < count; i++)
 	{
 		string id = "Cube_" + std::to_string(i);
-		auto go = GameObject(id, model, shader, material);		
+		auto go = GameObject(id, rootParamInfo, model, shader, material);
 		batch->AddGameObject(go);
 	}
 }
@@ -538,7 +577,7 @@ void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags)
 
 DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 {
-	auto line = std::make_shared<DebugLine>(m_d3dClass, m_shaderLine, start, end, color);
+	auto line = std::make_shared<DebugLine>(m_d3dClass, m_rpiLine, m_shaderLine, m_matLine, start, end, color);
 	m_debugLineList.push_back(line);
 	return line.get();
 }

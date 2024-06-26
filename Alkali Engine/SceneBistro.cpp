@@ -22,32 +22,44 @@ bool SceneBistro::LoadContent()
 
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	int numCBV = 3, numSRV = 2;
+	RootParamInfo rootParamInfo;
+	rootParamInfo.NumCBV_PerFrame = 2;
+	rootParamInfo.NumCBV_PerDraw = 1;
+	rootParamInfo.NumSRV = 2;
+	rootParamInfo.ParamIndexCBV_PerDraw = 0;
+	rootParamInfo.ParamIndexCBV_PerFrame = 1;
+	rootParamInfo.ParamIndexSRV = 2;
 
-	CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	ComPtr<ID3D12RootSignature> rootSigPBR;
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
-	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-	rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
+		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[rootParamInfo.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 
-	D3D12_STATIC_SAMPLER_DESC sampler[1]; 
-	sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-	sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-	sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-	sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
-	sampler[0].MipLODBias = 0;
-	sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
-	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler[0].MinLOD = 0.0f;
-	sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-	sampler[0].ShaderRegister = 0;
-	sampler[0].RegisterSpace = 0;
-	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	auto rootSig = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
+		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, _countof(sampler));
+		rootSigPBR->SetName(L"Bistro Root Sig");
+	}
 
 	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
 	{
@@ -60,7 +72,7 @@ bool SceneBistro::LoadContent()
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSig.Get(), m_d3dClass->GetDevice());
+		m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
 		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
 	}
 
@@ -75,16 +87,16 @@ bool SceneBistro::LoadContent()
 			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSig.Get(), m_d3dClass->GetDevice(), true);
+		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
 	}
 
 	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
 	{
-		m_batch->Init("PBR Basic", rootSig);
+		m_batch->Init("PBR Basic", rootSigPBR);
 	}
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", m_batch.get(), m_shaderPBR, m_shaderPBR_CullOff);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), m_shaderPBR, m_shaderPBR_CullOff);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);

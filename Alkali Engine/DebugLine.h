@@ -3,6 +3,8 @@
 #include "pch.h"
 #include "D3DClass.h"
 #include "Shader.h"
+#include "Material.h"
+#include "GameObject.h"
 
 struct VS_IN
 {
@@ -13,7 +15,7 @@ struct VS_IN
 class DebugLine
 {
 public:
-	DebugLine(D3DClass* d3d, shared_ptr<Shader> shader, XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
+	DebugLine(D3DClass* d3d, RootParamInfo& rpi, shared_ptr<Shader> shader, shared_ptr<Material> material, XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
 	~DebugLine();
 
 	void SetPositions(D3DClass* d3d, XMFLOAT3 start, XMFLOAT3 end);
@@ -32,6 +34,9 @@ private:
 	XMFLOAT3 m_color;
 
 	shared_ptr<Shader> m_shader;
+	shared_ptr<Material> m_material;
+
+	RootParamInfo m_rootParamInfo;
 
 	ComPtr<ID3D12Resource> m_vertexBuffer;
 	VS_IN* m_mappedVertexData;

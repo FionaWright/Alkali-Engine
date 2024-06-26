@@ -18,7 +18,7 @@ public:
 	static void Init(D3DClass* d3d, UINT numDescriptors);
 	static UINT AddSRVs(D3DClass* d3d, const vector<Texture*>& textures);
 	static UINT AddDynamicSRVs(UINT count);
-	static UINT AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources);
+	static UINT AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing);
 
 	static void SetDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT format, ID3D12Resource* resource);
 
