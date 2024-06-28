@@ -101,7 +101,7 @@ private:
     ComPtr<ID3D12RootSignature> m_rootSigLine, m_rootSigDepth;
     shared_ptr<Shader> m_shaderLine, m_shaderDepth;
     shared_ptr<Material> m_matLine;
-    RootParamInfo m_rpiLine;
+    RootParamInfo m_rpiLine, m_rpiDepth;
 
     ComPtr<ID3D12Resource> m_depthBufferResource;
     unique_ptr<GameObject> m_goDepthTex;

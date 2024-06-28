@@ -28,6 +28,7 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 	ms_sortBatchGos = true;
+	ms_renderDebugLines = true;
 	//ms_forceReloadBinTex = true; // TEMPORARY
 }
 
@@ -37,18 +38,7 @@ Scene::~Scene()
 
 bool Scene::Init(D3DClass* pD3DClass)
 {
-    // Check for DirectX Math library support.
-	// Note: Should this be moved to Application/D3DClass?
-    if (!DirectX::XMVerifyCPUSupport())
-    {
-        MessageBoxA(NULL, "Failed to verify DirectX Math library support.", "Error", MB_OK | MB_ICONERROR);
-        return false;
-    }
-
-	m_d3dClass = pD3DClass;
-
-	//ms_forceReloadBinTex = true;
-	ms_renderDebugLines = true;
+	m_d3dClass = pD3DClass;	
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 
@@ -162,20 +152,19 @@ bool Scene::LoadContent()
 		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
 	}
 
-	RootParamInfo rootParamInfoDepth;
-	rootParamInfoDepth.NumCBV_PerFrame = 0;
-	rootParamInfoDepth.NumCBV_PerDraw = 0;
-	rootParamInfoDepth.NumSRV = 1;
-	rootParamInfoDepth.ParamIndexCBV_PerDraw = 0;
-	rootParamInfoDepth.ParamIndexCBV_PerFrame = -1;
-	rootParamInfoDepth.ParamIndexSRV = -1;
+	m_rpiDepth.NumCBV_PerFrame = 0;
+	m_rpiDepth.NumCBV_PerDraw = 0;
+	m_rpiDepth.NumSRV = 1;
+	m_rpiDepth.ParamIndexCBV_PerDraw = -1;
+	m_rpiDepth.ParamIndexCBV_PerFrame = -1;
+	m_rpiDepth.ParamIndexSRV = 0;
 
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfoDepth.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, m_rpiDepth.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[rootParamInfoDepth.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		rootParameters[m_rpiDepth.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler[1];
 		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
@@ -209,7 +198,7 @@ bool Scene::LoadContent()
 	m_depthBufferMat = std::make_shared<Material>();
 	m_depthBufferMat->AddDynamicSRVs(1);
 
-	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", rootParamInfoDepth, modelPlane, m_shaderDepth, m_depthBufferMat, true);
+	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", m_rpiDepth, modelPlane, m_shaderDepth, m_depthBufferMat, true);
 	m_goDepthTex->SetRotation(90, 0, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
@@ -313,6 +302,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		// Convert DSV to SRV and assign as a texture to be read in the shader
 		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		m_depthBufferMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
+
+		m_depthBufferMat->AssignMaterial(commandList.Get(), m_rpiDepth);
 
 		m_goDepthTex->Render(commandList.Get());
 		
