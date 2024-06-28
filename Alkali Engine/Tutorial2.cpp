@@ -44,7 +44,7 @@ bool Tutorial2::LoadContent()
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	// Textures
-	shared_ptr<Texture> baseTex, normalTex;
+	shared_ptr<Texture> baseTex, normalTex, specTex;
 	{
 		string texName = "EarthDay.png";
 		if (!ResourceTracker::TryGetTexture(texName, baseTex))
@@ -58,12 +58,18 @@ bool Tutorial2::LoadContent()
 		{
 			normalTex->Init(m_d3dClass, commandListDirect.Get(), normalName, false, true);
 		}
+
+		string specName = "DefaultSpecular.png";
+		if (!ResourceTracker::TryGetTexture(specName, specTex))
+		{
+			specTex->Init(m_d3dClass, commandListDirect.Get(), specName);
+		}
 	}
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
-	rootParamInfo.NumCBV_PerDraw = 1;
-	rootParamInfo.NumSRV = 2;
+	rootParamInfo.NumCBV_PerDraw = 2;
+	rootParamInfo.NumSRV = 3;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
 	rootParamInfo.ParamIndexSRV = 2;
@@ -71,8 +77,9 @@ bool Tutorial2::LoadContent()
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[3];		
+		int shaderRegisterFrameStart = rootParamInfo.NumCBV_PerDraw;
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, shaderRegisterFrameStart, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			
 		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
@@ -99,9 +106,9 @@ bool Tutorial2::LoadContent()
 		rootSigPBR->SetName(L"Tutorial2 Root Sig");
 	}
 
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex };
 
 	m_perFramePBRMat = std::make_shared<Material>();
 	m_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
@@ -118,6 +125,10 @@ bool Tutorial2::LoadContent()
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
 	ResourceTracker::AddMaterial(matPBR2);
+
+	MaterialPropertiesCB defaultMatProps;
+	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
+	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 
 	// Shaders
 	shared_ptr<Shader> shaderPBR, shaderPBRCullOff;

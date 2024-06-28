@@ -30,7 +30,7 @@ struct Camera
     float3 CameraPosition;
     float p;
 };
-ConstantBuffer<Camera> CameraCB : register(b1);
+ConstantBuffer<Camera> CameraCB : register(b2);
 
 V_OUT main(V_IN input)
 {
