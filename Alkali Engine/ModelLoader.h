@@ -89,5 +89,6 @@ private:
 	static vector<ObjObject> ms_indexList;
 
 	static fastgltf::Parser ms_parser;
+	static bool ms_initialisedParser;
 };
 

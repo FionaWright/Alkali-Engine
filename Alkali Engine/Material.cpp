@@ -40,32 +40,32 @@ void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDir
         m_cbvHeapIndex_perDraw = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perDraw, false);
 }
 
-void Material::SetCBV_PerFrame(UINT registerIndex, void* srcData, size_t dataSize) 
+void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize) 
 {
-    if (m_cbvResources_perFrame.size() <= registerIndex)
+    if (m_cbvResources_perFrame.size() <= resourceIndex)
         throw std::exception("Material does not have ownership of that resource");
 
     void* dstData = nullptr;
     D3D12_RANGE readRange = {};
-    m_cbvResources_perFrame.at(registerIndex)->Map(0, &readRange, &dstData);
+    m_cbvResources_perFrame.at(resourceIndex)->Map(0, &readRange, &dstData);
 
     std::memcpy(dstData, srcData, dataSize);
 
-    m_cbvResources_perFrame.at(registerIndex)->Unmap(0, nullptr);
+    m_cbvResources_perFrame.at(resourceIndex)->Unmap(0, nullptr);
 }
 
-void Material::SetCBV_PerDraw(UINT registerIndex, void* srcData, size_t dataSize)
+void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize)
 {
-    if (m_cbvResources_perDraw.size() <= registerIndex)
+    if (m_cbvResources_perDraw.size() <= resourceIndex)
         throw std::exception("Material does not have ownership of that resource");
 
     void* dstData = nullptr;
     D3D12_RANGE readRange = {};
-    m_cbvResources_perDraw.at(registerIndex)->Map(0, &readRange, &dstData);
+    m_cbvResources_perDraw.at(resourceIndex)->Map(0, &readRange, &dstData);
 
     std::memcpy(dstData, srcData, dataSize);
 
-    m_cbvResources_perDraw.at(registerIndex)->Unmap(0, nullptr);
+    m_cbvResources_perDraw.at(resourceIndex)->Unmap(0, nullptr);
 }
 
 void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource)

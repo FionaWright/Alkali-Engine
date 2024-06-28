@@ -32,6 +32,17 @@ struct DirectionalLightCB
     float SpecularPower;
 };
 
+struct MaterialPropertiesCB
+{
+    XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;
+    float Roughness = 0.5f;
+
+    float AlphaCutoff = 0.5f;
+    float IOR = 1.5f;
+    float Dispersion = 0.0f;
+    float p;
+};
+
 struct PerFrameCBuffers
 {
     CameraCB Camera;

@@ -24,8 +24,8 @@ bool SceneBistro::LoadContent()
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
-	rootParamInfo.NumCBV_PerDraw = 1;
-	rootParamInfo.NumSRV = 2;
+	rootParamInfo.NumCBV_PerDraw = 2;
+	rootParamInfo.NumSRV = 3;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
 	rootParamInfo.ParamIndexSRV = 2;
@@ -33,8 +33,9 @@ bool SceneBistro::LoadContent()
 	ComPtr<ID3D12RootSignature> rootSigPBR;
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
+		int shaderRegisterFrameStart = rootParamInfo.NumCBV_PerDraw;
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, shaderRegisterFrameStart, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[3];

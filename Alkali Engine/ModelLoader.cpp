@@ -15,6 +15,7 @@ vector<XMFLOAT2> ModelLoader::ms_texList;
 vector<XMFLOAT3> ModelLoader::ms_norList;
 vector<ObjObject> ModelLoader::ms_indexList;
 fastgltf::Parser ModelLoader::ms_parser;
+bool ModelLoader::ms_initialisedParser;
 
 constexpr bool RIGHT_HANDED_TO_LEFT = true;
 
@@ -820,6 +821,26 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 			throw std::exception("No support for this type of texture");
 	}
 
+	string specTexPath = "";
+	if (mat.specular && mat.specular.get()->specularTexture.has_value())
+	{
+		fastgltf::Texture& tex = asset->textures[mat.specular.get()->specularTexture.value().textureIndex];
+		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+		if (image.data.index() == 2)
+		{
+			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+			size_t slashIndex = texName.find_last_of('/');
+
+			if (slashIndex != std::string::npos)
+				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+			else
+				specTexPath = texName;
+		}
+		else
+			throw std::exception("No support for this type of texture");
+	}
+
 	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
 	if (diffuseTexPath == "")
 		texFullFilePath = "WhitePOT.png";
@@ -840,15 +861,33 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 		normalTex->Init(d3d, commandList, texNormalFullFilePath, false, true);
 	}
 
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+	string specFullFilePath = modelNameExtensionless + "/" + specTexPath;
+	if (specTexPath == "")
+		specFullFilePath = "DefaultSpecular.png";
+
+	shared_ptr<Texture> specTex;
+	if (!ResourceTracker::TryGetTexture(specFullFilePath, specTex))
+	{
+		specTex->Init(d3d, commandList, specFullFilePath);
+	}
+
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
+	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
 	ResourceTracker::AddMaterial(material);
+
+	MaterialPropertiesCB matProperties;
+	matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
+	matProperties.Roughness = mat.pbrData.roughnessFactor;
+	matProperties.AlphaCutoff = mat.alphaCutoff;
+	matProperties.Dispersion = mat.dispersion;
+	matProperties.IOR = mat.ior;
+	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
 
 	string nodeName(node.name);
 	nodeName = modelNameExtensionless + "::" + nodeName;
@@ -918,6 +957,12 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 	fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath(path);
 	if (data.error() != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
+
+	if (!ms_initialisedParser)
+	{
+		ms_parser = fastgltf::Parser(fastgltf::Extensions::KHR_materials_specular);
+		ms_initialisedParser = true;
+	}
 
 	fastgltf::Options options = fastgltf::Options::None;
 

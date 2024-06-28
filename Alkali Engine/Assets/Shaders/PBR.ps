@@ -13,16 +13,31 @@ struct V_OUT
 struct DirectionalLight
 {
     float3 AmbientColor;
+    float p1;
+
     float3 LightDirection;
+    float p2;
+
     float3 LightDiffuse;
     float SpecularPower;
-
-    float2 p;
 };
-ConstantBuffer<DirectionalLight> DirLightCB : register(b2);
+ConstantBuffer<DirectionalLight> DirLightCB : register(b3);
+
+struct MaterialProperties
+{
+    float3 BaseColorFactor;
+    float Roughness;    
+
+    float AlphaCutoff;
+    float IOR;
+    float Dispersion;
+    float p;
+};
+ConstantBuffer<MaterialProperties> MatPropCB : register(b1);
 
 Texture2D g_texture : register(t0);
 Texture2D g_normalMap : register(t1);
+Texture2D g_specularMap : register(t2);
 SamplerState g_sampler : register(s0);
 
 float4 main(V_OUT input) : SV_Target
@@ -46,26 +61,22 @@ float4 main(V_OUT input) : SV_Target
         normalTangentSpace.y * input.Binormal +
         normalTangentSpace.z * input.Normal);    
 
-    float4 finalCol = float4(DirLightCB.AmbientColor, tex.a);
+    float3 specData = g_specularMap.Sample(g_sampler, input.UV).rgb;
+    float specularIntensity = specData.g;
+    float glossiness = 1;
+    float metalness = specData.b;
 
-    float intensity = max(0, dot(-DirLightCB.LightDirection, normalWorld));    
-    float specular = 0;
-    
-    if (intensity > 0.0f)
-    {
-        finalCol.rgb += DirLightCB.LightDiffuse * intensity;
-        float3 reflection = normalize(2.0f * intensity * normalWorld + DirLightCB.LightDirection); 
-        specular = pow(saturate(dot(reflection, input.ViewDirection)), DirLightCB.SpecularPower);
-    }
-    
-    finalCol.rgb = saturate(saturate(finalCol.rgb + specular) * tex.rgb);
+    float4 finalCol = float4(0, 0, 0, tex.a);
+
+    float3 viewDir = normalize(input.ViewDirection);
+    float NdotL = saturate(dot(normalWorld, -DirLightCB.LightDirection));
+    float3 diffuse = tex.rgb * (metalness + DirLightCB.AmbientColor + DirLightCB.LightDiffuse * NdotL);
+
+    float3 reflectDir = reflect(DirLightCB.LightDirection, normalWorld);
+    float spec = pow(saturate(dot(viewDir, reflectDir)), DirLightCB.SpecularPower * glossiness) * specularIntensity * (1.0f - metalness);
+
+    finalCol.rgb += diffuse + saturate(spec * DirLightCB.LightDiffuse);
     finalCol.rgb = pow(finalCol.rgb, 1.0f / 2.2f);
-    
-    //return float4(frac(input.UV), sign(input.UV.y), 1);
-    //return float4(frac(input.UV), 0, 1);
-    //return float4(abs(input.Normal), 1);
-    //return float4(abs(input.Tangent), 1);
-    //return float4(abs(input.Binormal), 1); 
 
     return finalCol;
 }
