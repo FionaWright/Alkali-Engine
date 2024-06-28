@@ -91,7 +91,7 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParam
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexCBV_PerFrame, cbvHandle);
     }
 
-    if (m_srvHeapIndex != -1 && rootParamInfo.NumSRV > 0 && rootParamInfo.ParamIndexSRV >= 0 && m_textures.size() > 0)
+    if (m_srvHeapIndex != -1 && rootParamInfo.NumSRV > 0 && rootParamInfo.ParamIndexSRV >= 0)
     {
         CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(gpuHandle, m_srvHeapIndex, incrementSize);
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexSRV, srvHandle);

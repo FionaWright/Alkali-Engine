@@ -18,6 +18,12 @@ void D3DClass::Init()
     debugInterface->EnableDebugLayer();
 #endif
 
+    if (!XMVerifyCPUSupport())
+    {
+        MessageBoxA(NULL, "Failed to verify DirectX Math library support.", "Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
     m_dxgiAdapter = ResourceManager::GetAdapter(USE_BARRIER_WARP);
     if (!m_dxgiAdapter)
         throw new std::exception("Adapter not found");
