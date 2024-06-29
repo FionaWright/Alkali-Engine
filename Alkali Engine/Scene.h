@@ -48,6 +48,7 @@ public:
     static bool IsSphereModeOn(Model** model);
     static bool IsForceReloadBinTex();
     static bool IsMipMapDebugMode();
+    static void StaticShutdown();
 
     Window* GetWindow();
 
@@ -106,6 +107,8 @@ private:
     ComPtr<ID3D12Resource> m_depthBufferResource;
     unique_ptr<GameObject> m_goDepthTex;
     shared_ptr<Material> m_depthBufferMat;
+
+    static shared_ptr<Material> ms_perFramePBRMat;
 
     static shared_ptr<Model> ms_sphereModel;
     static bool ms_sphereMode;

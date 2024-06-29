@@ -83,7 +83,7 @@ bool Tutorial2::LoadContent()
 		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			
 		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[rootParamInfo.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 
@@ -109,10 +109,6 @@ bool Tutorial2::LoadContent()
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex };
-
-	m_perFramePBRMat = std::make_shared<Material>();
-	m_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
-	ResourceTracker::AddMaterial(m_perFramePBRMat);
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
@@ -172,23 +168,24 @@ bool Tutorial2::LoadContent()
 	}
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", rootParamInfo, modelSphere, shaderPBR, matPBR1);
-	go.SetPosition(-50, 3, -10);
-	go.SetScale(20);
-	m_goTest = batch->AddGameObject(go);
+	//GameObject go("Test", rootParamInfo, modelSphere, shaderPBR, matPBR1);
+	//go.SetPosition(-50, 3, -10);
+	//go.SetScale(20);
+	//m_goTest = batch->AddGameObject(go);
 
-	GameObject go2("Plane", rootParamInfo, modelPlane, shaderPBRCullOff, matPBR2);
-	m_goPlane = batch->AddGameObject(go2);
-	m_goPlane->SetPosition(3, 3, 0);
+	//GameObject go2("Plane", rootParamInfo, modelPlane, shaderPBRCullOff, matPBR2);
+	//m_goPlane = batch->AddGameObject(go2);
+	//m_goPlane->SetPosition(3, 3, 0);
 
-	m_camera->SetPosition(16, 6, -5);
-	m_camera->SetRotation(0, -90, 0);
+	//m_camera->SetPosition(16, 6, -5);
+	//m_camera->SetRotation(0, -90, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
@@ -209,7 +206,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.TotalTime * 2.0f);
+	float angle = static_cast<float>(e.TotalTime * 0.2f);
 	//m_goCube->RotateBy(0, angle, 0);
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
 
@@ -228,9 +225,6 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
-
-	m_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
-	m_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
 }
 
 void Tutorial2::OnRender(TimeEventArgs& e)

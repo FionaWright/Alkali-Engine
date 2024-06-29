@@ -40,7 +40,7 @@ struct MaterialPropertiesCB
     float AlphaCutoff = 0.5f;
     float IOR = 1.5f;
     float Dispersion = 0.0f;
-    float p;
+    float Metallic = 0.5f;
 };
 
 struct PerFrameCBuffers

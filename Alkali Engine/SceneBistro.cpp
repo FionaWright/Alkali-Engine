@@ -39,7 +39,7 @@ bool SceneBistro::LoadContent()
 		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[rootParamInfo.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 

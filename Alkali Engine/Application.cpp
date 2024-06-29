@@ -108,6 +108,7 @@ void Application::Shutdown()
     TextureLoader::Shutdown();
     ResourceTracker::ReleaseAll();
     DescriptorManager::Shutdown();
+    Scene::StaticShutdown();
 
     DestroyScenes();    
     m_mainWindow->Destroy();

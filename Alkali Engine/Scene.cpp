@@ -15,6 +15,7 @@ bool Scene::ms_sortBatchGos;
 bool Scene::ms_forceReloadBinTex;
 bool Scene::ms_mipMapDebugMode;
 bool Scene::ms_renderDebugLines;
+shared_ptr<Material> Scene::ms_perFramePBRMat;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -89,6 +90,14 @@ bool Scene::LoadContent()
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
+	if (!ms_perFramePBRMat)
+	{
+		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
+		ms_perFramePBRMat = std::make_shared<Material>();
+		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+		ResourceTracker::AddMaterial(ms_perFramePBRMat);
+	}
 
 	m_rpiLine.NumCBV_PerFrame = 0;
 	m_rpiLine.NumCBV_PerDraw = 1;
@@ -257,6 +266,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 void Scene::OnRender(TimeEventArgs& e)
 {
+	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
+	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
+
 	RenderImGui();
 
 	CommandQueue* commandQueue = nullptr;
@@ -466,6 +478,12 @@ bool Scene::IsForceReloadBinTex()
 bool Scene::IsMipMapDebugMode()
 {
 	return ms_mipMapDebugMode;
+}
+
+void Scene::StaticShutdown()
+{
+	ms_perFramePBRMat.reset();
+	ms_sphereModel.reset();
 }
 
 Window* Scene::GetWindow()
