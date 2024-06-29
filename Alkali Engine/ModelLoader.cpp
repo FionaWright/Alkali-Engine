@@ -548,7 +548,10 @@ void LoadGLTFVertexData(vector<VertexInputData>& vBuffer, fastgltf::Expected<fas
 {
 	const auto attributeObj = primitive.findAttribute(attribute);
 	if (attributeObj == primitive.attributes.cend())
-		throw std::exception("Err");
+	{
+		OutputDebugString(L"Invalid attribute");
+		return;
+	}
 
 	const auto& accessor = asset->accessors.at(attributeObj->second);
 	const auto& bufferView = asset->bufferViews.at(*accessor.bufferViewIndex);
@@ -797,8 +800,6 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 			else
 				diffuseTexPath = texName;
 		}
-		else
-			throw std::exception("No support for this type of texture");
 	}
 
 	string normalTexPath = "";
@@ -817,8 +818,6 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 			else
 				normalTexPath = texName;
 		}
-		else
-			throw std::exception("No support for this type of texture");
 	}
 
 	string specTexPath = "";
@@ -837,8 +836,23 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 			else
 				specTexPath = texName;
 		}
-		else
-			throw std::exception("No support for this type of texture");
+	}
+
+	if (specTexPath == "" && mat.pbrData.metallicRoughnessTexture.has_value())
+	{
+		fastgltf::Texture& tex = asset->textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex];
+		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+		if (image.data.index() == 2)
+		{
+			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+			size_t slashIndex = texName.find_last_of('/');
+
+			if (slashIndex != std::string::npos)
+				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+			else
+				specTexPath = texName;
+		}
 	}
 
 	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
@@ -887,10 +901,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	matProperties.AlphaCutoff = mat.alphaCutoff;
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;
+	matProperties.Metallic = mat.pbrData.metallicFactor;
 	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
 
 	string nodeName(node.name);
-	nodeName = modelNameExtensionless + "::" + nodeName;
+	nodeName = id + "::" + nodeName;
 
 	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
 	GameObject go(nodeName, rpi, model, shaderUsed, material);
@@ -901,8 +916,17 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
-	fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
-	Transform transform = ToTransform(trs);
+	Transform transform;
+	if (node.transform.index() == 0)
+	{
+		fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
+		transform = ToTransform(trs);
+	}	
+	else
+	{
+		throw std::exception("Unsupported transform type");
+	}
+
 	transform.Position = Add(transform.Position, rollingTransform.Position);
 	transform.Rotation = Add(transform.Rotation, rollingTransform.Rotation);
 	transform.Scale = Mult(transform.Scale, rollingTransform.Scale);
@@ -964,7 +988,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		ms_initialisedParser = true;
 	}
 
-	fastgltf::Options options = fastgltf::Options::None;
+	fastgltf::Options options = fastgltf::Options::DecomposeNodeMatrices;
 
 	fastgltf::Expected<fastgltf::Asset> asset = ms_parser.loadGltf(data.get(), path, options);
 	auto error = asset.error();

@@ -17,6 +17,5 @@ protected:
 	virtual void OnRender(TimeEventArgs& e) override;
 
 private:
-	GameObject* m_goTest, * m_goPlane;
-	shared_ptr<Material> m_perFramePBRMat;
+	GameObject* m_goTest, * m_goPlane;	
 };
