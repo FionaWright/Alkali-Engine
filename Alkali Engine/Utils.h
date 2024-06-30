@@ -44,6 +44,8 @@ std::string ToString(XMFLOAT3& v);
 
 bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool resetPos);
 
+bool XOR(bool a, bool b);
+
 template <typename T>
 bool Contains(vector<T>& v, T& obj)
 {

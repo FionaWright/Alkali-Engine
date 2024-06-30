@@ -18,6 +18,7 @@ public:
 	~Texture();
 
 	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false);
+	void InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, vector<string>& filePaths, bool flipUpsideDown = false);
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
@@ -35,8 +36,9 @@ private:
 
 	D3D12_RESOURCE_DESC m_textureDesc;
 
-	int m_channels;
+	int m_channels = -1;
 	bool m_hasAlpha = false;
+	bool m_isCubemap = false;
 
 	string m_filePath;
 };

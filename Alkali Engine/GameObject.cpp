@@ -188,6 +188,11 @@ void GameObject::UpdateWorldMatrix(bool considerCentroid)
 	m_worldMatrix = XMMatrixMultiply(CI, XMMatrixMultiply(S, XMMatrixMultiply(R, XMMatrixMultiply(T, C))));
 }
 
+void GameObject::ForceSetTransparent(bool trans)
+{
+	m_isTransparent = trans;
+}
+
 XMMATRIX GameObject::TransformToWorldMatrix(const Transform& transform) 
 {
 	XMMATRIX T = XMMatrixTranslation(transform.Position.x, transform.Position.y, transform.Position.z);
@@ -237,7 +242,7 @@ Material* GameObject::GetMaterial() const
 
 bool GameObject::IsTransparent() const
 {
-	return m_material->GetHasAlpha();
+	return m_material->GetHasAlpha() || m_isTransparent;
 }
 
 bool GameObject::IsOrthographic() const

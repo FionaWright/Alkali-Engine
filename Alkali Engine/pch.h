@@ -22,7 +22,6 @@
 
 // Windows Runtime Library. Needed for ComPtr<> template class.
 #include <wrl.h>
-using Microsoft::WRL::ComPtr;
 
 // DirectX 12 specific headers.
 #include <d3d12.h>
@@ -30,8 +29,6 @@ using Microsoft::WRL::ComPtr;
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h> 
-
-using namespace DirectX;
 
 // D3D12 extension library.
 #include "d3dx12.h"
@@ -48,3 +45,6 @@ using namespace DirectX;
 
 // Resources
 #include "Assets/Resources/resource.h"
+
+using Microsoft::WRL::ComPtr;
+using namespace DirectX;

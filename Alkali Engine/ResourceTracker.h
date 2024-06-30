@@ -17,6 +17,7 @@ class ResourceTracker
 public:
 	static void AddTexture(string filePath, shared_ptr<Texture> tex);
 	static bool TryGetTexture(string filePath, shared_ptr<Texture>& tex);
+	static bool TryGetTexture(vector<string>& filepaths, shared_ptr<Texture>& tex);
 	static unordered_map<string, shared_ptr<Texture>>& GetTextures();
 	static void ClearTexList();
 

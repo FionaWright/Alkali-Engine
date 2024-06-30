@@ -245,11 +245,14 @@ void Application::RenderImGuiScenes()
             static bool split = true;
             ImGui::Checkbox("Split Model", &split);
 
+            static bool invert = false;
+            ImGui::Checkbox("Invert Model", &invert);
+
             if (ImGui::Button("Import"))
             {
                 string fileNameStr(fileName);
                 string filePath = fileDir + fileNameStr + ".obj";
-                ModelLoader::PreprocessObjFile(filePath, split);
+                ModelLoader::PreprocessObjFile(filePath, split, invert);
             }
 
             ImGui::TreePop();

@@ -24,6 +24,7 @@ constexpr UINT DESCRIPTOR_HEAP_SIZE = 10000;
 
 constexpr int GLOBAL_MIP_LEVELS = 5;
 constexpr bool AUTO_MIP_LEVELS = true;
+constexpr bool CUBEMAP_MIP_MAPS_DISABLED = true;
 
 constexpr bool CENTROID_BASED_WORLD_MATRIX_ENABLED = false;
 

@@ -17,5 +17,5 @@ protected:
 	virtual void OnRender(TimeEventArgs& e) override;
 
 private:
-	GameObject* m_goTest, * m_goPlane;	
+	GameObject* m_goTest, * m_goPlane, * m_goSkybox;
 };
