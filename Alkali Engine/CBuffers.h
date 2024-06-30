@@ -1,6 +1,8 @@
 #pragma once
 
 #include "pch.h"
+#include "Settings.h"
+#include "Utils.h"
 
 struct MatricesCB
 {

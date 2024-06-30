@@ -903,6 +903,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	matProperties.IOR = mat.ior;
 	matProperties.Metallic = mat.pbrData.metallicFactor;
 	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
+	material->AttachProperties(matProperties);
 
 	string nodeName(node.name);
 	nodeName = id + "::" + nodeName;
@@ -968,7 +969,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	}
 }
 
-void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -1008,8 +1009,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		{
 			int nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			Transform defTransform = {};
-			LoadNode(d3d, commandList, rpi, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defTransform);
+			LoadNode(d3d, commandList, rpi, asset, batch, shader, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
 		}
 	}
 }

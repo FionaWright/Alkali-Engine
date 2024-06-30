@@ -89,9 +89,11 @@ float4 main(V_OUT input) : SV_Target
     float3 specData = g_specularMap.Sample(g_sampler, input.UV).rgb;
     float specularIntensity = 1;
     float glossiness = 1;
-    float metalness = specData.b * MatPropCB.Metallic * 0.75f;
+    float metalness = specData.b * MatPropCB.Metallic;
     float roughness = specData.g * MatPropCB.Roughness;
 
+    //return float4(0, MatPropCB.Roughness, MatPropCB.Metallic, 1);
+    //return float4(specData, 1);
     //return float4(metalness, roughness, 0, 1);
 
     //==============================================================        

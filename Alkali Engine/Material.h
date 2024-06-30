@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "Texture.h"
+#include "CBuffers.h"
 
 using std::shared_ptr;
 
@@ -21,11 +22,14 @@ public:
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
+	void AttachProperties(const MaterialPropertiesCB& matProp);
+
 	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParamInfo& rootParamInfo);
 
 	bool GetHasAlpha();
 	vector<shared_ptr<Texture>>& GetTextures();
 	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw);
+	bool GetProperties(MaterialPropertiesCB& prop);
 
 	void ClearTextures();
 
@@ -34,5 +38,8 @@ private:
 	vector<ID3D12Resource*> m_cbvResources_perFrame;		
 	vector<ID3D12Resource*> m_cbvResources_perDraw;		
 	vector<shared_ptr<Texture>> m_textures;
+
+	MaterialPropertiesCB m_propertiesCB;
+	bool m_attachedProperties;
 };
 

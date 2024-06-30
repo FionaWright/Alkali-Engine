@@ -1125,6 +1125,24 @@ void Scene::RenderImGui()
 				}
 				
 				ImGui::Unindent(IM_GUI_INDENTATION);
+
+				MaterialPropertiesCB matProp;
+				if (matList[i]->GetProperties(matProp))
+				{
+					ImGui::Text("Material Properties:");
+
+					ImGui::Indent(IM_GUI_INDENTATION);
+
+					ImGui::Text(("BaseColor: " + ToString(matProp.BaseColorFactor)).c_str());
+					ImGui::Text(("Roughness: " + std::to_string(matProp.Roughness)).c_str());
+					ImGui::Text(("Metalness: " + std::to_string(matProp.Metallic)).c_str());
+					ImGui::Text(("Alpha Cutoff: " + std::to_string(matProp.AlphaCutoff)).c_str());
+					ImGui::Text(("Dispersion: " + std::to_string(matProp.Dispersion)).c_str());
+					ImGui::Text(("IOR: " + std::to_string(matProp.IOR)).c_str());
+
+					ImGui::Unindent(IM_GUI_INDENTATION);
+				}
+
 				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 

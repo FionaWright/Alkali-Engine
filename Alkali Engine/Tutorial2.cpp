@@ -167,9 +167,11 @@ bool Tutorial2::LoadContent()
 		batch->Init("PBR Basic", rootSigPBR);
 	}
 
+	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
+
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfo, batch.get(), shaderPBR, shaderPBRCullOff, nullptr, t);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
@@ -184,8 +186,8 @@ bool Tutorial2::LoadContent()
 	//m_goPlane = batch->AddGameObject(go2);
 	//m_goPlane->SetPosition(3, 3, 0);
 
-	//m_camera->SetPosition(16, 6, -5);
-	//m_camera->SetRotation(0, -90, 0);
+	m_camera->SetPosition(16, 6, -5);
+	m_camera->SetRotation(0, -90, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
