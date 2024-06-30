@@ -57,7 +57,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = USE_SRGB ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     m_textureDesc.DepthOrArraySize = 1;
     m_textureDesc.SampleDesc.Count = 1;
     m_textureDesc.SampleDesc.Quality = 0;

@@ -73,6 +73,12 @@ void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT form
     DescriptorManager::SetDynamicSRV(d3d, m_srvHeapIndex + registerIndex, format, resource);
 }
 
+void Material::AttachProperties(const MaterialPropertiesCB& matProp)
+{
+    m_propertiesCB = matProp;
+    m_attachedProperties = true;
+}
+
 void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParamInfo& rootParamInfo)
 {
     UINT incrementSize = DescriptorManager::GetIncrementSize();
@@ -113,6 +119,15 @@ void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw)
     srv = m_srvHeapIndex;
     cbvFrame = m_cbvHeapIndex_perFrame;
     cbvDraw = m_cbvHeapIndex_perDraw;
+}
+
+bool Material::GetProperties(MaterialPropertiesCB& prop)
+{
+    if (!m_attachedProperties)
+        return false;
+
+    prop = m_propertiesCB;
+    return true;
 }
 
 void Material::ClearTextures()
