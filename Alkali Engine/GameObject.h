@@ -20,15 +20,13 @@ struct Transform
 
 struct RootParamInfo
 {
-	UINT ParamCount;
+	UINT NumCBV_PerFrame = 0;
+	UINT NumCBV_PerDraw = 0;
+	UINT NumSRV = 0;
 
-	UINT NumCBV_PerFrame;
-	UINT NumCBV_PerDraw;
-	UINT NumSRV;
-
-	UINT ParamIndexCBV_PerFrame;
-	UINT ParamIndexCBV_PerDraw;
-	UINT ParamIndexSRV;
+	UINT ParamIndexCBV_PerFrame = -1;
+	UINT ParamIndexCBV_PerDraw = -1;
+	UINT ParamIndexSRV = -1;
 };
 
 class GameObject
@@ -61,6 +59,7 @@ public:
 	void RotateBy(XMFLOAT3 xyz);
 
 	void UpdateWorldMatrix(bool considerCentroid = true);	
+	void ForceSetTransparent(bool trans);
 
 	size_t GetModelVertexCount() const;
 	size_t GetModelIndexCount() const;
@@ -86,5 +85,6 @@ protected:
 	RootParamInfo m_rootParamInfo;
 
 	bool m_orthographic;
+	bool m_isTransparent;
 };
 

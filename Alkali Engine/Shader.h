@@ -31,8 +31,8 @@ public:
 	Shader();
 	~Shader();
 
-	void Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	void Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	void InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
 	void Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig);
 	void Recompile(ID3D12Device2* device);
@@ -61,6 +61,6 @@ private:
 
 	bool m_preCompiled = false;
 	bool m_cullNone = false;
-	bool m_disableDSV = false;
+	bool m_disableDSV = false, m_disableDSVWrite = false;
 };
 

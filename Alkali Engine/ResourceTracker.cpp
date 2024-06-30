@@ -28,6 +28,27 @@ bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 	return true;
 }
 
+bool ResourceTracker::TryGetTexture(vector<string>& filepaths, shared_ptr<Texture>& tex)
+{
+	string id = "";
+	for (int i = 0; i < filepaths.size(); i++)
+	{
+		if (i != 0)
+			id += "~";
+		id += filepaths[i];
+	}
+
+	if (!ms_textureMap.contains(id))
+	{
+		tex = std::make_shared<Texture>();
+		AddTexture(id, tex);
+		return false;
+	}
+
+	tex = ms_textureMap.at(id);
+	return true;
+}
+
 unordered_map<string, shared_ptr<Texture>>& ResourceTracker::GetTextures()
 {
 	return ms_textureMap;

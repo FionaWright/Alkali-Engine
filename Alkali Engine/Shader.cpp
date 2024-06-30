@@ -13,11 +13,12 @@ Shader::~Shader()
 {
 }
 
-void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;
 	m_cullNone = cullNone;
 	m_disableDSV = disableDSV;
+	m_disableDSVWrite = disableDSVWrite;
 	m_inputLayout = inputLayout;
 
 	m_VSName = g_dirPath + vsName;
@@ -26,11 +27,12 @@ void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INP
 	Compile(device, rootSig);
 }
 
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
 {
 	m_topology = topology;	
 	m_cullNone = cullNone;
 	m_disableDSV = disableDSV;
+	m_disableDSVWrite = disableDSVWrite;
 	m_inputLayout = inputLayout;
 
 	m_preCompiled = true;
@@ -98,8 +100,8 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = m_disableDSV ? FALSE : TRUE;
-	depthStencilDesc.DepthWriteMask = m_cullNone ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL; 
-	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	depthStencilDesc.DepthWriteMask = m_cullNone || m_disableDSVWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = m_disableDSVWrite ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
 
 	depthStencilDesc.StencilEnable = m_cullNone || m_disableDSV ? FALSE : TRUE;
 	depthStencilDesc.StencilWriteMask = 0xFF;

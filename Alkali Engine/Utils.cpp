@@ -135,3 +135,8 @@ bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool 
         file.seekg(startPosition);
     return true;
 }
+
+bool XOR(bool a, bool b)
+{
+    return !a != !b;
+}

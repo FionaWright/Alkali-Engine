@@ -41,7 +41,7 @@ Transform ToTransform(fastgltf::TRS& trs)
 	return transform;
 }
 
-void ModelLoader::PreprocessObjFile(string filePath, bool split)
+void ModelLoader::PreprocessObjFile(string filePath, bool split, bool invert)
 {
 	size_t lastSlashPos = filePath.find_last_of("\\/");
 	size_t lastDotPos = filePath.find_last_of(".");
@@ -217,9 +217,9 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 
 	if (!split)
 	{
-		string outputPath = folderPath + ".model";
+		string outputPath = folderPath + (invert ? " (Inverted)" : "") + ".model";
 
-		SaveObject(outputPath, ms_indexList.at(0).IndexList);
+		SaveObject(outputPath, ms_indexList.at(0).IndexList, invert);
 
 		ms_posList.clear();
 		ms_texList.clear();
@@ -232,9 +232,9 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 		if (ms_indexList.at(i).IndexList.size() == 0)
 			continue;
 
-		string outputPath = folderPath + "/" + ms_indexList.at(i).Name + ".model";
+		string outputPath = folderPath + "/" + ms_indexList.at(i).Name + (invert ? " (Inverted)" : "") + ".model";
 
-		SaveObject(outputPath, ms_indexList.at(i).IndexList);
+		SaveObject(outputPath, ms_indexList.at(i).IndexList, invert);
 	}
 
 	ms_posList.clear();
@@ -242,7 +242,7 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split)
 	ms_norList.clear();
 }
 
-void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices)
+void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& objIndices, bool invert)
 {
 	size_t vertexCount = objIndices.size();
 
@@ -252,6 +252,8 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 
 	XMFLOAT3 rollingCentroidSum = XMFLOAT3(0, 0, 0);
 
+	bool invertOrder = XOR(invert, RIGHT_HANDED_TO_LEFT);
+
 	for (int32_t i = 0; i < vertexCount - 2; i += 3)
 	{
 		int32_t i1 = i + 1;
@@ -259,9 +261,9 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 
 		XMFLOAT2 t0 = ms_texList.at(objIndices.at(i).TextureIndex);
 		XMFLOAT2 t1 = ms_texList.at(objIndices.at(i1).TextureIndex);
-		XMFLOAT2 t2 = ms_texList.at(objIndices.at(i2).TextureIndex);
+		XMFLOAT2 t2 = ms_texList.at(objIndices.at(i2).TextureIndex);		
 
-		if (RIGHT_HANDED_TO_LEFT)
+		if (invertOrder)
 		{
 			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i, rollingCentroidSum);
 			TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i1, i, i2, rollingCentroidSum);
