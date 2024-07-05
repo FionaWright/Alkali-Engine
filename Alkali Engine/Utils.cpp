@@ -90,6 +90,11 @@ XMFLOAT3 Negate(const XMFLOAT3& v)
     return XMFLOAT3(-v.x, -v.y, -v.z);
 }
 
+XMFLOAT3 Saturate(const XMFLOAT3& v) 
+{
+    return XMFLOAT3(std::clamp(v.x, 0.0f, 1.0f), std::clamp(v.y, 0.0f, 1.0f), std::clamp(v.z, 0.0f, 1.0f));
+}
+
 float Magnitude(const XMFLOAT3& v)
 {
     return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);

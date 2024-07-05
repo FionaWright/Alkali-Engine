@@ -34,7 +34,9 @@ constexpr bool FLIP_TGA_UPSIDE_DOWN = false;
 constexpr bool FLIP_TGA_RIGHTSIDE_LEFT = false;
 
 ID3D12RootSignature* TextureLoader::ms_mipMapRootSig;
-ID3D12PipelineState* TextureLoader::ms_pso;
+ID3D12RootSignature* TextureLoader::ms_irradianceRootSig;
+ID3D12PipelineState* TextureLoader::ms_mipMapPSO;
+ID3D12PipelineState* TextureLoader::ms_irradiancePSO;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
 
@@ -745,17 +747,23 @@ XMFLOAT3 rgbeToFloat(const uint8_t* rgbe)
     return XMFLOAT3(rgbe[0] * f, rgbe[1] * f, rgbe[2] * f);
 }
 
-XMFLOAT3 SampleHDR(const uint8_t* hdrData, const XMFLOAT2& texCoord, const int hdrWidth, const int hdrHeight) 
+XMFLOAT3 SampleHDR(const uint8_t* hdrData, const XMFLOAT3& direction, const int hdrWidth, const int hdrHeight) 
 {
-    float clampedX = std::clamp(texCoord.x, 0.0f, static_cast<float>(hdrWidth - 1));
-    float clampedY = std::clamp(texCoord.y, 0.0f, static_cast<float>(hdrHeight - 1));
+    float theta = atan2f(direction.z, direction.x);
+    float phi = acos(direction.y);
 
-    int x = static_cast<int>(clampedX);
-    int y = static_cast<int>(clampedY);
+    float texU = ((theta / (2.0 * PI)) + 0.5) * hdrWidth;
+    float texV = (phi / PI) * hdrHeight;
+
+    texU = std::clamp(texU, 0.0f, static_cast<float>(hdrWidth - 1));
+    texV = std::clamp(texV, 0.0f, static_cast<float>(hdrHeight - 1));
+
+    int x = static_cast<int>(texU);
+    int y = static_cast<int>(texV);
     int x1 = std::min(x + 1, hdrWidth - 1);
     int y1 = std::min(y + 1, hdrHeight - 1);
-    float dx = clampedX - x;
-    float dy = clampedY - y;
+    float dx = texU - x;
+    float dy = texV - y;
 
     const uint8_t* c00 = &hdrData[(y * hdrWidth + x) * 4];
     XMFLOAT3 col00 = rgbeToFloat(c00);
@@ -928,14 +936,11 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
     height = hdrHeight;
     width = hdrHeight;
 
-    constexpr bool DEBUG_DIRECTION = false;
-
     for (int face = 0; face < 6; ++face)
     {
         pDatas[face] = new uint8_t[width * height * channels];
 
         for (int y = 0; y < height; ++y)
-        {
             for (int x = 0; x < width; ++x)
             {
                 float u = ((x / static_cast<float>(width - 1)) - 0.5f) * 2;
@@ -946,31 +951,15 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
                 XMFLOAT3 direction = Add(Add(faceDirections[face], up), right);
                 direction = Normalize(direction);
 
-                float theta = atan2f(direction.z, direction.x);
-                float phi = acos(direction.y);
-
-                float texU = ((theta / (2.0 * PI)) + 0.5) * hdrWidth;
-                float texV = (phi / PI) * hdrHeight;
-
-                XMFLOAT3 col = SampleHDR(hdrData, XMFLOAT2(texU, texV), hdrWidth, hdrHeight);
+                XMFLOAT3 col = SampleHDR(hdrData, direction, hdrWidth, hdrHeight);
+                col = Saturate(col);
 
                 int texIndex = y * width + x;
-
-                if (DEBUG_DIRECTION)
-                {
-                    pDatas[face][texIndex * 4 + 0] = u * 255;
-                    pDatas[face][texIndex * 4 + 1] = v * 255;
-                    pDatas[face][texIndex * 4 + 2] = 0;
-                    pDatas[face][texIndex * 4 + 3] = 255;
-                    continue;
-                }
-                
                 pDatas[face][texIndex * 4 + 0] = col.x * 255;
                 pDatas[face][texIndex * 4 + 1] = col.y * 255;
                 pDatas[face][texIndex * 4 + 2] = col.z * 255;
                 pDatas[face][texIndex * 4 + 3] = 255;
             }
-        }
     }
 
     fin.close();
@@ -1001,7 +990,7 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
         return;        
 
     if (!ms_mipMapRootSig)
-        InitComputeShader(device);
+        InitMipMapCS(device);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srcTextureSRVDesc = {};
     srcTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -1026,7 +1015,7 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
     ms_trackedDescHeaps.push_back(descriptorHeap);
 
     commandListDirect->SetComputeRootSignature(ms_mipMapRootSig);
-    commandListDirect->SetPipelineState(ms_pso);
+    commandListDirect->SetPipelineState(ms_mipMapPSO);
     commandListDirect->SetDescriptorHeaps(1, &descriptorHeap);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
@@ -1068,6 +1057,58 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
     }
 }
 
+void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource)
+{
+    auto device = d3d->GetDevice();
+
+    if (!ms_irradianceRootSig)
+        InitIrradianceCS(device);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srcTextureSRVDesc = {};
+    srcTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srcTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    srcTextureSRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srcTextureSRVDesc.Texture2D.MipLevels = 1;
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC destTextureUAVDesc = {};
+    destTextureUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    destTextureUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    destTextureUAVDesc.Texture2DArray.ArraySize = 6;
+    destTextureUAVDesc.Texture2DArray.FirstArraySlice = 0;
+    destTextureUAVDesc.Texture2DArray.MipSlice = 0;
+
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.NumDescriptors = 2;
+    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+    ID3D12DescriptorHeap* descriptorHeap;
+    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap));
+    ms_trackedDescHeaps.push_back(descriptorHeap);
+
+    commandListDirect->SetComputeRootSignature(ms_irradianceRootSig);
+    commandListDirect->SetPipelineState(ms_irradiancePSO);
+    commandListDirect->SetDescriptorHeaps(1, &descriptorHeap);
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
+
+    device->CreateShaderResourceView(srcResource, &srcTextureSRVDesc, currentCPUHandle);
+    currentCPUHandle.Offset(1, ms_descriptorSize);
+    device->CreateUnorderedAccessView(dstResource, nullptr, &destTextureUAVDesc, currentCPUHandle);
+
+    commandListDirect->SetComputeRootDescriptorTable(0, currentGPUHandle);
+    currentGPUHandle.Offset(1, ms_descriptorSize);
+    commandListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
+    currentGPUHandle.Offset(1, ms_descriptorSize);
+
+    int threads = IRRADIANCE_MAP_RESO / 8;
+
+    commandListDirect->Dispatch(threads, threads, 1);
+
+    ResourceManager::TransitionResource(commandListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
+}
+
 void TextureLoader::Shutdown()
 {
     if (ms_mipMapRootSig)
@@ -1076,10 +1117,10 @@ void TextureLoader::Shutdown()
         ms_mipMapRootSig = 0;
     }
 
-    if (ms_pso)
+    if (ms_mipMapPSO)
     {
-        ms_pso->Release();
-        ms_pso = 0;
+        ms_mipMapPSO->Release();
+        ms_mipMapPSO = 0;
     }
 
     for (int i = 0; i < ms_trackedDescHeaps.size(); i++)
@@ -1090,7 +1131,7 @@ void TextureLoader::Shutdown()
     ms_trackedDescHeaps.clear();
 }
 
-void TextureLoader::InitComputeShader(ID3D12Device2* device)
+void TextureLoader::InitMipMapCS(ID3D12Device2* device)
 {
     ms_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -1137,7 +1178,55 @@ void TextureLoader::InitComputeShader(ID3D12Device2* device)
     psoDesc.pRootSignature = ms_mipMapRootSig;
     psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
 
-    device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_pso));
+    device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_mipMapPSO));
+}
+
+void TextureLoader::InitIrradianceCS(ID3D12Device2* device)
+{
+    ms_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    //The compute shader expects 2 floats, the source texture and the destination texture
+    CD3DX12_DESCRIPTOR_RANGE srvCbvRanges[2];
+    CD3DX12_ROOT_PARAMETER rootParameters[2];
+    srvCbvRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+    srvCbvRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
+
+    rootParameters[0].InitAsDescriptorTable(1, &srvCbvRanges[0]);
+    rootParameters[1].InitAsDescriptorTable(1, &srvCbvRanges[1]);
+
+    D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    samplerDesc.MinLOD = 0.0f;
+    samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+    samplerDesc.MaxAnisotropy = 0;
+    samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+    samplerDesc.ShaderRegister = 0;
+    samplerDesc.RegisterSpace = 0;
+    samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    ID3DBlob* signature;
+    ID3DBlob* error;
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+    rootSignatureDesc.Init(_countof(rootParameters), rootParameters, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+
+    device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&ms_irradianceRootSig));
+
+    ComPtr<ID3DBlob> cBlob;
+    wstring path = Application::GetEXEDirectoryPath() + L"/IrradianceMap.cso";
+    HRESULT hr = D3DReadFileToBlob(path.c_str(), &cBlob);
+    ThrowIfFailed(hr);
+
+    D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.pRootSignature = ms_irradianceRootSig;
+    psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
+
+    device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_irradiancePSO));
 }
 
 bool TextureLoader::ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData)

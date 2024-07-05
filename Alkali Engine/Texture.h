@@ -21,12 +21,15 @@ public:
 	void InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, vector<string>& filePaths, bool flipUpsideDown = false);
 	void InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false);
 
+	void InitCubeMapUAV_Empty(D3DClass* d3d);
+
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
 
 	bool GetHasAlpha();
 	string GetFilePath();
 	int GetMipLevels();
 	int GetChannels();
+	ID3D12Resource* GetResource();
 
 private:
 	int m_textureWidth = -1, m_textureHeight = -1;

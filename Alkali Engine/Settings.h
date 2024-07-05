@@ -11,6 +11,8 @@ constexpr bool DEBUG_HEAP_ENABLED_DEFAULT = false;
 constexpr bool CONVERT_NORMAL_CHANNELS_2_TO_3 = false;
 constexpr bool CONVERT_NORMAL_CHANNELS_3_TO_2 = true;
 
+constexpr int IRRADIANCE_MAP_RESO = 512;
+
 constexpr float IM_GUI_INDENTATION = 16;
 
 constexpr float ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
@@ -54,3 +56,4 @@ constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] =
 inline constexpr double DEG_TO_RAD = 0.01745329252;
 inline constexpr double RAD_TO_DEG = 57.295779513;
 inline constexpr double PI = 3.14159265359;
+inline constexpr double TAU = 2 * PI;
