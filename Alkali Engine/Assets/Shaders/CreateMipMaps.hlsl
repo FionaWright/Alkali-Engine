@@ -6,7 +6,7 @@ SamplerState BilinearClamp : register(s0);
 
 cbuffer CB : register(b0)
 {
-    float2 TexelSize; // 1.0 / destination dimension
+    float2 TexelSize; 
 }
 
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]

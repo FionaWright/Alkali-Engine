@@ -21,15 +21,18 @@ public:
 	static void LoadHDR(string filePath, int& width, int& height, vector<uint8_t*>& pDatas, int& channels);
 
 	static void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
+	static void CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
 	static void Shutdown();
 
 private:
-	static void InitComputeShader(ID3D12Device2* device);
+	static void InitMipMapCS(ID3D12Device2* device);
+	static void InitIrradianceCS(ID3D12Device2* device);
 	static bool ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData);
 
-	static ID3D12RootSignature* ms_mipMapRootSig;
-	static ID3D12PipelineState* ms_pso;
+	static ID3D12RootSignature* ms_mipMapRootSig, * ms_irradianceRootSig;
+	static ID3D12PipelineState* ms_mipMapPSO, * ms_irradiancePSO;
+
 	static int ms_descriptorSize;
 	static vector<ID3D12DescriptorHeap*> ms_trackedDescHeaps;
 };

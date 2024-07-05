@@ -4,6 +4,7 @@
 #include "ModelLoader.h"
 #include "ResourceTracker.h"
 #include "Utils.h"
+#include "TextureLoader.h"
 
 Tutorial2::Tutorial2(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
@@ -50,7 +51,7 @@ bool Tutorial2::LoadContent()
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	// Textures
-	shared_ptr<Texture> baseTex, normalTex, specTex, skyboxTex;
+	shared_ptr<Texture> baseTex, normalTex, specTex, skyboxTex, irradianceTex;
 	{
 		string texName = "EarthDay.png";
 		if (!ResourceTracker::TryGetTexture(texName, baseTex))
@@ -71,25 +72,29 @@ bool Tutorial2::LoadContent()
 			specTex->Init(m_d3dClass, commandListDirect.Get(), specName);
 		}
 
-		//vector<string> skyboxPaths = {
-		//	"Skyboxes/Iceland/negx.tga",
-		//	"Skyboxes/Iceland/posx.tga",
-		//	"Skyboxes/Iceland/posy.tga",
-		//	"Skyboxes/Iceland/negy.tga",
-		//	"Skyboxes/Iceland/negz.tga",
-		//	"Skyboxes/Iceland/posz.tga"
-		//};
+		vector<string> skyboxPaths = {
+			"Skyboxes/Iceland/negx.tga",
+			"Skyboxes/Iceland/posx.tga",
+			"Skyboxes/Iceland/posy.tga",
+			"Skyboxes/Iceland/negy.tga",
+			"Skyboxes/Iceland/negz.tga",
+			"Skyboxes/Iceland/posz.tga"
+		};
 
-		//if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
+		if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
+		{
+			skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
+		}
+
+		//string skyboxPath = "Skyboxes/Bistro_Bridge.hdr";
+		//if (!ResourceTracker::TryGetTexture(skyboxPath, skyboxTex))
 		//{
-		//	skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
+		//	skyboxTex->InitCubeMapHDR(m_d3dClass, commandListDirect.Get(), skyboxPath);			
 		//}
 
-		string skyboxPath = "Skyboxes/Bistro_Bridge.hdr";
-		if (!ResourceTracker::TryGetTexture(skyboxPath, skyboxTex))
-		{
-			skyboxTex->InitCubeMapHDR(m_d3dClass, commandListDirect.Get(), skyboxPath);
-		}
+		irradianceTex = std::make_shared<Texture>();
+		irradianceTex->InitCubeMapUAV_Empty(m_d3dClass);
+		TextureLoader::CreateIrradianceMap(m_d3dClass, commandListDirect.Get(), skyboxTex->GetResource(), irradianceTex->GetResource());
 	}
 
 	RootParamInfo rootParamInfoPBR;
@@ -169,7 +174,7 @@ bool Tutorial2::LoadContent()
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, skyboxTex };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
@@ -254,8 +259,8 @@ bool Tutorial2::LoadContent()
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, skyboxTex, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, skyboxTex, shaderPBRCullOff, nullptr, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, irradianceTex, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, irradianceTex, shaderPBRCullOff, nullptr, t);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);

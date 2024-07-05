@@ -424,5 +424,8 @@
     <FxCompile Include="Assets\Shaders\Skybox_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="IrradianceMap.hlsl">
+      <Filter>Shaders\Compute</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

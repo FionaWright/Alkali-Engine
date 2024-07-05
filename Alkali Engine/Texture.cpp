@@ -158,7 +158,7 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
     m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; // No cubemap flag set?
+    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; 
     m_textureDesc.DepthOrArraySize = 6;
     m_textureDesc.SampleDesc.Count = 1;
     m_textureDesc.SampleDesc.Quality = 0;
@@ -246,7 +246,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; // No cubemap flag set?
+    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; 
     m_textureDesc.DepthOrArraySize = 6;
     m_textureDesc.SampleDesc.Count = 1;
     m_textureDesc.SampleDesc.Quality = 0;
@@ -299,6 +299,43 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SRV_FINAL_STATE);
 }
 
+void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
+{
+    HRESULT hr;
+    auto device = d3d->GetDevice();
+
+    m_isCubemap = true;
+    m_hasAlpha = true;
+    m_channels = 4;
+    m_textureWidth = IRRADIANCE_MAP_RESO;
+    m_textureHeight = IRRADIANCE_MAP_RESO;
+
+    DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;        
+
+    m_textureDesc = {};
+    m_textureDesc.Format = format;
+    m_textureDesc.Width = m_textureWidth;
+    m_textureDesc.Height = m_textureHeight;
+    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    m_textureDesc.DepthOrArraySize = 6;
+    m_textureDesc.SampleDesc.Count = 1;
+    m_textureDesc.SampleDesc.Quality = 0;
+    m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    m_textureDesc.MipLevels = 1;
+
+    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_textureResource));
+    ThrowIfFailed(hr);
+
+    //int numSubresources = 6;
+    //const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, numSubresources);
+
+    //heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    //auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+    //hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
+    //ThrowIfFailed(hr);    
+}
+
 void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, int heapOffset)
 {   
     auto device = d3d->GetDevice();
@@ -339,4 +376,9 @@ int Texture::GetMipLevels()
 int Texture::GetChannels()
 {
     return m_channels;
+}
+
+ID3D12Resource* Texture::GetResource()
+{
+    return m_textureResource.Get();
 }
