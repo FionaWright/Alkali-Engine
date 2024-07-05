@@ -736,6 +736,247 @@ void TextureLoader::LoadJPG(string filePath, int& width, int& height, uint8_t** 
 {
 }
 
+XMFLOAT3 rgbeToFloat(const uint8_t* rgbe) 
+{
+    if (rgbe[3] == 0)
+        return XMFLOAT3(0, 0, 0);
+
+    float f = ldexp(1.0f, rgbe[3] - (int)(128 + 8));
+    return XMFLOAT3(rgbe[0] * f, rgbe[1] * f, rgbe[2] * f);
+}
+
+XMFLOAT3 SampleHDR(const uint8_t* hdrData, const XMFLOAT2& texCoord, const int hdrWidth, const int hdrHeight) 
+{
+    float clampedX = std::clamp(texCoord.x, 0.0f, static_cast<float>(hdrWidth - 1));
+    float clampedY = std::clamp(texCoord.y, 0.0f, static_cast<float>(hdrHeight - 1));
+
+    int x = static_cast<int>(clampedX);
+    int y = static_cast<int>(clampedY);
+    int x1 = std::min(x + 1, hdrWidth - 1);
+    int y1 = std::min(y + 1, hdrHeight - 1);
+    float dx = clampedX - x;
+    float dy = clampedY - y;
+
+    const uint8_t* c00 = &hdrData[(y * hdrWidth + x) * 4];
+    XMFLOAT3 col00 = rgbeToFloat(c00);
+
+    const uint8_t* c10 = &hdrData[(y * hdrWidth + x1) * 4];
+    XMFLOAT3 col10 = rgbeToFloat(c10);
+
+    const uint8_t* c01 = &hdrData[(y1 * hdrWidth + x) * 4];
+    XMFLOAT3 col01 = rgbeToFloat(c01);
+
+    const uint8_t* c11 = &hdrData[(y1 * hdrWidth + x1) * 4];
+    XMFLOAT3 col11 = rgbeToFloat(c11);
+
+    col00 = Mult(col00, (1 - dx) * (1 - dy));
+    col10 = Mult(col10, dx * (1 - dy));
+    col01 = Mult(col01, dy * (1 - dx));
+    col11 = Mult(col11, dx * dy);
+
+    return Add(Add(col00, col10), Add(col01, col11));
+}
+
+void ReadRLEData(ifstream& fin, uint8_t*& data, int width, int height) 
+{
+    if (width < 8 || width > 0x7fff)
+    {
+        fin.read(reinterpret_cast<char*>(data), width * height * 4);
+        return;
+    }
+
+    uint8_t* scanline_buffer = new uint8_t[width * 4];
+
+    for (int y = 0; y < height; y++)
+    {
+        uint8_t rgbe[4];
+        fin.read(reinterpret_cast<char*>(rgbe), 4);
+
+        if (rgbe[0] != 2 || rgbe[1] != 2 || (rgbe[2] & 0x80))
+        {
+            // This file is not run length encoded
+            data[(y * width + 0) * 4 + 0] = rgbe[0];
+            data[(y * width + 0) * 4 + 1] = rgbe[1];
+            data[(y * width + 0) * 4 + 2] = rgbe[2];
+            data[(y * width + 0) * 4 + 3] = rgbe[3];
+            fin.read(reinterpret_cast<char*>(&data[(y * width + 1) * 4]), (width - 1) * 4);
+            continue;
+        }
+
+        if (((rgbe[2] << 8) | rgbe[3]) != width)
+            throw std::exception("Invalid scanline width");
+
+        for (int i = 0; i < 4; i++)
+        {
+            int ptr = 0;
+            while (ptr < width)
+            {
+                uint8_t buf[2];
+                fin.read(reinterpret_cast<char*>(buf), 2);
+                if (buf[0] > 128)
+                {
+                    int count = buf[0] - 128;
+                    if ((count == 0) || (count > width - ptr))
+                        throw std::exception("Bad RLE data");
+
+                    while (count > 0)
+                    {
+                        scanline_buffer[ptr] = buf[1];
+                        ptr++;
+                        count--;
+                    }
+                    continue;
+                }
+                
+                int count = buf[0];
+                if ((count == 0) || (count > width - ptr))
+                    throw std::exception("Bad RLE data");
+
+                scanline_buffer[ptr++] = buf[1];
+                count--;
+                if (count > 0)
+                {
+                    fin.read(reinterpret_cast<char*>(&scanline_buffer[ptr]), count);
+                    ptr += count;
+                }
+            }
+
+            for (int j = 0; j < width; j++)
+            {
+                data[(y * width + j) * 4 + i] = scanline_buffer[j];
+            }
+        }
+    }
+    delete[] scanline_buffer;
+}
+
+void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uint8_t*>& pDatas, int& channels)
+{
+    ifstream fin;
+    fin.open(filePath, std::ios::binary);
+
+    if (!fin)
+        throw std::exception("IO Exception");
+
+    string confirmation;
+    std::getline(fin, confirmation);
+    if (confirmation != "#?RADIANCE")
+        throw std::exception("Invalid HDR file");
+
+    string madeWithPhotoshop;
+    std::getline(fin, madeWithPhotoshop);
+    if (madeWithPhotoshop != "# Made with Adobe Photoshop")
+        throw std::exception("Invalid HDR file");
+
+    string gammaStr;
+    std::getline(fin, gammaStr);
+    int equalsIndex = gammaStr.find_first_of('=');
+    int gamma = atoi(gammaStr.substr(equalsIndex + 1, gammaStr.size() - equalsIndex - 1).c_str());
+
+    string primariesStr;
+    std::getline(fin, primariesStr);
+
+    string formatStr;
+    std::getline(fin, formatStr);
+    if (formatStr != "FORMAT=32-bit_rle_rgbe")
+        throw std::exception("Invalid HDR file");
+
+    fin.get();
+
+    string sizeStr;
+    std::getline(fin, sizeStr);
+    int Yindex = sizeStr.find_first_of('Y');
+    int Xindex = sizeStr.find_first_of('X');
+    int hdrHeight = atoi(sizeStr.substr(Yindex + 2, Xindex - 2 - Yindex + 2).c_str());
+    int hdrWidth = atoi(sizeStr.substr(Xindex + 2, sizeStr.size() - Xindex + 1).c_str());
+
+    channels = 4;
+    int totalPixelCount = hdrWidth * hdrHeight;
+    int totalChannelCount = totalPixelCount * channels;
+    uint8_t* hdrData = new uint8_t[totalChannelCount];
+    ReadRLEData(fin, hdrData, hdrWidth, hdrHeight);
+
+    vector<XMFLOAT3> faceDirections = {
+        {-1, 0, 0},
+        {1, 0, 0},         
+        {0, 1, 0}, 
+        {0, -1, 0},
+        {0, 0, -1},
+        {0, 0, 1}        
+    };
+
+    vector<XMFLOAT3> faceRights = {
+        {0, 0, 1},
+        {0, 0, -1},
+        {-1, 0, 0},
+        {-1, 0, 0},
+        {-1, 0, 0},
+        {1, 0, 0}
+    };
+
+    vector<XMFLOAT3> faceUps = {
+        {0, -1, 0}, 
+        {0, -1, 0},
+        {0, 0, -1}, 
+        {0, 0, 1}, 
+        {0, -1, 0}, 
+        {0, -1, 0}
+    };
+
+    pDatas.resize(6);
+
+    height = hdrHeight;
+    width = hdrHeight;
+
+    constexpr bool DEBUG_DIRECTION = false;
+
+    for (int face = 0; face < 6; ++face)
+    {
+        pDatas[face] = new uint8_t[width * height * channels];
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                float u = ((x / static_cast<float>(width - 1)) - 0.5f) * 2;
+                float v = ((y / static_cast<float>(height - 1)) - 0.5f) * 2;
+
+                XMFLOAT3 up = Mult(faceUps[face], v);
+                XMFLOAT3 right = Mult(faceRights[face], u);
+                XMFLOAT3 direction = Add(Add(faceDirections[face], up), right);
+                direction = Normalize(direction);
+
+                float theta = atan2f(direction.z, direction.x);
+                float phi = acos(direction.y);
+
+                float texU = ((theta / (2.0 * PI)) + 0.5) * hdrWidth;
+                float texV = (phi / PI) * hdrHeight;
+
+                XMFLOAT3 col = SampleHDR(hdrData, XMFLOAT2(texU, texV), hdrWidth, hdrHeight);
+
+                int texIndex = y * width + x;
+
+                if (DEBUG_DIRECTION)
+                {
+                    pDatas[face][texIndex * 4 + 0] = u * 255;
+                    pDatas[face][texIndex * 4 + 1] = v * 255;
+                    pDatas[face][texIndex * 4 + 2] = 0;
+                    pDatas[face][texIndex * 4 + 3] = 255;
+                    continue;
+                }
+                
+                pDatas[face][texIndex * 4 + 0] = col.x * 255;
+                pDatas[face][texIndex * 4 + 1] = col.y * 255;
+                pDatas[face][texIndex * 4 + 2] = col.z * 255;
+                pDatas[face][texIndex * 4 + 3] = 255;
+            }
+        }
+    }
+
+    fin.close();
+    delete[] hdrData;    
+}
+
 void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc)
 {
     struct DWParam

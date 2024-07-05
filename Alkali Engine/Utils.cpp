@@ -19,6 +19,11 @@ XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b)
     return XMFLOAT3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
+XMFLOAT4 Add(XMFLOAT4 a, XMFLOAT4 b)
+{
+    return XMFLOAT4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+}
+
 XMFLOAT3 Subtract(XMFLOAT3 a, XMFLOAT3 b)
 {
 	return XMFLOAT3(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -62,6 +67,11 @@ XMFLOAT3 Divide(const XMFLOAT3& a, float d)
 XMFLOAT3 Mult(const XMFLOAT3& a, float d)
 {
     return XMFLOAT3(a.x * d, a.y * d, a.z * d);
+}
+
+XMFLOAT4 Mult(const XMFLOAT4& a, float d)
+{
+    return XMFLOAT4(a.x * d, a.y * d, a.z * d, a.w * d);
 }
 
 XMFLOAT3 Mult(const XMFLOAT3& a, const XMFLOAT3& b)

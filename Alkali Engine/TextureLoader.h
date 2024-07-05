@@ -18,6 +18,7 @@ public:
 	static void LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t** pData);
 	static void LoadPNG(string filePath, int& width, int& height, uint8_t** pData, int& channels);
 	static void LoadJPG(string filePath, int& width, int& height, uint8_t** pData, int& channels);
+	static void LoadHDR(string filePath, int& width, int& height, vector<uint8_t*>& pDatas, int& channels);
 
 	static void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
 
