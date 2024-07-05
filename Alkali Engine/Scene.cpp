@@ -29,8 +29,7 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
 	ms_sortBatchGos = true;
-	ms_renderDebugLines = true;
-	//ms_forceReloadBinTex = true; // TEMPORARY
+	ms_renderDebugLines = false; // DISABLED TEMPORARILY
 }
 
 Scene::~Scene()

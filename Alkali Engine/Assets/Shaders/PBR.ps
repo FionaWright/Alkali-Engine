@@ -20,7 +20,7 @@ struct DirectionalLight
     float3 LightDirection;
     float p2;
 
-    float3 LightDiffuse;
+    float3 LightColor;
     float SpecularPower;
 };
 ConstantBuffer<DirectionalLight> DirLightCB : register(b3);
@@ -40,28 +40,13 @@ ConstantBuffer<MaterialProperties> MatPropCB : register(b1);
 Texture2D g_texture : register(t0);
 Texture2D g_normalMap : register(t1);
 Texture2D g_specularMap : register(t2);
+TextureCube g_skybox : register(t3);
 SamplerState g_sampler : register(s0);
 
-float DistributionGGX(float3 NdH, float roughnessSq)
-{
-    float a = roughnessSq * roughnessSq;
-    float denominator = (NdH * NdH * (a - 1.0f) + 1.0f);
-    return a / (PI * denominator * denominator);
-}
-
-// HdV == cosTheta
-// 5 is the sharpness, can be modified
-float3 FresnelSchlick(float cosTheta, float3 F0)
-{
-    return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
-}
-
-float GeometrySmith(float NdL, float NdV, float roughnessSq)
-{
-    float ggxV = NdV / (NdV * (1.0f - roughnessSq) + roughnessSq);
-    float ggxL = NdL / (NdL * (1.0f - roughnessSq) + roughnessSq);
-    return ggxV * ggxL;
-}
+float D_GGX(float NdH, float roughness);
+float3 F_Schlick(float cosTheta, float3 F0);
+float G_Smith(float NdL, float NdV, float roughness);
+float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
@@ -71,7 +56,6 @@ float4 main(V_OUT input) : SV_Target
         discard;
 
     tex.rgb = pow(tex.rgb, 2.2f);
-    tex.rgb *= MatPropCB.BaseColorFactor;
 
 #if BUMP_2_CHANNEL
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
@@ -82,48 +66,85 @@ float4 main(V_OUT input) : SV_Target
 #else
     float3 normalTangentSpace = g_normalMap.Sample(g_sampler, input.UV).rgb;
     normalTangentSpace.xyz = normalTangentSpace.xyz * 2.0f - 1.0f;
-#endif
+#endif    
+
+    float3 occlusionRoughnessMetallic = g_specularMap.Sample(g_sampler, input.UV).rgb;    
+    float roughness = occlusionRoughnessMetallic.g * MatPropCB.Roughness;
+    float metalness = occlusionRoughnessMetallic.b * MatPropCB.Metallic;
+
+    float envLOD = roughness * 10;
 
     float3 N = normalize(normalTangentSpace.x * input.Tangent + normalTangentSpace.y * input.Binormal + normalTangentSpace.z * input.Normal);    
-
-    float3 specData = g_specularMap.Sample(g_sampler, input.UV).rgb;
-    float specularIntensity = 1;
-    float glossiness = 1;
-    float metalness = specData.b * MatPropCB.Metallic;
-    float roughness = specData.g * MatPropCB.Roughness;
-
-    //return float4(0, MatPropCB.Roughness, MatPropCB.Metallic, 1);
-    //return float4(specData, 1);
-    //return float4(metalness, roughness, 0, 1);
-
-    //==============================================================        
-
     float3 L = normalize(DirLightCB.LightDirection);
     float3 V = normalize(input.ViewDirection);
     float3 H = normalize(-L + V);
+    float3 R = reflect(-V, N);
 
     float NdL = saturate(dot(N, -L));        
     float NdV = saturate(dot(N, V));
     float HdV = saturate(dot(H, V));
     float NdH = saturate(dot(N, H));
+    float HdL = saturate(dot(H, -L));   
 
-    float3 diffuse = tex.rgb * (1 - metalness) * (DirLightCB.AmbientColor + DirLightCB.LightDiffuse * NdL);
+    //==============================================================         
 
-    float3 F0 = lerp(0.04f, tex.rgb, metalness);
+    float3 albedo = tex.rgb * MatPropCB.BaseColorFactor;
+    float3 F0 = lerp(0.04f, albedo, metalness);
 
-    float D = DistributionGGX(NdH, roughness);    
-    float3 F = FresnelSchlick(HdV, F0);
-    float G = GeometrySmith(NdL, NdV, roughness);
+    float D = D_GGX(NdH, roughness);    
+    float3 F = F_Schlick(HdV, F0);
+    float G = G_Smith(NdL, NdV, roughness);
 
-    float specDenom = max(0.001f, 4.0f * max(0.001f, NdV) * max(0.001f, NdL));
-    float3 specularDFG = NdL * D * F * G / specDenom;
+    float kS = F;
+    float kD = (1 - kS) * (1 - metalness);
 
-    float4 finalCol;
-    finalCol.rgb = diffuse + specularDFG;
-    finalCol.rgb = pow(finalCol.rgb, 1.0f / 2.2f);
-    finalCol.a = tex.a;
+    float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
+    float3 specular = specularDFG * DirLightCB.LightColor * kS;    
+    
+    float3 diffuse = kD * (albedo / PI) * DirLightCB.LightColor * NdL;  
+    float3 ambient = albedo * DirLightCB.AmbientColor;   
+    
+    float3 envReflection = g_skybox.SampleLevel(g_sampler, R, envLOD).rgb;   
+    envReflection *= (1.0f - roughness) * F;
 
-    //return float4(F, 1);
+    float3 Lo = diffuse + specular + ambient;
 
-    return finalCol;
+    Lo = pow(Lo, 1.0f / 2.2f);
+    return float4(Lo, tex.a);
+}
+
+float D_GGX(float NdH, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float denominator = (NdH * NdH * (a2 - 1.0f) + 1.0f);
+    return a2 / max(0.001f, PI * denominator * denominator);
+}
+
+// 5 is the sharpness, can be modified
+float3 F_Schlick(float cosTheta, float3 F0)
+{
+    return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+}
+
+float G_Smith(float NdL, float NdV, float roughness)
+{
+    float r = roughness + 1;
+    float k = (r * r) / 8.0f;
+    
+    float ggxL = NdL / (NdL * (1.0f - k) + k);
+    float ggxV = NdV / (NdV * (1.0f - k) + k);
+
+    return ggxL * ggxV;
+}
+
+float G_Smith_IBL(float NdL, float NdV, float roughness)
+{
+    float r = roughness;
+    float k = (r * r) / 2.0f;
+    
+    float ggxL = NdL / (NdL * (1.0f - k) + k);
+    float ggxV = NdV / (NdV * (1.0f - k) + k);
+
+    return ggxL * ggxV;
 }

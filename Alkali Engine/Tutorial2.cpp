@@ -71,25 +71,31 @@ bool Tutorial2::LoadContent()
 			specTex->Init(m_d3dClass, commandListDirect.Get(), specName);
 		}
 
-		vector<string> skyboxPaths = {
-			"Skyboxes/Iceland/negx.tga",
-			"Skyboxes/Iceland/posx.tga",
-			"Skyboxes/Iceland/posy.tga",
-			"Skyboxes/Iceland/negy.tga",
-			"Skyboxes/Iceland/negz.tga",
-			"Skyboxes/Iceland/posz.tga"
-		};
+		//vector<string> skyboxPaths = {
+		//	"Skyboxes/Iceland/negx.tga",
+		//	"Skyboxes/Iceland/posx.tga",
+		//	"Skyboxes/Iceland/posy.tga",
+		//	"Skyboxes/Iceland/negy.tga",
+		//	"Skyboxes/Iceland/negz.tga",
+		//	"Skyboxes/Iceland/posz.tga"
+		//};
 
-		if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
+		//if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
+		//{
+		//	skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
+		//}
+
+		string skyboxPath = "Skyboxes/Bistro_Bridge.hdr";
+		if (!ResourceTracker::TryGetTexture(skyboxPath, skyboxTex))
 		{
-			skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
+			skyboxTex->InitCubeMapHDR(m_d3dClass, commandListDirect.Get(), skyboxPath);
 		}
 	}
 
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 2;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
-	rootParamInfoPBR.NumSRV = 3;
+	rootParamInfoPBR.NumSRV = 4;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
 	rootParamInfoPBR.ParamIndexCBV_PerFrame = 1;
 	rootParamInfoPBR.ParamIndexSRV = 2;
@@ -163,7 +169,7 @@ bool Tutorial2::LoadContent()
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, skyboxTex };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
@@ -178,6 +184,8 @@ bool Tutorial2::LoadContent()
 	ResourceTracker::AddMaterial(matPBR2);
 
 	MaterialPropertiesCB defaultMatProps;
+	//defaultMatProps.Roughness = 0;
+	//defaultMatProps.Metallic = 1;
 	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 
@@ -246,14 +254,14 @@ bool Tutorial2::LoadContent()
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, shaderPBRCullOff, nullptr, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, skyboxTex, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, skyboxTex, shaderPBRCullOff, nullptr, t);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);
 	//m_batch->AddHeldGameObjectsToList(m_gameObjectList);
 
-	GameObject go("Test", rootParamInfoPBR, modelInvertedCube, shaderPBR, matPBR1);
+	GameObject go("Test", rootParamInfoPBR, modelSphere, shaderPBR, matPBR1);
 	go.SetPosition(-50, 3, -10);
 	go.SetScale(20);
 	m_goTest = batchPBR->AddGameObject(go);
@@ -288,7 +296,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.TotalTime * 0.2f);
+	float angle = static_cast<float>(e.TotalTime * 2.0f);
 	//m_goCube->RotateBy(0, angle, 0);
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
 

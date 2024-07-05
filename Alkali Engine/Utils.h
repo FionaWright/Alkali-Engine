@@ -8,6 +8,8 @@ std::string wstringToString(const std::wstring& wstr);
 
 XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b);
 
+XMFLOAT4 Add(XMFLOAT4 a, XMFLOAT4 b);
+
 XMFLOAT3 Subtract(XMFLOAT3 a, XMFLOAT3 b);
 
 XMFLOAT2 Subtract(XMFLOAT2 a, XMFLOAT2 b);
@@ -23,6 +25,8 @@ XMFLOAT3 Normalize(const XMFLOAT3& v);
 XMFLOAT3 Divide(const XMFLOAT3& a, float d);
 
 XMFLOAT3 Mult(const XMFLOAT3& a, float d);
+
+XMFLOAT4 Mult(const XMFLOAT4& a, float d);
 
 XMFLOAT3 Mult(const XMFLOAT3& a, const XMFLOAT3& b);
 

@@ -15,6 +15,25 @@ bool SceneBistro::LoadContent()
 {
 	Scene::LoadContent();
 
+	shared_ptr<Model> modelInvertedCube;
+	{
+		CommandQueue* commandQueueCopy = nullptr;
+		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!commandQueueCopy)
+			throw std::exception("Command Queue Error");
+
+		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+
+		string modelName = "Cube (Inverted).model";
+		if (!ResourceTracker::TryGetModel(modelName, modelInvertedCube))
+		{
+			modelInvertedCube->Init(commandListCopy.Get(), modelName);
+		}
+
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		commandQueueCopy->WaitForFenceValue(fenceValue);
+	}
+
 	CommandQueue* commandQueueDirect = nullptr;
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!commandQueueDirect)
@@ -22,10 +41,25 @@ bool SceneBistro::LoadContent()
 
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
+	vector<string> skyboxPaths = {
+			"Skyboxes/Iceland/negx.tga",
+			"Skyboxes/Iceland/posx.tga",
+			"Skyboxes/Iceland/posy.tga",
+			"Skyboxes/Iceland/negy.tga",
+			"Skyboxes/Iceland/negz.tga",
+			"Skyboxes/Iceland/posz.tga"
+	};
+
+	shared_ptr<Texture> skyboxTex;
+	if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
+	{
+		skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
+	}
+
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
 	rootParamInfo.NumCBV_PerDraw = 2;
-	rootParamInfo.NumSRV = 3;
+	rootParamInfo.NumSRV = 4;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
 	rootParamInfo.ParamIndexSRV = 2;
@@ -62,6 +96,48 @@ bool SceneBistro::LoadContent()
 		rootSigPBR->SetName(L"Bistro Root Sig");
 	}
 
+	RootParamInfo rootParamInfoSkybox;
+	rootParamInfoSkybox.NumCBV_PerDraw = 1;
+	rootParamInfoSkybox.NumSRV = 1;
+	rootParamInfoSkybox.ParamIndexCBV_PerDraw = 0;
+	rootParamInfoSkybox.ParamIndexSRV = 1;
+
+	ComPtr<ID3D12RootSignature> rootSigSkybox;
+	{
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+		ranges[rootParamInfoSkybox.ParamIndexCBV_PerDraw].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfoSkybox.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[rootParamInfoSkybox.ParamIndexSRV].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfoSkybox.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+		rootParameters[rootParamInfoSkybox.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[rootParamInfoSkybox.ParamIndexCBV_PerDraw], D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[rootParamInfoSkybox.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[rootParamInfoSkybox.ParamIndexSRV], D3D12_SHADER_VISIBILITY_PIXEL);
+
+		D3D12_STATIC_SAMPLER_DESC sampler[1];
+		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
+		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
+		sampler[0].MipLODBias = 0;
+		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
+		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler[0].MinLOD = 0.0f;
+		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
+		sampler[0].ShaderRegister = 0;
+		sampler[0].RegisterSpace = 0;
+		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		rootSigSkybox = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, _countof(sampler));
+		rootSigSkybox->SetName(L"Skybox RootSig");
+	}
+
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
+	vector<shared_ptr<Texture>> textures = { skyboxTex };
+	shared_ptr matSkybox = std::make_shared<Material>();
+	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matSkybox->AddSRVs(m_d3dClass, textures);
+	ResourceTracker::AddMaterial(matSkybox);
+
 	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
 	{
 		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
@@ -91,13 +167,34 @@ bool SceneBistro::LoadContent()
 		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
 	}
 
+	shared_ptr<Shader> shaderSkybox;
+	if (!ResourceTracker::TryGetShader("Skybox_VS.cso - Skybox_PS.cso", shaderSkybox))
+	{
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		shaderSkybox->InitPreCompiled(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayout, rootSigSkybox.Get(), m_d3dClass->GetDevice(), false, false, true);
+	}
+
 	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
 	{
 		m_batch->Init("PBR Basic", rootSigPBR);
 	}
 
+	shared_ptr<Batch> batchSkybox;
+	if (!ResourceTracker::TryGetBatch("Skybox", batchSkybox))
+	{
+		batchSkybox->Init("Skybox", rootSigSkybox);
+	}
+
+	GameObject goSkybox("Skybox", rootParamInfoSkybox, modelInvertedCube, shaderSkybox, matSkybox);
+	goSkybox.SetScale(20);
+	m_goSkybox = batchSkybox->AddGameObject(goSkybox);
+
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), m_shaderPBR, m_shaderPBR_CullOff);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), m_shaderPBR, skyboxTex, m_shaderPBR_CullOff);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
@@ -136,6 +233,8 @@ void SceneBistro::OnUpdate(TimeEventArgs& e)
 	{
 		m_pWindow->ToggleVSync();
 	}
+
+	m_goSkybox->SetPosition(m_camera->GetWorldPosition());
 }
 
 void SceneBistro::OnRender(TimeEventArgs& e)
