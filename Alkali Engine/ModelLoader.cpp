@@ -776,7 +776,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
@@ -889,7 +889,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, skyboxTex };
+	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
@@ -917,7 +917,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	batch->AddGameObject(go);
 }
 
-void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
 	Transform transform;
 	if (node.transform.index() == 0)
@@ -938,7 +938,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
+		LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -967,11 +967,11 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, commandList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, shaderCullOff, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, commandList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, transform, id);
 	}
 }
 
-void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -1011,7 +1011,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		{
 			int nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
+			LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
 		}
 	}
 }

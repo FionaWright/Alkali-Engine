@@ -100,7 +100,7 @@ bool Tutorial2::LoadContent()
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 2;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
-	rootParamInfoPBR.NumSRV = 4;
+	rootParamInfoPBR.NumSRV = 5;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
 	rootParamInfoPBR.ParamIndexCBV_PerFrame = 1;
 	rootParamInfoPBR.ParamIndexSRV = 2;
@@ -174,7 +174,7 @@ bool Tutorial2::LoadContent()
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
@@ -189,8 +189,6 @@ bool Tutorial2::LoadContent()
 	ResourceTracker::AddMaterial(matPBR2);
 
 	MaterialPropertiesCB defaultMatProps;
-	//defaultMatProps.Roughness = 0;
-	//defaultMatProps.Metallic = 1;
 	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 
@@ -259,8 +257,8 @@ bool Tutorial2::LoadContent()
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, irradianceTex, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), shaderPBR, irradianceTex, shaderPBRCullOff, nullptr, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Primitives.glb", rootParamInfo, batch.get(), shaderPBR);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderCube);

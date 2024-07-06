@@ -4,6 +4,7 @@
 #include "ModelLoader.h"
 #include "CBuffers.h"
 #include "ResourceTracker.h"
+#include "TextureLoader.h"
 
 SceneBistro::SceneBistro(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
@@ -56,10 +57,14 @@ bool SceneBistro::LoadContent()
 		skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
 	}
 
+	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
+	irradianceTex->InitCubeMapUAV_Empty(m_d3dClass);
+	TextureLoader::CreateIrradianceMap(m_d3dClass, commandListDirect.Get(), skyboxTex->GetResource(), irradianceTex->GetResource());
+
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
 	rootParamInfo.NumCBV_PerDraw = 2;
-	rootParamInfo.NumSRV = 4;
+	rootParamInfo.NumSRV = 5;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
 	rootParamInfo.ParamIndexSRV = 2;
@@ -194,7 +199,7 @@ bool SceneBistro::LoadContent()
 	m_goSkybox = batchSkybox->AddGameObject(goSkybox);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), m_shaderPBR, skyboxTex, m_shaderPBR_CullOff);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), skyboxTex, irradianceTex, m_shaderPBR, m_shaderPBR_CullOff);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
