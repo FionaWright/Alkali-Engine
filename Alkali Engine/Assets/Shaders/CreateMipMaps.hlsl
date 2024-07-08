@@ -11,9 +11,7 @@ cbuffer CB : register(b0)
 
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
 void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
-{
-	//DTid is the thread ID * the values from numthreads above and in this case correspond to the pixels location in number of pixels.    
-    
+{   
     float2 texcoordsC = TexelSize * (DTid.xy);
     float2 texcoordsN = TexelSize * (DTid.xy + float2(0, 1));
     float2 texcoordsE = TexelSize * (DTid.xy + float2(1, 0));

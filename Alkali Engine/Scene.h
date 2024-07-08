@@ -70,6 +70,14 @@ protected:
     void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
     void RenderImGui();
 
+    shared_ptr<Model> CreateModel(string path, ID3D12GraphicsCommandList2* commandList);
+    shared_ptr<Texture> CreateTexture(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown = false, bool isNormalMap = false);
+    shared_ptr<Texture> CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown = false);
+    shared_ptr<Texture> CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown = false);
+    shared_ptr<Texture> CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* commandList);
+    shared_ptr<Shader> CreateShader(wstring vs, wstring ps, const vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout, RootSig* rootSig, bool preCompiled = false, bool cullOff = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+    shared_ptr<Batch> CreateBatch(shared_ptr<RootSig> rootSig);
+
     Window* m_pWindow;
 
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;

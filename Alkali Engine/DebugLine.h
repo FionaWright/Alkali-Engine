@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Material.h"
 #include "GameObject.h"
+#include "RootSig.h"
 
 struct VS_IN
 {

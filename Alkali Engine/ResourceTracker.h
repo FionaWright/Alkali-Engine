@@ -27,6 +27,7 @@ public:
 
 	static void AddShader(string filePath, shared_ptr<Shader> shader);
 	static bool TryGetShader(string filePath, shared_ptr<Shader>& shader);
+	static bool TryGetShader(wstring filePath, shared_ptr<Shader>& shader);
 	static unordered_map<string, shared_ptr<Shader>>& GetShaders();
 
 	static void AddBatch(string filePath, shared_ptr<Batch> batch);

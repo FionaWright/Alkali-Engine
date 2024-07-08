@@ -86,7 +86,7 @@ float4 main(V_OUT input) : SV_Target
     float NdH = saturate(dot(N, H));
     float HdL = saturate(dot(H, -L));   
 
-    float envMapMipLevels = 10;
+    float envMapMipLevels = 12;
 
     //==============================================================         
 
@@ -101,18 +101,16 @@ float4 main(V_OUT input) : SV_Target
     float kD = (1 - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * envMapMipLevels).rgb;
-    envReflections *= NdL * metalness * roughness;
+    envReflections *= metalness * roughness * kS;
 
     float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * DirLightCB.LightColor * kS;    
-
-    //return float4(D, D, D, 1);
     
-    float3 diffuse = irradiance * kD * (albedo / PI) * DirLightCB.LightColor * NdL;  
+    float3 diffuse = irradiance * kD * albedo * DirLightCB.LightColor * NdL;  
     diffuse *= 1 - metalness;
-    float3 ambient = kD * irradiance * (albedo / PI);      
+    float3 ambient = irradiance * albedo;   
 
     float3 Lo = diffuse + specular + ambient + envReflections;
 

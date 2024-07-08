@@ -16,24 +16,17 @@ bool SceneBistro::LoadContent()
 {
 	Scene::LoadContent();
 
-	shared_ptr<Model> modelInvertedCube;
-	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
-			throw std::exception("Command Queue Error");
+	CommandQueue* commandQueueCopy = nullptr;
+	commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!commandQueueCopy)
+		throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		string modelName = "Cube (Inverted).model";
-		if (!ResourceTracker::TryGetModel(modelName, modelInvertedCube))
-		{
-			modelInvertedCube->Init(commandListCopy.Get(), modelName);
-		}
+	shared_ptr<Model> modelInvertedCube = CreateModel("Cube (Inverted).model", commandListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
-	}
+	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	CommandQueue* commandQueueDirect = nullptr;
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -51,15 +44,8 @@ bool SceneBistro::LoadContent()
 			"Skyboxes/Iceland/posz.tga"
 	};
 
-	shared_ptr<Texture> skyboxTex;
-	if (!ResourceTracker::TryGetTexture(skyboxPaths, skyboxTex))
-	{
-		skyboxTex->InitCubeMap(m_d3dClass, commandListDirect.Get(), skyboxPaths);
-	}
-
-	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
-	irradianceTex->InitCubeMapUAV_Empty(m_d3dClass);
-	TextureLoader::CreateIrradianceMap(m_d3dClass, commandListDirect.Get(), skyboxTex->GetResource(), irradianceTex->GetResource());
+	shared_ptr<Texture> skyboxTex = CreateCubemap(skyboxPaths, commandListDirect.Get());
+	shared_ptr<Texture> irradianceTex = CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
@@ -69,37 +55,8 @@ bool SceneBistro::LoadContent()
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
 	rootParamInfo.ParamIndexSRV = 2;
 
-	ComPtr<ID3D12RootSignature> rootSigPBR;
-	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
-		int shaderRegisterFrameStart = rootParamInfo.NumCBV_PerDraw;
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerFrame, shaderRegisterFrameStart, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-
-		CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-		rootParameters[rootParamInfo.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
-		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-
-		D3D12_STATIC_SAMPLER_DESC sampler[1];
-		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, _countof(sampler));
-		rootSigPBR->SetName(L"Bistro Root Sig");
-	}
+	shared_ptr<RootSig> rootSigPBR = std::make_shared<RootSig>();
+	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfo);
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -107,104 +64,48 @@ bool SceneBistro::LoadContent()
 	rootParamInfoSkybox.ParamIndexCBV_PerDraw = 0;
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
-	ComPtr<ID3D12RootSignature> rootSigSkybox;
-	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
-		ranges[rootParamInfoSkybox.ParamIndexCBV_PerDraw].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfoSkybox.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[rootParamInfoSkybox.ParamIndexSRV].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfoSkybox.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-
-		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
-		rootParameters[rootParamInfoSkybox.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[rootParamInfoSkybox.ParamIndexCBV_PerDraw], D3D12_SHADER_VISIBILITY_ALL);
-		rootParameters[rootParamInfoSkybox.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[rootParamInfoSkybox.ParamIndexSRV], D3D12_SHADER_VISIBILITY_PIXEL);
-
-		D3D12_STATIC_SAMPLER_DESC sampler[1];
-		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		rootSigSkybox = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, _countof(sampler));
-		rootSigSkybox->SetName(L"Skybox RootSig");
-	}
+	shared_ptr<RootSig> rootSigSkybox = std::make_shared<RootSig>();
+	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { skyboxTex };
+
 	shared_ptr matSkybox = std::make_shared<Material>();
 	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
 	ResourceTracker::AddMaterial(matSkybox);
 
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", m_shaderPBR))
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 
-		m_shaderPBR->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
-		//m_shaderCube->InitPreCompiled(L"Test_VS.cso", L"Test_PS.cso", inputLayout, _countof(inputLayout), rootSig);
-	}
-
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps --CullOff", m_shaderPBR_CullOff))
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutSkybox =
 	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 
-		m_shaderPBR_CullOff->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice(), true);
-	}
+	shared_ptr<Shader> shaderPBR = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
+	shared_ptr<Shader> shaderPBRCullOff = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
+	shared_ptr<Shader> shaderSkybox = CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
 
-	shared_ptr<Shader> shaderSkybox;
-	if (!ResourceTracker::TryGetShader("Skybox_VS.cso - Skybox_PS.cso", shaderSkybox))
-	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-
-		shaderSkybox->InitPreCompiled(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayout, rootSigSkybox.Get(), m_d3dClass->GetDevice(), false, false, true);
-	}
-
-	if (!ResourceTracker::TryGetBatch("PBR Basic", m_batch))
-	{
-		m_batch->Init("PBR Basic", rootSigPBR);
-	}
-
-	shared_ptr<Batch> batchSkybox;
-	if (!ResourceTracker::TryGetBatch("Skybox", batchSkybox))
-	{
-		batchSkybox->Init("Skybox", rootSigSkybox);
-	}
-
-	GameObject goSkybox("Skybox", rootParamInfoSkybox, modelInvertedCube, shaderSkybox, matSkybox);
-	goSkybox.SetScale(20);
-	m_goSkybox = batchSkybox->AddGameObject(goSkybox);
+	m_batch = CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchSkybox = CreateBatch(rootSigSkybox);
+	
+	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
+	m_goSkybox->SetScale(20);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), skyboxTex, irradianceTex, m_shaderPBR, m_shaderPBR_CullOff);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
 
-	m_camera->SetPosition(0, 0, -10);
+	m_camera->SetPosition(0, 3, -5);
 	m_camera->SetRotation(0, 0, 0);
 
 	return true;

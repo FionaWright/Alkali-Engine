@@ -106,6 +106,12 @@ bool ResourceTracker::TryGetShader(string filePath, shared_ptr<Shader>& shader)
 	return true;
 }
 
+bool ResourceTracker::TryGetShader(wstring filePath, shared_ptr<Shader>& shader) 
+{
+	string filePathStr = wstringToString(filePath);
+	return TryGetShader(filePathStr, shader);
+}
+
 unordered_map<string, shared_ptr<Shader>>& ResourceTracker::GetShaders()
 {
 	return ms_shaderMap;

@@ -3,16 +3,10 @@
 #include "CBuffers.h"
 #include "Utils.h"
 
-void Batch::Init(string name, ComPtr<ID3D12RootSignature> pRootSig)
+void Batch::Init(string name, shared_ptr<RootSig> pRootSig)
 {
 	m_Name = name;
-	m_rootSignature = pRootSig;
-}
-
-void Batch::Init(string name, CD3DX12_ROOT_PARAMETER1* params, UINT paramCount)
-{
-	m_Name = name;
-	m_rootSignature = ResourceManager::CreateRootSignature(params, paramCount, nullptr, 0);
+	m_rootSig = pRootSig;
 }
 
 GameObject* Batch::AddGameObject(GameObject go)
@@ -28,12 +22,18 @@ GameObject* Batch::AddGameObject(GameObject go)
 	return &m_goList[m_goList.size() - 1];
 }
 
-void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthoGraphic)
+{
+	GameObject go(name, pModel, pShader, pMaterial, orthoGraphic);
+	return AddGameObject(go);
+}
+
+void RenderFromList(vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
 
-	commandList->SetGraphicsRootSignature(rootSig);
+	commandList->SetGraphicsRootSignature(rootSig->GetRootSigResource());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	for (int i = 0; i < list.size(); i++)
@@ -43,18 +43,18 @@ void RenderFromList(vector<GameObject>& list, ID3D12RootSignature* rootSig, ID3D
 		list[i].GetBoundingSphere(pos, radius);
 
 		if (!FRUSTUM_CULLING_ENABLED || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
-			list[i].Render(commandList, &matrices);
+			list[i].Render(commandList, rootSig->GetRootParamInfo(), &matrices);
 	}
 }
 
 void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
-	RenderFromList(m_goList, m_rootSignature.Get(), commandList, viewProj, frustum);
+	RenderFromList(m_goList, m_rootSig.get(), commandList, viewProj, frustum);
 }
 
 void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
 {
-	RenderFromList(m_goListTrans, m_rootSignature.Get(), commandList, viewProj, frustum);
+	RenderFromList(m_goListTrans, m_rootSig.get(), commandList, viewProj, frustum);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

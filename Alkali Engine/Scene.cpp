@@ -206,7 +206,7 @@ bool Scene::LoadContent()
 	m_depthBufferMat = std::make_shared<Material>();
 	m_depthBufferMat->AddDynamicSRVs(1);
 
-	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", m_rpiDepth, modelPlane, m_shaderDepth, m_depthBufferMat, true);
+	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_depthBufferMat, true);
 	m_goDepthTex->SetRotation(90, 0, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
@@ -316,7 +316,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 		m_depthBufferMat->AssignMaterial(commandList.Get(), m_rpiDepth);
 
-		m_goDepthTex->Render(commandList.Get());
+		m_goDepthTex->Render(commandList.Get(), m_rpiDepth);
 		
 		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
 	}
@@ -351,21 +351,17 @@ void Scene::OnWindowDestroy()
 
 void Scene::InstantiateCubes(int count)
 {
-	shared_ptr<Model> model;
-	if (!ResourceTracker::TryGetModel("Cube", model))
-	{
-		CommandQueue* commandQueueCopy = nullptr;
-	    commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
-			throw std::exception("Command Queue Error");
+	CommandQueue* commandQueueCopy = nullptr;
+	commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!commandQueueCopy)
+		throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		model->Init(commandListCopy.Get(), L"Cube.model");
+	shared_ptr<Model> model = CreateModel("Cube.model", commandListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
-	}
+	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	CommandQueue* commandQueueDirect = nullptr;
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -374,17 +370,8 @@ void Scene::InstantiateCubes(int count)
 
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	shared_ptr<Texture> texture;
-	shared_ptr<Texture> normalMap;
-	if (!ResourceTracker::TryGetTexture("Baba.png", texture))
-	{
-		texture->Init(m_d3dClass, commandListDirect.Get(), "Baba.png");
-	}
-
-	if (!ResourceTracker::TryGetTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", normalMap))
-	{
-		normalMap->Init(m_d3dClass, commandListDirect.Get(), "Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds");
-	}
+	shared_ptr<Texture> texture = CreateTexture("Baba.png", commandListDirect.Get());
+	shared_ptr<Texture> normalMap = CreateTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", commandListDirect.Get(), false, true);
 
 	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { texture, normalMap };
@@ -392,71 +379,34 @@ void Scene::InstantiateCubes(int count)
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes, false);
 	material->AddSRVs(m_d3dClass, textures);
+	ResourceTracker::AddMaterial(material);
 
 	RootParamInfo rootParamInfo;
-	rootParamInfo.NumCBV_PerFrame = 0;
 	rootParamInfo.NumCBV_PerDraw = 1;
 	rootParamInfo.NumSRV = 2;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
-	rootParamInfo.ParamIndexCBV_PerFrame = -1;
 	rootParamInfo.ParamIndexSRV = 1;
 
-	ComPtr<ID3D12RootSignature> rootSigPBR;
+	shared_ptr<RootSig> rootSigPBR = std::make_shared<RootSig>();
+	rootSigPBR->InitDefaultSampler("PBR Root Sig Cubes", rootParamInfo);
+
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rootParamInfo.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rootParamInfo.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 
-		const int paramCount = 2;
-		CD3DX12_ROOT_PARAMETER1 rootParameters[paramCount];
-		rootParameters[rootParamInfo.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
-		rootParameters[rootParamInfo.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	shared_ptr<Shader> shader = CreateShader(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.get());
 
-		D3D12_STATIC_SAMPLER_DESC sampler[1];
-		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		rootSigPBR = ResourceManager::CreateRootSignature(rootParameters, paramCount, sampler, 1);
-		rootSigPBR->SetName(L"Tutorial2 Root Sig");
-	}
-
-	shared_ptr<Shader> shader;
-	if (!ResourceTracker::TryGetShader("PBR.vs - PBR.ps", shader))
-	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		
-		shader->Init(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.Get(), m_d3dClass->GetDevice());
-	}
-
-	shared_ptr<Batch> batch;
-	if (!ResourceTracker::TryGetBatch("PBR Basic", batch))
-	{
-		batch->Init("PBR Basic", rootSigPBR);
-	}
+	shared_ptr<Batch> batch = CreateBatch(rootSigPBR);
 
 	for (int i = 0; i < count; i++)
 	{
 		string id = "Cube_" + std::to_string(i);
-		auto go = GameObject(id, rootParamInfo, model, shader, material);
-		batch->AddGameObject(go);
+		batch->CreateGameObject(id, model, shader, material);
 	}
 }
 
@@ -1175,4 +1125,81 @@ void Scene::RenderImGui()
 
 	if (m_showImGUIDemo)
 		ImGui::ShowDemoWindow(); // Show demo window! :)
+}
+
+shared_ptr<Model> Scene::CreateModel(string path, ID3D12GraphicsCommandList2* commandList)
+{
+	shared_ptr<Model> model;
+	if (!ResourceTracker::TryGetModel(path, model))
+	{
+		model->Init(commandList, path);
+	}
+	return model;
+}
+
+shared_ptr<Texture> Scene::CreateTexture(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown, bool isNormalMap)
+{
+	shared_ptr<Texture> tex;
+	if (!ResourceTracker::TryGetTexture(path, tex))
+	{
+		tex->Init(m_d3dClass, commandList, path, flipUpsideDown, isNormalMap);
+	}
+	return tex;
+}
+
+shared_ptr<Texture> Scene::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
+{
+	shared_ptr<Texture> tex;
+	if (!ResourceTracker::TryGetTexture(path, tex))
+	{
+		tex->InitCubeMapHDR(m_d3dClass, commandList, path, flipUpsideDown);
+	}
+	return tex;
+}
+
+shared_ptr<Texture> Scene::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
+{
+	shared_ptr<Texture> tex;
+	if (!ResourceTracker::TryGetTexture(paths, tex))
+	{
+		tex->InitCubeMap(m_d3dClass, commandList, paths, flipUpsideDown);
+	}
+	return tex;
+}
+
+shared_ptr<Texture> Scene::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* commandList)
+{	
+	shared_ptr<Texture> tex = std::make_shared<Texture>();
+	tex->InitCubeMapUAV_Empty(m_d3dClass);
+	TextureLoader::CreateIrradianceMap(m_d3dClass, commandList, cubemap->GetResource(), tex->GetResource());
+	return tex;
+}
+
+shared_ptr<Shader> Scene::CreateShader(wstring vs, wstring ps, const vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout, RootSig* rootSig, bool preCompiled, bool cullOff, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+{
+	shared_ptr<Shader> shader;
+	wstring id = vs + L" - " + ps;
+	if (cullOff)
+		id += L" --CullOff";
+
+	if (!ResourceTracker::TryGetShader(id, shader))
+	{
+		if (preCompiled)
+			shader->InitPreCompiled(vs, ps, inputLayout, rootSig->GetRootSigResource(), m_d3dClass->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
+		else
+			shader->Init(vs, ps, inputLayout, rootSig->GetRootSigResource(), m_d3dClass->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
+	}
+	return shader;
+}
+
+shared_ptr<Batch> Scene::CreateBatch(shared_ptr<RootSig> rootSig)
+{
+	string id = "Batch for " + rootSig->GetName();
+
+	shared_ptr<Batch> batch;
+	if (!ResourceTracker::TryGetBatch(id, batch))
+	{
+		batch->Init(id, rootSig);
+	}
+	return batch;
 }
