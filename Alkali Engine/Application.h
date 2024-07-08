@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-class Tutorial2;
+class SceneTest;
 class Scene;
 
 using std::wstring;

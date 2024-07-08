@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Tutorial2.h"
+#include "SceneTest.h"
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
 #include "ResourceTracker.h"
@@ -7,12 +7,12 @@
 #include "TextureLoader.h"
 #include "RootSig.h"
 
-Tutorial2::Tutorial2(const std::wstring& name, Window* pWindow)
+SceneTest::SceneTest(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
 {
 }
 
-bool Tutorial2::LoadContent()
+bool SceneTest::LoadContent()
 {
 	Scene::LoadContent();
 
@@ -155,14 +155,14 @@ bool Tutorial2::LoadContent()
 	return true;
 }
 
-void Tutorial2::UnloadContent()
+void SceneTest::UnloadContent()
 {
 	Scene::UnloadContent();
 
 	m_FoV = 45;
 }
 
-void Tutorial2::OnUpdate(TimeEventArgs& e)
+void SceneTest::OnUpdate(TimeEventArgs& e)
 {
 	Scene::OnUpdate(e);
 
@@ -191,7 +191,7 @@ void Tutorial2::OnUpdate(TimeEventArgs& e)
 	m_goSkybox->SetPosition(m_camera->GetWorldPosition());
 }
 
-void Tutorial2::OnRender(TimeEventArgs& e)
+void SceneTest::OnRender(TimeEventArgs& e)
 {
 	Scene::OnRender(e);	
 }
