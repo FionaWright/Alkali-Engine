@@ -182,17 +182,20 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     case WM_MOUSEMOVE:
     {
-        int x = ((int)(short)LOWORD(lParam)); // Why???
-        int y = ((int)(short)HIWORD(lParam));
+        // ???
+        float x = static_cast<float>(((int)(short)LOWORD(lParam)));
+        float y = static_cast<float>(((int)(short)HIWORD(lParam)));
 
         InputManager::SetMousePos(XMFLOAT2(x, y));
 
         POINT clientToScreenPoint;
-        clientToScreenPoint.x = x;
-        clientToScreenPoint.y = y;
+        clientToScreenPoint.x = static_cast<LONG>(x);
+        clientToScreenPoint.y = static_cast<LONG>(y);
         ScreenToClient(hwnd, &clientToScreenPoint);
 
-        XMFLOAT2 client = XMFLOAT2(clientToScreenPoint.x, clientToScreenPoint.y);
+        XMFLOAT2 client;
+        client.x = static_cast<float>(clientToScreenPoint.x);
+        client.y = static_cast<float>(clientToScreenPoint.y);
         InputManager::SetMousePosClient(client);
     }
     break;
