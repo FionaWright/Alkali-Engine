@@ -3,6 +3,15 @@
 #include "CBuffers.h"
 #include "Utils.h"
 
+Batch::Batch()
+	: m_Name("Uninitialised")
+{
+}
+
+Batch::~Batch()
+{
+}
+
 void Batch::Init(string name, shared_ptr<RootSig> pRootSig)
 {
 	m_Name = name;
