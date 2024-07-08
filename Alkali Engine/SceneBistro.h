@@ -17,9 +17,5 @@ protected:
 	virtual void OnRender(TimeEventArgs& e) override;
 
 private:
-	float m_FoV;
-
-	shared_ptr<Batch> m_batch;
-	shared_ptr<Shader> m_shaderPBR, m_shaderPBR_CullOff;
-	GameObject* m_goSkybox;
+	GameObject* m_goSkybox = nullptr;
 };

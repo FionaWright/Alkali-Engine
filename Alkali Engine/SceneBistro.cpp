@@ -8,7 +8,6 @@
 
 SceneBistro::SceneBistro(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
-	, m_FoV(45.0f)
 {
 }
 
@@ -93,14 +92,14 @@ bool SceneBistro::LoadContent()
 	shared_ptr<Shader> shaderPBRCullOff = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
 	shared_ptr<Shader> shaderSkybox = CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
 
-	m_batch = CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchPBR = CreateBatch(rootSigPBR);
 	shared_ptr<Batch> batchSkybox = CreateBatch(rootSigSkybox);
 	
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);
 
 	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, m_batch.get(), skyboxTex, irradianceTex, m_shaderPBR, m_shaderPBR_CullOff);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 
 	fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
@@ -116,8 +115,6 @@ void SceneBistro::UnloadContent()
 	Scene::UnloadContent();
 
 	m_FoV = 45;
-	m_batch.reset();
-	m_shaderPBR.reset();
 }
 
 void SceneBistro::OnUpdate(TimeEventArgs& e)
