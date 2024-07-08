@@ -220,6 +220,9 @@
     <ClCompile Include="AssetFactory.cpp">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
+    <ClCompile Include="SettingsManager.cpp">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SceneTest.h">
@@ -255,7 +258,7 @@
     <ClInclude Include="Keycodes.h">
       <Filter>Source Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Settings.h">
+    <ClInclude Include="Constants.h">
       <Filter>Source Files\Data</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
@@ -389,6 +392,9 @@
     </ClInclude>
     <ClInclude Include="AssetFactory.h">
       <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsManager.h">
+      <Filter>Source Files\Managers\System Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -66,7 +66,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
 	rtvFormats.NumRenderTargets = 1;
-	rtvFormats.RTFormats[0] = RTV_FORMAT;
+	rtvFormats.RTFormats[0] = SettingsManager::ms_DX12.RTVFormat;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
@@ -144,7 +144,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
-	psoStream.DSVFormat = DSV_FORMAT;
+	psoStream.DSVFormat = SettingsManager::ms_DX12.DSVFormat;
 	psoStream.RTVFormats = rtvFormats;
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };

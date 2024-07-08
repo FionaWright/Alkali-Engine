@@ -36,7 +36,7 @@ Application::Application(HINSTANCE hInst)
     AssetFactory::Init(m_d3dClass.get());
 
     bool vSync = false;
-    m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), vSync);
+    m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SettingsManager::ms_Window.ScreenWidth), static_cast<int>(SettingsManager::ms_Window.ScreenHeight), vSync);
     m_mainWindow->Show();
 
     shared_ptr<SceneTest> tut2Scene = std::make_shared<SceneTest>(L"Madeline Scene", m_mainWindow.get());

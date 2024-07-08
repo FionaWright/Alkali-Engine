@@ -43,11 +43,9 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
-    void InstantiateCubes(int count);
+    void InstantiateCubes(int count); // Move
 
     static bool IsSphereModeOn(Model** model);
-    static bool IsForceReloadBinTex();
-    static bool IsMipMapDebugMode();
     static void StaticShutdown();
 
     Window* GetWindow();
@@ -87,19 +85,16 @@ protected:
     vector<shared_ptr<DebugLine>> m_debugLineList;
     DebugLine* m_debugLineLightDir;
 
-    float m_FoV;
     Frustum m_frustum;
     PerFrameCBuffers m_perFrameCBuffers;
 
 private:    
     bool m_dsvEnabled;
-    bool m_showImGUIDemo = false;
     float m_backgroundColor[4];    
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
-    bool m_freezeFrustum = false;
 
-    ComPtr<ID3D12RootSignature> m_rootSigLine, m_rootSigDepth;
+    shared_ptr<RootSig> m_rootSigLine, m_rootSigDepth;
     shared_ptr<Shader> m_shaderLine, m_shaderDepth;
     shared_ptr<Material> m_matLine;
     RootParamInfo m_rpiLine, m_rpiDepth;
@@ -111,10 +106,4 @@ private:
     static shared_ptr<Material> ms_perFramePBRMat;
 
     static shared_ptr<Model> ms_sphereModel;
-    static bool ms_sphereMode;
-    static bool ms_visualizeDSV;
-    static bool ms_sortBatchGos;
-    static bool ms_forceReloadBinTex;
-    static bool ms_mipMapDebugMode;
-    static bool ms_renderDebugLines;
 };

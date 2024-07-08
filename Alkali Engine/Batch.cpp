@@ -51,7 +51,7 @@ void RenderFromList(vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCo
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
 
-		if (!FRUSTUM_CULLING_ENABLED || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
+		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
 			list[i].Render(commandList, rootSig->GetRootParamInfo(), &matrices);
 	}
 }

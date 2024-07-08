@@ -60,12 +60,12 @@ void RootSig::Init(const string& name, const RootParamInfo& rpi)
 void RootSig::InitDefaultSampler(const string& name, const RootParamInfo& rpi)
 {
 	D3D12_STATIC_SAMPLER_DESC sampler[1];
-	sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-	sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-	sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-	sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
+	sampler[0].Filter = SettingsManager::ms_DX12.SamplerFilterDefault;
+	sampler[0].AddressU = SettingsManager::ms_DX12.SamplerAddressModeDefault;
+	sampler[0].AddressV = SettingsManager::ms_DX12.SamplerAddressModeDefault;
+	sampler[0].AddressW = SettingsManager::ms_DX12.SamplerAddressModeDefault;
 	sampler[0].MipLODBias = 0;
-	sampler[0].MaxAnisotropy = DEFAULT_SAMPLER_MAX_ANISOTROPIC;
+	sampler[0].MaxAnisotropy = SettingsManager::ms_DX12.SamplerMaxAnisotropicDefault;
 	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	sampler[0].MinLOD = 0.0f;

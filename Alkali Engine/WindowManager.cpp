@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "WindowManager.h"
-#include "Settings.h"
+#include "Constants.h"
 #include "InputManager.h"
 #include "ImGUIManager.h"
+#include "SettingsManager.h"
 
 static WindowManager* gs_Instance;
 
@@ -36,7 +37,7 @@ void WindowManager::Init(HINSTANCE hInstance)
     wndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON2));
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszMenuName = nullptr;
-    wndClass.lpszClassName = WINDOW_CLASS_NAME;
+    wndClass.lpszClassName = SettingsManager::ms_Window.WindowName.c_str();
     wndClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON2));
 
     if (!RegisterClassExW(&wndClass))
@@ -73,7 +74,7 @@ shared_ptr<Window> WindowManager::CreateRenderWindow(D3DClass* pD3D, const wstri
     HWND parent = nullptr;
     HMENU menu = nullptr;
     LPVOID param = nullptr;
-    HWND hWnd = CreateWindowW(WINDOW_CLASS_NAME, windowName.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, parent, menu, m_hInstance, param);
+    HWND hWnd = CreateWindowW(SettingsManager::ms_Window.WindowName.c_str(), windowName.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, parent, menu, m_hInstance, param);
 
     if (!hWnd)
     {

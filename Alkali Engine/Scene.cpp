@@ -10,12 +10,6 @@
 #include "AssetFactory.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
-bool Scene::ms_sphereMode;
-bool Scene::ms_visualizeDSV;
-bool Scene::ms_sortBatchGos;
-bool Scene::ms_forceReloadBinTex;
-bool Scene::ms_mipMapDebugMode;
-bool Scene::ms_renderDebugLines;
 shared_ptr<Material> Scene::ms_perFramePBRMat;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
@@ -26,11 +20,8 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	, m_viewMatrix(XMMatrixIdentity())
 	, m_projectionMatrix(XMMatrixIdentity())
 	, m_viewProjMatrix(XMMatrixIdentity())
-	, m_FoV(45.0f)
 {
 	SetBackgroundColor(0.4f, 0.6f, 0.9f, 1.0f);
-	ms_sortBatchGos = true;
-	ms_renderDebugLines = true; // DISABLED TEMPORARILY
 }
 
 Scene::~Scene()
@@ -52,7 +43,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
 
-	DescriptorManager::Init(m_d3dClass, DESCRIPTOR_HEAP_SIZE);
+	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
 
 	if (m_dsvEnabled)
 		SetDSVForSize(width, height);
@@ -71,15 +62,8 @@ bool Scene::LoadContent()
 
 		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		if (!ResourceTracker::TryGetModel("Sphere.model", ms_sphereModel))
-		{
-			ms_sphereModel->Init(commandListCopy.Get(), L"Sphere.model");
-		}
-		
-		if (!ResourceTracker::TryGetModel("Plane.model", modelPlane))
-		{
-			modelPlane->Init(commandListCopy.Get(), L"Plane.model");
-		}
+		ms_sphereModel = AssetFactory::CreateModel("Sphere.model", commandListCopy.Get());
+		modelPlane = AssetFactory::CreateModel("Plane.model", commandListCopy.Get());
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -99,55 +83,27 @@ bool Scene::LoadContent()
 		ResourceTracker::AddMaterial(ms_perFramePBRMat);
 	}
 
-	m_rpiLine.NumCBV_PerFrame = 0;
 	m_rpiLine.NumCBV_PerDraw = 1;
-	m_rpiLine.NumSRV = 0;
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
-	m_rpiLine.ParamIndexCBV_PerFrame = -1;
-	m_rpiLine.ParamIndexSRV = -1;
 
+
+	m_rootSigLine = std::make_shared<RootSig>();
+	m_rootSigLine->InitDefaultSampler("Line Root Sig", m_rpiLine);
+
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, m_rpiLine.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[m_rpiLine.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
-
-		D3D12_STATIC_SAMPLER_DESC sampler[1];
-		sampler[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = 0;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		m_rootSigLine = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
-		m_rootSigLine->SetName(L"Line Root Sig");
-	}
-
-	if (!ResourceTracker::TryGetShader("Line_VS.cso - Line_PS.cso", m_shaderLine))
-	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
-	}
+	m_shaderLine = AssetFactory::CreateShader(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.get(), true, false, false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
 
 		m_matLine = std::make_shared<Material>();
 		m_matLine->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+		ResourceTracker::AddMaterial(m_matLine);
 	}
 
 	{
@@ -161,48 +117,18 @@ bool Scene::LoadContent()
 		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
 	}
 
-	m_rpiDepth.NumCBV_PerFrame = 0;
-	m_rpiDepth.NumCBV_PerDraw = 0;
 	m_rpiDepth.NumSRV = 1;
-	m_rpiDepth.ParamIndexCBV_PerDraw = -1;
-	m_rpiDepth.ParamIndexCBV_PerFrame = -1;
 	m_rpiDepth.ParamIndexSRV = 0;
 
+	m_rootSigDepth = std::make_shared<RootSig>();
+	m_rootSigDepth->InitDefaultSampler("Depth Buffer Root Sig", m_rpiDepth);
+
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, m_rpiDepth.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
 
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[m_rpiDepth.ParamIndexSRV].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-
-		D3D12_STATIC_SAMPLER_DESC sampler[1];
-		sampler[0].Filter = DEFAULT_SAMPLER_FILTER;
-		sampler[0].AddressU = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressV = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].AddressW = DEFAULT_SAMPLER_ADDRESS_MODE;
-		sampler[0].MipLODBias = 0;
-		sampler[0].MaxAnisotropy = 0;
-		sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler[0].MinLOD = 0.0f;
-		sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-		sampler[0].ShaderRegister = 0;
-		sampler[0].RegisterSpace = 0;
-		sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		m_rootSigDepth = ResourceManager::CreateRootSignature(rootParameters, _countof(rootParameters), sampler, 1);
-		m_rootSigDepth->SetName(L"Depth Buffer Tex Root Sig");
-	}
-
-	if (!ResourceTracker::TryGetShader("Depth_VS.cso - Depth_PS.cso", m_shaderDepth))
-	{
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		m_shaderDepth->InitPreCompiled(L"Depth_VS.cso", L"Depth_PS.cso", inputLayout, m_rootSigDepth.Get(), m_d3dClass->GetDevice(), true, true);
-	}
+	m_shaderDepth = AssetFactory::CreateShader(L"Depth_VS.cso", L"Depth_PS.cso", inputLayout, m_rootSigDepth.get(), true, true, true);
 
 	m_depthBufferMat = std::make_shared<Material>();
 	m_depthBufferMat->AddDynamicSRVs(1);
@@ -241,13 +167,15 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	}
 
 	m_viewMatrix = m_camera->GetViewMatrix();
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
+
+	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, SettingsManager::ms_DX12.FarPlane);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 
-	if (!m_freezeFrustum)
+	if (!SettingsManager::ms_Dynamic.FreezeFrustum)
 		m_frustum.UpdateValues(m_viewProjMatrix);
 	
-	bool showLines = PERMA_FRUSTUM_DEBUG_LINES || m_freezeFrustum;
+	bool showLines = SettingsManager::ms_Dynamic.AlwaysShowFrustumDebugLines || SettingsManager::ms_Dynamic.FreezeFrustum;
 	if (showLines)
 		m_frustum.CalculateDebugLinePoints(m_d3dClass);
 
@@ -256,7 +184,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
-	if (ms_sortBatchGos)
+	if (SettingsManager::ms_Dynamic.BatchSortingEnabled)
 	{
 		auto& batchList = ResourceTracker::GetBatches();
 		for (auto& it : batchList)
@@ -301,14 +229,14 @@ void Scene::OnRender(TimeEventArgs& e)
 	for (auto& it : batchList)
 		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
 
-	if (ms_renderDebugLines)
+	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
-	if (ms_visualizeDSV && m_goDepthTex)
+	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_goDepthTex)
 	{
 		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, nullptr); // Disable DSV
 
-		commandList->SetGraphicsRootSignature(m_rootSigDepth.Get());
+		commandList->SetGraphicsRootSignature(m_rootSigDepth->GetRootSigResource());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Convert DSV to SRV and assign as a texture to be read in the shader
@@ -328,7 +256,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	Present(commandList.Get(), commandQueue); 
 	
 	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
-	if (ms_visualizeDSV && m_goDepthTex)
+	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_goDepthTex)
 	{
 		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
 
@@ -413,21 +341,11 @@ void Scene::InstantiateCubes(int count)
 
 bool Scene::IsSphereModeOn(Model** model)
 {
-	if (!ms_sphereMode)
+	if (!SettingsManager::ms_Dynamic.BoundingSphereMode)
 		return false;
 
 	*model = ms_sphereModel.get();
 	return true;
-}
-
-bool Scene::IsForceReloadBinTex()
-{
-	return ms_forceReloadBinTex;
-}
-
-bool Scene::IsMipMapDebugMode()
-{
-	return ms_mipMapDebugMode;
 }
 
 void Scene::StaticShutdown()
@@ -504,17 +422,17 @@ void Scene::SetDSVForSize(int width, int height)
 	height = std::max(1, height);
 
 	D3D12_CLEAR_VALUE optimizedClearValue = {};
-	optimizedClearValue.Format = DSV_FORMAT;
+	optimizedClearValue.Format = SettingsManager::ms_DX12.DSVFormat;
 	optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DSV_FORMAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(optimizedClearValue.Format, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
 	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBufferResource));
 	ThrowIfFailed(hr);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-	dsv.Format = DSV_FORMAT;
+	dsv.Format = optimizedClearValue.Format;
 	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsv.Texture2D.MipSlice = 0;
 	dsv.Flags = D3D12_DSV_FLAG_NONE;
@@ -528,7 +446,7 @@ void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags)
 	auto device = m_d3dClass->GetDevice();
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-	dsv.Format = DSV_FORMAT;
+	dsv.Format = SettingsManager::ms_DX12.DSVFormat;
 	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsv.Texture2D.MipSlice = 0;
 	dsv.Flags = flags;
@@ -548,7 +466,7 @@ void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D1
 {
 	for (int i = 0; i < m_debugLineList.size(); i++)
 	{
-		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine.Get(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjMatrix);
+		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjMatrix);
 	}
 }
 
@@ -580,15 +498,15 @@ void Scene::RenderImGui()
 					}
 				}
 
-				ImGui::Checkbox("Freeze Frustum Culling", &m_freezeFrustum);
+				ImGui::Checkbox("Freeze Frustum Culling", &SettingsManager::ms_Dynamic.FreezeFrustum);
 
-				ImGui::Checkbox("Show Bounding Spheres", &ms_sphereMode);
+				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
-				ImGui::Checkbox("Show DSV", &ms_visualizeDSV);
+				ImGui::Checkbox("Show DSV", &SettingsManager::ms_Dynamic.VisualiseDSVEnabled);
 
-				bool prevMipMapDebugMode = ms_mipMapDebugMode;
-				ImGui::Checkbox("Mip Map Debug Mode", &ms_mipMapDebugMode);
-				if (prevMipMapDebugMode != ms_mipMapDebugMode)
+				bool prevMipMapDebugMode = SettingsManager::ms_Dynamic.MipMapDebugMode;
+				ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode);
+				if (prevMipMapDebugMode != SettingsManager::ms_Dynamic.MipMapDebugMode)
 				{
 					ResourceTracker::ClearTexList();
 					ResourceTracker::ClearMatList();
@@ -603,13 +521,10 @@ void Scene::RenderImGui()
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
-				bool fullScreen = m_pWindow->IsFullScreen();
-				ImGui::Checkbox("Fullscreen", &fullScreen);
-				m_pWindow->SetFullscreen(fullScreen);
+				if (ImGui::Checkbox("Fullscreen", &SettingsManager::ms_Dynamic.FullscreenEnabled))
+					m_pWindow->SetFullscreen(SettingsManager::ms_Dynamic.FullscreenEnabled);
 
-				bool vSync = m_pWindow->IsVSync();
-				ImGui::Checkbox("VSync", &vSync);
-				m_pWindow->SetVSync(vSync);
+				ImGui::Checkbox("VSync", &SettingsManager::ms_Dynamic.VSyncEnabled);
 			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
@@ -617,9 +532,9 @@ void Scene::RenderImGui()
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
-				bool prevForceReload = ms_forceReloadBinTex;
-				ImGui::Checkbox("Force reload all binTex", &ms_forceReloadBinTex);
-				if (!prevForceReload && ms_forceReloadBinTex)
+				bool prevAllowBinTex = SettingsManager::ms_Dynamic.AllowBinTex;
+				ImGui::Checkbox("Force reload all binTex", &SettingsManager::ms_Dynamic.AllowBinTex);
+				if (prevAllowBinTex && !SettingsManager::ms_Dynamic.AllowBinTex)
 				{
 					ResourceTracker::ClearTexList();
 					ResourceTracker::ClearMatList();
@@ -631,7 +546,7 @@ void Scene::RenderImGui()
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
-				ImGui::Checkbox("Show demo window", &m_showImGUIDemo);
+				ImGui::Checkbox("Show demo window", &SettingsManager::ms_Dynamic.ShowImGuiDemoWindow);
 			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
@@ -646,7 +561,7 @@ void Scene::RenderImGui()
 
 			ImGui::ColorEdit4("Background Color", m_backgroundColor);
 
-			ImGui::Checkbox("Debug Lines", &ms_renderDebugLines);
+			ImGui::Checkbox("Debug Lines", &SettingsManager::ms_Dynamic.DebugLinesEnabled);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Rendering");
@@ -654,7 +569,7 @@ void Scene::RenderImGui()
 
 			ImGui::Checkbox("DSV enabled", &m_dsvEnabled);
 
-			ImGui::Checkbox("Sort By Depth", &ms_sortBatchGos);
+			ImGui::Checkbox("Sort By Depth", &SettingsManager::ms_Dynamic.BatchSortingEnabled);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Directional Light CBV");
@@ -1100,7 +1015,7 @@ void Scene::RenderImGui()
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
 
-		if (!DescriptorManager::ms_DebugHeapEnabled)
+		if (!SettingsManager::ms_Dynamic.HeapDebugViewEnabled)
 			ImGui::BeginDisabled(true);
 
 		if (ImGui::CollapsingHeader("Heap View"))
@@ -1118,12 +1033,12 @@ void Scene::RenderImGui()
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}
 
-		if (!DescriptorManager::ms_DebugHeapEnabled)
+		if (!SettingsManager::ms_Dynamic.HeapDebugViewEnabled)
 			ImGui::EndDisabled();
 
 		ImGui::Unindent(IM_GUI_INDENTATION);
 	}
 
-	if (m_showImGUIDemo)
-		ImGui::ShowDemoWindow(); // Show demo window! :)
+	if (SettingsManager::ms_Dynamic.ShowImGuiDemoWindow)
+		ImGui::ShowDemoWindow();
 }
