@@ -7,8 +7,7 @@
 constexpr int NUM_CHANNELS = 4;
 
 Texture::Texture()
-    : m_textureData(0)
-    , m_textureDesc({})
+    : m_textureDesc({})
 {
 }
 
@@ -19,29 +18,15 @@ Texture::~Texture()
         m_textureResource->Release();
         m_textureResource.Reset();
     }
-
-    if (m_textureData)
-    {
-        delete m_textureData;
-        m_textureData = 0;
-    }
 }
 
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
+void Texture::MakeTexDesc(UINT16 arraySize) 
 {
-    HRESULT hr;
-    auto device = d3d->GetDevice();
-
-    m_filePath = filePath;
-    string longPath = "Assets/Textures/" + filePath;
-
-    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &m_textureData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);
-
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
-    if (invalidForMipMaps)
+    if (invalidForMipMaps || (m_isCubemap && CUBEMAP_MIP_MAPS_DISABLED))
         m_textureDesc.MipLevels = 1u;
     else if (AUTO_MIP_LEVELS)
         m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
@@ -58,39 +43,71 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
     m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-    m_textureDesc.DepthOrArraySize = 1;
+    m_textureDesc.DepthOrArraySize = arraySize;
     m_textureDesc.SampleDesc.Count = 1;
     m_textureDesc.SampleDesc.Quality = 0;
     m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+void Texture::CreateResources(ID3D12Device2* device, int numSubresources)
+{
+    m_numSubresources = numSubresources;
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
+    HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
     ThrowIfFailed(hr);
 
-    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 1);
+    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, numSubresources);
 
     heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
     ThrowIfFailed(hr);
+}
 
+void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uint8_t** pData)
+{
     int realChannels = m_channels == 3 ? 4 : m_channels;
     int channelsPerRow = m_textureWidth * realChannels;
     int bytesPerRow = channelsPerRow * sizeof(uint8_t);
     int totalBytes = bytesPerRow * m_textureHeight;
 
-    D3D12_SUBRESOURCE_DATA textureData = {};
-    textureData.pData = m_textureData;
-    textureData.RowPitch = bytesPerRow;
-    textureData.SlicePitch = totalBytes;
+    vector< D3D12_SUBRESOURCE_DATA> subresources(m_numSubresources);
+
+    for (int i = 0; i < m_numSubresources; i++)
+    {
+        subresources[i].pData = pData[i];
+        subresources[i].RowPitch = bytesPerRow;
+        subresources[i].SlicePitch = totalBytes;
+    }    
+
+    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, m_numSubresources, subresources.data());    
+
+    for (int i = 0; i < m_numSubresources; i++)
+    {
+        delete[] pData[i];
+    }
+}
+
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
+{
+    HRESULT hr;
+    auto device = d3d->GetDevice();
+
+    m_filePath = filePath;
+    string longPath = "Assets/Textures/" + filePath;
+
+    uint8_t* pData;
+    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &pData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);
+
+    MakeTexDesc(1);
+
+    CreateResources(device, 1);
+
+    UploadResources(commandListDirect, &pData);
 
     wstring debugName(filePath.begin(), filePath.end());
     m_textureResource->SetName(debugName.c_str());
-
-    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, 1, &textureData);
-
-    delete[] m_textureData;
-    m_textureData = 0;
 
     if (m_textureDesc.MipLevels > 1)
     {
@@ -137,67 +154,14 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
         }
     }
 
-    // NPOT dimensions not currently supported for mip mapping
-    bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
-    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
+    MakeTexDesc(6);
 
-    if (invalidForMipMaps || CUBEMAP_MIP_MAPS_DISABLED)
-        m_textureDesc.MipLevels = 1u;
-    else if (AUTO_MIP_LEVELS)
-        m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
-    else
-        m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
+    CreateResources(device, 6);
 
-    DXGI_FORMAT format =
-        m_channels == 4 ? DXGI_FORMAT_R8G8B8A8_UNORM :
-        m_channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM :
-        m_channels == 2 ? DXGI_FORMAT_R8G8_UNORM :
-        DXGI_FORMAT_R8_UNORM;
-
-    m_textureDesc.Format = format;
-    m_textureDesc.Width = m_textureWidth;
-    m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; 
-    m_textureDesc.DepthOrArraySize = 6;
-    m_textureDesc.SampleDesc.Count = 1;
-    m_textureDesc.SampleDesc.Quality = 0;
-    m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
-    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
-    ThrowIfFailed(hr);
-
-    int numSubresources = 6;
-    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, numSubresources);
-
-    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
-    ThrowIfFailed(hr);
-
-    int realChannels = m_channels == 3 ? 4 : m_channels;
-    int channelsPerRow = m_textureWidth * realChannels;
-    int bytesPerRow = channelsPerRow * sizeof(uint8_t);
-    int totalBytes = bytesPerRow * m_textureHeight;
-
-    vector<D3D12_SUBRESOURCE_DATA> subresources(6);
-
-    for (int i = 0; i < 6; i++)
-    {
-        subresources[i].pData = textureDatas[i];
-        subresources[i].RowPitch = bytesPerRow;
-        subresources[i].SlicePitch = totalBytes;
-    }
+    UploadResources(commandListDirect, textureDatas.data());
 
     wstring debugName(L"Unnamed Cubemap");
     m_textureResource->SetName(debugName.c_str());
-
-    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, numSubresources, subresources.data());
-
-    for (int i = 0; i < 6; i++)
-    {
-        delete[] textureDatas[i];
-    }
 
     if (m_textureDesc.MipLevels > 1)
     {
@@ -224,67 +188,14 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     string longPath = "Assets/Textures/" + filePath;
     TextureLoader::LoadHDR(longPath, m_textureWidth, m_textureHeight, textureDatas, m_channels);
 
-    // NPOT dimensions not currently supported for mip mapping
-    bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
-    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
+    MakeTexDesc(6);
 
-    if (invalidForMipMaps || CUBEMAP_MIP_MAPS_DISABLED)
-        m_textureDesc.MipLevels = 1u;
-    else if (AUTO_MIP_LEVELS)
-        m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
-    else
-        m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
+    CreateResources(device, 6);
 
-    DXGI_FORMAT format =
-        m_channels == 4 ? DXGI_FORMAT_R8G8B8A8_UNORM :
-        m_channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM :
-        m_channels == 2 ? DXGI_FORMAT_R8G8_UNORM :
-        DXGI_FORMAT_R8_UNORM;
-
-    m_textureDesc.Format = format;
-    m_textureDesc.Width = m_textureWidth;
-    m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; 
-    m_textureDesc.DepthOrArraySize = 6;
-    m_textureDesc.SampleDesc.Count = 1;
-    m_textureDesc.SampleDesc.Quality = 0;
-    m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
-    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
-    ThrowIfFailed(hr);
-
-    int numSubresources = 6;
-    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, numSubresources);
-
-    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-    hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_textureUploadHeap));
-    ThrowIfFailed(hr);
-
-    int realChannels = m_channels == 3 ? 4 : m_channels;
-    int channelsPerRow = m_textureWidth * realChannels;
-    int bytesPerRow = channelsPerRow * sizeof(uint8_t);
-    int totalBytes = bytesPerRow * m_textureHeight;
-
-    vector<D3D12_SUBRESOURCE_DATA> subresources(6);
-
-    for (int i = 0; i < 6; i++)
-    {
-        subresources[i].pData = textureDatas[i];
-        subresources[i].RowPitch = bytesPerRow;
-        subresources[i].SlicePitch = totalBytes;
-    }
+    UploadResources(commandListDirect, textureDatas.data());
 
     wstring debugName(L"Unnamed Cubemap");
     m_textureResource->SetName(debugName.c_str());
-
-    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, numSubresources, subresources.data());
-
-    for (int i = 0; i < 6; i++)
-    {
-        delete[] textureDatas[i];
-    }
 
     if (m_textureDesc.MipLevels > 1)
     {
@@ -308,17 +219,9 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
     m_textureWidth = IRRADIANCE_MAP_RESO;
     m_textureHeight = IRRADIANCE_MAP_RESO;
 
-    DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;        
+    MakeTexDesc(6);
 
-    m_textureDesc.Format = format;
-    m_textureDesc.Width = m_textureWidth;
-    m_textureDesc.Height = m_textureHeight;
-    m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-    m_textureDesc.DepthOrArraySize = 6;
-    m_textureDesc.SampleDesc.Count = 1;
-    m_textureDesc.SampleDesc.Quality = 0;
-    m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    m_textureDesc.MipLevels = 1;
+    //m_textureDesc.MipLevels = 1; // IS IT YOU?????????
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_textureResource));
