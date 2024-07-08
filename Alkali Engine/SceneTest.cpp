@@ -6,6 +6,7 @@
 #include "Utils.h"
 #include "TextureLoader.h"
 #include "RootSig.h"
+#include "AssetFactory.h"
 
 SceneTest::SceneTest(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)	
@@ -28,8 +29,8 @@ bool SceneTest::LoadContent()
 		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, commandListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
 
-		modelPlane = CreateModel("Plane.model", commandListCopy.Get());
-		modelInvertedCube = CreateModel("Cube (Inverted).model", commandListCopy.Get());
+		modelPlane = AssetFactory::CreateModel("Plane.model", commandListCopy.Get());
+		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
 
 		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -41,11 +42,11 @@ bool SceneTest::LoadContent()
 		throw std::exception("Command Queue Error");
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	shared_ptr<Texture> baseTex = CreateTexture("EarthDay.png", commandListDirect.Get());
-	shared_ptr<Texture> normalTex = CreateTexture("EarthNormal.png", commandListDirect.Get(), false, true);
-	shared_ptr<Texture> specTex = CreateTexture("DefaultSpecular.png", commandListDirect.Get());
-	shared_ptr<Texture> skyboxTex = CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
+	shared_ptr<Texture> baseTex = AssetFactory::CreateTexture("EarthDay.png", commandListDirect.Get());
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture("EarthNormal.png", commandListDirect.Get(), false, true);
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture("DefaultSpecular.png", commandListDirect.Get());
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", commandListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
 
 	//vector<string> skyboxPaths = {
 	//	"Skyboxes/Iceland/negx.tga",
@@ -118,16 +119,16 @@ bool SceneTest::LoadContent()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shaderPBR = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
-	shared_ptr<Shader> shaderPBRCullOff = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
-	shared_ptr<Shader> shaderSkybox = CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
+	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
+	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
-	shared_ptr<Batch> batchPBR = CreateBatch(rootSigPBR);
-	shared_ptr<Batch> batchSkybox = CreateBatch(rootSigSkybox);
+	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 

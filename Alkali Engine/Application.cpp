@@ -13,6 +13,7 @@
 #include "TextureLoader.h"
 #include "ResourceTracker.h"
 #include "DescriptorManager.h"
+#include "AssetFactory.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -31,6 +32,8 @@ Application::Application(HINSTANCE hInst)
 
     m_windowManager->Init(hInst);
     m_d3dClass->Init();
+
+    AssetFactory::Init(m_d3dClass.get());
 
     bool vSync = false;
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), vSync);
