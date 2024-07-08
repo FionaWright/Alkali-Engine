@@ -42,6 +42,6 @@ private:
 	size_t m_addedCBV_PerDraw = 0, m_addedCBV_PerFrame = 0;
 
 	MaterialPropertiesCB m_propertiesCB;
-	bool m_attachedProperties;
+	bool m_attachedProperties = false;
 };
 

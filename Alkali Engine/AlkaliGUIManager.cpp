@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Application.h"
+#include "AssetFactory.h"
 
 void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 {
@@ -201,11 +202,30 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 			static char numObjectsStr[256];
 			ImGui::InputText("Number", numObjectsStr, 256, 0);
 
-			if (ImGui::Button("Instantiate Cube"))
-			{
-				int num = std::atoi(numObjectsStr);
-				scene->InstantiateCubes(num);
-			}
+			int num = std::atoi(numObjectsStr);
+
+			if (ImGui::Button("Instantiate Cube(s)"))
+				AssetFactory::InstantiateObjects("Cube.model", num);
+
+			ImGui::Spacing();
+
+			if (ImGui::Button("Instantiate Madeline(s)"))
+				AssetFactory::InstantiateObjects("Madeline.model", num);
+
+			ImGui::Spacing();
+
+			if (ImGui::Button("Instantiate Sphere(s)"))
+				AssetFactory::InstantiateObjects("Sphere.model", num);
+
+			ImGui::Spacing();
+
+			if (ImGui::Button("Instantiate Plane(s)"))
+				AssetFactory::InstantiateObjects("Plane.model", num);
+
+			ImGui::Spacing();
+
+			if (ImGui::Button("Instantiate TomBox(es)"))
+				AssetFactory::InstantiateObjects("TomBoxTriangulated.model", num);
 
 			ImGui::Spacing();
 

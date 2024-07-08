@@ -276,67 +276,6 @@ void Scene::OnWindowDestroy()
 {
 }
 
-void Scene::InstantiateCubes(int count)
-{
-	CommandQueue* commandQueueCopy = nullptr;
-	commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	if (!commandQueueCopy)
-		throw std::exception("Command Queue Error");
-
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
-
-	shared_ptr<Model> model = AssetFactory::CreateModel("Cube.model", commandListCopy.Get());
-
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
-
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
-		throw std::exception("Command Queue Error");
-
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
-
-	shared_ptr<Texture> texture = AssetFactory::CreateTexture("Baba.png", commandListDirect.Get());
-	shared_ptr<Texture> normalMap = AssetFactory::CreateTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", commandListDirect.Get(), false, true);
-
-	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
-	vector<shared_ptr<Texture>> textures = { texture, normalMap };
-
-	shared_ptr<Material> material = std::make_shared<Material>();
-	material->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizes, false);
-	material->AddSRVs(m_d3dClass, textures);
-	ResourceTracker::AddMaterial(material);
-
-	RootParamInfo rootParamInfo;
-	rootParamInfo.NumCBV_PerDraw = 1;
-	rootParamInfo.NumSRV = 2;
-	rootParamInfo.ParamIndexCBV_PerDraw = 0;
-	rootParamInfo.ParamIndexSRV = 1;
-
-	shared_ptr<RootSig> rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig Cubes", rootParamInfo);
-
-	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-
-	shared_ptr<Shader> shader = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.get());
-
-	shared_ptr<Batch> batch = AssetFactory::CreateBatch(rootSigPBR);
-
-	for (int i = 0; i < count; i++)
-	{
-		string id = "Cube_" + std::to_string(i);
-		batch->CreateGameObject(id, model, shader, material);
-	}
-}
-
 bool Scene::IsSphereModeOn(Model** model)
 {
 	if (!SettingsManager::ms_Dynamic.BoundingSphereMode)

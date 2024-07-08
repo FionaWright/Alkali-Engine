@@ -87,3 +87,63 @@ shared_ptr<Batch> AssetFactory::CreateBatch(shared_ptr<RootSig> rootSig)
 	}
 	return batch;
 }
+
+void AssetFactory::InstantiateObjects(string modelName, int count)
+{
+	CommandQueue* commandQueueCopy = nullptr;
+	commandQueueCopy = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!commandQueueCopy)
+		throw std::exception("Command Queue Error");
+
+	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+
+	shared_ptr<Model> model = AssetFactory::CreateModel(modelName, commandListCopy.Get());
+
+	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	commandQueueCopy->WaitForFenceValue(fenceValue);
+
+	CommandQueue* commandQueueDirect = nullptr;
+	commandQueueDirect = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!commandQueueDirect)
+		throw std::exception("Command Queue Error");
+
+	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+
+	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
+
+	RootParamInfo rootParamInfo;
+	rootParamInfo.NumCBV_PerDraw = 1;
+	rootParamInfo.ParamIndexCBV_PerDraw = 0;
+
+	shared_ptr<RootSig> rootSig = std::make_shared<RootSig>();
+	rootSig->InitDefaultSampler("Root Sig Cubes", rootParamInfo);
+
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	shared_ptr<Shader> shader = AssetFactory::CreateShader(L"Shrimple_VS.cso", L"Shrimple_PS.cso", inputLayout, rootSig.get(), true);
+
+	shared_ptr<Batch> batch = AssetFactory::CreateBatch(rootSig);
+
+	for (int i = 0; i < count; i++)
+	{
+		shared_ptr<Material> material = std::make_shared<Material>();
+		material->AddCBVs(ms_d3d, commandListDirect.Get(), cbvSizes, false);
+		ResourceTracker::AddMaterial(material);
+
+		string id = modelName + " #" + std::to_string(i);
+		auto go = batch->CreateGameObject(id, model, shader, material);
+
+		float randX = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
+		float randY = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
+		float randZ = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
+
+		go->SetPosition(randX * 20, randY * 10, randZ * 20);
+	}
+}
