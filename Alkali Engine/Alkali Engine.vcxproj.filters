@@ -52,7 +52,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tutorial2.cpp">
+    <ClCompile Include="SceneTest.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
@@ -210,7 +210,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Tutorial2.h">
+    <ClInclude Include="SceneTest.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">

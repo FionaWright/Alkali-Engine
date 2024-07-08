@@ -226,7 +226,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
-    <ClCompile Include="Tutorial2.cpp" />
+    <ClCompile Include="SceneTest.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="WindowManager.cpp" />
@@ -283,7 +283,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureLoader.h" />
-    <ClInclude Include="Tutorial2.h" />
+    <ClInclude Include="SceneTest.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WindowManager.h" />

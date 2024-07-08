@@ -5,7 +5,7 @@
 #include "Window.h"
 #include "CommandQueue.h"
 #include "Scene.h"
-#include "Tutorial2.h"
+#include "SceneTest.h"
 #include "ModelLoader.h"
 #include "ImGUIManager.h"
 #include "Utils.h"
@@ -36,7 +36,7 @@ Application::Application(HINSTANCE hInst)
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), vSync);
     m_mainWindow->Show();
 
-    shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow.get());
+    shared_ptr<SceneTest> tut2Scene = std::make_shared<SceneTest>(L"Madeline Scene", m_mainWindow.get());
     InitScene(tut2Scene);
 
     shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
