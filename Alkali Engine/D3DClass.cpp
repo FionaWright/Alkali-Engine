@@ -55,8 +55,8 @@ CommandQueue* D3DClass::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
     case D3D12_COMMAND_LIST_TYPE_COPY:
         return m_copyCommandQueue.get();
     default:
-        assert(false && "Invalid command queue type.");
-    }
+        throw std::exception("Invalid command queue args");
+    }    
 }
 
 bool D3DClass::IsTearingSupported() const

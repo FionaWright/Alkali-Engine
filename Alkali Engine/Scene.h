@@ -43,8 +43,6 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
-    void InstantiateCubes(int count); // Move
-
     static bool IsSphereModeOn(Model** model);
     static void StaticShutdown();
 

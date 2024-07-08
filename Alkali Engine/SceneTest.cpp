@@ -180,6 +180,7 @@ void SceneTest::OnUpdate(TimeEventArgs& e)
 	if (altEnter || InputManager::IsKeyDown(KeyCode::F11))
 	{
 		SettingsManager::ms_Dynamic.FullscreenEnabled = !SettingsManager::ms_Dynamic.FullscreenEnabled;
+		m_pWindow->SetFullscreen(SettingsManager::ms_Dynamic.FullscreenEnabled);
 	}
 
 	if (InputManager::IsKeyDown(KeyCode::V))

@@ -22,6 +22,8 @@ public:
     static shared_ptr<Shader> CreateShader(wstring vs, wstring ps, const vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout, RootSig* rootSig, bool preCompiled = false, bool cullOff = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     static shared_ptr<Batch> CreateBatch(shared_ptr<RootSig> rootSig);
 
+    static void InstantiateObjects(string modelName, int count);
+
 private:
     static D3DClass* ms_d3d;
 };

@@ -116,6 +116,9 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const Roo
 
 bool Material::GetHasAlpha()
 {
+    if (m_textures.size() == 0)
+        return false;
+
     return m_textures.at(0)->GetHasAlpha();
 }
 

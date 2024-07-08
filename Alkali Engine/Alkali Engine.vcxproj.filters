@@ -187,9 +187,6 @@
     <ClCompile Include="Application.cpp">
       <Filter>Source Files\Managers\System Managers</Filter>
     </ClCompile>
-    <ClCompile Include="D3DClass.cpp">
-      <Filter>Source Files\Managers\System Managers</Filter>
-    </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>Source Files\Managers\System Managers</Filter>
     </ClCompile>
@@ -225,6 +222,9 @@
     </ClCompile>
     <ClCompile Include="AlkaliGUIManager.cpp">
       <Filter>Source Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DClass.cpp">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -366,9 +366,6 @@
     <ClInclude Include="Application.h">
       <Filter>Source Files\Managers\System Managers</Filter>
     </ClInclude>
-    <ClInclude Include="D3DClass.h">
-      <Filter>Source Files\Managers\System Managers</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Source Files\Managers\System Managers</Filter>
     </ClInclude>
@@ -401,6 +398,9 @@
     </ClInclude>
     <ClInclude Include="AlkaliGUIManager.h">
       <Filter>Source Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DClass.h">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -462,6 +462,12 @@
     </FxCompile>
     <FxCompile Include="Assets\Shaders\CreateMipMapsCubemap.hlsl">
       <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Shrimple_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Shrimple_VS.hlsl">
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
