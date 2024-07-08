@@ -12,6 +12,7 @@
 
 using std::wstring;
 using std::shared_ptr;
+using std::weak_ptr;
 
 class Scene;
 
@@ -46,7 +47,7 @@ public:
     HWND GetHWND();
     ID3D12DescriptorHeap* GetRTVDescriptorHeap();
 
-    void RegisterCallbacks(shared_ptr<Scene> pScene);
+    void RegisterCallbacks(Scene* pScene);
 
 protected:
     friend LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -71,7 +72,7 @@ private:
 
     uint64_t m_FrameCounter = 0;
 
-    std::weak_ptr<Scene> m_pScene;
+    Scene* m_pScene = nullptr;
 
     ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
     ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
@@ -82,6 +83,5 @@ private:
 
     RECT m_WindowRect;
 
-    D3DClass* m_d3dClass;
-
+    D3DClass* m_d3dClass = nullptr;
 };

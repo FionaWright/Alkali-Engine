@@ -14,6 +14,7 @@
 #include "ResourceTracker.h"
 #include "DescriptorManager.h"
 #include "AssetFactory.h"
+#include "AlkaliGUIManager.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -39,13 +40,13 @@ Application::Application(HINSTANCE hInst)
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SettingsManager::ms_Window.ScreenWidth), static_cast<int>(SettingsManager::ms_Window.ScreenHeight), vSync);
     m_mainWindow->Show();
 
-    shared_ptr<SceneTest> tut2Scene = std::make_shared<SceneTest>(L"Madeline Scene", m_mainWindow.get());
-    InitScene(tut2Scene);
+    shared_ptr<SceneTest> testScene = std::make_shared<SceneTest>(L"Madeline Scene", m_mainWindow.get());
+    InitScene(testScene);
 
     shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
     InitScene(bistroScene);
 
-    AssignScene(tut2Scene);
+    AssignScene(testScene.get());
 
     ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);   
 }
@@ -64,7 +65,7 @@ int Application::Run()
     {
         ImGUIManager::Begin();
 
-        RenderImGuiScenes();
+        AlkaliGUIManager::RenderGUI(m_d3dClass.get(), m_currentScene, this);
 
         if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
@@ -130,10 +131,10 @@ void Application::ChangeScene(wstring sceneID)
 {
     shared_ptr<Scene> scene = m_sceneMap.at(sceneID);
 
-    AssignScene(scene);
+    AssignScene(scene.get());
 }
 
-void Application::AssignScene(shared_ptr<Scene> scene)
+void Application::AssignScene(Scene* scene)
 {
     auto startTimeProfiler = std::chrono::high_resolution_clock::now();
 
@@ -169,127 +170,22 @@ void Application::AssignScene(shared_ptr<Scene> scene)
 
 void Application::DestroyScenes() 
 {
-    m_currentScene.reset();
-
     for (const auto& pair : m_sceneMap)
     {
         shared_ptr<Scene> scene = pair.second;
         
         scene->UnloadContent();
         scene->Destroy();
+        scene.reset();
     }
 }
 
-void Application::RenderImGuiScenes()
+double Application::GetFPS()
 {
-    ImGui::SeparatorText("Stats");
-    ImGui::Indent(IM_GUI_INDENTATION);
+    return m_fps;
+}
 
-    string fpsTxt = "FPS: " + std::to_string(m_fps);
-    ImGui::Text(fpsTxt.c_str());
-
-    XMFLOAT2 mousePos = InputManager::GetMousePos();
-    string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
-    ImGui::Text(mouseTxt.c_str());
-
-    XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
-    string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
-    ImGui::Text(mouseDeltaTxt.c_str());
-
-    ImGui::Spacing();
-    ImGui::Unindent(IM_GUI_INDENTATION);
-
-    if (ImGui::CollapsingHeader("Scenes"))
-    {
-        ImGui::Indent(IM_GUI_INDENTATION);
-
-        for (const auto& pair : m_sceneMap)
-        {
-            bool disabled = pair.second == m_currentScene;
-            if (disabled)
-                ImGui::BeginDisabled(true);
-
-            if (ImGui::Button(wstringToString(pair.first).c_str()))
-            {
-                AssignScene(pair.second);
-            }
-
-            if (disabled)
-                ImGui::EndDisabled();
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Reset current scene"))
-        {
-            AssignScene(m_currentScene);
-        }
-
-        ImGui::Unindent(IM_GUI_INDENTATION);
-    }
-
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Tools"))
-    {
-        ImGui::Indent(IM_GUI_INDENTATION);
-
-        if (ImGui::TreeNode("Model Preprocessing"))
-        {
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            string fileDir = "C:\\Users\\finnw\\OneDrive\\Documents\\3D objects\\";
-            string msg = "Using directory: " + fileDir;
-            ImGui::Text(msg.c_str());
-
-            static char fileName[256];
-            ImGui::InputText("File name (.obj)", fileName, 256, 0);
-
-            static bool split = true;
-            ImGui::Checkbox("Split Model", &split);
-
-            static bool invert = false;
-            ImGui::Checkbox("Invert Model", &invert);
-
-            if (ImGui::Button("Import"))
-            {
-                string fileNameStr(fileName);
-                string filePath = fileDir + fileNameStr + ".obj";
-                ModelLoader::PreprocessObjFile(filePath, split, invert);
-            }
-
-            ImGui::TreePop();
-            ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::Spacing();
-        }
-
-        if (ImGui::TreeNode("Object Creation"))
-        {
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            static char numObjectsStr[256];
-            ImGui::InputText("Number", numObjectsStr, 256, 0);
-
-            if (ImGui::Button("Instantiate Cube"))
-            {
-                int num = std::atoi(numObjectsStr);
-                m_currentScene->InstantiateCubes(num);
-            }
-
-            ImGui::Spacing();
-
-            if (ImGui::Button("Clear Resource Tracker"))
-            {
-                ResourceTracker::ReleaseAll();
-            }
-
-            ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::Spacing();
-            ImGui::TreePop();
-        }
-
-        ImGui::Unindent(IM_GUI_INDENTATION);
-    }
-
-    ImGui::Spacing();
+unordered_map<wstring, shared_ptr<Scene>>& Application::GetSceneMap()
+{
+    return m_sceneMap;
 }

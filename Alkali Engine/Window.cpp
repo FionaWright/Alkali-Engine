@@ -46,10 +46,8 @@ void Window::Hide()
 
 void Window::Destroy()
 {
-    if (auto pScene = m_pScene.lock())
-    {
-        pScene->OnWindowDestroy();
-    }
+    if (m_pScene)
+        m_pScene->OnWindowDestroy();
 
     if (m_hWnd)
     {
@@ -105,27 +103,23 @@ void Window::SetFullscreen(bool fullscreen)
     ::ShowWindow(m_hWnd, SW_NORMAL);
 }
 
-void Window::RegisterCallbacks(shared_ptr<Scene> pScene)
+void Window::RegisterCallbacks(Scene* pScene)
 {
     m_pScene = pScene;
 }
 
 void Window::OnUpdate(TimeEventArgs& e)
 {   
-    if (auto pScene = m_pScene.lock())
-    {
-        m_FrameCounter++;
+    m_FrameCounter++;
 
-        pScene->OnUpdate(e);
-    }
+    if (m_pScene)
+        m_pScene->OnUpdate(e);
 }
 
 void Window::OnRender(TimeEventArgs& e)
 {   
-    if (auto pScene = m_pScene.lock())
-    {
-        pScene->OnRender(e);
-    }
+    if (m_pScene)
+        m_pScene->OnRender(e);
 }
 
 void Window::OnResize(ResizeEventArgs& e)
@@ -151,10 +145,8 @@ void Window::OnResize(ResizeEventArgs& e)
         UpdateRenderTargetViews();
     }
 
-    if (auto pScene = m_pScene.lock())
-    {
-        pScene->OnResize(e);
-    }
+    if (m_pScene)
+        m_pScene->OnResize(e);
 }
 
 ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
