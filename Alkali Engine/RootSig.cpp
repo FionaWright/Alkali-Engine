@@ -7,6 +7,7 @@ using std::vector;
 RootSig::RootSig()
 	: m_rootSigResource(nullptr)
 	, m_rpi({})
+	, m_name("Uninitialised")
 {
 }
 
@@ -17,7 +18,7 @@ RootSig::~RootSig()
 void RootSig::Init(const string& name, const RootParamInfo& rpi, D3D12_STATIC_SAMPLER_DESC* samplerDesc, int samplerCount)
 {
 	m_rpi = rpi;
-	m_name = name + "[" + std::to_string(rpi.NumCBV_PerDraw) + "," + std::to_string(rpi.NumCBV_PerFrame) + "," + std::to_string(rpi.NumSRV) + "," + std::to_string(rpi.ParamIndexCBV_PerDraw) + "," + std::to_string(rpi.ParamIndexCBV_PerFrame) + "," + std::to_string(rpi.ParamIndexSRV) + "]";
+	m_name = name + " [" + std::to_string(rpi.NumCBV_PerDraw) + "," + std::to_string(rpi.NumCBV_PerFrame) + "," + std::to_string(rpi.NumSRV) + "," + std::to_string(rpi.ParamIndexCBV_PerDraw) + "," + std::to_string(rpi.ParamIndexCBV_PerFrame) + "," + std::to_string(rpi.ParamIndexSRV) + "]";
 
 	int paramTypesCount = (rpi.NumCBV_PerDraw != 0 ? 1 : 0) + (rpi.NumCBV_PerFrame != 0 ? 1 : 0) + (rpi.NumSRV != 0 ? 1 : 0);
 	

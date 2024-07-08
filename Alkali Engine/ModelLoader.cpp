@@ -160,7 +160,7 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split, bool invert)
 			{
 				if (ms_indexList.at(i).Name == object.Name)
 				{
-					objectIndex = i;
+					objectIndex = static_cast<int>(i);
 					foundExistingObject = true;
 					break;
 				}
@@ -169,8 +169,7 @@ void ModelLoader::PreprocessObjFile(string filePath, bool split, bool invert)
 				continue;
 
 			ms_indexList.push_back(object);
-			objectIndex = ms_indexList.size() - 1;
-
+			objectIndex = static_cast<int>(ms_indexList.size() - 1);
 			continue;
 		}
 
@@ -276,7 +275,7 @@ void ModelLoader::SaveObject(string outputPath, vector<ObjFaceVertexIndices>& ob
 		TryAddVertex(vertexBuffer, indexBuffer, objIndices, vertexMap, i2, i1, i, rollingCentroidSum);
 	}
 
-	rollingCentroidSum = Divide(rollingCentroidSum, vertexBuffer.size());
+	rollingCentroidSum = Divide(rollingCentroidSum, static_cast<float>(vertexBuffer.size()));
 	if (vertexBuffer.size() == 0)
 		rollingCentroidSum = XMFLOAT3_ZERO;
 
@@ -731,7 +730,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputData* output) {
 		const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
-		float handedness = data->w > 0 ? 1 : -1;
+		float handedness = data->w > 0.0f ? 1.0f : -1.0f;
 		output->Tangent = Normalize(Mult(XMFLOAT3(data->x, data->y, data->z), handedness));
 		if (RIGHT_HANDED_TO_LEFT)
 			output->Tangent.x = -output->Tangent.x;
@@ -757,7 +756,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	rollingCentroidSum.X /= vertexCount;
 	rollingCentroidSum.Y /= vertexCount;
 	rollingCentroidSum.Z /= vertexCount;
-	XMFLOAT3 centroidFloat3 = XMFLOAT3(rollingCentroidSum.X, rollingCentroidSum.Y, rollingCentroidSum.Z);
+	XMFLOAT3 centroidFloat3 = XMFLOAT3(static_cast<float>(rollingCentroidSum.X), static_cast<float>(rollingCentroidSum.Y), static_cast<float>(rollingCentroidSum.Z));
 
 	for (size_t j = 0; j < vertexCount; j++)
 	{
@@ -1009,7 +1008,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		size_t nodeCount = scene.nodeIndices.size();
 		for (size_t n = 0; n < nodeCount; n++)
 		{
-			int nodeIndex = scene.nodeIndices[n];
+			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
 			LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
 		}
@@ -1078,7 +1077,7 @@ vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12G
 		size_t nodeCount = scene.nodeIndices.size();
 		for (size_t n = 0; n < nodeCount; n++)
 		{
-			int nodeIndex = scene.nodeIndices[n];
+			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
 			LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, node, modelList);
 		}

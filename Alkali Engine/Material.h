@@ -39,7 +39,7 @@ private:
 	vector<ID3D12Resource*> m_cbvResources_perDraw;		
 	vector<shared_ptr<Texture>> m_textures;
 
-	UINT m_addedCBV_PerDraw = 0, m_addedCBV_PerFrame = 0;
+	size_t m_addedCBV_PerDraw = 0, m_addedCBV_PerFrame = 0;
 
 	MaterialPropertiesCB m_propertiesCB;
 	bool m_attachedProperties;

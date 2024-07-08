@@ -33,7 +33,7 @@ Application::Application(HINSTANCE hInst)
     m_d3dClass->Init();
 
     bool vSync = false;
-    m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", SCREEN_WIDTH, SCREEN_HEIGHT, vSync);
+    m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), vSync);
     m_mainWindow->Show();
 
     shared_ptr<Tutorial2> tut2Scene = std::make_shared<Tutorial2>(L"Madeline Scene", m_mainWindow.get());
@@ -86,7 +86,7 @@ int Application::Run()
     return static_cast<int>(msg.wParam);
 }
 
-void Application::CalculateFPS(float deltaTime) 
+void Application::CalculateFPS(double deltaTime) 
 {
     m_fpsTimeSinceUpdate += deltaTime;
     m_fpsFramesSinceUpdate++;

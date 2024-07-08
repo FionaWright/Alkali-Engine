@@ -14,6 +14,9 @@ class GameObject;
 class Batch
 {
 public:
+	Batch();
+	~Batch();
+
 	void Init(string name, shared_ptr<RootSig> pRootSig);
 
 	GameObject* AddGameObject(GameObject go);
@@ -29,7 +32,7 @@ public:
 	string m_Name;
 
 private:
-	shared_ptr<RootSig> m_rootSig;
+	shared_ptr<RootSig> m_rootSig = nullptr;
 	vector<GameObject> m_goList;
 	vector<GameObject> m_goListTrans;
 	// Add option to sort by depth value as well

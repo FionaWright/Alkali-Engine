@@ -11,6 +11,8 @@
 
 #define ZLIB_CONST
 
+#pragma warning (disable : 6287)
+
 #ifdef __FRAMAC__
     #define SPNG_DISABLE_OPT
     #include "tests/framac_stubs.h"

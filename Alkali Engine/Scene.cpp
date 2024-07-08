@@ -42,8 +42,8 @@ bool Scene::Init(D3DClass* pD3DClass)
 
 	m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 
-	float width = m_pWindow->GetClientWidth();
-	float height = m_pWindow->GetClientHeight();
+	int width = m_pWindow->GetClientWidth();
+	int height = m_pWindow->GetClientHeight();
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
 	m_perFrameCBuffers.DirectionalLight.AmbientColor = XMFLOAT3(0.15f, 0.15f, 0.15f);
@@ -139,7 +139,7 @@ bool Scene::LoadContent()
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
-		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+		m_shaderLine->InitPreCompiled(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.Get(), m_d3dClass->GetDevice(), false, false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
 	}
 
 	{

@@ -28,7 +28,7 @@ public:
 
     void RenderImGuiScenes();
 
-    void CalculateFPS(float deltaTime);
+    void CalculateFPS(double deltaTime);
 
     void Shutdown();
 

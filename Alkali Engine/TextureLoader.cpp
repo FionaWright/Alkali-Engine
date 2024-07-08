@@ -12,6 +12,9 @@
 using std::wstring;
 using std::ofstream;
 
+#pragma warning (disable : 6386)
+#pragma warning (disable : 6385)
+
 #define BLOCK_SIZE 8
 constexpr int NUM_CHANNELS = 4;
 
@@ -229,17 +232,18 @@ void TextureLoader::LoadTGA(string filePath, int& width, int& height, uint8_t** 
         {
             int spi = FLIP_TGA_UPSIDE_DOWN ? (h * width + w) * bytesPerPixel : sPixelIndex;
 
-            (*pData)[dPixelIndex + 0] = static_cast<uint8_t>(targaData[spi + 2]);  // Red.
-            (*pData)[dPixelIndex + 1] = static_cast<uint8_t>(targaData[spi + 1]);  // Green.
-            (*pData)[dPixelIndex + 2] = static_cast<uint8_t>(targaData[spi + 0]);  // Blue
+            int dpi = dPixelIndex * NUM_CHANNELS;
+            (*pData)[dpi + 0] = static_cast<uint8_t>(targaData[spi + 2]);  // Red.
+            (*pData)[dpi + 1] = static_cast<uint8_t>(targaData[spi + 1]);  // Green.
+            (*pData)[dpi + 2] = static_cast<uint8_t>(targaData[spi + 0]);  // Blue
 
             if (bytesPerPixel == 4)
-                (*pData)[dPixelIndex + 3] = static_cast<uint8_t>(targaData[spi + 3]);  // Alpha
+                (*pData)[dpi + 3] = static_cast<uint8_t>(targaData[spi + 3]);  // Alpha
             else
-                (*pData)[dPixelIndex + 3] = 255u;  // Alpha
+                (*pData)[dpi + 3] = 255u;  // Alpha
 
             sPixelIndex += bytesPerPixel;
-            dPixelIndex += NUM_CHANNELS;
+            dPixelIndex++;
         }
 
         sPixelIndex -= (width * bytesPerPixel * 2);
@@ -640,10 +644,7 @@ void TextureLoader::LoadDDS_ATI2(ifstream& fin, int& width, int& height, uint8_t
     size_t totalBlocks = blockWidth * blockHeight;
     ATI2Block* blocks = new ATI2Block[totalBlocks];
 
-    fin.read(reinterpret_cast<char*>(blocks), totalBlocks * sizeof(ATI2Block));
-
-    uint8_t decompressedRed[16];
-    uint8_t decompressedGreen[16];
+    fin.read(reinterpret_cast<char*>(blocks), totalBlocks * sizeof(ATI2Block));   
 
     for (int bY = 0; bY < blockHeight; ++bY)
     {
@@ -753,8 +754,8 @@ XMFLOAT3 SampleHDR(const uint8_t* hdrData, const XMFLOAT3& direction, const int 
     float theta = atan2f(direction.z, direction.x);
     float phi = acos(direction.y);
 
-    float texU = ((theta / (2.0 * PI)) + 0.5) * hdrWidth;
-    float texV = (phi / PI) * hdrHeight;
+    float texU = ((theta / (2.0f * static_cast<float>(PI))) + 0.5f) * hdrWidth;
+    float texV = (phi / static_cast<float>(PI)) * hdrHeight;
 
     texU = std::clamp(texU, 0.0f, static_cast<float>(hdrWidth - 1));
     texV = std::clamp(texV, 0.0f, static_cast<float>(hdrHeight - 1));
@@ -879,7 +880,7 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
 
     string gammaStr;
     std::getline(fin, gammaStr);
-    int equalsIndex = gammaStr.find_first_of('=');
+    size_t equalsIndex = gammaStr.find_first_of('=');
     int gamma = atoi(gammaStr.substr(equalsIndex + 1, gammaStr.size() - equalsIndex - 1).c_str());
 
     string primariesStr;
@@ -894,8 +895,8 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
 
     string sizeStr;
     std::getline(fin, sizeStr);
-    int Yindex = sizeStr.find_first_of('Y');
-    int Xindex = sizeStr.find_first_of('X');
+    size_t Yindex = sizeStr.find_first_of('Y');
+    size_t Xindex = sizeStr.find_first_of('X');
     int hdrHeight = atoi(sizeStr.substr(Yindex + 2, Xindex - 2 - Yindex + 2).c_str());
     int hdrWidth = atoi(sizeStr.substr(Xindex + 2, sizeStr.size() - Xindex + 1).c_str());
 
@@ -956,10 +957,10 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
                 col = Saturate(col);
 
                 int texIndex = y * width + x;
-                pDatas[face][texIndex * 4 + 0] = col.x * 255;
-                pDatas[face][texIndex * 4 + 1] = col.y * 255;
-                pDatas[face][texIndex * 4 + 2] = col.z * 255;
-                pDatas[face][texIndex * 4 + 3] = 255;
+                pDatas[face][texIndex * 4 + 0] = static_cast<uint8_t>(col.x * 255);
+                pDatas[face][texIndex * 4 + 1] = static_cast<uint8_t>(col.y * 255);
+                pDatas[face][texIndex * 4 + 2] = static_cast<uint8_t>(col.z * 255);
+                pDatas[face][texIndex * 4 + 3] = 255u;
             }
     }
 
