@@ -9,7 +9,7 @@ ImVec2 ImGUIManager::ms_windowSize;
 
 void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight)
 {
-	if (!USING_IM_GUI)
+	if (!SettingsManager::ms_Misc.ImGuiEnabled)
 		return;
 
 	IMGUI_CHECKVERSION();
@@ -22,13 +22,15 @@ void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight)
 	int backBufferCount = 1;
 	ms_descHeapSRV = ResourceManager::CreateDescriptorHeap(backBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
+	auto rtvFormat = SettingsManager::ms_DX12.RTVFormat;
+
 	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX12_Init(device, framesInFlight, RTV_FORMAT, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
+	ImGui_ImplDX12_Init(device, framesInFlight, rtvFormat, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
 }
 
 void ImGUIManager::Begin()
 {
-	if (!USING_IM_GUI || ms_currentlyRendering)
+	if (!SettingsManager::ms_Misc.ImGuiEnabled || ms_currentlyRendering)
 		return;	
 
 	ImGui_ImplDX12_NewFrame();
@@ -46,7 +48,7 @@ void ImGUIManager::Begin()
 
 void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 {
-	if (!USING_IM_GUI || !ms_currentlyRendering)
+	if (!SettingsManager::ms_Misc.ImGuiEnabled || !ms_currentlyRendering)
 		return;
 
 	ImGui::End();
@@ -68,7 +70,7 @@ bool ImGUIManager::MouseHoveringImGui()
 
 void ImGUIManager::Shutdown()
 {
-	if (!USING_IM_GUI)
+	if (!SettingsManager::ms_Misc.ImGuiEnabled)
 		return;
 
 	ImGui_ImplDX12_Shutdown();

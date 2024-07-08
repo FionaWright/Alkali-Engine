@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "TextureLoader.h"
-#include "Settings.h"
+#include "Constants.h"
 #include "Application.h"
 #include "ResourceManager.h"
 #include "Scene.h"
@@ -54,7 +54,7 @@ void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** 
     bool binTexAlternativeExists = std::filesystem::exists(binTexPath);
 
     string fileExtension = filePath.substr(dotIndex + 1, filePath.size() - dotIndex - 1);
-    if ((!Scene::IsForceReloadBinTex() && binTexAlternativeExists) || fileExtension == "binTex")
+    if ((SettingsManager::ms_Dynamic.AllowBinTex && binTexAlternativeExists) || fileExtension == "binTex")
     {
         LoadBinTex(binTexPath, width, height, pData, hasAlpha, channels);
         return;
@@ -103,7 +103,7 @@ void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t*
 
     uint8_t* dataSrc = pData;
 
-    if (isNormalMap && channels == 3 && CONVERT_NORMAL_CHANNELS_3_TO_2)
+    if (isNormalMap && channels == 3 && SettingsManager::ms_Misc.NormalMapChannels == SettingsManager::ms_Misc.ONLY_2_CHANNEL)
     {
         int newChannels = 2;
         size_t pixelCount = width * height;
@@ -119,7 +119,7 @@ void TextureLoader::StoreBinTex(string filePath, int width, int height, uint8_t*
         }
     }    
 
-    if (isNormalMap && channels == 2 && CONVERT_NORMAL_CHANNELS_2_TO_3)
+    if (isNormalMap && channels == 2 && SettingsManager::ms_Misc.NormalMapChannels == SettingsManager::ms_Misc.ONLY_3_CHANNEL)
     {
         int newChannels = 4;
         size_t pixelCount = width * height;
@@ -1041,7 +1041,7 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
 
             commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelWidth), 0);
             commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelHeight), 1);
-            if (!isCubemap && Scene::IsMipMapDebugMode())
+            if (!isCubemap && SettingsManager::ms_Dynamic.MipMapDebugMode)
                 commandListDirect->SetComputeRoot32BitConstant(0, mip, 2);
         }
 
@@ -1109,11 +1109,11 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
     commandListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
     currentGPUHandle.Offset(1, ms_descriptorSize);
 
-    int threads = IRRADIANCE_MAP_RESO / 8;
+    int threads = SettingsManager::ms_Misc.IrradianceMapResolution / 8;
 
     commandListDirect->Dispatch(threads, threads, 1);
 
-    ResourceManager::TransitionResource(commandListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
+    ResourceManager::TransitionResource(commandListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void TextureLoader::Shutdown()
@@ -1154,7 +1154,7 @@ void TextureLoader::InitMipMapCS(ID3D12Device2* device)
     srvCbvRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
     srvCbvRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
 
-    int constantsCount = Scene::IsMipMapDebugMode() ? 3 : 2;
+    int constantsCount = SettingsManager::ms_Dynamic.MipMapDebugMode ? 3 : 2;
     rootParameters[0].InitAsConstants(constantsCount, 0);
     rootParameters[1].InitAsDescriptorTable(1, &srvCbvRanges[0]);
     rootParameters[2].InitAsDescriptorTable(1, &srvCbvRanges[1]);
@@ -1183,7 +1183,7 @@ void TextureLoader::InitMipMapCS(ID3D12Device2* device)
     device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&ms_mipMapRootSig));
 
     ComPtr<ID3DBlob> cBlob;
-    wstring path = Application::GetEXEDirectoryPath() + (Scene::IsMipMapDebugMode() ? L"/CreateMipMapsDebug.cso" : L"/CreateMipMaps.cso");
+    wstring path = Application::GetEXEDirectoryPath() + (SettingsManager::ms_Dynamic.MipMapDebugMode ? L"/CreateMipMapsDebug.cso" : L"/CreateMipMaps.cso");
     HRESULT hr = D3DReadFileToBlob(path.c_str(), &cBlob);
     ThrowIfFailed(hr);
 

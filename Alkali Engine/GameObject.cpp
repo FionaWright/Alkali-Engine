@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "GameObject.h"
-#include "Settings.h"
+#include "Constants.h"
+#include "SettingsManager.h"
 #include "Utils.h"
 #include "Scene.h"
 
@@ -174,7 +175,7 @@ void GameObject::RotateBy(XMFLOAT3 xyz)
 void GameObject::UpdateWorldMatrix(bool considerCentroid)
 {
 	XMMATRIX C = XMMatrixIdentity();
-	if (CENTROID_BASED_WORLD_MATRIX_ENABLED && considerCentroid && m_model)
+	if (SettingsManager::ms_Misc.CentroidBasedWorldMatricesEnabled && considerCentroid && m_model)
 	{
 		XMFLOAT3 centroid = m_model->GetCentroid();
 		if (!Equals(centroid, XMFLOAT3_ZERO))

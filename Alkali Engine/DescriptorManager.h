@@ -28,8 +28,6 @@ public:
 
 	static void Shutdown();
 
-	static bool ms_DebugHeapEnabled;
-
 private:
 	static unordered_map<string, UINT> ms_descriptorIndexMap;
 	static ComPtr<ID3D12DescriptorHeap> ms_srv_cbv_uav_Heap;

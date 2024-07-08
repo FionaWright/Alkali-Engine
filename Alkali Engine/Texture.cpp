@@ -26,12 +26,12 @@ void Texture::MakeTexDesc(UINT16 arraySize)
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
-    if (invalidForMipMaps || (m_isCubemap && CUBEMAP_MIP_MAPS_DISABLED))
+    if (invalidForMipMaps || (m_isCubemap && !SettingsManager::ms_Misc.CubemapMipMapsEnabled))
         m_textureDesc.MipLevels = 1u;
-    else if (AUTO_MIP_LEVELS)
+    else if (SettingsManager::ms_Misc.AutoMipLevelsEnabled)
         m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
     else
-        m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
+        m_textureDesc.MipLevels = SettingsManager::ms_Misc.DefaultGlobalMipLevels;
 
     DXGI_FORMAT format =
         m_channels == 4 ? DXGI_FORMAT_R8G8B8A8_UNORM :
@@ -91,7 +91,6 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uin
 
 void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
 {
-    HRESULT hr;
     auto device = d3d->GetDevice();
 
     m_filePath = filePath;
@@ -113,16 +112,15 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SRV_FINAL_STATE);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, vector<string>& filePaths, bool flipUpsideDown)
 {
-    HRESULT hr;
     auto device = d3d->GetDevice();
 
     m_isCubemap = true;
@@ -167,16 +165,15 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc, true);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SRV_FINAL_STATE);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown)
 {
-    HRESULT hr;
     auto device = d3d->GetDevice();
 
     m_isCubemap = true;
@@ -201,11 +198,11 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc, true);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SRV_FINAL_STATE);
+        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SRV_FINAL_STATE);
+    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
@@ -216,12 +213,10 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
     m_isCubemap = true;
     m_hasAlpha = true;
     m_channels = 4;
-    m_textureWidth = IRRADIANCE_MAP_RESO;
-    m_textureHeight = IRRADIANCE_MAP_RESO;
+    m_textureWidth = SettingsManager::ms_Misc.IrradianceMapResolution;
+    m_textureHeight = SettingsManager::ms_Misc.IrradianceMapResolution;
 
     MakeTexDesc(6);
-
-    //m_textureDesc.MipLevels = 1; // IS IT YOU?????????
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_textureResource));

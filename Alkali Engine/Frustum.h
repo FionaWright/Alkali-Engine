@@ -21,8 +21,8 @@ public:
 private:
 	struct FrustumPlane
 	{
-		XMFLOAT3 Normal;
-		float Distance;
+		XMFLOAT3 Normal = XMFLOAT3_ZERO;
+		float Distance = 0;
 	};
 
 	FrustumPlane m_frustumPlanes[6];

@@ -9,8 +9,6 @@ Window::Window(HWND hWnd, D3DClass* pD3DClass, const wstring& windowName, int cl
     , m_WindowName(windowName)
     , m_ClientWidth(clientWidth)
     , m_ClientHeight(clientHeight)
-    , m_VSync(vSync)
-    , m_Fullscreen(false)
     , m_d3dClass(pD3DClass)
 {
     m_dxgiSwapChain = CreateSwapChain();
@@ -70,34 +68,9 @@ int Window::GetClientHeight() const
     return m_ClientHeight;
 }
 
-bool Window::IsVSync() const
-{
-    return m_VSync;
-}
-
-void Window::SetVSync(bool vSync)
-{
-    m_VSync = vSync;
-}
-
-void Window::ToggleVSync()
-{
-    SetVSync(!m_VSync);
-}
-
-bool Window::IsFullScreen() const
-{
-    return m_Fullscreen;
-}
-
 void Window::SetFullscreen(bool fullscreen)
 {
-    if (m_Fullscreen == fullscreen)
-        return;
-
-    m_Fullscreen = fullscreen;
-
-    if (m_Fullscreen) 
+    if (fullscreen)
     {
         ::GetWindowRect(m_hWnd, &m_WindowRect);
 
@@ -130,11 +103,6 @@ void Window::SetFullscreen(bool fullscreen)
         SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
     ::ShowWindow(m_hWnd, SW_NORMAL);
-}
-
-void Window::ToggleFullscreen()
-{
-    SetFullscreen(!m_Fullscreen);
 }
 
 void Window::RegisterCallbacks(shared_ptr<Scene> pScene)
@@ -207,7 +175,7 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = m_ClientWidth;
     swapChainDesc.Height = m_ClientHeight;
-    swapChainDesc.Format = SWAP_CHAIN_DXGI_FORMAT;
+    swapChainDesc.Format = SettingsManager::ms_DX12.SwapChainFormat;
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -245,7 +213,7 @@ void Window::UpdateRenderTargetViews()
         ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
 
         D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-        desc.Format = RTV_FORMAT;
+        desc.Format = SettingsManager::ms_DX12.RTVFormat;
         desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
         device->CreateRenderTargetView(backBuffer.Get(), &desc, rtvHandle);
@@ -283,8 +251,8 @@ UINT Window::GetCurrentBackBufferIndex() const
 
 UINT Window::Present()
 {
-    UINT syncInterval = m_VSync ? 1 : 0;
-    UINT presentFlags = m_d3dClass->IsTearingSupported() && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+    UINT syncInterval = SettingsManager::ms_Dynamic.VSyncEnabled ? 1 : 0;
+    UINT presentFlags = m_d3dClass->IsTearingSupported() && !SettingsManager::ms_Dynamic.VSyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
     ThrowIfFailed(m_dxgiSwapChain->Present(syncInterval, presentFlags));
     m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
 

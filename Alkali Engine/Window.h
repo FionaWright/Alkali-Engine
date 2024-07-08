@@ -7,7 +7,8 @@
 
 #include "CommandQueue.h"
 #include "D3DClass.h"
-#include "Settings.h"
+#include "Constants.h"
+#include "SettingsManager.h"
 
 using std::wstring;
 using std::shared_ptr;
@@ -28,13 +29,7 @@ public:
     int GetClientWidth() const;
     int GetClientHeight() const;
 
-    bool IsVSync() const;
-    void SetVSync(bool vSync);
-    void ToggleVSync();
-
-    bool IsFullScreen() const;
     void SetFullscreen(bool fullscreen);
-    void ToggleFullscreen();
 
     void Show();
     void Hide();
@@ -73,8 +68,6 @@ private:
 
     int m_ClientWidth;
     int m_ClientHeight;
-    bool m_VSync;
-    bool m_Fullscreen;
 
     uint64_t m_FrameCounter = 0;
 

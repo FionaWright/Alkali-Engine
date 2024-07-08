@@ -114,8 +114,6 @@ bool SceneBistro::LoadContent()
 void SceneBistro::UnloadContent()
 {
 	Scene::UnloadContent();
-
-	m_FoV = 45;
 }
 
 void SceneBistro::OnUpdate(TimeEventArgs& e)
@@ -130,12 +128,12 @@ void SceneBistro::OnUpdate(TimeEventArgs& e)
 	bool altEnter = InputManager::IsKeyDown(KeyCode::Enter) && InputManager::IsAltHeld();
 	if (altEnter || InputManager::IsKeyDown(KeyCode::F11))
 	{
-		m_pWindow->ToggleFullscreen();
+		SettingsManager::ms_Dynamic.FullscreenEnabled = !SettingsManager::ms_Dynamic.FullscreenEnabled;
 	}
 
 	if (InputManager::IsKeyDown(KeyCode::V))
 	{
-		m_pWindow->ToggleVSync();
+		SettingsManager::ms_Dynamic.VSyncEnabled = !SettingsManager::ms_Dynamic.VSyncEnabled;
 	}
 
 	m_goSkybox->SetPosition(m_camera->GetWorldPosition());

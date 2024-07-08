@@ -24,7 +24,7 @@ void D3DClass::Init()
         return;
     }
 
-    m_dxgiAdapter = ResourceManager::GetAdapter(USE_BARRIER_WARP);
+    m_dxgiAdapter = ResourceManager::GetAdapter(SettingsManager::ms_Window.UseBarrierWarps);
     if (!m_dxgiAdapter)
         throw new std::exception("Adapter not found");
 

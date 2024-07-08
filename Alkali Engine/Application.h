@@ -1,7 +1,8 @@
 #pragma once
 
 #include "pch.h"
-#include "Settings.h"
+#include "Constants.h"
+#include "SettingsManager.h"
 #include "D3DClass.h"
 #include "WindowManager.h"
 

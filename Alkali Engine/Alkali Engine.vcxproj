@@ -224,6 +224,7 @@
     <ClCompile Include="HighResolutionClock.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="SceneBistro.cpp" />
+    <ClCompile Include="SettingsManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
@@ -281,7 +282,8 @@
     <ClInclude Include="Keycodes.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SceneBistro.h" />
-    <ClInclude Include="Settings.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="SettingsManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureLoader.h" />
