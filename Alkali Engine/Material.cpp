@@ -35,9 +35,14 @@ void Material::AddDynamicSRVs(UINT count)
 void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame)
 {
     if (perFrame)
+    {
         m_cbvHeapIndex_perFrame = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perFrame, true);
-    else
-        m_cbvHeapIndex_perDraw = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perDraw, false);
+        m_addedCBV_PerFrame += sizes.size();
+        return;
+    }        
+    
+    m_cbvHeapIndex_perDraw = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perDraw, false);
+    m_addedCBV_PerDraw += sizes.size();
 }
 
 void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize) 
@@ -79,8 +84,13 @@ void Material::AttachProperties(const MaterialPropertiesCB& matProp)
     m_attachedProperties = true;
 }
 
-void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParamInfo& rootParamInfo)
+void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo)
 {
+    if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
+        rootParamInfo.NumCBV_PerFrame != m_addedCBV_PerFrame ||
+        rootParamInfo.NumSRV != m_textures.size())
+        throw std::exception("Invalid RootParamInfo based on created resources");
+
     UINT incrementSize = DescriptorManager::GetIncrementSize();
 
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = DescriptorManager::GetHeap()->GetGPUDescriptorHandleForHeapStart();    

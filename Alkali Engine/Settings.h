@@ -24,7 +24,7 @@ constexpr UINT BACK_BUFFER_COUNT = 3;
 constexpr bool USE_BARRIER_WARP = false;
 constexpr UINT DESCRIPTOR_HEAP_SIZE = 10000;
 
-constexpr int GLOBAL_MIP_LEVELS = 5;
+constexpr int GLOBAL_MIP_LEVELS = 2;
 constexpr bool AUTO_MIP_LEVELS = true;
 constexpr bool CUBEMAP_MIP_MAPS_DISABLED = true;
 

@@ -205,6 +205,9 @@
     <ClCompile Include="DescriptorManager.cpp">
       <Filter>Source Files\Managers</Filter>
     </ClCompile>
+    <ClCompile Include="RootSig.cpp">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tutorial2.h">
@@ -369,6 +372,9 @@
     <ClInclude Include="DescriptorManager.h">
       <Filter>Source Files\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="RootSig.h">
+      <Filter>Source Files\GPU Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Assets\Resources\Alkali Engine.rc">
@@ -425,6 +431,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="IrradianceMap.hlsl">
+      <Filter>Shaders\Compute</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\CreateMipMapsCubemap.hlsl">
       <Filter>Shaders\Compute</Filter>
     </FxCompile>
   </ItemGroup>

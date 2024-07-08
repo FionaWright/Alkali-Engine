@@ -217,6 +217,7 @@
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="ResourceTracker.cpp" />
+    <ClCompile Include="RootSig.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="HighResolutionClock.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="ModelLoader.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="ResourceTracker.h" />
+    <ClInclude Include="RootSig.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="HighResolutionClock.h" />
@@ -302,6 +304,12 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\CreateMipMapsCubemap.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>

@@ -538,7 +538,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		material->AddSRVs(d3d, textures);
 		ResourceTracker::AddMaterial(material);
 
-		GameObject go(modelName, rpi, model, shader, material);
+		GameObject go(modelName, model, shader, material);
 		batch->AddGameObject(go);
 	}
 
@@ -911,7 +911,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	nodeName = id + "::" + nodeName;
 
 	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
-	GameObject go(nodeName, rpi, model, shaderUsed, material);
+	GameObject go(nodeName, model, shaderUsed, material);
 	go.SetTransform(transform);
 
 	batch->AddGameObject(go);

@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Material.h"
 #include "CBuffers.h"
+#include "RootSig.h"
 
 using std::shared_ptr;
 
@@ -18,27 +19,16 @@ struct Transform
 	XMFLOAT3 Scale = XMFLOAT3_ONE;
 };
 
-struct RootParamInfo
-{
-	UINT NumCBV_PerFrame = 0;
-	UINT NumCBV_PerDraw = 0;
-	UINT NumSRV = 0;
-
-	UINT ParamIndexCBV_PerFrame = -1;
-	UINT ParamIndexCBV_PerDraw = -1;
-	UINT ParamIndexSRV = -1;
-};
-
 class GameObject
 {
 public:
-	GameObject(string name, RootParamInfo& rpi, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
+	GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
 	GameObject(string name);
 	~GameObject();
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices = nullptr);
+	void Render(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices = nullptr);
 
-	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
+	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
 
 	Transform GetTransform() const;
 	void SetTransform(Transform t);
@@ -82,7 +72,6 @@ protected:
 	Transform m_transform;
 
 	XMMATRIX m_worldMatrix;
-	RootParamInfo m_rootParamInfo;
 
 	bool m_orthographic;
 	bool m_isTransparent;

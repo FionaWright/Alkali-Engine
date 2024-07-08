@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include "Scene.h"
 
-GameObject::GameObject(string name, RootParamInfo& rpi, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
+GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
 	, m_worldMatrix(XMMatrixIdentity())
 	, m_model(pModel)
@@ -12,7 +12,7 @@ GameObject::GameObject(string name, RootParamInfo& rpi, shared_ptr<Model> pModel
 	, m_Name(name)
 	, m_material(pMaterial)
 	, m_orthographic(orthographic)
-	, m_rootParamInfo(rpi)
+	, m_isTransparent(false)
 {
 }
 
@@ -24,6 +24,7 @@ GameObject::GameObject(string name)
 	, m_Name(name)
 	, m_material(nullptr)
 	, m_orthographic(false)
+	, m_isTransparent(false)
 {
 }
 
@@ -31,7 +32,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices)
+void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices)
 {
 	if (!m_model || !m_shader)
 		throw std::exception("Missing components");
@@ -56,14 +57,14 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, MatricesC
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(commandListDirect, matrices, sphereModel, &modifiedTransform);
+		RenderModel(commandListDirect, rpi, matrices, sphereModel, &modifiedTransform);
 		return;
 	}
 
-	RenderModel(commandListDirect, matrices, m_model.get());
+	RenderModel(commandListDirect, rpi, matrices, m_model.get());
 }
 
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, MatricesCB* matrices, Model* model, Transform* transform)
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform)
 {
 	XMMATRIX& worldMatrix = m_worldMatrix;
 	if (transform)
@@ -73,7 +74,7 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, Matr
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
 	m_material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
 
-	m_material->AssignMaterial(commandListDirect, m_rootParamInfo);
+	m_material->AssignMaterial(commandListDirect, rpi);
 
 	model->Render(commandListDirect);
 }

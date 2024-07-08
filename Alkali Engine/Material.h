@@ -24,7 +24,7 @@ public:
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
 
-	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, RootParamInfo& rootParamInfo);
+	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo);
 
 	bool GetHasAlpha();
 	vector<shared_ptr<Texture>>& GetTextures();
@@ -38,6 +38,8 @@ private:
 	vector<ID3D12Resource*> m_cbvResources_perFrame;		
 	vector<ID3D12Resource*> m_cbvResources_perDraw;		
 	vector<shared_ptr<Texture>> m_textures;
+
+	UINT m_addedCBV_PerDraw = 0, m_addedCBV_PerFrame = 0;
 
 	MaterialPropertiesCB m_propertiesCB;
 	bool m_attachedProperties;
