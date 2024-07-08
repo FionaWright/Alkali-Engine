@@ -11,9 +11,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{916aed96-10c8-4995-975b-390fa89241d2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\GPU Resources">
-      <UniqueIdentifier>{85c34872-b23d-4cf6-a1a7-164c85448086}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PCH">
       <UniqueIdentifier>{adc8683f-4472-466a-b4c1-ef7fd74b4815}</UniqueIdentifier>
     </Filter>
@@ -50,49 +47,40 @@
     <Filter Include="Includes\zlib">
       <UniqueIdentifier>{2f20234d-0b85-4125-b590-e2c3fea6ee77}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Managers\Asset Managers">
+      <UniqueIdentifier>{09f2ffed-b1ed-49da-9cb4-6881fcb14709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Managers\System Managers">
+      <UniqueIdentifier>{1c79e66a-71e8-4cc5-b5a9-724c93f79358}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Managers\DX12 Managers">
+      <UniqueIdentifier>{7fd80402-164b-42bf-8c61-7b9fa94f0f53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Asset Objects">
+      <UniqueIdentifier>{85c34872-b23d-4cf6-a1a7-164c85448086}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SceneTest.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="Batch.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>Source Files\Managers</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="WindowManager.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DClass.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Source Files\Managers</Filter>
     </ClCompile>
     <ClCompile Include="ImGUIManager.cpp">
       <Filter>Source Files\Managers</Filter>
@@ -122,10 +110,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="SceneBistro.cpp">
       <Filter>Source Files\Scenes</Filter>
@@ -143,13 +131,7 @@
       <Filter>Source Files\CPU Objects</Filter>
     </ClCompile>
     <ClCompile Include="DebugLine.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureLoader.cpp">
-      <Filter>Source Files\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelLoader.cpp">
-      <Filter>Source Files\Managers</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClCompile>
     <ClCompile Include="Includes\fastgltf\src\base64.cpp">
       <Filter>Includes\FastGLTF</Filter>
@@ -199,14 +181,44 @@
     <ClCompile Include="Includes\zlib\trees.c">
       <Filter>Includes\zlib</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceTracker.cpp">
-      <Filter>Source Files\Managers</Filter>
+    <ClCompile Include="RootSig.cpp">
+      <Filter>Source Files\Asset Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DClass.cpp">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClCompile>
     <ClCompile Include="DescriptorManager.cpp">
-      <Filter>Source Files\Managers</Filter>
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClCompile>
-    <ClCompile Include="RootSig.cpp">
-      <Filter>Source Files\GPU Resources</Filter>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceTracker.cpp">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelLoader.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowManager.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetFactory.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -214,7 +226,7 @@
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">
       <Filter>PCH</Filter>
@@ -223,37 +235,19 @@
       <Filter>PCH</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="Batch.h">
-      <Filter>Source Files\GPU Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>Source Files\Managers</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="d3dx12.h">
       <Filter>PCH</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowManager.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DClass.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Source Files\Managers</Filter>
     </ClInclude>
     <ClInclude Include="ImGUIManager.h">
       <Filter>Source Files\Managers</Filter>
@@ -268,7 +262,7 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="CBuffers.h">
       <Filter>Source Files\Data</Filter>
@@ -277,7 +271,7 @@
       <Filter>Source Files\Data</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="SceneBistro.h">
       <Filter>Source Files\Scenes</Filter>
@@ -295,16 +289,10 @@
       <Filter>Source Files\CPU Objects</Filter>
     </ClInclude>
     <ClInclude Include="DebugLine.h">
-      <Filter>Source Files\GPU Resources</Filter>
+      <Filter>Source Files\Asset Objects</Filter>
     </ClInclude>
     <ClInclude Include="Assets\Resources\resource.h">
       <Filter>Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureLoader.h">
-      <Filter>Source Files\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelLoader.h">
-      <Filter>Source Files\Managers</Filter>
     </ClInclude>
     <ClInclude Include="Includes\fastgltf\include\fastgltf\base64.hpp">
       <Filter>Includes\FastGLTF</Filter>
@@ -366,14 +354,41 @@
     <ClInclude Include="Includes\zlib\trees.h">
       <Filter>Includes\zlib</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceTracker.h">
-      <Filter>Source Files\Managers</Filter>
+    <ClInclude Include="RootSig.h">
+      <Filter>Source Files\Asset Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DClass.h">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Source Files\Managers\System Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClInclude>
     <ClInclude Include="DescriptorManager.h">
-      <Filter>Source Files\Managers</Filter>
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
     </ClInclude>
-    <ClInclude Include="RootSig.h">
-      <Filter>Source Files\GPU Resources</Filter>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceTracker.h">
+      <Filter>Source Files\Managers\DX12 Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelLoader.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowManager.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetFactory.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

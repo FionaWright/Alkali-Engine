@@ -7,6 +7,7 @@
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
 #include "DescriptorManager.h"
+#include "AssetFactory.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
 bool Scene::ms_sphereMode;
@@ -358,7 +359,7 @@ void Scene::InstantiateCubes(int count)
 
 	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-	shared_ptr<Model> model = CreateModel("Cube.model", commandListCopy.Get());
+	shared_ptr<Model> model = AssetFactory::CreateModel("Cube.model", commandListCopy.Get());
 
 	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 	commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -370,8 +371,8 @@ void Scene::InstantiateCubes(int count)
 
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	shared_ptr<Texture> texture = CreateTexture("Baba.png", commandListDirect.Get());
-	shared_ptr<Texture> normalMap = CreateTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", commandListDirect.Get(), false, true);
+	shared_ptr<Texture> texture = AssetFactory::CreateTexture("Baba.png", commandListDirect.Get());
+	shared_ptr<Texture> normalMap = AssetFactory::CreateTexture("Bistro/Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds", commandListDirect.Get(), false, true);
 
 	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { texture, normalMap };
@@ -399,9 +400,9 @@ void Scene::InstantiateCubes(int count)
 		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shader = CreateShader(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.get());
+	shared_ptr<Shader> shader = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayout, rootSigPBR.get());
 
-	shared_ptr<Batch> batch = CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batch = AssetFactory::CreateBatch(rootSigPBR);
 
 	for (int i = 0; i < count; i++)
 	{
@@ -1125,81 +1126,4 @@ void Scene::RenderImGui()
 
 	if (m_showImGUIDemo)
 		ImGui::ShowDemoWindow(); // Show demo window! :)
-}
-
-shared_ptr<Model> Scene::CreateModel(string path, ID3D12GraphicsCommandList2* commandList)
-{
-	shared_ptr<Model> model;
-	if (!ResourceTracker::TryGetModel(path, model))
-	{
-		model->Init(commandList, path);
-	}
-	return model;
-}
-
-shared_ptr<Texture> Scene::CreateTexture(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown, bool isNormalMap)
-{
-	shared_ptr<Texture> tex;
-	if (!ResourceTracker::TryGetTexture(path, tex))
-	{
-		tex->Init(m_d3dClass, commandList, path, flipUpsideDown, isNormalMap);
-	}
-	return tex;
-}
-
-shared_ptr<Texture> Scene::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
-{
-	shared_ptr<Texture> tex;
-	if (!ResourceTracker::TryGetTexture(path, tex))
-	{
-		tex->InitCubeMapHDR(m_d3dClass, commandList, path, flipUpsideDown);
-	}
-	return tex;
-}
-
-shared_ptr<Texture> Scene::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
-{
-	shared_ptr<Texture> tex;
-	if (!ResourceTracker::TryGetTexture(paths, tex))
-	{
-		tex->InitCubeMap(m_d3dClass, commandList, paths, flipUpsideDown);
-	}
-	return tex;
-}
-
-shared_ptr<Texture> Scene::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* commandList)
-{	
-	shared_ptr<Texture> tex = std::make_shared<Texture>();
-	tex->InitCubeMapUAV_Empty(m_d3dClass);
-	TextureLoader::CreateIrradianceMap(m_d3dClass, commandList, cubemap->GetResource(), tex->GetResource());
-	return tex;
-}
-
-shared_ptr<Shader> Scene::CreateShader(wstring vs, wstring ps, const vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout, RootSig* rootSig, bool preCompiled, bool cullOff, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
-{
-	shared_ptr<Shader> shader;
-	wstring id = vs + L" - " + ps;
-	if (cullOff)
-		id += L" --CullOff";
-
-	if (!ResourceTracker::TryGetShader(id, shader))
-	{
-		if (preCompiled)
-			shader->InitPreCompiled(vs, ps, inputLayout, rootSig->GetRootSigResource(), m_d3dClass->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
-		else
-			shader->Init(vs, ps, inputLayout, rootSig->GetRootSigResource(), m_d3dClass->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
-	}
-	return shader;
-}
-
-shared_ptr<Batch> Scene::CreateBatch(shared_ptr<RootSig> rootSig)
-{
-	string id = "Batch for " + rootSig->GetName();
-
-	shared_ptr<Batch> batch;
-	if (!ResourceTracker::TryGetBatch(id, batch))
-	{
-		batch->Init(id, rootSig);
-	}
-	return batch;
 }

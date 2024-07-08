@@ -5,6 +5,7 @@
 #include "CBuffers.h"
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
+#include "AssetFactory.h"
 
 SceneBistro::SceneBistro(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
@@ -22,7 +23,7 @@ bool SceneBistro::LoadContent()
 
 	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
 
-	shared_ptr<Model> modelInvertedCube = CreateModel("Cube (Inverted).model", commandListCopy.Get());
+	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
 
 	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
 	commandQueueCopy->WaitForFenceValue(fenceValue);
@@ -43,8 +44,8 @@ bool SceneBistro::LoadContent()
 			"Skyboxes/Iceland/posz.tga"
 	};
 
-	shared_ptr<Texture> skyboxTex = CreateCubemap(skyboxPaths, commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 2;
@@ -88,12 +89,12 @@ bool SceneBistro::LoadContent()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shaderPBR = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
-	shared_ptr<Shader> shaderPBRCullOff = CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
-	shared_ptr<Shader> shaderSkybox = CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
+	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
+	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
 
-	shared_ptr<Batch> batchPBR = CreateBatch(rootSigPBR);
-	shared_ptr<Batch> batchSkybox = CreateBatch(rootSigSkybox);
+	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 	
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);

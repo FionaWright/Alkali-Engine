@@ -7,6 +7,7 @@
 #include "ResourceTracker.h"
 
 #include "fastgltf/include/fastgltf/tools.hpp"
+#include "AssetFactory.h"
 
 namespace filesystem = std::filesystem;
 
@@ -860,31 +861,19 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	if (diffuseTexPath == "")
 		texFullFilePath = "WhitePOT.png";
 
-	shared_ptr<Texture> diffuseTex;
-	if (!ResourceTracker::TryGetTexture(texFullFilePath, diffuseTex))
-	{
-		diffuseTex->Init(d3d, commandList, texFullFilePath);
-	}
+	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(texFullFilePath, commandList);
 	
 	string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
 	if (normalTexPath == "")
 		texNormalFullFilePath = "DefaultNormal.tga";
 
-	shared_ptr<Texture> normalTex;
-	if (!ResourceTracker::TryGetTexture(texNormalFullFilePath, normalTex))
-	{
-		normalTex->Init(d3d, commandList, texNormalFullFilePath, false, true);
-	}
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(texNormalFullFilePath, commandList, false, true);
 
 	string specFullFilePath = modelNameExtensionless + "/" + specTexPath;
 	if (specTexPath == "")
 		specFullFilePath = "MetalRoughSpheres/Spheres_MetalRough.png";
 
-	shared_ptr<Texture> specTex;
-	if (!ResourceTracker::TryGetTexture(specFullFilePath, specTex))
-	{
-		specTex->Init(d3d, commandList, specFullFilePath);
-	}
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
