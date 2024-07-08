@@ -27,8 +27,6 @@ public:
 
     int Run();
 
-    void RenderImGuiScenes();
-
     void CalculateFPS(double deltaTime);
 
     void Shutdown();
@@ -37,9 +35,12 @@ public:
 
     void ChangeScene(wstring sceneID);
 
-    void AssignScene(shared_ptr<Scene> scene);
+    void AssignScene(Scene* scene);
 
     void DestroyScenes();
+
+    double GetFPS();
+    unordered_map<wstring, shared_ptr<Scene>>& GetSceneMap();
 
 private:        
     HINSTANCE m_hInstance;
@@ -51,7 +52,7 @@ private:
     HighResolutionClock m_updateClock;
     HighResolutionClock m_renderClock;
 
-    shared_ptr<Scene> m_currentScene;
+    Scene* m_currentScene;
 
     unordered_map<wstring, shared_ptr<Scene>> m_sceneMap;
 

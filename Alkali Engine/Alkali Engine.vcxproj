@@ -105,6 +105,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AlkaliGUIManager.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="AssetFactory.cpp" />
     <ClCompile Include="Batch.cpp" />
@@ -234,6 +235,7 @@
     <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AlkaliGUIManager.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="AssetFactory.h" />
     <ClInclude Include="Assets\Resources\resource.h" />

@@ -223,6 +223,9 @@
     <ClCompile Include="SettingsManager.cpp">
       <Filter>Source Files\Managers\System Managers</Filter>
     </ClCompile>
+    <ClCompile Include="AlkaliGUIManager.cpp">
+      <Filter>Source Files\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SceneTest.h">
@@ -395,6 +398,9 @@
     </ClInclude>
     <ClInclude Include="SettingsManager.h">
       <Filter>Source Files\Managers\System Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="AlkaliGUIManager.h">
+      <Filter>Source Files\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

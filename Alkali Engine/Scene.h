@@ -49,13 +49,15 @@ public:
     static void StaticShutdown();
 
     Window* GetWindow();
+    PerFrameCBuffers& GetPerFrameCBuffers();
+    Camera* GetCamera();
 
     wstring m_Name;
     bool m_ContentLoaded = false;
 
+    XMFLOAT4 m_BackgroundColor;
+
 protected:
-    void SetBackgroundColor(float r, float g, float b, float a);
-    
     void ClearBackBuffer(ID3D12GraphicsCommandList2* commandList);
     void ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
 
@@ -66,31 +68,29 @@ protected:
 
     DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
     void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
-    void RenderImGui();
 
     Window* m_pWindow;
 
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
-    D3D12_VIEWPORT m_viewport;
-    D3D12_RECT m_scissorRect;
+    D3D12_VIEWPORT m_viewport = {};
+    D3D12_RECT m_scissorRect = {};
 
     XMMATRIX m_viewMatrix;
     XMMATRIX m_projectionMatrix;
     XMMATRIX m_viewProjMatrix;
 
-    D3DClass* m_d3dClass;
+    D3DClass* m_d3dClass = nullptr;
     unique_ptr<Camera> m_camera; // Change this to not be a ptr
 
     vector<shared_ptr<DebugLine>> m_debugLineList;
-    DebugLine* m_debugLineLightDir;
+    DebugLine* m_debugLineLightDir = nullptr;
 
     Frustum m_frustum;
-    PerFrameCBuffers m_perFrameCBuffers;
+    PerFrameCBuffers m_perFrameCBuffers = {};
 
 private:    
     bool m_dsvEnabled;
-    float m_backgroundColor[4];    
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
