@@ -33,7 +33,7 @@ public:
 private:
 	static unordered_map<string, UINT> ms_descriptorIndexMap;
 	static ComPtr<ID3D12DescriptorHeap> ms_srv_cbv_uav_Heap;
-	static UINT ms_nextDescriptorIndex;
+	static size_t ms_nextDescriptorIndex;
 	static UINT ms_descriptorIncrementSize;
 
 	static vector<string> ms_debugHeapList;

@@ -3,7 +3,7 @@
 
 unordered_map<string, UINT> DescriptorManager::ms_descriptorIndexMap;
 ComPtr<ID3D12DescriptorHeap> DescriptorManager::ms_srv_cbv_uav_Heap;
-UINT DescriptorManager::ms_nextDescriptorIndex;
+size_t DescriptorManager::ms_nextDescriptorIndex;
 UINT DescriptorManager::ms_descriptorIncrementSize;
 bool DescriptorManager::ms_initialised;
 vector<string> DescriptorManager::ms_debugHeapList;
@@ -36,7 +36,7 @@ UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<shared_ptr<Texture>>
 	if (ms_descriptorIndexMap.contains(id))
 		return ms_descriptorIndexMap.at(id);
 
-	int heapStart = ms_nextDescriptorIndex;
+	UINT heapStart = static_cast<UINT>(ms_nextDescriptorIndex);
 	ms_nextDescriptorIndex += textures.size();
 
 	for (size_t i = 0; i < textures.size(); i++)
@@ -62,7 +62,7 @@ UINT DescriptorManager::AddDynamicSRVs(UINT count)
 			ms_debugHeapList.push_back("Dynamic SRV: " + std::to_string(i));
 	}
 
-	UINT heapStart = ms_nextDescriptorIndex;
+	UINT heapStart = static_cast<UINT>(ms_nextDescriptorIndex);
 	ms_nextDescriptorIndex += count;
 	return heapStart;
 }
@@ -84,7 +84,7 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 	if (sharing && ms_descriptorIndexMap.contains(id))
 		return ms_descriptorIndexMap.at(id);
 
-	UINT heapStart = ms_nextDescriptorIndex;	
+	UINT heapStart = static_cast<UINT>(ms_nextDescriptorIndex);
 	ms_nextDescriptorIndex += sizes.size();
 
 	if (sharing)
@@ -118,7 +118,7 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = cbufferResource->GetGPUVirtualAddress();
-		cbvDesc.SizeInBytes = alignedSize;
+		cbvDesc.SizeInBytes = static_cast<UINT>(alignedSize);
 
 		UINT incrementSize = d3d->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

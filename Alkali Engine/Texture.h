@@ -23,7 +23,7 @@ public:
 
 	void InitCubeMapUAV_Empty(D3DClass* d3d);
 
-	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, int srvHeapOffset);
+	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, size_t srvHeapOffset);
 
 	bool GetHasAlpha();
 	string GetFilePath();

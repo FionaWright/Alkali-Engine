@@ -8,6 +8,7 @@ constexpr int NUM_CHANNELS = 4;
 
 Texture::Texture()
     : m_textureData(0)
+    , m_textureDesc({})
 {
 }
 
@@ -40,11 +41,10 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
-    m_textureDesc = {};
     if (invalidForMipMaps)
-        m_textureDesc.MipLevels = 1;
+        m_textureDesc.MipLevels = 1u;
     else if (AUTO_MIP_LEVELS)
-        m_textureDesc.MipLevels = std::log2(std::max(m_textureWidth, m_textureHeight)) + 1;
+        m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
     else
         m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
 
@@ -141,11 +141,10 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
-    m_textureDesc = {};
     if (invalidForMipMaps || CUBEMAP_MIP_MAPS_DISABLED)
-        m_textureDesc.MipLevels = 1;
+        m_textureDesc.MipLevels = 1u;
     else if (AUTO_MIP_LEVELS)
-        m_textureDesc.MipLevels = std::log2(std::max(m_textureWidth, m_textureHeight)) + 1;
+        m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
     else
         m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
 
@@ -229,11 +228,10 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
 
-    m_textureDesc = {};
     if (invalidForMipMaps || CUBEMAP_MIP_MAPS_DISABLED)
-        m_textureDesc.MipLevels = 1;
+        m_textureDesc.MipLevels = 1u;
     else if (AUTO_MIP_LEVELS)
-        m_textureDesc.MipLevels = std::log2(std::max(m_textureWidth, m_textureHeight)) + 1;
+        m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
     else
         m_textureDesc.MipLevels = GLOBAL_MIP_LEVELS;
 
@@ -312,7 +310,6 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
 
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;        
 
-    m_textureDesc = {};
     m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
@@ -328,7 +325,7 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
     ThrowIfFailed(hr);   
 }
 
-void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, int heapOffset)
+void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, size_t heapOffset)
 {   
     auto device = d3d->GetDevice();
 
@@ -345,7 +342,7 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, int
         srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
         srvDesc.Texture2D.MostDetailedMip = 0;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(heapStart, heapOffset, incrementSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(heapStart, static_cast<INT>(heapOffset), incrementSize);
         device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
     }    
 }

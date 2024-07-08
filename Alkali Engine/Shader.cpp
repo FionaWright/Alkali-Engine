@@ -6,6 +6,7 @@ bool Shader::ms_GlobalFillWireframeMode;
 bool Shader::ms_GlobalCullNone;
 
 Shader::Shader()
+	: m_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
 {
 }
 
@@ -117,20 +118,36 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	depthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 	depthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	UINT inputLayoutCount = m_inputLayout.size();
+	UINT inputLayoutCount = static_cast<UINT>(m_inputLayout.size());
 
-	m_psoStream.pRootSignature = m_rootSig;
-	m_psoStream.InputLayout = { m_inputLayout.data(), inputLayoutCount };
-	m_psoStream.PrimitiveTopologyType = m_topology;
-	m_psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
-	m_psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
-	m_psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
-	m_psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
-	m_psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
-	m_psoStream.DSVFormat = DSV_FORMAT;
-	m_psoStream.RTVFormats = rtvFormats;
+	// For full list of fields (Order matters!)
+	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type
+	struct PipelineStateStream
+	{
+		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
+		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
+		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC Blend;
+		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
+		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL DepthStencil;
+		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
+		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
+	} psoStream;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &m_psoStream };
+	psoStream.pRootSignature = m_rootSig;
+	psoStream.InputLayout = { m_inputLayout.data(), inputLayoutCount };
+	psoStream.PrimitiveTopologyType = m_topology;
+	psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
+	psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
+	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
+	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
+	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
+	psoStream.DSVFormat = DSV_FORMAT;
+	psoStream.RTVFormats = rtvFormats;
+
+	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };
 
 	hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso));
 	ThrowIfFailed(hr);
