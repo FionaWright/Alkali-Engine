@@ -24,27 +24,26 @@ void RootSig::Init(const string& name, const RootParamInfo& rpi, D3D12_STATIC_SA
 	
 	vector<CD3DX12_ROOT_PARAMETER1> rootParameters(paramTypesCount);
 
+	CD3DX12_DESCRIPTOR_RANGE1 rangeDraw, rangeFrame, rangeSRV;
+
 	if (rpi.ParamIndexCBV_PerDraw != -1)
-	{
-		CD3DX12_DESCRIPTOR_RANGE1 range;
-		range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rpi.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		rootParameters[rpi.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+	{		
+		rangeDraw.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rpi.NumCBV_PerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		rootParameters[rpi.ParamIndexCBV_PerDraw].InitAsDescriptorTable(1, &rangeDraw, D3D12_SHADER_VISIBILITY_ALL);
 	}	
 
 	if (rpi.ParamIndexCBV_PerFrame != -1)
 	{
 		int shaderRegisterFrameStart = rpi.NumCBV_PerDraw;
 
-		CD3DX12_DESCRIPTOR_RANGE1 range;
-		range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rpi.NumCBV_PerFrame, shaderRegisterFrameStart, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		rootParameters[rpi.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+		rangeFrame.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, rpi.NumCBV_PerFrame, shaderRegisterFrameStart, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		rootParameters[rpi.ParamIndexCBV_PerFrame].InitAsDescriptorTable(1, &rangeFrame, D3D12_SHADER_VISIBILITY_ALL);
 	}
 
 	if (rpi.ParamIndexSRV != -1)
 	{
-		CD3DX12_DESCRIPTOR_RANGE1 range;
-		range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rpi.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		rootParameters[rpi.ParamIndexSRV].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_PIXEL);
+		rangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rpi.NumSRV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		rootParameters[rpi.ParamIndexSRV].InitAsDescriptorTable(1, &rangeSRV, D3D12_SHADER_VISIBILITY_PIXEL);
 	}
 
 	m_rootSigResource = ResourceManager::CreateRootSignature(rootParameters.data(), paramTypesCount, samplerDesc, samplerCount);
