@@ -159,6 +159,10 @@ bool SceneTest::LoadContent()
 void SceneTest::UnloadContent()
 {
 	Scene::UnloadContent();
+
+	m_goSkybox = nullptr;
+	m_goTest = nullptr;
+	m_goPlane = nullptr;
 }
 
 void SceneTest::OnUpdate(TimeEventArgs& e)

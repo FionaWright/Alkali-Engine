@@ -86,7 +86,6 @@ bool Scene::LoadContent()
 	m_rpiLine.NumCBV_PerDraw = 1;
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
 
-
 	m_rootSigLine = std::make_shared<RootSig>();
 	m_rootSigLine->InitDefaultSampler("Line Root Sig", m_rpiLine);
 
@@ -147,6 +146,13 @@ void Scene::UnloadContent()
 	m_BackgroundColor = XMFLOAT4(0.4f, 0.6f, 0.9f, 1.0f);
 	ResourceTracker::ClearBatchList();
 	m_camera->Reset();
+
+	ms_perFramePBRMat.reset();
+	m_shaderDepth.reset();
+	m_shaderLine.reset();
+	m_matLine.reset();
+	m_goDepthTex.reset();
+	m_depthBufferMat.reset();
 
 	if (ms_sphereModel)
 	{
