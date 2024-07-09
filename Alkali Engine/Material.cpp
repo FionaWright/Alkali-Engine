@@ -25,11 +25,13 @@ void Material::AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures)
 {
     m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, textures);
     m_textures = textures;
+    m_addedSRV += textures.size();
 }
 
 void Material::AddDynamicSRVs(UINT count)
 {
     m_srvHeapIndex = DescriptorManager::AddDynamicSRVs(count);
+    m_addedSRV += count;
 }
 
 void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame)
@@ -88,7 +90,7 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const Roo
 {
     if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
         rootParamInfo.NumCBV_PerFrame != m_addedCBV_PerFrame ||
-        rootParamInfo.NumSRV != m_textures.size())
+        rootParamInfo.NumSRV != m_addedSRV)
         throw std::exception("Invalid RootParamInfo based on created resources");
 
     UINT incrementSize = DescriptorManager::GetIncrementSize();
@@ -146,4 +148,5 @@ bool Material::GetProperties(MaterialPropertiesCB& prop)
 void Material::ClearTextures()
 {
     m_textures.clear();
+    m_addedSRV = 0;
 }
