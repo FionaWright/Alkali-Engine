@@ -862,6 +862,30 @@ void ReadRLEData(ifstream& fin, uint8_t*& data, int width, int height)
 
 void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uint8_t*>& pDatas, int& channels)
 {
+    size_t dotIndex = filePath.find_last_of('.');
+    if (dotIndex == std::string::npos)
+        throw new std::exception("Invalid file path");    
+
+    string binTexPath0 = filePath.substr(0, dotIndex) + "__0.binTex";
+    string binTexPath1 = filePath.substr(0, dotIndex) + "__1.binTex";
+    string binTexPath2 = filePath.substr(0, dotIndex) + "__2.binTex";
+    string binTexPath3 = filePath.substr(0, dotIndex) + "__3.binTex";
+    string binTexPath4 = filePath.substr(0, dotIndex) + "__4.binTex";
+    string binTexPath5 = filePath.substr(0, dotIndex) + "__5.binTex";
+
+    if (std::filesystem::exists(binTexPath0))
+    {
+        bool hasAlpha = false;
+
+        LoadBinTex(binTexPath0, width, height, &pDatas[0], hasAlpha, channels);
+        LoadBinTex(binTexPath1, width, height, &pDatas[1], hasAlpha, channels);
+        LoadBinTex(binTexPath2, width, height, &pDatas[2], hasAlpha, channels);
+        LoadBinTex(binTexPath3, width, height, &pDatas[3], hasAlpha, channels);
+        LoadBinTex(binTexPath4, width, height, &pDatas[4], hasAlpha, channels);
+        LoadBinTex(binTexPath5, width, height, &pDatas[5], hasAlpha, channels);
+        return;
+    }
+
     ifstream fin;
     fin.open(filePath, std::ios::binary);
 
@@ -965,7 +989,14 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
     }
 
     fin.close();
-    delete[] hdrData;    
+    delete[] hdrData;   
+
+    StoreBinTex(binTexPath0, width, height, pDatas[0], false, channels, false, false);
+    StoreBinTex(binTexPath1, width, height, pDatas[1], false, channels, false, false);
+    StoreBinTex(binTexPath2, width, height, pDatas[2], false, channels, false, false);
+    StoreBinTex(binTexPath3, width, height, pDatas[3], false, channels, false, false);
+    StoreBinTex(binTexPath4, width, height, pDatas[4], false, channels, false, false);
+    StoreBinTex(binTexPath5, width, height, pDatas[5], false, channels, false, false);
 }
 
 void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc, bool isCubemap)

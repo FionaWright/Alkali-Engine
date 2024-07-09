@@ -147,7 +147,6 @@ void Scene::UnloadContent()
 	ResourceTracker::ClearBatchList();
 	m_camera->Reset();
 
-	ms_perFramePBRMat.reset();
 	m_shaderDepth.reset();
 	m_shaderLine.reset();
 	m_matLine.reset();
