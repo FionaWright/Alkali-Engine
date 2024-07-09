@@ -79,6 +79,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					DescriptorManager::Shutdown();
 					DescriptorManager::Init(d3d, SettingsManager::ms_DX12.DescriptorHeapSize);
 					TextureLoader::Shutdown();
+					Scene::StaticShutdown();
 					scene->UnloadContent();
 					scene->LoadContent();
 				}
