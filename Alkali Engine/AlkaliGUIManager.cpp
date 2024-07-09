@@ -72,12 +72,12 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Show DSV", &SettingsManager::ms_Dynamic.VisualiseDSVEnabled);
 
-				bool prevMipMapDebugMode = SettingsManager::ms_Dynamic.MipMapDebugMode;
-				ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode);
-				if (prevMipMapDebugMode != SettingsManager::ms_Dynamic.MipMapDebugMode)
+				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{
 					ResourceTracker::ClearTexList();
 					ResourceTracker::ClearMatList();
+					DescriptorManager::Shutdown();
+					DescriptorManager::Init(d3d, SettingsManager::ms_DX12.DescriptorHeapSize);
 					TextureLoader::Shutdown();
 					scene->UnloadContent();
 					scene->LoadContent();
