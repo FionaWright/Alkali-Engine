@@ -47,7 +47,7 @@ public:
     static void StaticShutdown();
 
     Window* GetWindow();
-    PerFrameCBuffers& GetPerFrameCBuffers();
+    PerFrameCBuffers_PBR& GetPerFrameCBuffers();
     Camera* GetCamera();
 
     wstring m_Name;
@@ -85,7 +85,7 @@ protected:
     DebugLine* m_debugLineLightDir = nullptr;
 
     Frustum m_frustum;
-    PerFrameCBuffers m_perFrameCBuffers = {};
+    PerFrameCBuffers_PBR m_perFrameCBuffers = {};
 
 private:    
     bool m_dsvEnabled;

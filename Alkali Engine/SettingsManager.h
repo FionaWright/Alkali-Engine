@@ -29,9 +29,6 @@ struct DX12Settings
 	D3D12_FILTER SamplerFilterDefault = D3D12_FILTER_ANISOTROPIC;
 	D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeDefault = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	int SamplerMaxAnisotropicDefault = 16;
-
-	UINT64 ShadowMapWidth = 2048;
-	UINT64 ShadowMapHeight = 1024;
 };
 
 struct WindowSettings
@@ -78,6 +75,14 @@ struct DynamicSettings
 	bool VisualiseDSVEnabled = false;
 	bool BoundingSphereMode = false;	
 	bool MipMapDebugMode = false;
+	bool VisualiseShadowMap = false;
+
+	int ShadowMapWidth = 256;
+	int ShadowMapHeight = 256;
+	int ShadowMapResoWidth = 4096;
+	int ShadowMapResoHeight = 4096;
+	int ShadowMapNear = -150;
+	int ShadowMapFar = 200;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

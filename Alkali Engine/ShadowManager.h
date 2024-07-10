@@ -25,10 +25,10 @@ public:
 
 	static void Update(XMFLOAT3 lightDir);
 	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList);
-	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList);
+	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle);
 
 	static ID3D12Resource* GetShadowMap();	
-	static XMMATRIX& GetVPMatrix();
+	static XMMATRIX& GetVPMatrix();	
 
 private:
 	static XMMATRIX ms_viewMatrix, ms_projMatrix, ms_vpMatrix;
@@ -42,6 +42,8 @@ private:
 	static std::unique_ptr<GameObject> ms_viewGO;
 	static shared_ptr<Shader> ms_depthShader;
 	static shared_ptr<RootSig> ms_depthRootSig;
-	static shared_ptr<Material> ms_depthMat;
+	static shared_ptr<Material> ms_depthMat, ms_viewDepthMat;
+	static shared_ptr<RootSig> ms_viewRootSig;
+	static D3D12_VIEWPORT ms_viewport;
 };
 

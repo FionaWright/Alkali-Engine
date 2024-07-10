@@ -55,7 +55,12 @@ void Shader::Compile(ID3D12Device2* device)
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = ms_GlobalCullNone || m_args.cullNone ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_BACK;
+	if (ms_GlobalCullNone || m_args.cullNone)
+		rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+	else if (m_args.cullFrontOnly)
+		rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
+	else
+		rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;

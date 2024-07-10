@@ -50,7 +50,14 @@ struct ShadowMapCB
     XMMATRIX ShadowMatrix;
 };
 
-struct PerFrameCBuffers
+struct DepthViewCB
+{
+    XMFLOAT2 Resolution;
+    float MinValue;
+    float MaxValue;
+};
+
+struct PerFrameCBuffers_PBR
 {
     CameraCB Camera;
     DirectionalLightCB DirectionalLight;

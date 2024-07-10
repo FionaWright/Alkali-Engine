@@ -156,6 +156,7 @@ bool SceneTest::LoadContent()
 
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);
+	m_goSkybox->SetOccluderState(false);
 
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);

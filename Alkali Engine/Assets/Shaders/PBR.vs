@@ -58,6 +58,7 @@ V_OUT main(V_IN input)
 
     float4 shadowPos = mul(ShadowCB.ShadowMatrix, worldPos);
     o.ShadowMapCoords = shadowPos.xyz / shadowPos.w;
+    o.ShadowMapCoords.xy = o.ShadowMapCoords.xy * 0.5f + 0.5f;
 
     return o;
 }

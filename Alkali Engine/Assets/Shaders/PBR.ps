@@ -55,8 +55,12 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
+    input.ShadowMapCoords.y = 1 - input.ShadowMapCoords.y;
     float shadowMapDepth = g_shadowMap.Sample(g_sampler, input.ShadowMapCoords.xy).r;
-    return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth, 1);
+    bool inLight = input.ShadowMapCoords.z + 0.0001f < shadowMapDepth;
+
+    if (!inLight)
+        return float4(0, 0, 0, 1);
 
     float4 tex = g_texture.Sample(g_sampler, input.UV);    
 
