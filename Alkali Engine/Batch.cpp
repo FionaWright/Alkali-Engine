@@ -37,7 +37,7 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 	return AddGameObject(go);
 }
 
-void RenderFromList(vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
@@ -51,19 +51,21 @@ void RenderFromList(vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCo
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
 
-		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || frustum.CheckSphere(pos, radius))
-			list[i].Render(commandList, rootSig->GetRootParamInfo(), &matrices);
+		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || !frustum || frustum->CheckSphere(pos, radius))
+			list[i].Render(d3d, commandList, rootSig->GetRootParamInfo(), &matrices, renderOverride);
 	}
 }
 
-void Batch::Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
 {
-	RenderFromList(m_goList, m_rootSig.get(), commandList, viewProj, frustum);
+	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
+	RenderFromList(d3d, m_goList, rootSig, commandList, viewProj, frustum, renderOverride);
 }
 
-void Batch::RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum)
+void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
 {
-	RenderFromList(m_goListTrans, m_rootSig.get(), commandList, viewProj, frustum);
+	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
+	RenderFromList(d3d, m_goListTrans, rootSig, commandList, viewProj, frustum, renderOverride);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

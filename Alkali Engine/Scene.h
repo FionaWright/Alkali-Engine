@@ -92,16 +92,16 @@ private:
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
-    shared_ptr<RootSig> m_rootSigLine, m_rootSigDepth;
-    shared_ptr<Shader> m_shaderLine, m_shaderDepth;
+    shared_ptr<RootSig> m_rootSigLine, m_viewDepthRootSig;
+    shared_ptr<Shader> m_shaderLine, m_viewDepthShader;
     shared_ptr<Material> m_matLine;
-    RootParamInfo m_rpiLine, m_rpiDepth;
+    RootParamInfo m_rpiLine, m_viewDepthRPI;
 
     ComPtr<ID3D12Resource> m_depthBufferResource;
-    unique_ptr<GameObject> m_goDepthTex;
-    shared_ptr<Material> m_depthBufferMat;
+    unique_ptr<GameObject> m_viewDepthGO;
+    shared_ptr<Material> m_viewDepthMat;
 
+    static shared_ptr<Material> ms_shadowMapMat;
     static shared_ptr<Material> ms_perFramePBRMat;
-
     static shared_ptr<Model> ms_sphereModel;
 };

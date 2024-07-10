@@ -23,15 +23,15 @@ Material::~Material()
 
 void Material::AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures)
 {
-    m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, textures);
+    m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, textures);   
     m_textures = textures;
     m_addedSRV += textures.size();
 }
 
-void Material::AddDynamicSRVs(UINT count)
+void Material::AddDynamicSRVs(string id, UINT count)
 {
-    m_srvHeapIndex = DescriptorManager::AddDynamicSRVs(count);
-    m_addedSRV += count;
+    m_srvHeapIndex_dynamic = DescriptorManager::AddDynamicSRVs(id, count);
+    m_addedSRV_dynamic += count;
 }
 
 void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame)
@@ -77,7 +77,10 @@ void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize
 
 void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource)
 {
-    DescriptorManager::SetDynamicSRV(d3d, m_srvHeapIndex + registerIndex, format, resource);
+    if (registerIndex >= m_addedSRV_dynamic)
+        throw std::exception("Invalid register index");
+
+    DescriptorManager::SetDynamicSRV(d3d, m_srvHeapIndex_dynamic + registerIndex, format, resource);
 }
 
 void Material::AttachProperties(const MaterialPropertiesCB& matProp)
@@ -90,7 +93,8 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const Roo
 {
     if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
         rootParamInfo.NumCBV_PerFrame != m_addedCBV_PerFrame ||
-        rootParamInfo.NumSRV != m_addedSRV)
+        rootParamInfo.NumSRV != m_addedSRV ||
+        rootParamInfo.NumSRV_Dynamic != m_addedSRV_dynamic)
         throw std::exception("Invalid RootParamInfo based on created resources");
 
     UINT incrementSize = DescriptorManager::GetIncrementSize();
@@ -114,6 +118,12 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const Roo
         CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(gpuHandle, m_srvHeapIndex, incrementSize);
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexSRV, srvHandle);
     }    
+
+    if (m_srvHeapIndex_dynamic != -1 && rootParamInfo.NumSRV_Dynamic > 0 && rootParamInfo.ParamIndexSRV_Dynamic >= 0)
+    {
+        CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(gpuHandle, m_srvHeapIndex_dynamic, incrementSize);
+        commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexSRV_Dynamic, srvHandle);
+    }
 }
 
 bool Material::GetHasAlpha()
@@ -143,6 +153,11 @@ bool Material::GetProperties(MaterialPropertiesCB& prop)
 
     prop = m_propertiesCB;
     return true;
+}
+
+bool Material::HasDynamicSRV()
+{
+    return m_addedSRV_dynamic > 0;
 }
 
 void Material::ClearTextures()

@@ -59,19 +59,19 @@ shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12Gr
 	return tex;
 }
 
-shared_ptr<Shader> AssetFactory::CreateShader(wstring vs, wstring ps, const vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout, RootSig* rootSig, bool preCompiled, bool cullOff, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
+shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool precompiled)
 {
 	shared_ptr<Shader> shader;
-	wstring id = vs + L" - " + ps;
-	if (cullOff)
+	wstring id = args.vs + L" - " + args.ps;
+	if (args.cullNone)
 		id += L" --CullOff";
 
 	if (!ResourceTracker::TryGetShader(id, shader))
 	{
-		if (preCompiled)
-			shader->InitPreCompiled(vs, ps, inputLayout, rootSig->GetRootSigResource(), ms_d3d->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
+		if (precompiled)
+			shader->InitPreCompiled(ms_d3d->GetDevice(), args);
 		else
-			shader->Init(vs, ps, inputLayout, rootSig->GetRootSigResource(), ms_d3d->GetDevice(), cullOff, disableDSV, disableDSVWrite, topology);
+			shader->Init(ms_d3d->GetDevice(), args);
 	}
 	return shader;
 }
@@ -127,7 +127,9 @@ void AssetFactory::InstantiateObjects(string modelName, int count)
 		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shader = AssetFactory::CreateShader(L"Shrimple_VS.cso", L"Shrimple_PS.cso", inputLayout, rootSig.get(), true);
+	ShaderArgs args = { L"Shrimple_VS.cso", L"Shrimple_PS.cso", inputLayout, rootSig->GetRootSigResource() };
+
+	shared_ptr<Shader> shader = AssetFactory::CreateShader(args, true);
 
 	shared_ptr<Batch> batch = AssetFactory::CreateBatch(rootSig);
 

@@ -876,13 +876,14 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
-	vector<UINT> cbvSizesFrame = {sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
 	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
+	material->AddDynamicSRVs("Shadow Map", 1);
 	ResourceTracker::AddMaterial(material);
 
 	MaterialPropertiesCB matProperties;

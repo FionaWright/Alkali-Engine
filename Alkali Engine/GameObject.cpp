@@ -4,6 +4,7 @@
 #include "SettingsManager.h"
 #include "Utils.h"
 #include "Scene.h"
+#include "Batch.h"
 
 GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
@@ -14,7 +15,7 @@ GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader>
 	, m_material(pMaterial)
 	, m_orthographic(orthographic)
 	, m_isTransparent(false)
-{
+{	
 }
 
 GameObject::GameObject(string name)
@@ -33,12 +34,22 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, RenderOverride* renderOverride)
 {
-	if (!m_model || !m_shader)
+	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
 
-	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());	
+	if (!m_shadowMapMat)
+	{
+		m_shadowMapMat = std::make_unique<Material>();
+		vector<UINT> sizes = { sizeof(MatricesCB) };
+		m_shadowMapMat->AddCBVs(d3d, commandListDirect, sizes, false);
+	}
+
+	if (renderOverride && renderOverride->ShaderOverride)
+		commandListDirect->SetPipelineState(renderOverride->ShaderOverride->GetPSO().Get());
+	else
+		commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
 
 	if (m_orthographic)
 	{
@@ -58,14 +69,16 @@ void GameObject::Render(ID3D12GraphicsCommandList2* commandListDirect, const Roo
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(commandListDirect, rpi, matrices, sphereModel, &modifiedTransform);
+		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMat.get() : m_material.get();
+		RenderModel(commandListDirect, rpi, matrices, sphereModel, &modifiedTransform, mat);
 		return;
 	}
 
-	RenderModel(commandListDirect, rpi, matrices, m_model.get());
+	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMat.get() : m_material.get();
+	RenderModel(commandListDirect, rpi, matrices, m_model.get(), nullptr, mat);
 }
 
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform)
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
 {
 	XMMATRIX& worldMatrix = m_worldMatrix;
 	if (transform)
@@ -73,9 +86,9 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, cons
 
 	matrices->M = worldMatrix;
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
-	m_material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
+	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
 
-	m_material->AssignMaterial(commandListDirect, rpi);
+	material->AssignMaterial(commandListDirect, rpi);
 
 	model->Render(commandListDirect);
 }

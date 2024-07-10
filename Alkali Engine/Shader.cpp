@@ -5,50 +5,31 @@
 bool Shader::ms_GlobalFillWireframeMode;
 bool Shader::ms_GlobalCullNone;
 
-Shader::Shader()
-	: m_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
+	m_args = args;
+
+	m_VSName = g_dirPath + args.vs;
+	m_PSName = g_dirPath + args.ps;
+
+	Compile(device);
 }
 
-Shader::~Shader()
+void Shader::InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args)
 {
-}
-
-void Shader::Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
-{
-	m_topology = topology;
-	m_cullNone = cullNone;
-	m_disableDSV = disableDSV;
-	m_disableDSVWrite = disableDSVWrite;
-	m_inputLayout = inputLayout;
-
-	m_VSName = g_dirPath + vsName;
-	m_PSName = g_dirPath + psName;	
-
-	Compile(device, rootSig);
-}
-
-void Shader::InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone, bool disableDSV, bool disableDSVWrite, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology)
-{
-	m_topology = topology;	
-	m_cullNone = cullNone;
-	m_disableDSV = disableDSV;
-	m_disableDSVWrite = disableDSVWrite;
-	m_inputLayout = inputLayout;
+	m_args = args;
 
 	m_preCompiled = true;
 
-	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + vsName;
-	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + psName;	
+	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + args.vs;
+	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + args.ps;
 
-	Compile(device, rootSig);
+	Compile(device);
 }
 
-void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
+void Shader::Compile(ID3D12Device2* device)
 {
 	HRESULT hr;
-
-	m_rootSig = rootSig;
 
 	ComPtr<ID3DBlob> vBlob;
 	ComPtr<ID3DBlob> pBlob;
@@ -56,21 +37,25 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	if (m_preCompiled)
 	{
 		vBlob = ReadPreCompiledShader(m_VSName.c_str());
-		pBlob = ReadPreCompiledShader(m_PSName.c_str());
+
+		if (!m_args.NoPS)
+			pBlob = ReadPreCompiledShader(m_PSName.c_str());
 	}
 	else
 	{
 		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1");
-		pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1");
+		if (!m_args.NoPS)
+			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1");
 	}
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-	rtvFormats.NumRenderTargets = 1;
-	rtvFormats.RTFormats[0] = SettingsManager::ms_DX12.RTVFormat;
+	rtvFormats.NumRenderTargets = m_args.NoPS ? 0 : 1;
+	if (!m_args.NoPS)
+		rtvFormats.RTFormats[0] = m_args.RTVFormat;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = ms_GlobalCullNone || m_cullNone ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_BACK;
+	rasterizerDesc.CullMode = ms_GlobalCullNone || m_args.cullNone ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -100,11 +85,11 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;	
 
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
-	depthStencilDesc.DepthEnable = m_disableDSV ? FALSE : TRUE;
-	depthStencilDesc.DepthWriteMask = m_cullNone || m_disableDSVWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = m_disableDSVWrite ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
+	depthStencilDesc.DepthEnable = m_args.disableDSV ? FALSE : TRUE;
+	depthStencilDesc.DepthWriteMask = m_args.cullNone || m_args.disableDSVWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = m_args.disableDSVWrite ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
 
-	depthStencilDesc.StencilEnable = m_cullNone || m_disableDSV ? FALSE : TRUE;
+	depthStencilDesc.StencilEnable = m_args.cullNone || m_args.disableDSV ? FALSE : TRUE;
 	depthStencilDesc.StencilWriteMask = 0xFF;
 	depthStencilDesc.StencilReadMask = 0xFF;
 
@@ -118,7 +103,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 	depthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 	depthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	UINT inputLayoutCount = static_cast<UINT>(m_inputLayout.size());
+	UINT inputLayoutCount = static_cast<UINT>(m_args.inputLayout.size());
 
 	// For full list of fields (Order matters!)
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type
@@ -136,11 +121,12 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
 	} psoStream;
 
-	psoStream.pRootSignature = m_rootSig;
-	psoStream.InputLayout = { m_inputLayout.data(), inputLayoutCount };
-	psoStream.PrimitiveTopologyType = m_topology;
+	psoStream.pRootSignature = m_args.rootSig;
+	psoStream.InputLayout = { m_args.inputLayout.data(), inputLayoutCount };
+	psoStream.PrimitiveTopologyType = m_args.Topology;
 	psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
-	psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
+	if (!m_args.NoPS)
+		psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
 	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
@@ -155,7 +141,7 @@ void Shader::Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig)
 
 void Shader::Recompile(ID3D12Device2* device)
 {
-	Compile(device, m_rootSig);
+	Compile(device);
 }
 
 ComPtr<ID3D12PipelineState> Shader::GetPSO()

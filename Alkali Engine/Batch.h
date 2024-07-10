@@ -11,6 +11,13 @@ using std::vector;
 
 class GameObject;
 
+struct RenderOverride
+{
+	Shader* ShaderOverride;
+	RootSig* RootSigOverride;
+	bool UseShadowMapMat = false;
+};
+
 class Batch
 {
 public:
@@ -21,8 +28,9 @@ public:
 
 	GameObject* AddGameObject(GameObject go);
 	GameObject* CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
-	void Render(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
-	void RenderTrans(ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum& frustum);
+
+	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* override = nullptr);
+	void RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* override = nullptr);
 
 	void SortObjects(const XMFLOAT3& camPos);
 

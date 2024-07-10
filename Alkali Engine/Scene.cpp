@@ -8,9 +8,11 @@
 #include "TextureLoader.h"
 #include "DescriptorManager.h"
 #include "AssetFactory.h"
+#include "ShadowManager.h"
 
 shared_ptr<Model> Scene::ms_sphereModel;
 shared_ptr<Material> Scene::ms_perFramePBRMat;
+shared_ptr<Material> Scene::ms_shadowMapMat;
 
 Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	: m_Name(name)
@@ -75,12 +77,21 @@ bool Scene::LoadContent()
 		throw std::exception("Command Queue Error");
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
+	ShadowManager::Init(m_d3dClass, commandListDirect.Get());
+
 	if (!ms_perFramePBRMat)
 	{
-		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
+		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
 		ms_perFramePBRMat = std::make_shared<Material>();
 		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 		ResourceTracker::AddMaterial(ms_perFramePBRMat);
+	}
+
+	if (!ms_shadowMapMat)
+	{
+		ms_shadowMapMat = std::make_shared<Material>();
+		ms_shadowMapMat->AddDynamicSRVs("Shadow Map", 1);
+		ResourceTracker::AddMaterial(ms_shadowMapMat);
 	}
 
 	m_rpiLine.NumCBV_PerDraw = 1;
@@ -95,7 +106,9 @@ bool Scene::LoadContent()
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	m_shaderLine = AssetFactory::CreateShader(L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine.get(), true, false, false, false, D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+	ShaderArgs args = { L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine->GetRootSigResource() };
+	args.Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+	m_shaderLine = AssetFactory::CreateShader(args, true);
 
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
@@ -116,24 +129,27 @@ bool Scene::LoadContent()
 		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
 	}
 
-	m_rpiDepth.NumSRV = 1;
-	m_rpiDepth.ParamIndexSRV = 0;
+	m_viewDepthRPI.NumSRV_Dynamic = 1;
+	m_viewDepthRPI.ParamIndexSRV_Dynamic = 0;
 
-	m_rootSigDepth = std::make_shared<RootSig>();
-	m_rootSigDepth->InitDefaultSampler("Depth Buffer Root Sig", m_rpiDepth);
+	m_viewDepthRootSig = std::make_shared<RootSig>();
+	m_viewDepthRootSig->InitDefaultSampler("Depth Buffer Root Sig", m_viewDepthRPI);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	m_shaderDepth = AssetFactory::CreateShader(L"Depth_VS.cso", L"Depth_PS.cso", inputLayout, m_rootSigDepth.get(), true, true, true);
+	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, m_viewDepthRootSig->GetRootSigResource() };
+	argsDepth.cullNone = true;
+	argsDepth.disableDSV = true;
+	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
 
-	m_depthBufferMat = std::make_shared<Material>();
-	m_depthBufferMat->AddDynamicSRVs(1);
+	m_viewDepthMat = std::make_shared<Material>();
+	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
 
-	m_goDepthTex = std::make_unique<GameObject>("Depth Tex", modelPlane, m_shaderDepth, m_depthBufferMat, true);
-	m_goDepthTex->SetRotation(90, 0, 0);
+	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
+	m_viewDepthGO->SetRotation(90, 0, 0);
 
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
@@ -147,11 +163,11 @@ void Scene::UnloadContent()
 	ResourceTracker::ClearBatchList();
 	m_camera->Reset();
 
-	m_shaderDepth.reset();
+	m_viewDepthShader.reset();
 	m_shaderLine.reset();
 	m_matLine.reset();
-	m_goDepthTex.reset();
-	m_depthBufferMat.reset();
+	m_viewDepthGO.reset();
+	m_viewDepthMat.reset();
 
 	if (ms_sphereModel)
 	{
@@ -189,6 +205,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
+	ShadowManager::Update(lDir);
+	m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrix();
+
 	if (SettingsManager::ms_Dynamic.BatchSortingEnabled)
 	{
 		auto& batchList = ResourceTracker::GetBatches();
@@ -199,67 +218,78 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 void Scene::OnRender(TimeEventArgs& e)
 {
+	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
+	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
+	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+
 	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
 	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
+	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB));
 
 	CommandQueue* commandQueue = nullptr;
 	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!commandQueue)
 		return;
-
 	auto commandList = commandQueue->GetAvailableCommandList();
 
-	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
-	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	ClearBackBuffer(commandList.Get());
-
-	commandList->RSSetViewports(1, &m_viewport);
-	commandList->RSSetScissorRects(1, &m_scissorRect);
+	auto& batchList = ResourceTracker::GetBatches();
 
 	auto globalHeap = DescriptorManager::GetHeap();
 	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	UINT numRenderTargets = 1;
-	commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+	commandList->RSSetViewports(1, &m_viewport);
+	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	auto& batchList = ResourceTracker::GetBatches();
+	ShadowManager::Render(m_d3dClass, commandList.Get(), batchList);		
+
+	auto fenceShadowMapPass = commandQueue->ExecuteCommandList(commandList); // Execute early (Due to MatricesCB being reused)
+	commandQueue->WaitForFenceValue(fenceShadowMapPass);
+	commandList = commandQueue->GetAvailableCommandList();	
+	commandList->RSSetViewports(1, &m_viewport);
+	commandList->RSSetScissorRects(1, &m_scissorRect);
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
+
+	commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+
+	ClearBackBuffer(commandList.Get());
+	
 	for (auto& it : batchList)
-		it.second->Render(commandList.Get(), m_viewProjMatrix, m_frustum);
+		it.second->Render(m_d3dClass, commandList.Get(), m_viewProjMatrix, &m_frustum, nullptr);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(commandList.Get(), m_viewProjMatrix, m_frustum);
+		it.second->RenderTrans(m_d3dClass, commandList.Get(), m_viewProjMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
 
-	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_goDepthTex)
+	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
-		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, nullptr); // Disable DSV
+		commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, nullptr); // Disable DSV
 
-		commandList->SetGraphicsRootSignature(m_rootSigDepth->GetRootSigResource());
+		commandList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Convert DSV to SRV and assign as a texture to be read in the shader
 		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_depthBufferMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
+		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 
-		m_depthBufferMat->AssignMaterial(commandList.Get(), m_rpiDepth);
-
-		m_goDepthTex->Render(commandList.Get(), m_rpiDepth);
+		m_viewDepthMat->AssignMaterial(commandList.Get(), m_viewDepthRPI);
+		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI);
 		
-		commandList->OMSetRenderTargets(numRenderTargets, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+		commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, &dsvCPUDesc);
 	}
 
-	ImGUIManager::Render(commandList.Get());
+	ImGUIManager::Render(commandList.Get());	
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(commandList.Get(), commandQueue); 
 	
 	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
-	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_goDepthTex)
+	// [!] Can this be removed by simply tracking the resource state?
+	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
 		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
 
