@@ -14,7 +14,9 @@ struct V_OUT
     float3 Normal : NORMAL;    
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;
+
     float3 ViewDirection : TEXCOORD1;
+    float3 ShadowMapCoords : TEXCOORD2;
 };
 
 struct Matrices
@@ -32,6 +34,12 @@ struct Camera
 };
 ConstantBuffer<Camera> CameraCB : register(b2);
 
+struct ShadowMap
+{
+    matrix ShadowMatrix;
+};
+ConstantBuffer<ShadowMap> ShadowCB : register(b4);
+
 V_OUT main(V_IN input)
 {
     V_OUT o;
@@ -47,6 +55,9 @@ V_OUT main(V_IN input)
 
     o.ViewDirection = CameraCB.CameraPosition.xyz - worldPos.xyz;
     o.ViewDirection = normalize(o.ViewDirection);
+
+    float4 shadowPos = mul(ShadowCB.ShadowMatrix, worldPos);
+    o.ShadowMapCoords = shadowPos.xyz / shadowPos.w;
 
     return o;
 }

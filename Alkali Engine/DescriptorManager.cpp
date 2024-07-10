@@ -49,10 +49,13 @@ UINT DescriptorManager::AddSRVs(D3DClass* d3d, const vector<shared_ptr<Texture>>
 	return heapStart;
 }
 
-UINT DescriptorManager::AddDynamicSRVs(UINT count)
+UINT DescriptorManager::AddDynamicSRVs(string id, UINT count)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
+
+	if (ms_descriptorIndexMap.contains(id))
+		return ms_descriptorIndexMap.at(id);
 
 	if (SettingsManager::ms_Dynamic.HeapDebugViewEnabled)
 	{
@@ -62,6 +65,7 @@ UINT DescriptorManager::AddDynamicSRVs(UINT count)
 
 	UINT heapStart = static_cast<UINT>(ms_nextDescriptorIndex);
 	ms_nextDescriptorIndex += count;
+	ms_descriptorIndexMap.emplace(id, heapStart);
 	return heapStart;
 }
 
@@ -157,7 +161,7 @@ void DescriptorManager::SetDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT for
 		srvDesc.Texture2D.MostDetailedMip = 0;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(cpuHandle, index, incrementSize);
-		device->CreateShaderResourceView(resource, &srvDesc, srvHandle);
+		device->CreateShaderResourceView(resource, &srvDesc, srvHandle); // Error
 	}
 }
 

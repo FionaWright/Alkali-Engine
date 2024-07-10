@@ -9,16 +9,47 @@ using std::vector;
 
 const wstring g_dirPath = L"Assets/Shaders/";
 
+struct ShaderArgs
+{
+	wstring vs, ps;
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
+	ID3D12RootSignature* rootSig;
+
+	bool cullNone = false;
+	bool disableDSV = false;
+	bool disableDSVWrite = false;
+	bool NoPS = false;
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	DXGI_FORMAT RTVFormat = SettingsManager::ms_DX12.RTVFormat;
+
+	ShaderArgs& operator=(const ShaderArgs& other)
+	{
+		if (this == &other)
+			return *this;
+
+		vs = other.vs;
+		ps = other.ps;
+		inputLayout = other.inputLayout; 
+		rootSig = other.rootSig;
+
+		cullNone = other.cullNone;
+		disableDSV = other.disableDSV;
+		disableDSVWrite = other.disableDSVWrite;
+		Topology = other.Topology;
+		RTVFormat = other.RTVFormat;
+		NoPS = other.NoPS;
+
+		return *this;
+	}
+};
+
 class Shader
 {
 public:
-	Shader();
-	~Shader();
+	void Init(ID3D12Device2* device, const ShaderArgs& args);
+	void InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args);
 
-	void Init(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-	void InitPreCompiled(const wstring& vsName, const wstring& psName, vector<D3D12_INPUT_ELEMENT_DESC> inputLayout, ID3D12RootSignature* rootSig, ID3D12Device2* device, bool cullNone = false, bool disableDSV = false, bool disableDSVWrite = false, D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-
-	void Compile(ID3D12Device2* device, ID3D12RootSignature* rootSig);
+	void Compile(ID3D12Device2* device);
 	void Recompile(ID3D12Device2* device);
 
 	ComPtr<ID3D12PipelineState> GetPSO();
@@ -36,14 +67,9 @@ protected:
 	ComPtr<ID3DBlob> ReadPreCompiledShader(LPCWSTR path);
 
 private:
-	vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
-	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_topology;
-
-	ID3D12RootSignature* m_rootSig = nullptr;
 	ComPtr<ID3D12PipelineState> m_pso = nullptr;
 
 	bool m_preCompiled = false;
-	bool m_cullNone = false;
-	bool m_disableDSV = false, m_disableDSVWrite = false;
+	ShaderArgs m_args;
 };
 

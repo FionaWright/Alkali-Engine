@@ -45,8 +45,14 @@ struct MaterialPropertiesCB
     float Metallic = 0.5f;
 };
 
+struct ShadowMapCB
+{
+    XMMATRIX ShadowMatrix;
+};
+
 struct PerFrameCBuffers
 {
     CameraCB Camera;
     DirectionalLightCB DirectionalLight;
+    ShadowMapCB ShadowMap;
 };

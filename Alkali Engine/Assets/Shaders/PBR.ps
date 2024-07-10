@@ -9,7 +9,9 @@ struct V_OUT
     float3 Normal : NORMAL;    
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;
+
     float3 ViewDirection : TEXCOORD1;
+    float3 ShadowMapCoords : TEXCOORD2;
 };
 
 struct DirectionalLight
@@ -42,6 +44,7 @@ Texture2D g_normalMap : register(t1);
 Texture2D g_specularMap : register(t2);
 TextureCube g_irradiance : register(t3);
 TextureCube g_envMap : register(t4);
+Texture2D g_shadowMap : register(t5);
 
 SamplerState g_sampler : register(s0);
 
@@ -52,6 +55,9 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
+    float shadowMapDepth = g_shadowMap.Sample(g_sampler, input.ShadowMapCoords.xy).r;
+    return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth, 1);
+
     float4 tex = g_texture.Sample(g_sampler, input.UV);    
 
     if (tex.a < MatPropCB.AlphaCutoff)

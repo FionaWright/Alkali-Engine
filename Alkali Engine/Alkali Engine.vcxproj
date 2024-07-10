@@ -227,6 +227,7 @@
     <ClCompile Include="SceneBistro.cpp" />
     <ClCompile Include="SettingsManager.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShadowManager.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="SceneTest.cpp" />
@@ -287,6 +288,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="SettingsManager.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShadowManager.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="SceneTest.h" />
@@ -327,6 +329,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateMipMaps</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateMipMaps</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\DepthBuffer_PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\DepthBuffer_VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Assets\Shaders\Depth_PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

@@ -58,12 +58,14 @@ bool SceneTest::LoadContent()
 	//};
 
 	RootParamInfo rootParamInfoPBR;
-	rootParamInfoPBR.NumCBV_PerFrame = 2;
+	rootParamInfoPBR.NumCBV_PerFrame = 3;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
 	rootParamInfoPBR.NumSRV = 5;
+	rootParamInfoPBR.NumSRV_Dynamic = 1;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
 	rootParamInfoPBR.ParamIndexCBV_PerFrame = 1;
 	rootParamInfoPBR.ParamIndexSRV = 2;	
+	rootParamInfoPBR.ParamIndexSRV_Dynamic = 3;
 
 	auto rootSigPBR = std::make_shared<RootSig>();
 	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfoPBR);
@@ -78,19 +80,21 @@ bool SceneTest::LoadContent()
 	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
-	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
+	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
+	matPBR1->AddDynamicSRVs("Shadow Map", 1);
 	ResourceTracker::AddMaterial(matPBR1);
 
 	shared_ptr<Material> matPBR2 = std::make_shared<Material>();
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
+	matPBR2->AddDynamicSRVs("Shadow Map", 1);
 	ResourceTracker::AddMaterial(matPBR2);
 
 	MaterialPropertiesCB defaultMatProps;
@@ -119,9 +123,15 @@ bool SceneTest::LoadContent()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
-	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
-	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
+	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
+	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
+
+	argsPBR.cullNone = true;
+	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
+
+	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
+	argsSkybox.disableDSVWrite = true;
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));

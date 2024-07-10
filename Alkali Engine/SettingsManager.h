@@ -29,6 +29,9 @@ struct DX12Settings
 	D3D12_FILTER SamplerFilterDefault = D3D12_FILTER_ANISOTROPIC;
 	D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeDefault = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	int SamplerMaxAnisotropicDefault = 16;
+
+	UINT64 ShadowMapWidth = 2048;
+	UINT64 ShadowMapHeight = 1024;
 };
 
 struct WindowSettings

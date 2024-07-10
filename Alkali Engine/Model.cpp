@@ -3,11 +3,12 @@
 #include "ModelLoader.h"
 
 Model::Model()
-	:
-	m_VertexBuffer(nullptr),
-	m_IndexBuffer(nullptr),
-	m_IndexBufferView({}),
-	m_VertexBufferView({})
+	: m_VertexBuffer(nullptr)
+	, m_IndexBuffer(nullptr)
+	, m_IndexBufferView({})
+	, m_VertexBufferView({})
+	, m_boundingSphereRadius(0)
+	, m_centroid(XMFLOAT3_ZERO)
 {
 }
 

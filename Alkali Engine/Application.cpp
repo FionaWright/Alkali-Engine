@@ -15,6 +15,7 @@
 #include "DescriptorManager.h"
 #include "AssetFactory.h"
 #include "AlkaliGUIManager.h"
+#include "ShadowManager.h"
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -113,6 +114,7 @@ void Application::Shutdown()
     ResourceTracker::ReleaseAll();
     DescriptorManager::Shutdown();
     Scene::StaticShutdown();
+    ShadowManager::Shutdown();
 
     DestroyScenes();    
     m_mainWindow->Destroy();

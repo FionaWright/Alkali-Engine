@@ -89,9 +89,15 @@ bool SceneBistro::LoadContent()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get());
-	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR.get(), false, true);
-	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox.get(), true, false, false, true);
+	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
+	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
+
+	argsPBR.cullNone = true;
+	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
+
+	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
+	argsSkybox.disableDSVWrite = true;
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);

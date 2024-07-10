@@ -11,6 +11,7 @@ using std::shared_ptr;
 
 class Model;
 class Shader;
+struct RenderOverride;
 
 struct Transform
 {
@@ -26,9 +27,9 @@ public:
 	GameObject(string name);
 	~GameObject();
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices = nullptr);
+	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices = nullptr, RenderOverride* renderOverride = nullptr);
 
-	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform = nullptr);
+	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform = nullptr, Material* materialOverride = nullptr);
 
 	Transform GetTransform() const;
 	void SetTransform(Transform t);
@@ -68,6 +69,8 @@ protected:
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
 	shared_ptr<Material> m_material;
+
+	shared_ptr<Material> m_shadowMapMat;
 
 	Transform m_transform;
 
