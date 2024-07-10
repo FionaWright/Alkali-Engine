@@ -69,12 +69,11 @@ UINT DescriptorManager::AddDynamicSRVs(string id, UINT count)
 	return heapStart;
 }
 
-UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing)
+UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing, string id)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
 
-	string id = "";
 	for (size_t i = 0; i < sizes.size(); i++)
 	{
 		if (i != 0)

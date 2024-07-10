@@ -39,6 +39,9 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
 
+	if (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder)
+		return;
+
 	if (!m_shadowMapMat)
 	{
 		m_shadowMapMat = std::make_unique<Material>();
@@ -53,6 +56,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 
 	if (m_orthographic)
 	{
+		m_material->AssignMaterial(commandListDirect, rpi);
 		m_model->Render(commandListDirect);
 		return;
 	}
@@ -154,6 +158,11 @@ void GameObject::SetScale(XMFLOAT3 xyz)
 {
 	m_transform.Scale = xyz;
 	UpdateWorldMatrix();
+}
+
+void GameObject::SetOccluderState(bool enabled)
+{
+	m_isOccluder = enabled;
 }
 
 void GameObject::AddPosition(float x, float y, float z)

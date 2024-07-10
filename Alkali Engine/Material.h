@@ -16,7 +16,7 @@ public:
 
 	void AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures);
 	void AddDynamicSRVs(string id, UINT count);	
-	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame);
+	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
 	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);

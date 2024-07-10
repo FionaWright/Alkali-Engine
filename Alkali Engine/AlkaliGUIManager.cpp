@@ -70,7 +70,28 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
-				ImGui::Checkbox("Show DSV", &SettingsManager::ms_Dynamic.VisualiseDSVEnabled);
+				bool visualiseDSV = SettingsManager::ms_Dynamic.VisualiseDSVEnabled;
+				bool visualiseShadow = SettingsManager::ms_Dynamic.VisualiseShadowMap;
+				if (visualiseShadow)
+					ImGui::BeginDisabled(true);
+
+				ImGui::Checkbox("Visualise Depth Buffer", &SettingsManager::ms_Dynamic.VisualiseDSVEnabled);
+
+				if (visualiseShadow)
+					ImGui::EndDisabled();
+
+				if (visualiseDSV)
+					ImGui::BeginDisabled(true);
+
+				ImGui::Checkbox("Visualise Shadow Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
+
+				if (visualiseDSV)
+					ImGui::EndDisabled();
+
+				ImGui::InputInt("Shadow Map Width", &SettingsManager::ms_Dynamic.ShadowMapWidth);
+				ImGui::InputInt("Shadow Map Height", &SettingsManager::ms_Dynamic.ShadowMapHeight);
+				ImGui::InputInt("Shadow Map Near", &SettingsManager::ms_Dynamic.ShadowMapNear);
+				ImGui::InputInt("Shadow Map Far", &SettingsManager::ms_Dynamic.ShadowMapFar);
 
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{

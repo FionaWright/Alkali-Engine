@@ -34,16 +34,16 @@ void Material::AddDynamicSRVs(string id, UINT count)
     m_addedSRV_dynamic += count;
 }
 
-void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame)
+void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id)
 {
     if (perFrame)
     {
-        m_cbvHeapIndex_perFrame = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perFrame, true);
+        m_cbvHeapIndex_perFrame = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perFrame, true, id);
         m_addedCBV_PerFrame += sizes.size();
         return;
     }        
     
-    m_cbvHeapIndex_perDraw = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perDraw, false);
+    m_cbvHeapIndex_perDraw = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perDraw, false, id);
     m_addedCBV_PerDraw += sizes.size();
 }
 

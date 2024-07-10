@@ -17,18 +17,22 @@ D3D12_RESOURCE_STATES ShadowManager::ms_currentDSVState;
 std::unique_ptr<GameObject> ShadowManager::ms_viewGO;
 shared_ptr<Shader> ShadowManager::ms_depthShader;
 shared_ptr<RootSig> ShadowManager::ms_depthRootSig;
-shared_ptr<Material> ShadowManager::ms_depthMat;
+shared_ptr<Material> ShadowManager::ms_depthMat, ShadowManager::ms_viewDepthMat;
+shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
+D3D12_VIEWPORT ShadowManager::ms_viewport;
 
 void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 {
 	{
+		ms_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(SettingsManager::ms_Dynamic.ShadowMapResoWidth), static_cast<float>(SettingsManager::ms_Dynamic.ShadowMapResoHeight));
+
 		ms_dsvHeap = ResourceManager::CreateDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		ms_dsvDescriptorSize = d3d->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 		D3D12_RESOURCE_DESC dsvDesc = {};
 		dsvDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		dsvDesc.Width = SettingsManager::ms_DX12.ShadowMapWidth;
-		dsvDesc.Height = SettingsManager::ms_DX12.ShadowMapHeight;
+		dsvDesc.Width = SettingsManager::ms_Dynamic.ShadowMapResoWidth;
+		dsvDesc.Height = SettingsManager::ms_Dynamic.ShadowMapResoHeight;		
 		dsvDesc.DepthOrArraySize = 1;
 		dsvDesc.MipLevels = 1;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -58,10 +62,12 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 
 	RootParamInfo viewRPI;
 	viewRPI.NumSRV_Dynamic = 1;
-	viewRPI.ParamIndexSRV_Dynamic = 0;
+	viewRPI.NumCBV_PerFrame = 1;
+	viewRPI.ParamIndexCBV_PerFrame = 0;
+	viewRPI.ParamIndexSRV_Dynamic = 1;
 
-	auto viewRootSig = std::make_shared<RootSig>();
-	viewRootSig->InitDefaultSampler("View Shadow Map RS", viewRPI);
+	ms_viewRootSig = std::make_shared<RootSig>();
+	ms_viewRootSig->InitDefaultSampler("View Shadow Map RS", viewRPI);
 
 	RootParamInfo depthRPI;
 	depthRPI.NumCBV_PerDraw = 1;
@@ -75,25 +81,35 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, viewRootSig->GetRootSigResource() };
+	ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, ms_viewRootSig->GetRootSigResource() };
 	viewArgs.cullNone = true;
 	viewArgs.disableDSV = true;
 	auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
 
 	ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
 	depthArgs.NoPS = true;
+	depthArgs.cullFrontOnly = true;
 	ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
 
 	ms_depthMat = std::make_shared<Material>();
 	vector<UINT> cbvDrawSizes = { sizeof(MatricesCB) };
 	ms_depthMat->AddCBVs(d3d, commandList, cbvDrawSizes, false);
 
-	auto viewDepthmat = std::make_shared<Material>();
-	viewDepthmat->AddDynamicSRVs("Shadow View", 1);
+	ms_viewDepthMat = std::make_shared<Material>();
+	vector<UINT> cbvFrameSizesView = { sizeof(DepthViewCB) };
+	ms_viewDepthMat->AddCBVs(d3d, commandList, cbvFrameSizesView, true, "ShadowView");
+	ms_viewDepthMat->AddDynamicSRVs("Shadow View", 1);
+
+	DepthViewCB dvCB;
+	dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
+	dvCB.MaxValue = 1;
+	dvCB.MinValue = 0.2f;
+
+	ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
 
 	auto modelPlane = AssetFactory::CreateModel("Plane.model", commandList);
 
-	ms_viewGO = std::make_unique<GameObject>("View Shadow Map", modelPlane, viewDepthShader, viewDepthmat, true);
+	ms_viewGO = std::make_unique<GameObject>("View Shadow Map", modelPlane, viewDepthShader, ms_viewDepthMat, true);
 	ms_viewGO->SetRotation(90, 0, 0);
 }
 
@@ -108,16 +124,15 @@ void ShadowManager::Shutdown()
 
 void ShadowManager::Update(XMFLOAT3 lightDir)
 {
-	XMFLOAT3 eye = Mult(lightDir, -5);
-	XMVECTOR eyeV = XMLoadFloat3(&eye);
+	XMVECTOR eyeV = XMLoadFloat3(&XMFLOAT3_ZERO);
 
-	XMVECTOR focusV = XMLoadFloat3(&XMFLOAT3_ZERO);
+	XMVECTOR focusV = XMLoadFloat3(&lightDir);
 
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 	XMVECTOR upV = XMLoadFloat3(&up);
 
 	ms_viewMatrix = XMMatrixLookAtLH(eyeV, focusV, upV);
-	ms_projMatrix = XMMatrixOrthographicLH(SettingsManager::ms_DX12.ShadowMapWidth, SettingsManager::ms_DX12.ShadowMapHeight, -30, 30);
+	ms_projMatrix = XMMatrixOrthographicLH(SettingsManager::ms_Dynamic.ShadowMapWidth, SettingsManager::ms_Dynamic.ShadowMapHeight, SettingsManager::ms_Dynamic.ShadowMapNear, SettingsManager::ms_Dynamic.ShadowMapFar);
 	ms_vpMatrix = ms_viewMatrix * ms_projMatrix;
 }
 
@@ -125,6 +140,8 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 {
 	if (ms_currentDSVState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		ResourceManager::TransitionResource(commandList, ms_shadowMapResource.Get(), ms_currentDSVState, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+	commandList->RSSetViewports(1, &ms_viewport);
 
 	auto dsvHandle = ms_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
@@ -154,6 +171,16 @@ XMMATRIX& ShadowManager::GetVPMatrix()
 	return ms_vpMatrix;
 }
 
-void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
+void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle)
 {
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
+
+	commandList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	ms_viewDepthMat->SetDynamicSRV(d3d, 0, DXGI_FORMAT_R32_FLOAT, ms_shadowMapResource.Get());
+
+	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo());
+
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }

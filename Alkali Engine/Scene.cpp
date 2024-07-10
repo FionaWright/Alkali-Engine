@@ -130,7 +130,9 @@ bool Scene::LoadContent()
 	}
 
 	m_viewDepthRPI.NumSRV_Dynamic = 1;
-	m_viewDepthRPI.ParamIndexSRV_Dynamic = 0;
+	m_viewDepthRPI.NumCBV_PerFrame = 1;
+	m_viewDepthRPI.ParamIndexCBV_PerFrame = 0;
+	m_viewDepthRPI.ParamIndexSRV_Dynamic = 1;
 
 	m_viewDepthRootSig = std::make_shared<RootSig>();
 	m_viewDepthRootSig->InitDefaultSampler("Depth Buffer Root Sig", m_viewDepthRPI);
@@ -145,8 +147,18 @@ bool Scene::LoadContent()
 	argsDepth.disableDSV = true;
 	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
 
+	vector<UINT> viewCBVFrame = { sizeof(DepthViewCB) };
+
 	m_viewDepthMat = std::make_shared<Material>();
 	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
+	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, true, "DepthView");
+
+	DepthViewCB dvCB;
+	dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
+	dvCB.MaxValue = 1.0f;
+	dvCB.MinValue = 0.96f;
+
+	m_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
 
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
@@ -219,8 +231,8 @@ void Scene::OnUpdate(TimeEventArgs& e)
 void Scene::OnRender(TimeEventArgs& e)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	auto rtvCPUDesc = m_pWindow->GetCurrentRenderTargetView();
-	auto dsvCPUDesc = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	auto rtvHandle = m_pWindow->GetCurrentRenderTargetView();
+	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
 	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
 	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
@@ -238,7 +250,6 @@ void Scene::OnRender(TimeEventArgs& e)
 	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
 	ShadowManager::Render(m_d3dClass, commandList.Get(), batchList);		
@@ -252,7 +263,8 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
 
-	commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+	commandList->RSSetViewports(1, &m_viewport);
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	ClearBackBuffer(commandList.Get());
 	
@@ -263,11 +275,11 @@ void Scene::OnRender(TimeEventArgs& e)
 		it.second->RenderTrans(m_d3dClass, commandList.Get(), m_viewProjMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
-		RenderDebugLines(commandList.Get(), rtvCPUDesc, dsvCPUDesc);
+		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle);
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
-		commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, nullptr); // Disable DSV
+		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
 
 		commandList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -276,10 +288,15 @@ void Scene::OnRender(TimeEventArgs& e)
 		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 
-		m_viewDepthMat->AssignMaterial(commandList.Get(), m_viewDepthRPI);
+		//m_viewDepthMat->AssignMaterial(commandList.Get(), m_viewDepthRPI);
 		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI);
 		
-		commandList->OMSetRenderTargets(1, &rtvCPUDesc, FALSE, &dsvCPUDesc);
+		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	}
+	
+	if (SettingsManager::ms_Dynamic.VisualiseShadowMap)
+	{
+		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle);
 	}
 
 	ImGUIManager::Render(commandList.Get());	
@@ -331,7 +348,7 @@ Window* Scene::GetWindow()
 	return m_pWindow;
 }
 
-PerFrameCBuffers& Scene::GetPerFrameCBuffers()
+PerFrameCBuffers_PBR& Scene::GetPerFrameCBuffers()
 {
 	return m_perFrameCBuffers;
 }

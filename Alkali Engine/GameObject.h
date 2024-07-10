@@ -43,6 +43,8 @@ public:
 	void SetScale(float x, float y, float z);
 	void SetScale(XMFLOAT3 xyz);
 
+	void SetOccluderState(bool enabled);
+
 	void AddPosition(float x, float y, float z);
 	void AddPosition(XMFLOAT3 xyz);
 
@@ -78,5 +80,6 @@ protected:
 
 	bool m_orthographic;
 	bool m_isTransparent;
+	bool m_isOccluder = true;
 };
 
