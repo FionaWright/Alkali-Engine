@@ -130,6 +130,14 @@ void ShadowManager::Update(XMFLOAT3 lightDir)
 {
 	float width = 0, height = 0, nearDist = INFINITY, farDist = -INFINITY;
 
+	XMFLOAT3 forwardBasis = Normalize(lightDir);
+	XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
+	XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
+	XMFLOAT3 maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
+
+	// pK = up * r + right * r = (up + right) * r * sqrt(2)
+	// pK = [(up + right) * sqrt(2)] * r
+
 	if (SettingsManager::ms_Dynamic.DynamicShadowMapBounds)
 	{
 		auto& batchList = ResourceTracker::GetBatches();
@@ -144,8 +152,11 @@ void ShadowManager::Update(XMFLOAT3 lightDir)
 				float radius;
 				opaques[i].GetBoundingSphere(pos, radius);
 
-				width = std::max(width, abs(pos.x) + radius);
-				height = std::max(height, abs(pos.y) + radius);
+				XMFLOAT3 pK = Add(Abs(pos), Abs(Mult(maxBasis, radius)));
+
+				width = std::max(width, pK.x);
+				height = std::max(height, pK.y);
+
 				nearDist = std::min(nearDist, pos.z - radius);
 				farDist = std::max(farDist, pos.z + radius);
 			}
@@ -156,10 +167,16 @@ void ShadowManager::Update(XMFLOAT3 lightDir)
 				float radius;
 				trans[i].GetBoundingSphere(pos, radius);
 
-				width = std::max(width, abs(pos.x) + radius);
-				height = std::max(height, abs(pos.y) + radius);
-				nearDist = std::min(nearDist, pos.z - radius);
-				farDist = std::max(farDist, pos.z + radius);
+				XMFLOAT3 pK = Add(Abs(pos), Abs(Mult(maxBasis, radius)));
+
+				width = std::max(width, pK.x);
+				height = std::max(height, pK.y);
+
+				XMFLOAT3 pN = Add(pos, Mult(forwardBasis, -radius));
+				XMFLOAT3 pF = Add(pos, Mult(forwardBasis, radius));
+
+				nearDist = std::min(nearDist, pN.z);
+				farDist = std::max(farDist, pF.z);
 			}
 		}
 
