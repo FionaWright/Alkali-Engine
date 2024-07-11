@@ -16,6 +16,7 @@ struct RenderOverride
 	Shader* ShaderOverride;
 	RootSig* RootSigOverride;
 	bool UseShadowMapMat = false;
+	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
 };
 
 class Batch

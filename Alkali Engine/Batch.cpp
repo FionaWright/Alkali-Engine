@@ -51,7 +51,10 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
 
-		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || !frustum || frustum->CheckSphere(pos, radius))
+		float frustumNear = renderOverride ? renderOverride->FrustumNearPercent : 0.0f;
+		float frustumFar = renderOverride ? renderOverride->FrustumFarPercent: 1.0f;
+
+		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || !frustum || frustum->CheckSphere(pos, radius, frustumNear, frustumFar))
 			list[i].Render(d3d, commandList, rootSig->GetRootParamInfo(), &matrices, renderOverride);
 	}
 }

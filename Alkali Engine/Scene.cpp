@@ -219,8 +219,8 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
-		ShadowManager::Update(lDir);
-		m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrix();
+		ShadowManager::Update(lDir, m_frustum);
+		m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrices()[0];
 	}	
 
 	if (SettingsManager::ms_Dynamic.BatchSortingEnabled)
@@ -257,7 +257,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
-		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList);
+		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
 
 		auto fenceShadowMapPass = commandQueue->ExecuteCommandList(commandList); // Execute early (Due to MatricesCB being reused)
 		commandQueue->WaitForFenceValue(fenceShadowMapPass);
