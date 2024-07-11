@@ -77,6 +77,8 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 
+	bool ShadowMapEnabled = true;
+	bool DynamicShadowMapBounds = true;
 	int ShadowMapWidth = 256;
 	int ShadowMapHeight = 256;
 	int ShadowMapResoWidth = 4096;
