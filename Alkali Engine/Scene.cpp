@@ -217,8 +217,11 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
-	ShadowManager::Update(lDir);
-	m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrix();
+	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	{
+		ShadowManager::Update(lDir);
+		m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrix();
+	}	
 
 	if (SettingsManager::ms_Dynamic.BatchSortingEnabled)
 	{
@@ -252,16 +255,19 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	ShadowManager::Render(m_d3dClass, commandList.Get(), batchList);		
+	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	{
+		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList);
 
-	auto fenceShadowMapPass = commandQueue->ExecuteCommandList(commandList); // Execute early (Due to MatricesCB being reused)
-	commandQueue->WaitForFenceValue(fenceShadowMapPass);
-	commandList = commandQueue->GetAvailableCommandList();	
-	commandList->RSSetViewports(1, &m_viewport);
-	commandList->RSSetScissorRects(1, &m_scissorRect);
-	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		auto fenceShadowMapPass = commandQueue->ExecuteCommandList(commandList); // Execute early (Due to MatricesCB being reused)
+		commandQueue->WaitForFenceValue(fenceShadowMapPass);
+		commandList = commandQueue->GetAvailableCommandList();
+		commandList->RSSetViewports(1, &m_viewport);
+		commandList->RSSetScissorRects(1, &m_scissorRect);
+		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
+		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
+	}
 
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -294,7 +300,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	}
 	
-	if (SettingsManager::ms_Dynamic.VisualiseShadowMap)
+	if (SettingsManager::ms_Dynamic.ShadowMapEnabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
 		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle);
 	}

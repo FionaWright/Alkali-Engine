@@ -80,12 +80,14 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (visualiseShadow)
 					ImGui::EndDisabled();
 
-				if (visualiseDSV)
+				ImGui::Checkbox("Shadow Map Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
+
+				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 					ImGui::BeginDisabled(true);
 
 				ImGui::Checkbox("Visualise Shadow Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
 
-				if (visualiseDSV)
+				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 					ImGui::EndDisabled();
 
 				ImGui::InputInt("Shadow Map Width", &SettingsManager::ms_Dynamic.ShadowMapWidth);

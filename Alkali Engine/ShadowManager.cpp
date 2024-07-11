@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "Batch.h"
 #include "Frustum.h"
+#include "ResourceTracker.h"
 
 XMMATRIX ShadowManager::ms_viewMatrix, ShadowManager::ms_projMatrix, ShadowManager::ms_vpMatrix;
 
@@ -119,11 +120,65 @@ void ShadowManager::Shutdown()
 	ms_depthRootSig.reset();
 	ms_depthShader.reset();
 	ms_viewGO.reset();
+	ms_viewDepthMat.reset();
+	ms_depthMat.reset();
+	ms_viewRootSig.reset();
 	ms_shadowMapResource.Reset();
 }
 
 void ShadowManager::Update(XMFLOAT3 lightDir)
 {
+	float width = 0, height = 0, nearDist = INFINITY, farDist = -INFINITY;
+
+	if (SettingsManager::ms_Dynamic.DynamicShadowMapBounds)
+	{
+		auto& batchList = ResourceTracker::GetBatches();
+		for (auto& it : batchList)
+		{
+			auto& opaques = it.second->GetOpaques();
+			auto& trans = it.second->GetTrans();
+
+			for (size_t i = 0; i < opaques.size(); i++)
+			{
+				XMFLOAT3 pos;
+				float radius;
+				opaques[i].GetBoundingSphere(pos, radius);
+
+				width = std::max(width, abs(pos.x) + radius);
+				height = std::max(height, abs(pos.y) + radius);
+				nearDist = std::min(nearDist, pos.z - radius);
+				farDist = std::max(farDist, pos.z + radius);
+			}
+
+			for (size_t i = 0; i < trans.size(); i++)
+			{
+				XMFLOAT3 pos;
+				float radius;
+				trans[i].GetBoundingSphere(pos, radius);
+
+				width = std::max(width, abs(pos.x) + radius);
+				height = std::max(height, abs(pos.y) + radius);
+				nearDist = std::min(nearDist, pos.z - radius);
+				farDist = std::max(farDist, pos.z + radius);
+			}
+		}
+
+		width *= 2;
+		height *= 2;
+
+		SettingsManager::ms_Dynamic.ShadowMapWidth = width;
+		SettingsManager::ms_Dynamic.ShadowMapHeight = height;
+		SettingsManager::ms_Dynamic.ShadowMapNear = nearDist;
+		SettingsManager::ms_Dynamic.ShadowMapFar = farDist;
+	}
+	else
+	{
+		width = SettingsManager::ms_Dynamic.ShadowMapWidth;
+		height = SettingsManager::ms_Dynamic.ShadowMapHeight;
+		nearDist = SettingsManager::ms_Dynamic.ShadowMapNear;
+		farDist = SettingsManager::ms_Dynamic.ShadowMapFar;
+	}
+
 	XMVECTOR eyeV = XMLoadFloat3(&XMFLOAT3_ZERO);
 
 	XMVECTOR focusV = XMLoadFloat3(&lightDir);
@@ -132,7 +187,7 @@ void ShadowManager::Update(XMFLOAT3 lightDir)
 	XMVECTOR upV = XMLoadFloat3(&up);
 
 	ms_viewMatrix = XMMatrixLookAtLH(eyeV, focusV, upV);
-	ms_projMatrix = XMMatrixOrthographicLH(SettingsManager::ms_Dynamic.ShadowMapWidth, SettingsManager::ms_Dynamic.ShadowMapHeight, SettingsManager::ms_Dynamic.ShadowMapNear, SettingsManager::ms_Dynamic.ShadowMapFar);
+	ms_projMatrix = XMMatrixOrthographicLH(width, height, nearDist, farDist);
 	ms_vpMatrix = ms_viewMatrix * ms_projMatrix;
 }
 
