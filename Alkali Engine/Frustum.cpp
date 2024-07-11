@@ -2,14 +2,6 @@
 #include "Frustum.h"
 #include "Utils.h"
 
-Frustum::Frustum()
-{
-}
-
-Frustum::~Frustum()
-{
-}
-
 void Frustum::UpdateValues(XMMATRIX viewProj)
 {
     // Left Plane
@@ -41,12 +33,14 @@ void Frustum::UpdateValues(XMMATRIX viewProj)
     m_frustumPlanes[4].Normal.y = viewProj.r[1].m128_f32[2];
     m_frustumPlanes[4].Normal.z = viewProj.r[2].m128_f32[2];
     m_frustumPlanes[4].Distance = viewProj.r[3].m128_f32[2];
+    m_nearIndex = 4;
 
     // Far Plane
     m_frustumPlanes[5].Normal.x = viewProj.r[0].m128_f32[3] - viewProj.r[0].m128_f32[2];
     m_frustumPlanes[5].Normal.y = viewProj.r[1].m128_f32[3] - viewProj.r[1].m128_f32[2];
     m_frustumPlanes[5].Normal.z = viewProj.r[2].m128_f32[3] - viewProj.r[2].m128_f32[2];
     m_frustumPlanes[5].Distance = viewProj.r[3].m128_f32[3] - viewProj.r[3].m128_f32[2];
+    m_farIndex = 5;
 
     // Normalize the planes
     for (int i = 0; i < 6; ++i)
@@ -55,6 +49,8 @@ void Frustum::UpdateValues(XMMATRIX viewProj)
         m_frustumPlanes[i].Normal = Normalize(m_frustumPlanes[i].Normal, length);
         m_frustumPlanes[i].Distance /= length;
     }
+
+    m_nearFarDist = SettingsManager::ms_DX12.FarPlane - SettingsManager::ms_DX12.NearPlane;
 }
 
 void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
@@ -106,11 +102,17 @@ void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
     m_debugLines.at(11)->SetPositions(d3d, NSE, FSE);
 }
 
-bool Frustum::CheckSphere(XMFLOAT3 pos, float radius)
-{
+bool Frustum::CheckSphere(XMFLOAT3 pos, float radius, float nearPercent, float farPercent)
+{    
     for (int i = 0; i < 6; ++i)
     {
-        float distance = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance;
+        float nearFarOffset = 0;
+        if (i == m_nearIndex)
+            nearFarOffset = m_nearFarDist * nearPercent;
+        else if (i == m_farIndex)
+            nearFarOffset = -m_nearFarDist * (1 - farPercent);
+
+        float distance = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance + nearFarOffset;
         if (distance < -radius)
             return false;
     }
@@ -134,4 +136,56 @@ void Frustum::SetDebugLinesEnabled(bool enabled)
     {
         m_debugLines.at(i)->SetEnabled(enabled);
     }
+}
+
+void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
+{   
+    XMFLOAT3 frustumCorners[8];
+
+    auto Intersection = [](const FrustumPlane& p1, const FrustumPlane& p2, const FrustumPlane& p3, float& nearFarOffset) -> XMFLOAT3
+    {
+        XMFLOAT3 u = Cross(p2.Normal, p3.Normal);
+        float denom = Dot(p1.Normal, u);
+        XMFLOAT3 point = Divide(
+            Add(Mult(Cross(p2.Normal, p3.Normal), p1.Distance),
+            Add(Mult(Cross(p3.Normal, p1.Normal), p2.Distance),
+            Mult(Cross(p1.Normal, p2.Normal), p3.Distance + nearFarOffset))), denom);
+        return point;
+    };
+
+    float nearOffset = m_nearFarDist * nearPercent;
+    float farOffset = -m_nearFarDist * (1 - farPercent);
+
+    frustumCorners[0] = Intersection(m_frustumPlanes[0], m_frustumPlanes[2], m_frustumPlanes[4], nearOffset); // Left, Top, Near
+    frustumCorners[1] = Intersection(m_frustumPlanes[0], m_frustumPlanes[3], m_frustumPlanes[4], nearOffset); // Left, Bottom, Near
+    frustumCorners[2] = Intersection(m_frustumPlanes[1], m_frustumPlanes[2], m_frustumPlanes[4], nearOffset); // Right, Top, Near
+    frustumCorners[3] = Intersection(m_frustumPlanes[1], m_frustumPlanes[3], m_frustumPlanes[4], nearOffset); // Right, Bottom, Near
+
+    frustumCorners[4] = Intersection(m_frustumPlanes[0], m_frustumPlanes[2], m_frustumPlanes[5], farOffset); // Left, Top, Far
+    frustumCorners[5] = Intersection(m_frustumPlanes[0], m_frustumPlanes[3], m_frustumPlanes[5], farOffset); // Left, Bottom, Far
+    frustumCorners[6] = Intersection(m_frustumPlanes[1], m_frustumPlanes[2], m_frustumPlanes[5], farOffset); // Right, Top, Far
+    frustumCorners[7] = Intersection(m_frustumPlanes[1], m_frustumPlanes[3], m_frustumPlanes[5], farOffset); // Right, Bottom, Far
+
+    XMFLOAT3 forwardBasis = Normalize(dir);
+    XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
+    XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
+    XMFLOAT3 maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
+
+    float maxX = -INFINITY, minX = INFINITY, maxY = -INFINITY, minY = INFINITY;
+
+    for (int i = 0; i < 8; i++)
+    {
+        XMFLOAT3 pTransformed = Add(Add(Mult(rightBasis, frustumCorners[i].x), Mult(upBasis, frustumCorners[i].y)), Mult(forwardBasis, frustumCorners[i].z));
+
+        maxX = std::max(maxX, pTransformed.x);
+        minX = std::min(minX, pTransformed.x);
+        maxY = std::max(maxY, pTransformed.y);
+        minY = std::min(minY, pTransformed.y);
+
+        nearDist = std::min(nearDist, pTransformed.z);
+        farDist = std::max(farDist, pTransformed.z);
+    }
+
+    width = maxX - minX;
+    height = maxY - minY;
 }
