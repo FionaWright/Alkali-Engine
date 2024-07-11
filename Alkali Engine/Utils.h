@@ -20,6 +20,8 @@ XMFLOAT2 NaiveFrac(XMFLOAT2 a);
 
 XMFLOAT2 Abs(const XMFLOAT2& a);
 
+XMFLOAT3 Abs(const XMFLOAT3& a);
+
 XMFLOAT3 Normalize(const XMFLOAT3& v);
 
 XMFLOAT3 Divide(const XMFLOAT3& a, float d);

@@ -53,6 +53,11 @@ XMFLOAT2 Abs(const XMFLOAT2& a)
     return XMFLOAT2(std::abs(a.x), std::abs(a.y));
 }
 
+XMFLOAT3 Abs(const XMFLOAT3& a)
+{
+    return XMFLOAT3(std::abs(a.x), std::abs(a.y), std::abs(a.z));
+}
+
 XMFLOAT3 Normalize(const XMFLOAT3& v)
 {
 	float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
