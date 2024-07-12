@@ -48,9 +48,7 @@ void Frustum::UpdateValues(XMMATRIX viewProj)
         float length;
         m_frustumPlanes[i].Normal = Normalize(m_frustumPlanes[i].Normal, length);
         m_frustumPlanes[i].Distance /= length;
-    }
-
-    m_nearFarDist = SettingsManager::ms_DX12.FarPlane - SettingsManager::ms_DX12.NearPlane;
+    }    
 }
 
 void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
@@ -104,15 +102,18 @@ void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
 
 bool Frustum::CheckSphere(XMFLOAT3 pos, float radius, float nearPercent, float farPercent)
 {    
+    float nearFarDist = m_frustumPlanes[m_farIndex].Distance - m_frustumPlanes[m_nearIndex].Distance;
+    float nearDist = Dot(m_frustumPlanes[m_nearIndex].Normal, pos) + m_frustumPlanes[m_nearIndex].Distance;
+    float farDist = Dot(m_frustumPlanes[m_farIndex].Normal, pos) + m_frustumPlanes[m_farIndex].Distance;
+    float nearLimit = m_frustumPlanes[m_nearIndex].Distance + nearFarDist * nearPercent;
+    float farLimit = m_frustumPlanes[m_farIndex].Distance + nearFarDist * farPercent;
+
+    if (nearDist < nearLimit - radius || farDist > farLimit + radius)
+        return false;
+
     for (int i = 0; i < 6; ++i)
     {
-        float nearFarOffset = 0;
-        if (i == m_nearIndex)
-            nearFarOffset = m_nearFarDist * nearPercent;
-        else if (i == m_farIndex)
-            nearFarOffset = -m_nearFarDist * (1 - farPercent);
-
-        float distance = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance + nearFarOffset;
+        float distance = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance;
         if (distance < -radius)
             return false;
     }

@@ -40,7 +40,8 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	MatricesCB matrices;
-	matrices.VP = viewProj;
+	matrices.V = view;
+	matrices.P = proj;
 
 	commandList->SetGraphicsRootSignature(rootSig->GetRootSigResource());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

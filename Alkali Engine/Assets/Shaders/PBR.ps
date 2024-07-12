@@ -13,7 +13,9 @@ struct V_OUT
     float3 Binormal : BINORMAL;
 
     float3 ViewDirection : TEXCOORD1;
-    float3 ShadowMapCoords[CASCADES] : TEXCOORD2;
+    float ViewDepth : TEXCOORD2;
+
+    float4 ShadowMapCoords[CASCADES] : TEXCOORD3;
 };
 
 struct DirectionalLight
@@ -63,21 +65,23 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
-    float4 zDist = input.Position.zzzz / input.Position.w;
-    float4 cascadeComparison = (zDist > ShadowPixelCB.CascadeDistances);
-    return float4(zDist.xyz, 1);
-    return float4(cascadeComparison.xyz, 1);
+    float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
 
     float fCascadeIndex = dot(float4(CASCADES > 0, CASCADES > 1, CASCADES > 2, CASCADES > 3), cascadeComparison);
     fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
-    int iCascadeIndex = (int)fCascadeIndex;
+    int iCascadeIndex = (int)fCascadeIndex - 1;
 
     float3 shadowCoords = input.ShadowMapCoords[iCascadeIndex];
     shadowCoords.y = 1 - shadowCoords.y;
+    shadowCoords.x += iCascadeIndex;
     float shadowMapDepth = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
     bool inLight = shadowCoords.z + 0.0001f < shadowMapDepth;
 
-    return float4(shadowCoords.xy, 0, 1);
+    //if (iCascadeIndex != 0)
+      //  return float4(0, 1 , 0, 1);
+
+    //return float4(0, shadowCoords.y, 0, 1);
+    return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
 
     if (!inLight)
         return float4(0, 0, 0, 1);
