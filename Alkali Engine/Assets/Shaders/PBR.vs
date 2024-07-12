@@ -17,8 +17,10 @@ struct V_OUT
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;
 
-    float3 ViewDirection : TEXCOORD1;
-    float3 ShadowMapCoords[CASCADES] : TEXCOORD2;
+    float3 ViewDirection : TEXCOORD1;    
+    float ViewDepth : TEXCOORD2;
+
+    float4 ShadowMapCoords[CASCADES] : TEXCOORD3;
 };
 
 struct Matrices
@@ -49,7 +51,7 @@ V_OUT main(V_IN input)
 
     float4 pos = float4(input.Position, 1.0f);
     float4 worldPos = mul(MatricesCB.M, pos);
-    o.Position = mul(MatricesCB.VP, worldPos);
+    o.Position = mul(mul(MatricesCB.P, MatricesCB.V), worldPos);
     o.UV = input.UV;
 
     o.Normal = normalize(mul((float3x3)MatricesCB.InverseTransposeM, input.Normal));
@@ -62,9 +64,11 @@ V_OUT main(V_IN input)
     for (int i = 0; i < CASCADES; i++)
     {
         float4 shadowPos = mul(ShadowCB.ShadowMatrix[i], worldPos);
-        o.ShadowMapCoords[i] = shadowPos.xyz / shadowPos.w;
+        o.ShadowMapCoords[i].xyz = shadowPos.xyz / shadowPos.w;
         o.ShadowMapCoords[i].xy = o.ShadowMapCoords[i].xy * 0.5f + 0.5f;
     }
+
+    o.ViewDepth = mul(MatricesCB.V, worldPos).z;
 
     return o;
 }

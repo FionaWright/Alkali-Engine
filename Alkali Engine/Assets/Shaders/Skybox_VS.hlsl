@@ -13,7 +13,8 @@ struct Matrices
 {
     matrix M;
     matrix InverseTransposeM;
-    matrix VP;
+    matrix V;
+    matrix P;
 };
 ConstantBuffer<Matrices> MatricesCB : register(b0);
 
@@ -24,7 +25,7 @@ V_OUT main(V_IN input)
     float4 pos = float4(input.Position, 1.0f);
     
     float4 worldPos = mul(MatricesCB.M, pos);
-    o.Position = mul(MatricesCB.VP, worldPos);
+    o.Position = mul(mul(MatricesCB.P, MatricesCB.V), worldPos);
     
     o.Position.z = o.Position.w;
 

@@ -19,7 +19,7 @@ constexpr int SHADOW_MAP_CASCADES = 3;
 struct DX12Settings
 {
 	float NearPlane = 0.1f;
-	float FarPlane = 50.0f;
+	float FarPlane = 200.0f;
 
 	UINT DescriptorHeapSize = 10000;
 

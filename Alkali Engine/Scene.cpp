@@ -258,7 +258,10 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
 		ShadowManager::Update(m_d3dClass, lDir, m_frustum);
-		m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrices()[0];
+
+		auto vps = ShadowManager::GetVPMatrices();
+		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+			m_perFrameCBuffers.ShadowMap.ShadowMatrix[i] = vps[i];
 	}	
 
 	if (SettingsManager::ms_Dynamic.BatchSortingEnabled)
@@ -267,10 +270,15 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		for (auto& it : batchList)
 			it.second->SortObjects(m_camera->GetTransform().Position);
 	}
+
+	m_updated = true;
 }
 
 void Scene::OnRender(TimeEventArgs& e)
 {
+	if (!m_updated)
+		return;
+
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtvHandle = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -316,10 +324,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	ClearBackBuffer(commandList.Get());
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, commandList.Get(), m_viewProjMatrix, &m_frustum, nullptr);
+		it.second->Render(m_d3dClass, commandList.Get(), m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(m_d3dClass, commandList.Get(), m_viewProjMatrix, &m_frustum, nullptr);
+		it.second->RenderTrans(m_d3dClass, commandList.Get(), m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle);

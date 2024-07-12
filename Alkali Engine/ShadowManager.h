@@ -56,6 +56,7 @@ private:
 	static CascadeInfo ms_cascadeInfos[SHADOW_MAP_CASCADES];
 
 	static XMMATRIX ms_viewMatrix;
+	static XMMATRIX ms_projMatrices[SHADOW_MAP_CASCADES];
 	static XMMATRIX ms_vpMatrices[SHADOW_MAP_CASCADES];
 
 	static ComPtr<ID3D12DescriptorHeap> ms_dsvHeap;

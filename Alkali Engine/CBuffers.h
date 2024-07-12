@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "Constants.h"
 #include "Utils.h"
+#include "SettingsManager.h"
 
 struct MatricesCB
 {
@@ -48,7 +49,7 @@ struct MaterialPropertiesCB
 
 struct ShadowMapCB
 {
-    XMMATRIX ShadowMatrix;
+    XMMATRIX ShadowMatrix[SHADOW_MAP_CASCADES];
 };
 
 struct ShadowMapPixelCB
