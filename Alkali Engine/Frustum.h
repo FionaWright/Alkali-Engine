@@ -16,6 +16,7 @@ public:
 	void SetDebugLinesEnabled(bool enabled);
 
 	void GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
+	float GetNearFarDist();
 
 private:
 	struct FrustumPlane

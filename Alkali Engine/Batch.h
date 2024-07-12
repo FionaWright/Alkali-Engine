@@ -17,6 +17,7 @@ struct RenderOverride
 	RootSig* RootSigOverride;
 	bool UseShadowMapMat = false;
 	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
+	int CascadeIndex = -1;
 };
 
 class Batch
@@ -30,8 +31,8 @@ public:
 	GameObject* AddGameObject(GameObject go);
 	GameObject* CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
 
-	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* override = nullptr);
-	void RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* override = nullptr);
+	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* override = nullptr);
+	void RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* override = nullptr);
 
 	void SortObjects(const XMFLOAT3& camPos);
 

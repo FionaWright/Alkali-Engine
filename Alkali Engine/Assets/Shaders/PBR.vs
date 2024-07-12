@@ -1,3 +1,5 @@
+#define CASCADES 3
+
 struct V_IN
 {
     float3 Position : POSITION;
@@ -16,14 +18,15 @@ struct V_OUT
     float3 Binormal : BINORMAL;
 
     float3 ViewDirection : TEXCOORD1;
-    float3 ShadowMapCoords : TEXCOORD2;
+    float3 ShadowMapCoords[CASCADES] : TEXCOORD2;
 };
 
 struct Matrices
 {
     matrix M;
     matrix InverseTransposeM;
-    matrix VP;
+    matrix V;
+    matrix P;
 };
 ConstantBuffer<Matrices> MatricesCB : register(b0);
 
@@ -36,7 +39,7 @@ ConstantBuffer<Camera> CameraCB : register(b2);
 
 struct ShadowMap
 {
-    matrix ShadowMatrix;
+    matrix ShadowMatrix[CASCADES];
 };
 ConstantBuffer<ShadowMap> ShadowCB : register(b4);
 
@@ -56,9 +59,12 @@ V_OUT main(V_IN input)
     o.ViewDirection = CameraCB.CameraPosition.xyz - worldPos.xyz;
     o.ViewDirection = normalize(o.ViewDirection);
 
-    float4 shadowPos = mul(ShadowCB.ShadowMatrix, worldPos);
-    o.ShadowMapCoords = shadowPos.xyz / shadowPos.w;
-    o.ShadowMapCoords.xy = o.ShadowMapCoords.xy * 0.5f + 0.5f;
+    for (int i = 0; i < CASCADES; i++)
+    {
+        float4 shadowPos = mul(ShadowCB.ShadowMatrix[i], worldPos);
+        o.ShadowMapCoords[i] = shadowPos.xyz / shadowPos.w;
+        o.ShadowMapCoords[i].xy = o.ShadowMapCoords[i].xy * 0.5f + 0.5f;
+    }
 
     return o;
 }

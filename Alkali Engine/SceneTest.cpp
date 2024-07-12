@@ -58,7 +58,7 @@ bool SceneTest::LoadContent()
 	//};
 
 	RootParamInfo rootParamInfoPBR;
-	rootParamInfoPBR.NumCBV_PerFrame = 3;
+	rootParamInfoPBR.NumCBV_PerFrame = 4;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
 	rootParamInfoPBR.NumSRV = 5;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
@@ -80,7 +80,7 @@ bool SceneTest::LoadContent()
 	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
-	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
+	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	

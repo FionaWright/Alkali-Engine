@@ -2,6 +2,8 @@
 
 #define PI 3.141592654f
 
+#define CASCADES 3
+
 struct V_OUT
 {
     float4 Position : SV_Position;
@@ -11,7 +13,7 @@ struct V_OUT
     float3 Binormal : BINORMAL;
 
     float3 ViewDirection : TEXCOORD1;
-    float3 ShadowMapCoords : TEXCOORD2;
+    float3 ShadowMapCoords[CASCADES] : TEXCOORD2;
 };
 
 struct DirectionalLight
@@ -26,6 +28,12 @@ struct DirectionalLight
     float SpecularPower;
 };
 ConstantBuffer<DirectionalLight> DirLightCB : register(b3);
+
+struct ShadowMapPixel
+{
+    float4 CascadeDistances; // Max 4 cascades
+};
+ConstantBuffer<ShadowMapPixel> ShadowPixelCB : register(b5);
 
 struct MaterialProperties
 {
@@ -55,9 +63,21 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
-    input.ShadowMapCoords.y = 1 - input.ShadowMapCoords.y;
-    float shadowMapDepth = g_shadowMap.Sample(g_sampler, input.ShadowMapCoords.xy).r;
-    bool inLight = input.ShadowMapCoords.z + 0.0001f < shadowMapDepth;
+    float4 zDist = input.Position.zzzz / input.Position.w;
+    float4 cascadeComparison = (zDist > ShadowPixelCB.CascadeDistances);
+    return float4(zDist.xyz, 1);
+    return float4(cascadeComparison.xyz, 1);
+
+    float fCascadeIndex = dot(float4(CASCADES > 0, CASCADES > 1, CASCADES > 2, CASCADES > 3), cascadeComparison);
+    fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
+    int iCascadeIndex = (int)fCascadeIndex;
+
+    float3 shadowCoords = input.ShadowMapCoords[iCascadeIndex];
+    shadowCoords.y = 1 - shadowCoords.y;
+    float shadowMapDepth = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
+    bool inLight = shadowCoords.z + 0.0001f < shadowMapDepth;
+
+    return float4(shadowCoords.xy, 0, 1);
 
     if (!inLight)
         return float4(0, 0, 0, 1);

@@ -186,6 +186,11 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, floa
         farDist = std::max(farDist, pTransformed.z);
     }
 
-    width = maxX - minX;
-    height = maxY - minY;
+    width = 2 * std::max(maxX, abs(minX));
+    height = 2 * std::max(maxY, abs(minY));
+}
+
+float Frustum::GetNearFarDist()
+{
+    return m_nearFarDist;
 }

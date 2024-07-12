@@ -42,11 +42,12 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 	if (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder)
 		return;
 
-	if (!m_shadowMapMat)
+	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
 	{
-		m_shadowMapMat = std::make_unique<Material>();
+		auto mat = std::make_shared<Material>();
 		vector<UINT> sizes = { sizeof(MatricesCB) };
-		m_shadowMapMat->AddCBVs(d3d, commandListDirect, sizes, false);
+		mat->AddCBVs(d3d, commandListDirect, sizes, false);
+		m_shadowMapMats.push_back(mat);
 	}
 
 	if (renderOverride && renderOverride->ShaderOverride)
@@ -73,12 +74,12 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMat.get() : m_material.get();
+		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
 		RenderModel(commandListDirect, rpi, matrices, sphereModel, &modifiedTransform, mat);
 		return;
 	}
 
-	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMat.get() : m_material.get();
+	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
 	RenderModel(commandListDirect, rpi, matrices, m_model.get(), nullptr, mat);
 }
 

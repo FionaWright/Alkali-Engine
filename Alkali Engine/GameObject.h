@@ -72,7 +72,7 @@ protected:
 	shared_ptr<Shader> m_shader;
 	shared_ptr<Material> m_material;
 
-	shared_ptr<Material> m_shadowMapMat;
+	vector<shared_ptr<Material>> m_shadowMapMats;
 
 	Transform m_transform;
 
