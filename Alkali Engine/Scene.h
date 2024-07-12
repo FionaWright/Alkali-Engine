@@ -77,6 +77,7 @@ protected:
     XMMATRIX m_viewMatrix;
     XMMATRIX m_projectionMatrix;
     XMMATRIX m_viewProjMatrix;
+    XMMATRIX m_viewProjDebugLinesMatrix;
 
     D3DClass* m_d3dClass = nullptr;
     unique_ptr<Camera> m_camera; // Change this to not be a ptr

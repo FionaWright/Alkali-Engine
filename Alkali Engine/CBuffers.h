@@ -8,7 +8,8 @@ struct MatricesCB
 {
 	XMMATRIX M;
 	XMMATRIX InverseTransposeM;
-	XMMATRIX VP;
+    XMMATRIX V;
+    XMMATRIX P;
 };
 
 struct MatricesLineCB
@@ -50,6 +51,11 @@ struct ShadowMapCB
     XMMATRIX ShadowMatrix;
 };
 
+struct ShadowMapPixelCB
+{
+    XMFLOAT4 CascadeDistances; // Max 4 cascades
+};
+
 struct DepthViewCB
 {
     XMFLOAT2 Resolution;
@@ -62,4 +68,8 @@ struct PerFrameCBuffers_PBR
     CameraCB Camera;
     DirectionalLightCB DirectionalLight;
     ShadowMapCB ShadowMap;
+    ShadowMapPixelCB ShadowMapPixel;
 };
+constexpr std::vector<UINT> PER_FRAME_PBR_SIZES() { 
+    return { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB), sizeof(ShadowMapPixelCB) }; 
+}

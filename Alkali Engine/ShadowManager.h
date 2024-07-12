@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include "SettingsManager.h"
+#include "DebugLine.h"
 
 class Shader;
 class Material;
@@ -39,12 +40,15 @@ public:
 	static void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList);
 	static void Shutdown();
 
-	static void Update(XMFLOAT3 lightDir, Frustum& frustum);	
+	static void Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum);
 	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum);
 	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle);
 
+	static void SetDebugLines(vector<DebugLine*>& debugLines);
+
 	static ID3D12Resource* GetShadowMap();	
 	static XMMATRIX* GetVPMatrices();	
+	static XMFLOAT4 GetCascadeDistances(float nearFarDist);
 
 private:
 	static void CalculateBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist);
@@ -67,5 +71,7 @@ private:
 	static shared_ptr<RootSig> ms_viewRootSig;
 
 	static D3D12_VIEWPORT ms_viewports[SHADOW_MAP_CASCADES];
+
+	static vector<DebugLine*> ms_debugLines;
 };
 

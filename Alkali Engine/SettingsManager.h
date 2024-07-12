@@ -12,14 +12,14 @@ constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] = { D3D12_MESSAGE_SEVERITY_INFO };
 
 constexpr int BACK_BUFFER_COUNT = 3;
 
-constexpr int SHADOW_MAP_CASCADES = 2;
+constexpr int SHADOW_MAP_CASCADES = 3;
 
 //====================================
 
 struct DX12Settings
 {
 	float NearPlane = 0.1f;
-	float FarPlane = 100.0f;
+	float FarPlane = 50.0f;
 
 	UINT DescriptorHeapSize = 10000;
 
@@ -81,12 +81,9 @@ struct DynamicSettings
 
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
-	int ShadowMapWidth = 256;
-	int ShadowMapHeight = 256;
+	bool ShadowBoundsDebugLinesEnabled = true;
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
-	int ShadowMapNear = -150;
-	int ShadowMapFar = 200;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

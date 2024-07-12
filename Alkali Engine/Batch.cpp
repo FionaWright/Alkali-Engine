@@ -37,7 +37,7 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 	return AddGameObject(go);
 }
 
-void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
+void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	MatricesCB matrices;
 	matrices.VP = viewProj;
@@ -59,16 +59,16 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 	}
 }
 
-void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
+void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goList, rootSig, commandList, viewProj, frustum, renderOverride);
+	RenderFromList(d3d, m_goList, rootSig, commandList, view, proj, frustum, renderOverride);
 }
 
-void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& viewProj, Frustum* frustum, RenderOverride* renderOverride)
+void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goListTrans, rootSig, commandList, viewProj, frustum, renderOverride);
+	RenderFromList(d3d, m_goListTrans, rootSig, commandList, view, proj, frustum, renderOverride);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

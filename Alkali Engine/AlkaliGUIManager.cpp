@@ -68,6 +68,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Freeze Frustum Culling", &SettingsManager::ms_Dynamic.FreezeFrustum);
 
+				ImGui::Checkbox("Force Show Frustum Debug Lines", &SettingsManager::ms_Dynamic.AlwaysShowFrustumDebugLines);
+
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
 				bool visualiseDSV = SettingsManager::ms_Dynamic.VisualiseDSVEnabled;
@@ -90,10 +92,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 					ImGui::EndDisabled();
 
-				ImGui::InputInt("Shadow Map Width", &SettingsManager::ms_Dynamic.ShadowMapWidth);
-				ImGui::InputInt("Shadow Map Height", &SettingsManager::ms_Dynamic.ShadowMapHeight);
-				ImGui::InputInt("Shadow Map Near", &SettingsManager::ms_Dynamic.ShadowMapNear);
-				ImGui::InputInt("Shadow Map Far", &SettingsManager::ms_Dynamic.ShadowMapFar);
+				ImGui::Checkbox("Show Shadow Cascade Bounds", &SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled);
 
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{

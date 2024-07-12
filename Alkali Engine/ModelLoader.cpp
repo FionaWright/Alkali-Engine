@@ -876,7 +876,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
-	vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
+	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();

@@ -81,7 +81,7 @@ bool Scene::LoadContent()
 
 	if (!ms_perFramePBRMat)
 	{
-		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB) };
+		vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 		ms_perFramePBRMat = std::make_shared<Material>();
 		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 		ResourceTracker::AddMaterial(ms_perFramePBRMat);
@@ -127,6 +127,41 @@ bool Scene::LoadContent()
 
 		XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 		m_debugLineLightDir = AddDebugLine(Mult(lDir, 999), Mult(lDir, -999), XMFLOAT3(1, 1, 0));
+	}
+
+	{
+		vector<DebugLine*> shadowBoundsDebugLines;
+		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		{
+			XMFLOAT3 col;
+			switch (i)
+			{
+			case 0:
+				col = XMFLOAT3(1, 0, 0);
+				break;
+			case 1:
+				col = XMFLOAT3(0, 1, 0);
+				break;
+			case 2:
+				col = XMFLOAT3(0, 0, 1);
+				break;
+			case 3:
+				col = XMFLOAT3(1, 1, 0);
+				break;
+			default:
+				col = XMFLOAT3(1, 0, 1);
+				break;
+			}
+
+			col = Mult(col, 2.2f);
+
+			for (int l = 0; l < 12; l++)
+			{
+				shadowBoundsDebugLines.push_back(AddDebugLine(XMFLOAT3_ZERO, XMFLOAT3_ZERO, col));
+			}
+		}
+
+		ShadowManager::SetDebugLines(shadowBoundsDebugLines);
 	}
 
 	m_viewDepthRPI.NumSRV_Dynamic = 1;
@@ -205,6 +240,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, SettingsManager::ms_DX12.FarPlane);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 
+	XMMATRIX debugLineProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, 2000.0f);
+	m_viewProjDebugLinesMatrix = XMMatrixMultiply(m_viewMatrix, debugLineProj);
+
 	if (!SettingsManager::ms_Dynamic.FreezeFrustum)
 		m_frustum.UpdateValues(m_viewProjMatrix);
 	
@@ -219,7 +257,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
-		ShadowManager::Update(lDir, m_frustum);
+		ShadowManager::Update(m_d3dClass, lDir, m_frustum);
 		m_perFrameCBuffers.ShadowMap.ShadowMatrix = ShadowManager::GetVPMatrices()[0];
 	}	
 
@@ -265,6 +303,9 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->RSSetViewports(1, &m_viewport);
 		commandList->RSSetScissorRects(1, &m_scissorRect);
 		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+		XMFLOAT4 cascadeDist = ShadowManager::GetCascadeDistances(m_frustum.GetNearFarDist());
+		ms_perFramePBRMat->SetCBV_PerFrame(3, &cascadeDist, sizeof(ShadowMapPixelCB));
 
 		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
 	}
@@ -463,6 +504,6 @@ void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D1
 {
 	for (int i = 0; i < m_debugLineList.size(); i++)
 	{
-		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjMatrix);
+		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix);
 	}
 }

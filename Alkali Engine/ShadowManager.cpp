@@ -24,11 +24,15 @@ shared_ptr<Material> ShadowManager::ms_depthMat, ShadowManager::ms_viewDepthMat;
 shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
 
 D3D12_VIEWPORT ShadowManager::ms_viewports[SHADOW_MAP_CASCADES];
+vector<DebugLine*> ShadowManager::ms_debugLines;
 
 void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 {
-	ms_cascadeInfos[0] = { 0.0f, 0.5f };
-	ms_cascadeInfos[1] = { 0.5f, 1.0f };
+	assert(SHADOW_MAP_CASCADES <= 4);
+
+	ms_cascadeInfos[0] = { 0.0f, 0.3f };
+	ms_cascadeInfos[1] = { 0.3f, 0.6f };
+	ms_cascadeInfos[2] = { 0.6f, 1.0f };
 
 	{
 		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
@@ -141,7 +145,7 @@ void ShadowManager::Shutdown()
 	ms_shadowMapResource.Reset();
 }
 
-void ShadowManager::Update(XMFLOAT3 lightDir, Frustum& frustum)
+void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 {
 	XMVECTOR eyeV = XMLoadFloat3(&XMFLOAT3_ZERO);
 
@@ -180,6 +184,34 @@ void ShadowManager::Update(XMFLOAT3 lightDir, Frustum& frustum)
 
 		XMMATRIX proj = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * proj;
+	}
+
+	if (SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled && ms_debugLines.size() > 0)
+	{
+		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		{
+			XMFLOAT3 x = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
+			XMFLOAT3 y = Mult(upBasis, ms_cascadeInfos[i].Height * 0.5f);
+			XMFLOAT3 zF = Mult(forwardBasis, ms_cascadeInfos[i].Far);
+			XMFLOAT3 zN = Mult(forwardBasis, ms_cascadeInfos[i].Near);
+
+			int lineI = i * 12;
+
+			ms_debugLines[lineI + 0]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(Negate(x), y), zN));
+			ms_debugLines[lineI + 1]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(x, Negate(y)), zN));
+			ms_debugLines[lineI + 2]->SetPositions(d3d, Add(Add(Negate(x), y), zN), Add(Add(Negate(x), Negate(y)), zN));
+			ms_debugLines[lineI + 3]->SetPositions(d3d, Add(Add(x, Negate(y)), zN), Add(Add(Negate(x), Negate(y)), zN));
+
+			ms_debugLines[lineI + 4]->SetPositions(d3d, Add(Add(x, y), zF), Add(Add(Negate(x), y), zF));
+			ms_debugLines[lineI + 5]->SetPositions(d3d, Add(Add(x, y), zF), Add(Add(x, Negate(y)), zF));
+			ms_debugLines[lineI + 6]->SetPositions(d3d, Add(Add(Negate(x), y), zF), Add(Add(Negate(x), Negate(y)), zF));
+			ms_debugLines[lineI + 7]->SetPositions(d3d, Add(Add(x, Negate(y)), zF), Add(Add(Negate(x), Negate(y)), zF));
+
+			ms_debugLines[lineI + 8]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(x, y), zF));
+			ms_debugLines[lineI + 9]->SetPositions(d3d, Add(Add(Negate(x), Negate(y)), zN), Add(Add(Negate(x), Negate(y)), zF));
+			ms_debugLines[lineI + 10]->SetPositions(d3d, Add(Add(Negate(x), y), zN), Add(Add(Negate(x), y), zF));
+			ms_debugLines[lineI + 11]->SetPositions(d3d, Add(Add(x, Negate(y)), zN), Add(Add(x, Negate(y)), zF));
+		}
 	}
 }
 
@@ -257,15 +289,17 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
 	{
-		commandList->RSSetViewports(1, &ms_viewports[i]);			
+		commandList->RSSetViewports(1, &ms_viewports[i]);		
+		XMMATRIX vp = ms_vpMatrices[i];
+
+		ro.FrustumNearPercent = ms_cascadeInfos[i].NearPercent;
+		ro.FrustumFarPercent = ms_cascadeInfos[i].FarPercent;
+		ro.CascadeIndex = i;
 
 		for (auto& it : batchList)
-		{
-			ro.FrustumNearPercent = ms_cascadeInfos[i].NearPercent;
-			ro.FrustumFarPercent = ms_cascadeInfos[i].FarPercent;
-
-			it.second->Render(d3d, commandList, ms_vpMatrices[i], &frustum, &ro);
-			it.second->RenderTrans(d3d, commandList, ms_vpMatrices[i], &frustum, &ro);
+		{	
+			it.second->Render(d3d, commandList, vp, &frustum, &ro);
+			it.second->RenderTrans(d3d, commandList, vp, &frustum, &ro);
 		}
 	}
 
@@ -283,6 +317,30 @@ XMMATRIX* ShadowManager::GetVPMatrices()
 	return ms_vpMatrices;
 }
 
+XMFLOAT4 ShadowManager::GetCascadeDistances(float nearFarDist)
+{
+	XMFLOAT4 dist;
+	//if (SHADOW_MAP_CASCADES > 0)
+	//	dist.x = SettingsManager::ms_DX12.NearPlane + nearFarDist * ms_cascadeInfos[0].NearPercent;
+	//if (SHADOW_MAP_CASCADES > 1)
+	//	dist.y = SettingsManager::ms_DX12.NearPlane + nearFarDist * ms_cascadeInfos[1].NearPercent;
+	//if (SHADOW_MAP_CASCADES > 2)
+	//	dist.z = SettingsManager::ms_DX12.NearPlane + nearFarDist * ms_cascadeInfos[2].NearPercent;
+	//if (SHADOW_MAP_CASCADES > 3)
+	//	dist.w = SettingsManager::ms_DX12.NearPlane + nearFarDist * ms_cascadeInfos[3].NearPercent;
+
+	if (SHADOW_MAP_CASCADES > 0)
+		dist.x = ms_cascadeInfos[0].NearPercent;
+	if (SHADOW_MAP_CASCADES > 1)
+		dist.y = ms_cascadeInfos[1].NearPercent;
+	if (SHADOW_MAP_CASCADES > 2)
+		dist.z = ms_cascadeInfos[2].NearPercent;
+	if (SHADOW_MAP_CASCADES > 3)
+		dist.w = ms_cascadeInfos[3].NearPercent;
+
+	return dist;
+}
+
 void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle)
 {
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
@@ -295,4 +353,11 @@ void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo());
 
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+}
+
+void ShadowManager::SetDebugLines(vector<DebugLine*>& debugLines)
+{
+	assert(debugLines.size() == SHADOW_MAP_CASCADES * 12);
+
+	ms_debugLines = debugLines;
 }
