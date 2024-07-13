@@ -11,6 +11,7 @@ CascadeInfo ShadowManager::ms_cascadeInfos[SHADOW_MAP_CASCADES];
 XMMATRIX ShadowManager::ms_viewMatrix;
 XMMATRIX ShadowManager::ms_projMatrices[SHADOW_MAP_CASCADES];
 XMMATRIX ShadowManager::ms_vpMatrices[SHADOW_MAP_CASCADES];
+XMFLOAT3 ShadowManager::ms_maxBasis, ShadowManager::ms_forwardBasis;
 
 ComPtr<ID3D12DescriptorHeap> ShadowManager::ms_dsvHeap;
 UINT ShadowManager::ms_dsvDescriptorSize;
@@ -167,12 +168,12 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 		return;
 	}
 
-	XMFLOAT3 forwardBasis = Normalize(lightDir);
-	XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
-	XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
-	XMFLOAT3 maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));	
+	ms_forwardBasis = Normalize(lightDir);
+	XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
+	XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
+	ms_maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
 
-	BoundsArgs args = { forwardBasis, maxBasis, ResourceTracker::GetBatches(), frustum };
+	BoundsArgs args = { ms_forwardBasis, ms_maxBasis, ResourceTracker::GetBatches(), frustum };
 
 	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
 	{
@@ -193,8 +194,8 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 		{
 			XMFLOAT3 x = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
 			XMFLOAT3 y = Mult(upBasis, ms_cascadeInfos[i].Height * 0.5f);
-			XMFLOAT3 zF = Mult(forwardBasis, ms_cascadeInfos[i].Far);
-			XMFLOAT3 zN = Mult(forwardBasis, ms_cascadeInfos[i].Near);
+			XMFLOAT3 zF = Mult(ms_forwardBasis, ms_cascadeInfos[i].Far);
+			XMFLOAT3 zN = Mult(ms_forwardBasis, ms_cascadeInfos[i].Near);
 
 			int lineI = i * 12;
 
@@ -287,6 +288,9 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
 	ro.UseShadowMapMat = true;
+	ro.CullAgainstBounds = true;
+	ro.MaxBasis = Abs(ms_maxBasis);
+	ro.ForwardBasis = ms_forwardBasis;
 
 	XMMATRIX v = ms_viewMatrix;
 
@@ -296,14 +300,16 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 		XMMATRIX p = ms_projMatrices[i];
 
-		ro.FrustumNearPercent = ms_cascadeInfos[i].NearPercent;
-		ro.FrustumFarPercent = ms_cascadeInfos[i].FarPercent;
 		ro.CascadeIndex = i;
+		ro.BoundsWidth = ms_cascadeInfos[i].Width;
+		ro.BoundsHeight = ms_cascadeInfos[i].Height;
+		ro.BoundsNear = ms_cascadeInfos[i].Near;
+		ro.BoundsFar = ms_cascadeInfos[i].Far;
 
 		for (auto& it : batchList)
 		{	
-			it.second->Render(d3d, commandList, v, p, &frustum, &ro);
-			it.second->RenderTrans(d3d, commandList, v, p, &frustum, &ro);
+			it.second->Render(d3d, commandList, v, p, nullptr, &ro);
+			it.second->RenderTrans(d3d, commandList, v, p, nullptr, &ro);
 		}
 	}
 
@@ -356,3 +362,4 @@ void ShadowManager::SetDebugLines(vector<DebugLine*>& debugLines)
 
 	ms_debugLines = debugLines;
 }
+

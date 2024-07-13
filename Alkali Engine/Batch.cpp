@@ -37,6 +37,20 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 	return AddGameObject(go);
 }
 
+bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius)
+{
+	XMFLOAT3 forward = Mult(pos, ro->ForwardBasis);
+	if (forward.z - radius < ro->BoundsNear || forward.z + radius > ro->BoundsFar)
+		return false;
+
+	XMFLOAT3 pMin = Add(Abs(pos), Mult(ro->MaxBasis, -radius));
+
+	if (pMin.x * 2 <= ro->BoundsWidth || pMin.y * 2 <= ro->BoundsHeight)
+		return true;
+
+	return false;
+}
+
 void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* commandList, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	MatricesCB matrices;
@@ -51,6 +65,9 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		XMFLOAT3 pos;
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
+
+		if (renderOverride && renderOverride->CullAgainstBounds && !CheckWithinBounds(renderOverride, pos, radius))
+			continue;
 
 		float frustumNear = renderOverride ? renderOverride->FrustumNearPercent : 0.0f;
 		float frustumFar = renderOverride ? renderOverride->FrustumFarPercent: 1.0f;

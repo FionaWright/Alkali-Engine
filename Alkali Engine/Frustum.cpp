@@ -103,18 +103,17 @@ void Frustum::CalculateDebugLinePoints(D3DClass* d3d)
 bool Frustum::CheckSphere(XMFLOAT3 pos, float radius, float nearPercent, float farPercent)
 {    
     float nearFarDist = m_frustumPlanes[m_farIndex].Distance - m_frustumPlanes[m_nearIndex].Distance;
-    float nearDist = Dot(m_frustumPlanes[m_nearIndex].Normal, pos) + m_frustumPlanes[m_nearIndex].Distance;
-    float farDist = Dot(m_frustumPlanes[m_farIndex].Normal, pos) + m_frustumPlanes[m_farIndex].Distance;
-    float nearLimit = m_frustumPlanes[m_nearIndex].Distance + nearFarDist * nearPercent;
-    float farLimit = m_frustumPlanes[m_farIndex].Distance + nearFarDist * farPercent;
-
-    if (nearDist < nearLimit - radius || farDist > farLimit + radius)
-        return false;
 
     for (int i = 0; i < 6; ++i)
     {
-        float distance = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance;
-        if (distance < -radius)
+        float bonusDist = 0;
+        if (i == m_nearIndex)
+            bonusDist = nearFarDist * nearPercent;
+        else if (i == m_farIndex)
+            bonusDist = -nearFarDist * (1 - farPercent);
+
+        float distanceToPlane = Dot(m_frustumPlanes[i].Normal, pos) + m_frustumPlanes[i].Distance + bonusDist;
+        if (distanceToPlane < -radius)
             return false;
     }
 
@@ -170,7 +169,6 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, floa
     XMFLOAT3 forwardBasis = Normalize(dir);
     XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
     XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
-    XMFLOAT3 maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
 
     float maxX = -INFINITY, minX = INFINITY, maxY = -INFINITY, minY = INFINITY;
 
