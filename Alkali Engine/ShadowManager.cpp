@@ -127,6 +127,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
 		depthArgs.NoPS = true;
 		depthArgs.cullFrontOnly = true;
+		depthArgs.SlopeScaleDepthBias = 0.02f;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
 
 		ms_depthMat = std::make_shared<Material>();

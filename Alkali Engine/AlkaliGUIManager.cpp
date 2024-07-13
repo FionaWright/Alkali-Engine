@@ -94,6 +94,9 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Show Shadow Cascade Bounds", &SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled);
 
+				ImGui::InputFloat("Shadow Map Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+				ImGui::InputFloat("Shadow Map Normal Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
+
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{
 					ResourceTracker::ClearTexList();

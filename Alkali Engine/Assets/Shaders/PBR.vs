@@ -41,6 +41,7 @@ ConstantBuffer<Camera> CameraCB : register(b2);
 
 struct ShadowMap
 {
+    float NormalBias;
     matrix ShadowMatrix[CASCADES];
 };
 ConstantBuffer<ShadowMap> ShadowCB : register(b4);
@@ -63,7 +64,8 @@ V_OUT main(V_IN input)
 
     for (int i = 0; i < CASCADES; i++)
     {
-        float4 shadowPos = mul(ShadowCB.ShadowMatrix[i], worldPos);
+        float4 biasedPos = float4(worldPos.xyz + o.Normal * ShadowCB.NormalBias, worldPos.w);
+        float4 shadowPos = mul(ShadowCB.ShadowMatrix[i], biasedPos);
         o.ShadowMapCoords[i].xyz = shadowPos.xyz / shadowPos.w;
         o.ShadowMapCoords[i].xy = o.ShadowMapCoords[i].xy * 0.5f + 0.5f;
     }
