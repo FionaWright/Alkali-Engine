@@ -71,17 +71,17 @@ float4 main(V_OUT input) : SV_Target
     fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
     int iCascadeIndex = (int)fCascadeIndex - 1;
 
+    float shadowWidth = 1.0f / float(CASCADES); // MAKE THIS A CBV
+
     float3 shadowCoords = input.ShadowMapCoords[iCascadeIndex];
     shadowCoords.y = 1 - shadowCoords.y;
-    shadowCoords.x += iCascadeIndex;
+    shadowCoords.x *= shadowWidth;
+    shadowCoords.x += shadowWidth * iCascadeIndex;
     float shadowMapDepth = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
     bool inLight = shadowCoords.z + 0.0001f < shadowMapDepth;
 
-    //if (iCascadeIndex != 0)
-      //  return float4(0, 1 , 0, 1);
-
-    //return float4(0, shadowCoords.y, 0, 1);
-    return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
+    //return float4(shadowCoords.x, shadowCoords.y, 0, 1);
+    //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
 
     if (!inLight)
         return float4(0, 0, 0, 1);

@@ -143,16 +143,17 @@ bool SceneTest::LoadContent()
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 
 	m_goTest = batchPBR->CreateGameObject("Test", modelSphere, shaderPBR, matPBR1);
 	m_goTest->SetPosition(-50, 3, -10);
 	m_goTest->SetScale(20);
 
-	//GameObject go2("Plane", rootParamInfo, modelPlane, shaderPBRCullOff, matPBR2);
-	//m_goPlane = batch->AddGameObject(go2);
-	//m_goPlane->SetPosition(3, 3, 0);
+	m_goPlane = batchPBR->CreateGameObject("Plane", modelPlane, shaderPBR, matPBR2);
+	m_goPlane->SetPosition(0, -5, 0);
+	m_goPlane->SetScale(100);
+	m_goPlane->SetRotation(90, 0, 0);
 
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);

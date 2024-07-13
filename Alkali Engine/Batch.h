@@ -18,6 +18,11 @@ struct RenderOverride
 	bool UseShadowMapMat = false;
 	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
 	int CascadeIndex = -1;
+
+	XMFLOAT3 MaxBasis = XMFLOAT3_ZERO;
+	XMFLOAT3 ForwardBasis = XMFLOAT3_ZERO;
+	bool CullAgainstBounds = false;
+	float BoundsWidth = 0, BoundsHeight = 0, BoundsNear = 0, BoundsFar = 0;
 };
 
 class Batch
