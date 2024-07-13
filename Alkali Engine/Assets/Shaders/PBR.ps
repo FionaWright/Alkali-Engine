@@ -34,6 +34,10 @@ ConstantBuffer<DirectionalLight> DirLightCB : register(b3);
 struct ShadowMapPixel
 {
     float4 CascadeDistances; // Max 4 cascades
+    
+    float Bias;
+    float ShadowWidthPercent;
+    float2 p;
 };
 ConstantBuffer<ShadowMapPixel> ShadowPixelCB : register(b5);
 
@@ -71,14 +75,12 @@ float4 main(V_OUT input) : SV_Target
     fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
     int iCascadeIndex = (int)fCascadeIndex - 1;
 
-    float shadowWidth = 1.0f / float(CASCADES); // MAKE THIS A CBV
-
     float3 shadowCoords = input.ShadowMapCoords[iCascadeIndex];
     shadowCoords.y = 1 - shadowCoords.y;
-    shadowCoords.x *= shadowWidth;
-    shadowCoords.x += shadowWidth * iCascadeIndex;
+    shadowCoords.x *= ShadowPixelCB.ShadowWidthPercent;
+    shadowCoords.x += ShadowPixelCB.ShadowWidthPercent * iCascadeIndex;
     float shadowMapDepth = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
-    bool inLight = shadowCoords.z + 0.0001f < shadowMapDepth;
+    bool inLight = shadowCoords.z + ShadowPixelCB.Bias < shadowMapDepth;
 
     //return float4(shadowCoords.x, shadowCoords.y, 0, 1);
     //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);

@@ -45,6 +45,10 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
 
+	m_perFrameCBuffers.ShadowMap.NormalBias = 0.2f;
+	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;
+	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(SHADOW_MAP_CASCADES);
+
 	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
 
 	if (m_dsvEnabled)
@@ -312,8 +316,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->RSSetScissorRects(1, &m_scissorRect);
 		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		XMFLOAT4 cascadeDist = ShadowManager::GetCascadeDistances(m_frustum.GetNearFarDist());
-		ms_perFramePBRMat->SetCBV_PerFrame(3, &cascadeDist, sizeof(ShadowMapPixelCB));
+		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances(m_frustum.GetNearFarDist());
+		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
 		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
 	}

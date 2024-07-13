@@ -23,6 +23,8 @@ struct ShaderArgs
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	DXGI_FORMAT RTVFormat = SettingsManager::ms_DX12.RTVFormat;
 
+	float SlopeScaleDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+
 	ShaderArgs& operator=(const ShaderArgs& other)
 	{
 		if (this == &other)
@@ -40,6 +42,7 @@ struct ShaderArgs
 		Topology = other.Topology;
 		RTVFormat = other.RTVFormat;
 		NoPS = other.NoPS;
+		SlopeScaleDepthBias = other.SlopeScaleDepthBias;
 
 		return *this;
 	}

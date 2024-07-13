@@ -49,12 +49,19 @@ struct MaterialPropertiesCB
 
 struct ShadowMapCB
 {
+    float NormalBias;
+    XMFLOAT3 p;
+
     XMMATRIX ShadowMatrix[SHADOW_MAP_CASCADES];
 };
 
 struct ShadowMapPixelCB
 {
     XMFLOAT4 CascadeDistances; // Max 4 cascades
+
+    float Bias;
+    float ShadowWidthPercent;
+    XMFLOAT2 p;
 };
 
 struct DepthViewCB
