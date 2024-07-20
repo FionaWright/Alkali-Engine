@@ -90,7 +90,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				{
 					ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
 					ImGui::Checkbox("Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
-					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame);
+					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapUpdating);
 					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.ShadowCascadeCount);
 					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
 					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);

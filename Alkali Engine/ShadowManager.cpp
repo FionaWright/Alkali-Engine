@@ -153,7 +153,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ms_depthMat->AddCBVs(d3d, commandList, cbvDrawSizes, false);
 	}
 
-	if (!SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame)
+	if (!SettingsManager::ms_Dynamic.ShadowMapUpdating)
 	{
 		CalculateBounds(XMFLOAT3(0, -1, 0), frustum);
 		UpdateDebugLines(d3d);
@@ -215,7 +215,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 		return;
 	}	
 
-	if (SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame)
+	if (SettingsManager::ms_Dynamic.ShadowMapUpdating)
 	{
 		CalculateBounds(lightDir, frustum);
 		UpdateDebugLines(d3d);
@@ -283,15 +283,17 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& h
 			width = std::max(width, pMax.x);
 			height = std::max(height, pMax.y);
 
-			nearDist = std::min(nearDist, pos.z - radius);
-			farDist = std::max(farDist, pos.z + radius);
+			XMFLOAT3 pForward = Mult(args.forwardBasis, pos.z);
+
+			nearDist = std::min(nearDist, pForward.z - radius);
+			farDist = std::max(farDist, pForward.z + radius);
 		}
 
 		for (size_t i = 0; i < trans.size(); i++)
 		{
 			XMFLOAT3 pos;
 			float radius;
-			trans[i].GetBoundingSphere(pos, radius);
+			trans[i].GetBoundingSphere(pos, radius);			
 
 			if (!args.frustum.CheckSphere(pos, radius, args.cascadeNear, args.cascadeFar))
 				continue;
@@ -301,11 +303,10 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& h
 			width = std::max(width, pMax.x);
 			height = std::max(height, pMax.y);
 
-			XMFLOAT3 pN = Add(pos, Mult(args.forwardBasis, -radius));
-			XMFLOAT3 pF = Add(pos, Mult(args.forwardBasis, radius));
+			XMFLOAT3 pForward = Mult(args.forwardBasis, pos.z);
 
-			nearDist = std::min(nearDist, pN.z);
-			farDist = std::max(farDist, pF.z);
+			nearDist = std::min(nearDist, pForward.z - radius);
+			farDist = std::max(farDist, pForward.z + radius);
 		}
 	}
 

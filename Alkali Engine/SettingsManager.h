@@ -83,7 +83,7 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 
-	bool ShadowMapRecalculateBoundsEveryFrame = false;
+	bool ShadowMapUpdating = true;
 	int ShadowCascadeCount = 3;
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
