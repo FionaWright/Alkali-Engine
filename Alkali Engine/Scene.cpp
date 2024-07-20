@@ -46,9 +46,10 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
 
 	m_perFrameCBuffers.ShadowMap.NormalBias = 0.2f;
-	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;
-	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(SHADOW_MAP_CASCADES);
+	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;	
+	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(MAX_SHADOW_MAP_CASCADES);
 	m_perFrameCBuffers.ShadowMapPixel.TexelSize = XMFLOAT2(1.0f / SettingsManager::ms_Misc.ShadowMapResoWidth, 1.0f / SettingsManager::ms_Misc.ShadowMapResoHeight);
+
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[0] = XMFLOAT4(-0.94201624f, -0.39906216f, NAN, NAN);
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[1] = XMFLOAT4(0.94558609f, -0.76890725f, NAN, NAN);
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[2] = XMFLOAT4(-0.094184101f, -0.92938870f, NAN, NAN);
@@ -158,7 +159,7 @@ bool Scene::LoadContent()
 
 	{
 		vector<DebugLine*> shadowBoundsDebugLines;
-		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
 		{
 			XMFLOAT3 col;
 			switch (i)
@@ -284,13 +285,15 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
+		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;		
+		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.ShadowMapPCFSamples;
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.ShadowMapPCFSamples);
 
 		ShadowManager::Update(m_d3dClass, lDir, m_frustum);
 
 		auto vps = ShadowManager::GetVPMatrices();
-		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 			m_perFrameCBuffers.ShadowMap.ShadowMatrix[i] = vps[i];
 	}	
 

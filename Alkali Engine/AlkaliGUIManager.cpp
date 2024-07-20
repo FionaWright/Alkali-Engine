@@ -85,37 +85,48 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (visualiseShadow)
 					ImGui::EndDisabled();
 
-				ImGui::Checkbox("Shadow Map Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
-				ImGui::Checkbox("Shadow Map Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
-				ImGui::Checkbox("Shadow Map Bounds Updating", &SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame);
-
-				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
-					ImGui::BeginDisabled(true);
-
-				ImGui::Checkbox("Visualise Shadow Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
-
-				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
-					ImGui::EndDisabled();
-
-				ImGui::Checkbox("Show Shadow Cascade Bounds", &SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled);
-
-				ImGui::InputFloat("Shadow Map Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
-				ImGui::InputFloat("Shadow Map Normal Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
-
-				ImGui::Text("Shadow Map PCF Samples");
-
+				ImGui::SeparatorText("Shadow Map");
 				ImGui::Indent(IM_GUI_INDENTATION);
+				{
+					ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
+					ImGui::Checkbox("Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
+					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame);
+					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.ShadowCascadeCount);
+					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
+					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);
+					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);
 
-				static int pcf = 2;
-				if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
-					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 1;
-				ImGui::SameLine();
-				if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
-					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 4;
-				ImGui::SameLine();
-				if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
-					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 16;
+					if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
+						ImGui::BeginDisabled(true);
 
+					ImGui::Checkbox("Visualise Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
+
+					if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
+						ImGui::EndDisabled();
+
+					ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled);
+
+					ImGui::InputFloat("Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+					ImGui::InputFloat("Normal Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
+
+					ImGui::Text("PCF Samples");
+
+					ImGui::Indent(IM_GUI_INDENTATION);
+
+					static int pcf = 2;
+					if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
+						SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 1;
+					ImGui::SameLine();
+					if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
+						SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 4;
+					ImGui::SameLine();
+					if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
+						SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 16;
+
+					ImGui::Unindent(IM_GUI_INDENTATION);
+					ImGui::Spacing();
+				}
+				
 				ImGui::Unindent(IM_GUI_INDENTATION);
 
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))

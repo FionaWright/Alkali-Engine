@@ -7,10 +7,10 @@
 #include "Frustum.h"
 #include "ResourceTracker.h"
 
-CascadeInfo ShadowManager::ms_cascadeInfos[SHADOW_MAP_CASCADES];
+CascadeInfo ShadowManager::ms_cascadeInfos[MAX_SHADOW_MAP_CASCADES];
 XMMATRIX ShadowManager::ms_viewMatrix;
-XMMATRIX ShadowManager::ms_projMatrices[SHADOW_MAP_CASCADES];
-XMMATRIX ShadowManager::ms_vpMatrices[SHADOW_MAP_CASCADES];
+XMMATRIX ShadowManager::ms_projMatrices[MAX_SHADOW_MAP_CASCADES];
+XMMATRIX ShadowManager::ms_vpMatrices[MAX_SHADOW_MAP_CASCADES];
 XMFLOAT3 ShadowManager::ms_maxBasis, ShadowManager::ms_forwardBasis;
 
 ComPtr<ID3D12DescriptorHeap> ShadowManager::ms_dsvHeap;
@@ -25,7 +25,7 @@ shared_ptr<RootSig> ShadowManager::ms_depthRootSig;
 shared_ptr<Material> ShadowManager::ms_depthMat, ShadowManager::ms_viewDepthMat;
 shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
 
-D3D12_VIEWPORT ShadowManager::ms_viewports[SHADOW_MAP_CASCADES];
+D3D12_VIEWPORT ShadowManager::ms_viewports[MAX_SHADOW_MAP_CASCADES];
 vector<DebugLine*> ShadowManager::ms_debugLines;
 bool ShadowManager::ms_initialised;
 
@@ -35,14 +35,25 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		return;
 	ms_initialised = true;
 
-	assert(SHADOW_MAP_CASCADES <= 4);
+	assert(SettingsManager::ms_Dynamic.ShadowCascadeCount <= MAX_SHADOW_MAP_CASCADES);
 
-	ms_cascadeInfos[0] = { 0.0f, 0.3f };
-	ms_cascadeInfos[1] = { 0.3f, 0.6f };
-	ms_cascadeInfos[2] = { 0.6f, 1.0f };
+	float shadowWidth = 1.0f / float(SettingsManager::ms_Dynamic.ShadowCascadeCount);
+
+	for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
+	{
+		if (i >= SettingsManager::ms_Dynamic.ShadowCascadeCount)
+		{
+			SettingsManager::ms_Dynamic.ShadowNearPercents[i] = -1;
+			SettingsManager::ms_Dynamic.ShadowFarPercents[i] = -1;
+			continue;
+		}
+
+		SettingsManager::ms_Dynamic.ShadowNearPercents[i] = i * shadowWidth;
+		SettingsManager::ms_Dynamic.ShadowFarPercents[i] = (i + 1) * shadowWidth;
+	}
 
 	{
-		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
 		{
 			float topLeftX = SettingsManager::ms_Misc.ShadowMapResoWidth * i;
 			ms_viewports[i] = CD3DX12_VIEWPORT(topLeftX, 0.0f, static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoWidth), static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoHeight));
@@ -53,7 +64,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 
 		D3D12_RESOURCE_DESC dsvDesc = {};
 		dsvDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		dsvDesc.Width = SettingsManager::ms_Misc.ShadowMapResoWidth * SHADOW_MAP_CASCADES;
+		dsvDesc.Width = SettingsManager::ms_Misc.ShadowMapResoWidth * MAX_SHADOW_MAP_CASCADES;
 		dsvDesc.Height = SettingsManager::ms_Misc.ShadowMapResoHeight;
 		dsvDesc.DepthOrArraySize = 1;
 		dsvDesc.MipLevels = 1;
@@ -77,7 +88,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
 		desc.Format = DXGI_FORMAT_D32_FLOAT;
 		desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		desc.Texture2DArray.ArraySize = SHADOW_MAP_CASCADES;
+		//desc.Texture2DArray.ArraySize = MAX_SHADOW_MAP_CASCADES;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(ms_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 		d3d->GetDevice()->CreateDepthStencilView(ms_shadowMapResource.Get(), &desc, dsvHandle);
@@ -165,6 +176,24 @@ void ShadowManager::Shutdown()
 
 void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 {
+	if (SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents)
+	{
+		float shadowWidth = 1.0f / float(SettingsManager::ms_Dynamic.ShadowCascadeCount);
+
+		for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
+		{
+			if (i >= SettingsManager::ms_Dynamic.ShadowCascadeCount)
+			{
+				SettingsManager::ms_Dynamic.ShadowNearPercents[i] = -1;
+				SettingsManager::ms_Dynamic.ShadowFarPercents[i] = -1;
+				continue;
+			}
+
+			SettingsManager::ms_Dynamic.ShadowNearPercents[i] = i * shadowWidth;
+			SettingsManager::ms_Dynamic.ShadowFarPercents[i] = (i+1) * shadowWidth;
+		}
+	}
+
 	XMVECTOR eyeV = XMLoadFloat3(&XMFLOAT3_ZERO);
 
 	XMVECTOR focusV = XMLoadFloat3(&lightDir);
@@ -176,7 +205,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 
 	if (!SettingsManager::ms_Dynamic.DynamicShadowMapBounds)
 	{
-		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+		for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 		{
 			ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 			ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
@@ -190,7 +219,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 		UpdateDebugLines(d3d);
 	}		
 
-	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 	{
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
 	}
@@ -209,10 +238,10 @@ void ShadowManager::CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum)
 
 	BoundsArgs args = { ms_forwardBasis, ms_maxBasis, ResourceTracker::GetBatches(), frustum };
 
-	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 	{
-		args.cascadeNear = ms_cascadeInfos[i].NearPercent;
-		args.cascadeFar = ms_cascadeInfos[i].FarPercent;
+		args.cascadeNear = SettingsManager::ms_Dynamic.ShadowNearPercents[i];
+		args.cascadeFar = SettingsManager::ms_Dynamic.ShadowFarPercents[i];
 
 		//CalculateBounds(args, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 
@@ -300,7 +329,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 	XMMATRIX v = ms_viewMatrix;
 
-	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 	{
 		commandList->RSSetViewports(1, &ms_viewports[i]);				
 
@@ -337,15 +366,15 @@ XMFLOAT4 ShadowManager::GetCascadeDistances()
 {
 	float nearFarDist = SettingsManager::ms_Dynamic.FarPlane - SettingsManager::ms_Dynamic.NearPlane;
 
-	XMFLOAT4 dist;
-	if (SHADOW_MAP_CASCADES > 0)
-		dist.x = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * ms_cascadeInfos[0].NearPercent;
-	if (SHADOW_MAP_CASCADES > 1)
-		dist.y = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * ms_cascadeInfos[1].NearPercent;
-	if (SHADOW_MAP_CASCADES > 2)
-		dist.z = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * ms_cascadeInfos[2].NearPercent;
-	if (SHADOW_MAP_CASCADES > 3)
-		dist.w = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * ms_cascadeInfos[3].NearPercent;
+	XMFLOAT4 dist = XMFLOAT4(0, 0, 0, 0);
+	if (SettingsManager::ms_Dynamic.ShadowCascadeCount > 0)
+		dist.x = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * SettingsManager::ms_Dynamic.ShadowNearPercents[0];
+	if (SettingsManager::ms_Dynamic.ShadowCascadeCount > 1)
+		dist.y = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * SettingsManager::ms_Dynamic.ShadowNearPercents[1];
+	if (SettingsManager::ms_Dynamic.ShadowCascadeCount > 2)
+		dist.z = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * SettingsManager::ms_Dynamic.ShadowNearPercents[2];
+	if (SettingsManager::ms_Dynamic.ShadowCascadeCount > 3)
+		dist.w = SettingsManager::ms_Dynamic.NearPlane + nearFarDist * SettingsManager::ms_Dynamic.ShadowNearPercents[3];
 
 	return dist;
 }
@@ -381,7 +410,7 @@ void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 
 void ShadowManager::SetDebugLines(vector<DebugLine*>& debugLines)
 {
-	assert(debugLines.size() == SHADOW_MAP_CASCADES * 12);
+	assert(debugLines.size() == MAX_SHADOW_MAP_CASCADES * 12);
 
 	ms_debugLines = debugLines;
 }
@@ -394,7 +423,7 @@ void ShadowManager::UpdateDebugLines(D3DClass* d3d)
 	XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
 	XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
 
-	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 	{
 		XMFLOAT3 x = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
 		XMFLOAT3 y = Mult(upBasis, ms_cascadeInfos[i].Height * 0.5f);

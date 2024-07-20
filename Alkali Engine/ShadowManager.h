@@ -21,8 +21,6 @@ using std::string;
 
 struct CascadeInfo
 {
-	float NearPercent, FarPercent;
-
 	float Width, Height, Near, Far;
 };
 
@@ -56,11 +54,11 @@ public:
 private:
 	static void CalculateSceneBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist);
 
-	static CascadeInfo ms_cascadeInfos[SHADOW_MAP_CASCADES];
+	static CascadeInfo ms_cascadeInfos[MAX_SHADOW_MAP_CASCADES];
 
 	static XMMATRIX ms_viewMatrix;
-	static XMMATRIX ms_projMatrices[SHADOW_MAP_CASCADES];
-	static XMMATRIX ms_vpMatrices[SHADOW_MAP_CASCADES];
+	static XMMATRIX ms_projMatrices[MAX_SHADOW_MAP_CASCADES];
+	static XMMATRIX ms_vpMatrices[MAX_SHADOW_MAP_CASCADES];
 
 	static XMFLOAT3 ms_maxBasis, ms_forwardBasis;
 
@@ -76,7 +74,7 @@ private:
 	static shared_ptr<Material> ms_depthMat, ms_viewDepthMat;
 	static shared_ptr<RootSig> ms_viewRootSig;
 
-	static D3D12_VIEWPORT ms_viewports[SHADOW_MAP_CASCADES];
+	static D3D12_VIEWPORT ms_viewports[MAX_SHADOW_MAP_CASCADES];
 
 	static vector<DebugLine*> ms_debugLines;
 
