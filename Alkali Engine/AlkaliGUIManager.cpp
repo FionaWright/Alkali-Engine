@@ -97,6 +97,20 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::InputFloat("Shadow Map Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
 				ImGui::InputFloat("Shadow Map Normal Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
 
+				ImGui::Text("Shadow Map PCF Samples");
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				static int pcf = 2;
+				if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
+					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 1;
+				if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
+					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 4;
+				if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
+					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 16;
+
+				ImGui::Unindent(IM_GUI_INDENTATION);
+
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{
 					ResourceTracker::ClearTexList();

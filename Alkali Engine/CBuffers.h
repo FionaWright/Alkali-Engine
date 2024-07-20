@@ -61,7 +61,13 @@ struct ShadowMapPixelCB
 
     float Bias;
     float ShadowWidthPercent;
+    XMFLOAT2 TexelSize;
+
+    float PCFSampleCount;
+    float PCFSampleRange;
     XMFLOAT2 p;
+
+    XMFLOAT4 PoissonDisc[16];
 };
 
 struct DepthViewCB

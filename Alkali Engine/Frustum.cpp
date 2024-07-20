@@ -167,6 +167,9 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, floa
     frustumCorners[7] = Intersection(m_frustumPlanes[1], m_frustumPlanes[3], m_frustumPlanes[5], farOffset); // Right, Bottom, Far
 
     XMFLOAT3 forwardBasis = Normalize(dir);
+    if (Equals(forwardBasis, XMFLOAT3(0, -1, 0)))
+        forwardBasis = Normalize(XMFLOAT3(0.01f, -1, 0.01f));
+
     XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
     XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
 
