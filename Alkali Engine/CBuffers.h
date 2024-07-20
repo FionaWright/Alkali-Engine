@@ -50,9 +50,10 @@ struct MaterialPropertiesCB
 struct ShadowMapCB
 {
     float NormalBias;
-    XMFLOAT3 p;
+    float CascadeCount;
+    XMFLOAT2 p;
 
-    XMMATRIX ShadowMatrix[SHADOW_MAP_CASCADES];
+    XMMATRIX ShadowMatrix[MAX_SHADOW_MAP_CASCADES];
 };
 
 struct ShadowMapPixelCB
@@ -65,7 +66,8 @@ struct ShadowMapPixelCB
 
     float PCFSampleCount;
     float PCFSampleRange;
-    XMFLOAT2 p;
+    float CascadeCount;
+    float p;
 
     XMFLOAT4 PoissonDisc[16];
 };

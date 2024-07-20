@@ -2,7 +2,7 @@
 
 #define PI 3.141592654f
 
-#define CASCADES 3
+#define CASCADES 4
 
 struct V_OUT
 {
@@ -41,7 +41,8 @@ struct ShadowMapPixel
 
     float PCFSampleCount;
     float PCFSampleRange;
-    float2 p;
+    float CascadeCount;
+    float p;
 
     float4 PoissonDisc[16];
 };
@@ -77,7 +78,7 @@ float4 main(V_OUT input) : SV_Target
 {
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
 
-    float fCascadeIndex = dot(float4(CASCADES > 0, CASCADES > 1, CASCADES > 2, CASCADES > 3), cascadeComparison);
+    float fCascadeIndex = dot(float4(ShadowPixelCB.CascadeCount > 0, ShadowPixelCB.CascadeCount > 1, ShadowPixelCB.CascadeCount > 2, ShadowPixelCB.CascadeCount > 3), cascadeComparison);
     fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
     int iCascadeIndex = (int)fCascadeIndex - 1;
 
@@ -93,12 +94,13 @@ float4 main(V_OUT input) : SV_Target
         {
             float2 coord = shadowCoords.xy + (float2(x, y) + ShadowPixelCB.PoissonDisc[i].xy) * ShadowPixelCB.TexelSize;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
+
+            //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
+
             shadowFactor += pixelDepth < shadowMapDepth;   
             i++;
         }
-    shadowFactor /= ShadowPixelCB.PCFSampleCount;
-
-    //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
+    shadowFactor /= ShadowPixelCB.PCFSampleCount;    
 
     float4 tex = g_texture.Sample(g_sampler, input.UV);    
 

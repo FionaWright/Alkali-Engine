@@ -12,7 +12,7 @@ constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] = { D3D12_MESSAGE_SEVERITY_INFO };
 
 constexpr int BACK_BUFFER_COUNT = 3;
 
-constexpr int SHADOW_MAP_CASCADES = 3;
+constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 //====================================
 
@@ -84,10 +84,14 @@ struct DynamicSettings
 	bool VisualiseShadowMap = false;
 
 	bool ShadowMapRecalculateBoundsEveryFrame = false;
+	int ShadowCascadeCount = 3;
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
 	bool ShadowBoundsDebugLinesEnabled = true;
 	int ShadowMapPCFSamples = 16;
+	bool ShadowMapAutoNearFarPercents = true;
+	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
+	float ShadowFarPercents[MAX_SHADOW_MAP_CASCADES];
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

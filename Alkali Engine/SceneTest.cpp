@@ -185,7 +185,7 @@ void SceneTest::OnUpdate(TimeEventArgs& e)
 
 	float angle = static_cast<float>(e.TotalTime * 0.3f);
 	//m_goCube->RotateBy(0, angle, 0);
-	//m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
+	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
 
 	if (InputManager::IsKeyDown(KeyCode::Escape))
 	{
