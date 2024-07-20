@@ -18,9 +18,6 @@ constexpr int SHADOW_MAP_CASCADES = 3;
 
 struct DX12Settings
 {
-	float NearPlane = 0.1f;
-	float FarPlane = 200.0f;
-
 	UINT DescriptorHeapSize = 10000;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -57,9 +54,10 @@ struct MiscSettings
 
 	bool ImGuiEnabled = true;
 
-	bool ShadowMapRecalculateBoundsEveryFrame = false;
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
+
+	float DebugLinesFarPlane = 2000.0f;
 
 	enum NormalMapAcceptedChannels
 	{
@@ -69,6 +67,8 @@ struct MiscSettings
 
 struct DynamicSettings
 {
+	float NearPlane = 0.1f;
+	float FarPlane = 200.0f;
 	bool VSyncEnabled = false;
 	bool FullscreenEnabled = false;
 
@@ -83,6 +83,7 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 
+	bool ShadowMapRecalculateBoundsEveryFrame = false;
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
 	bool ShadowBoundsDebugLinesEnabled = true;

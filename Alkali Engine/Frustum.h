@@ -16,7 +16,6 @@ public:
 	void SetDebugLinesEnabled(bool enabled);
 
 	void GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
-	float GetNearFarDist();
 
 private:
 	struct FrustumPlane
@@ -29,7 +28,6 @@ private:
 	vector<DebugLine*> m_debugLines;
 
 	int m_nearIndex = -1, m_farIndex = -1;
-	float m_nearFarDist = SettingsManager::ms_DX12.FarPlane - SettingsManager::ms_DX12.NearPlane;
 
 	bool m_debugLinesEnabled = true;
 };

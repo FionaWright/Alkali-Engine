@@ -52,6 +52,9 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
+				ImGui::InputFloat("Near Plane", &SettingsManager::ms_Dynamic.NearPlane);
+				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
+
 				bool prevWireFrame = Shader::ms_GlobalFillWireframeMode;
 				ImGui::Checkbox("Wireframe", &Shader::ms_GlobalFillWireframeMode);
 
@@ -83,6 +86,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::EndDisabled();
 
 				ImGui::Checkbox("Shadow Map Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
+				ImGui::Checkbox("Shadow Map Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
+				ImGui::Checkbox("Shadow Map Bounds Updating", &SettingsManager::ms_Dynamic.ShadowMapRecalculateBoundsEveryFrame);
 
 				if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 					ImGui::BeginDisabled(true);
@@ -104,8 +109,10 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				static int pcf = 2;
 				if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
 					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 1;
+				ImGui::SameLine();
 				if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
 					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 4;
+				ImGui::SameLine();
 				if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
 					SettingsManager::ms_Dynamic.ShadowMapPCFSamples = 16;
 

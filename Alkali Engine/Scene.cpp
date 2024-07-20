@@ -49,22 +49,22 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;
 	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(SHADOW_MAP_CASCADES);
 	m_perFrameCBuffers.ShadowMapPixel.TexelSize = XMFLOAT2(1.0f / SettingsManager::ms_Misc.ShadowMapResoWidth, 1.0f / SettingsManager::ms_Misc.ShadowMapResoHeight);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[0] = XMFLOAT4(-0.94201624, -0.39906216, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[1] = XMFLOAT4(0.94558609, -0.76890725, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[2] = XMFLOAT4(-0.094184101, -0.92938870, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[3] = XMFLOAT4(0.34495938, 0.29387760, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[4] = XMFLOAT4(-0.91588581, 0.45771432, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[5] = XMFLOAT4(-0.81544232, -0.87912464, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[6] = XMFLOAT4(-0.38277543, 0.27676845, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[7] = XMFLOAT4(0.97484398, 0.75648379, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[8] = XMFLOAT4(0.44323325, -0.97511554, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[9] = XMFLOAT4(0.53742981, -0.47373420, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[10] = XMFLOAT4(-0.26496911, 0.34436442, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[11] = XMFLOAT4(0.79197514, 0.19090188, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[12] = XMFLOAT4(-0.24188840, 0.99706507, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[13] = XMFLOAT4(-0.81409955, 0.91437590, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126, 0.78641367, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161, -0.14100790, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[0] = XMFLOAT4(-0.94201624f, -0.39906216f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[1] = XMFLOAT4(0.94558609f, -0.76890725f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[2] = XMFLOAT4(-0.094184101f, -0.92938870f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[3] = XMFLOAT4(0.34495938f, 0.29387760f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[4] = XMFLOAT4(-0.91588581f, 0.45771432f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[5] = XMFLOAT4(-0.81544232f, -0.87912464f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[6] = XMFLOAT4(-0.38277543f, 0.27676845f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[7] = XMFLOAT4(0.97484398f, 0.75648379f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[8] = XMFLOAT4(0.44323325f, -0.97511554f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[9] = XMFLOAT4(0.53742981f, -0.47373420f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[10] = XMFLOAT4(-0.26496911f, 0.34436442f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[11] = XMFLOAT4(0.79197514f, 0.19090188f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[12] = XMFLOAT4(-0.24188840f, 0.99706507f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[13] = XMFLOAT4(-0.81409955f, 0.91437590f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126f, 0.78641367f, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161f, -0.14100790f, NAN, NAN);
 
 
 	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
@@ -101,7 +101,7 @@ bool Scene::LoadContent()
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, SettingsManager::ms_DX12.FarPlane);
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_Dynamic.NearPlane, SettingsManager::ms_Dynamic.FarPlane);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 	m_frustum.UpdateValues(m_viewProjMatrix);
 	ShadowManager::Init(m_d3dClass, commandListDirect.Get(), m_frustum);
@@ -264,10 +264,10 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	m_viewMatrix = m_camera->GetViewMatrix();
 
 	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, SettingsManager::ms_DX12.FarPlane);
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_Dynamic.NearPlane, SettingsManager::ms_Dynamic.FarPlane);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 
-	XMMATRIX debugLineProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, 2000.0f);
+	XMMATRIX debugLineProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_Dynamic.NearPlane, SettingsManager::ms_Misc.DebugLinesFarPlane);
 	m_viewProjDebugLinesMatrix = XMMatrixMultiply(m_viewMatrix, debugLineProj);
 
 	if (!SettingsManager::ms_Dynamic.FreezeFrustum)
@@ -342,7 +342,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->RSSetScissorRects(1, &m_scissorRect);
 		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances(m_frustum.GetNearFarDist());
+		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
 		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
