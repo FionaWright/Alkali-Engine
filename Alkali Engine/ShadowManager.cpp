@@ -174,7 +174,7 @@ void ShadowManager::Shutdown()
 	ms_initialised = false;
 }
 
-void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
+void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, const XMFLOAT3& eyePos)
 {
 	if (SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents)
 	{
@@ -194,9 +194,11 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 		}
 	}
 
-	XMVECTOR eyeV = XMLoadFloat3(&XMFLOAT3_ZERO);
+	XMFLOAT3 eye = XMFLOAT3(eyePos.x, 0, eyePos.z);
+	XMVECTOR eyeV = XMLoadFloat3(&eye);
 
-	XMVECTOR focusV = XMLoadFloat3(&lightDir);
+	XMFLOAT3 focus = Add(eye, lightDir);
+	XMVECTOR focusV = XMLoadFloat3(&focus);
 
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 	XMVECTOR upV = XMLoadFloat3(&up);
