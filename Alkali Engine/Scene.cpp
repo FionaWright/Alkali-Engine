@@ -290,7 +290,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.ShadowMapPCFSamples;
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.ShadowMapPCFSamples);
 
-		ShadowManager::Update(m_d3dClass, lDir, m_frustum);
+		ShadowManager::Update(m_d3dClass, lDir, m_frustum, m_camera->GetWorldPosition());
 
 		auto vps = ShadowManager::GetVPMatrices();
 		for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)

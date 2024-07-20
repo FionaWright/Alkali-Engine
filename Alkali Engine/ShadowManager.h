@@ -38,7 +38,7 @@ public:
 	static void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, Frustum& frustum);
 	static void Shutdown();
 
-	static void Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum);
+	static void Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, const XMFLOAT3& eyePos);
 	static void UpdateDebugLines(D3DClass* d3d);
 	static void CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum);
 	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum);
