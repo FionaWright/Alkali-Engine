@@ -57,6 +57,10 @@ struct MiscSettings
 
 	bool ImGuiEnabled = true;
 
+	bool ShadowMapRecalculateBoundsEveryFrame = false;
+	int ShadowMapResoWidth = 2048;
+	int ShadowMapResoHeight = 2048;
+
 	enum NormalMapAcceptedChannels
 	{
 		ANY_CHANNELS, ONLY_2_CHANNEL, ONLY_3_CHANNEL
@@ -82,8 +86,7 @@ struct DynamicSettings
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
 	bool ShadowBoundsDebugLinesEnabled = true;
-	int ShadowMapResoWidth = 2048;
-	int ShadowMapResoHeight = 2048;
+	int ShadowMapPCFSamples = 16;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

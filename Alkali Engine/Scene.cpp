@@ -40,7 +40,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	int height = m_pWindow->GetClientHeight();
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
-	m_perFrameCBuffers.DirectionalLight.AmbientColor = XMFLOAT3(0.15f, 0.15f, 0.15f);
+	m_perFrameCBuffers.DirectionalLight.AmbientColor = Mult(XMFLOAT3_ONE, 0.5f);
 	m_perFrameCBuffers.DirectionalLight.LightDiffuse = XMFLOAT3(1, 1, 1);
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
@@ -48,6 +48,24 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.ShadowMap.NormalBias = 0.2f;
 	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;
 	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(SHADOW_MAP_CASCADES);
+	m_perFrameCBuffers.ShadowMapPixel.TexelSize = XMFLOAT2(1.0f / SettingsManager::ms_Misc.ShadowMapResoWidth, 1.0f / SettingsManager::ms_Misc.ShadowMapResoHeight);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[0] = XMFLOAT4(-0.94201624, -0.39906216, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[1] = XMFLOAT4(0.94558609, -0.76890725, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[2] = XMFLOAT4(-0.094184101, -0.92938870, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[3] = XMFLOAT4(0.34495938, 0.29387760, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[4] = XMFLOAT4(-0.91588581, 0.45771432, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[5] = XMFLOAT4(-0.81544232, -0.87912464, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[6] = XMFLOAT4(-0.38277543, 0.27676845, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[7] = XMFLOAT4(0.97484398, 0.75648379, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[8] = XMFLOAT4(0.44323325, -0.97511554, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[9] = XMFLOAT4(0.53742981, -0.47373420, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[10] = XMFLOAT4(-0.26496911, 0.34436442, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[11] = XMFLOAT4(0.79197514, 0.19090188, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[12] = XMFLOAT4(-0.24188840, 0.99706507, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[13] = XMFLOAT4(-0.81409955, 0.91437590, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126, 0.78641367, NAN, NAN);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161, -0.14100790, NAN, NAN);
+
 
 	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
 
@@ -81,7 +99,12 @@ bool Scene::LoadContent()
 		throw std::exception("Command Queue Error");
 	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	ShadowManager::Init(m_d3dClass, commandListDirect.Get());
+	m_viewMatrix = m_camera->GetViewMatrix();
+	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_DX12.NearPlane, SettingsManager::ms_DX12.FarPlane);
+	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
+	m_frustum.UpdateValues(m_viewProjMatrix);
+	ShadowManager::Init(m_d3dClass, commandListDirect.Get(), m_frustum);
 
 	if (!ms_perFramePBRMat)
 	{
@@ -169,8 +192,8 @@ bool Scene::LoadContent()
 	}
 
 	m_viewDepthRPI.NumSRV_Dynamic = 1;
-	m_viewDepthRPI.NumCBV_PerFrame = 1;
-	m_viewDepthRPI.ParamIndexCBV_PerFrame = 0;
+	m_viewDepthRPI.NumCBV_PerDraw = 1;
+	m_viewDepthRPI.ParamIndexCBV_PerDraw = 0;
 	m_viewDepthRPI.ParamIndexSRV_Dynamic = 1;
 
 	m_viewDepthRootSig = std::make_shared<RootSig>();
@@ -190,14 +213,14 @@ bool Scene::LoadContent()
 
 	m_viewDepthMat = std::make_shared<Material>();
 	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
-	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, true, "DepthView");
+	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, false, "DepthView");
 
 	DepthViewCB dvCB;
 	dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
 	dvCB.MaxValue = 1.0f;
 	dvCB.MinValue = 0.96f;
 
-	m_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
+	m_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB));
 
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
@@ -261,6 +284,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
+		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.ShadowMapPCFSamples;
+		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.ShadowMapPCFSamples);
+
 		ShadowManager::Update(m_d3dClass, lDir, m_frustum);
 
 		auto vps = ShadowManager::GetVPMatrices();

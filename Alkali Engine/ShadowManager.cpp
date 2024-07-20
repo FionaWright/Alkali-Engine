@@ -27,9 +27,14 @@ shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
 
 D3D12_VIEWPORT ShadowManager::ms_viewports[SHADOW_MAP_CASCADES];
 vector<DebugLine*> ShadowManager::ms_debugLines;
+bool ShadowManager::ms_initialised;
 
-void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
+void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, Frustum& frustum)
 {
+	if (ms_initialised)
+		return;
+	ms_initialised = true;
+
 	assert(SHADOW_MAP_CASCADES <= 4);
 
 	ms_cascadeInfos[0] = { 0.0f, 0.3f };
@@ -39,8 +44,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 	{
 		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
 		{
-			float topLeftX = SettingsManager::ms_Dynamic.ShadowMapResoWidth * i;
-			ms_viewports[i] = CD3DX12_VIEWPORT(topLeftX, 0.0f, static_cast<float>(SettingsManager::ms_Dynamic.ShadowMapResoWidth), static_cast<float>(SettingsManager::ms_Dynamic.ShadowMapResoHeight));
+			float topLeftX = SettingsManager::ms_Misc.ShadowMapResoWidth * i;
+			ms_viewports[i] = CD3DX12_VIEWPORT(topLeftX, 0.0f, static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoWidth), static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoHeight));
 		}		
 
 		ms_dsvHeap = ResourceManager::CreateDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -48,8 +53,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 
 		D3D12_RESOURCE_DESC dsvDesc = {};
 		dsvDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		dsvDesc.Width = SettingsManager::ms_Dynamic.ShadowMapResoWidth * SHADOW_MAP_CASCADES;
-		dsvDesc.Height = SettingsManager::ms_Dynamic.ShadowMapResoHeight;		
+		dsvDesc.Width = SettingsManager::ms_Misc.ShadowMapResoWidth * SHADOW_MAP_CASCADES;
+		dsvDesc.Height = SettingsManager::ms_Misc.ShadowMapResoHeight;
 		dsvDesc.DepthOrArraySize = 1;
 		dsvDesc.MipLevels = 1;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -83,6 +88,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
+	if (!ms_viewDepthMat)
 	{
 		RootParamInfo viewRPI;
 		viewRPI.NumSRV_Dynamic = 1;
@@ -116,6 +122,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 		ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
 	}
 
+	if (!ms_depthMat)
 	{
 		RootParamInfo depthRPI;
 		depthRPI.NumCBV_PerDraw = 1;
@@ -134,6 +141,9 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList)
 		vector<UINT> cbvDrawSizes = { sizeof(MatricesCB) };
 		ms_depthMat->AddCBVs(d3d, commandList, cbvDrawSizes, false);
 	}
+
+	if (!SettingsManager::ms_Misc.ShadowMapRecalculateBoundsEveryFrame)
+		CalculateBounds(XMFLOAT3(0, -1, 0), frustum);
 }
 
 void ShadowManager::Shutdown()
@@ -146,6 +156,8 @@ void ShadowManager::Shutdown()
 	ms_depthMat.reset();
 	ms_viewRootSig.reset();
 	ms_shadowMapResource.Reset();
+
+	ms_initialised = false;
 }
 
 void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
@@ -167,30 +179,21 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 			ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
 		}
 		return;
-	}
+	}	
 
-	ms_forwardBasis = Normalize(lightDir);
-	XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
-	XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
-	ms_maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
-
-	BoundsArgs args = { ms_forwardBasis, ms_maxBasis, ResourceTracker::GetBatches(), frustum };
+	if (SettingsManager::ms_Misc.ShadowMapRecalculateBoundsEveryFrame)
+		CalculateBounds(lightDir, frustum);
 
 	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
 	{
-		args.cascadeNear = ms_cascadeInfos[i].NearPercent;
-		args.cascadeFar = ms_cascadeInfos[i].FarPercent;
-
-		//CalculateBounds(args, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
-
-		frustum.GetBoundingBoxFromDir(lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
-
-		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
 	}
 
 	if (SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled && ms_debugLines.size() > 0)
 	{
+		XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
+		XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
+
 		for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
 		{
 			XMFLOAT3 x = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
@@ -218,7 +221,34 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum)
 	}
 }
 
-void ShadowManager::CalculateBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist)
+void ShadowManager::CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum) 
+{	
+	ms_forwardBasis = Normalize(lightDir);
+
+	if (Equals(ms_forwardBasis, XMFLOAT3(0, -1, 0)))
+		ms_forwardBasis = Normalize(XMFLOAT3(0.01f, -1, 0.01f));
+
+	XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
+	XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
+	ms_maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
+
+	BoundsArgs args = { ms_forwardBasis, ms_maxBasis, ResourceTracker::GetBatches(), frustum };
+
+	for (int i = 0; i < SHADOW_MAP_CASCADES; i++)
+	{
+		args.cascadeNear = ms_cascadeInfos[i].NearPercent;
+		args.cascadeFar = ms_cascadeInfos[i].FarPercent;
+
+		//CalculateBounds(args, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+
+		frustum.GetBoundingBoxFromDir(lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+
+		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
+	}
+}
+
+void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist)
 {
 	// pMax = up * r + right * r = (up + right) * r * sqrt(2)
 	// pMax = [(up + right) * sqrt(2)] * r
@@ -341,6 +371,21 @@ XMFLOAT4 ShadowManager::GetCascadeDistances(float nearFarDist)
 		dist.w = SettingsManager::ms_DX12.NearPlane + nearFarDist * ms_cascadeInfos[3].NearPercent;
 
 	return dist;
+}
+
+float ShadowManager::GetPCFSampleRange(int sampleCount)
+{
+	switch (sampleCount)
+	{
+	case 1:
+		return 0;
+	case 4:
+		return 0.5f;
+	case 16:
+		return 1.5f;
+	default:
+		throw std::exception("Invalid sample count");
+	}
 }
 
 void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle)
