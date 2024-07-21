@@ -90,11 +90,13 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				{
 					ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
 					ImGui::Checkbox("Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
-					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapUpdating);
-					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.ShadowCascadeCount);
+					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapUpdating);					
 					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
+					ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.ShadowFitToSceneAndFrusta);
+
 					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);
 					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);					
+					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.ShadowCascadeCount);
 
 					if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 						ImGui::BeginDisabled(true);

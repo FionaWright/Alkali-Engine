@@ -253,8 +253,12 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 		ms_cascadeInfos[i].Width += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 		ms_cascadeInfos[i].Height += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 
-		ms_cascadeInfos[i].Width = std::max(ms_cascadeInfos[i].Width, sceneWidth);
-		ms_cascadeInfos[i].Height = std::max(ms_cascadeInfos[i].Height, sceneHeight);
+		if (SettingsManager::ms_Dynamic.ShadowFitToSceneAndFrusta)
+		{
+			ms_cascadeInfos[i].Width = std::max(ms_cascadeInfos[i].Width, sceneWidth);
+			ms_cascadeInfos[i].Height = std::max(ms_cascadeInfos[i].Height, sceneHeight);
+		}
+
 		ms_cascadeInfos[i].Near = std::min(ms_cascadeInfos[i].Near, sceneNear);
 		ms_cascadeInfos[i].Far = std::max(ms_cascadeInfos[i].Far, sceneFar);
 
