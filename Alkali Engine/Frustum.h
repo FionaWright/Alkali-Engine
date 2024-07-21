@@ -15,7 +15,7 @@ public:
 	void SetDebugLines(vector<DebugLine*> list);
 	void SetDebugLinesEnabled(bool enabled);
 
-	void GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
+	void GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
 
 private:
 	struct FrustumPlane

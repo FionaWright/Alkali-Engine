@@ -138,7 +138,7 @@ void Frustum::SetDebugLinesEnabled(bool enabled)
     }
 }
 
-void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
+void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
 {   
     XMFLOAT3 frustumCorners[8];
 
@@ -174,21 +174,20 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& dir, float nearPercent, floa
     XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
     XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
 
-    float maxX = -INFINITY, minX = INFINITY, maxY = -INFINITY, minY = INFINITY;
+    float maxX = -INFINITY, maxY = -INFINITY;
 
     for (int i = 0; i < 8; i++)
     {
         XMFLOAT3 pTransformed = Add(Add(Mult(rightBasis, frustumCorners[i].x), Mult(upBasis, frustumCorners[i].y)), Mult(forwardBasis, frustumCorners[i].z));
+        pTransformed = Subtract(pTransformed, origin);
 
-        maxX = std::max(maxX, pTransformed.x);
-        minX = std::min(minX, pTransformed.x);
-        maxY = std::max(maxY, pTransformed.y);
-        minY = std::min(minY, pTransformed.y);
+        maxX = std::max(maxX, abs(pTransformed.x));
+        maxY = std::max(maxY, abs(pTransformed.y));
 
         nearDist = std::min(nearDist, pTransformed.z);
         farDist = std::max(farDist, pTransformed.z);
     }
 
-    width = 2 * std::max(maxX, abs(minX));
-    height = 2 * std::max(maxY, abs(minY));
+    width = 2 * maxX;
+    height = 2 * maxY;
 }

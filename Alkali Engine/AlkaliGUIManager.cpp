@@ -94,7 +94,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.ShadowCascadeCount);
 					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
 					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);
-					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);
+					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);					
 
 					if (visualiseDSV || !SettingsManager::ms_Dynamic.ShadowMapEnabled)
 						ImGui::BeginDisabled(true);
@@ -105,9 +105,10 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 						ImGui::EndDisabled();
 
 					ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled);
+					ImGui::InputFloat("Bounds Bias", &SettingsManager::ms_Dynamic.ShadowBoundsBias);
 
-					ImGui::InputFloat("Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
-					ImGui::InputFloat("Normal Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
+					ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+					ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
 
 					ImGui::Text("PCF Samples");
 
