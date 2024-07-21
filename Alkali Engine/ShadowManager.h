@@ -52,7 +52,7 @@ public:
 	static float GetPCFSampleRange(int sampleCount);
 
 private:
-	static void CalculateSceneBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist);
+	static void CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos, float& width, float& height, float& nearDist, float& farDist);
 
 	static CascadeInfo ms_cascadeInfos[MAX_SHADOW_MAP_CASCADES];
 
@@ -60,7 +60,7 @@ private:
 	static XMMATRIX ms_projMatrices[MAX_SHADOW_MAP_CASCADES];
 	static XMMATRIX ms_vpMatrices[MAX_SHADOW_MAP_CASCADES];
 
-	static XMFLOAT3 ms_maxBasis, ms_forwardBasis;
+	static XMFLOAT3 ms_maxBasis, ms_forwardBasis, ms_eyePos;
 
 	static ComPtr<ID3D12DescriptorHeap> ms_dsvHeap;
 	static UINT ms_dsvDescriptorSize;

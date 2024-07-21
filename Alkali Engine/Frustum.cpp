@@ -170,16 +170,18 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir,
     XMFLOAT3 forwardBasis = Normalize(dir);
     if (Equals(forwardBasis, XMFLOAT3(0, -1, 0)))
         forwardBasis = Normalize(XMFLOAT3(0.01f, -1, 0.01f));
-
+    
     XMFLOAT3 rightBasis = Normalize(Cross(forwardBasis, XMFLOAT3(0, 1, 0)));
     XMFLOAT3 upBasis = Normalize(Cross(forwardBasis, rightBasis));
 
+    nearDist = INFINITY;
+    farDist = -INFINITY;
     float maxX = -INFINITY, maxY = -INFINITY;
 
     for (int i = 0; i < 8; i++)
     {
-        XMFLOAT3 pTransformed = Add(Add(Mult(rightBasis, frustumCorners[i].x), Mult(upBasis, frustumCorners[i].y)), Mult(forwardBasis, frustumCorners[i].z));
-        pTransformed = Subtract(pTransformed, origin);
+        XMFLOAT3 p = Subtract(frustumCorners[i], origin);
+        XMFLOAT3 pTransformed = Add(Add(Mult(rightBasis, p.x), Mult(upBasis, p.y)), Mult(forwardBasis, p.z));
 
         maxX = std::max(maxX, abs(pTransformed.x));
         maxY = std::max(maxY, abs(pTransformed.y));

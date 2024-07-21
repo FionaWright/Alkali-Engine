@@ -39,6 +39,8 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 
 bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius)
 {
+	pos = Subtract(pos, ro->Origin);
+
 	XMFLOAT3 forward = Mult(pos, ro->ForwardBasis);
 	if (forward.z - radius < ro->BoundsNear || forward.z + radius > ro->BoundsFar)
 		return false;
