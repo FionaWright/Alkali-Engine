@@ -155,8 +155,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 
 	if (!SettingsManager::ms_Dynamic.ShadowMapUpdating)
 	{
-		CalculateBounds(XMFLOAT3(0, -1, 0), frustum);
-		UpdateDebugLines(d3d);
+		CalculateBoundsAndMatrices(XMFLOAT3_ZERO, XMFLOAT3(0, -1, 0), frustum);
+		UpdateDebugLines(d3d, XMFLOAT3_ZERO);
 	}		
 }
 
@@ -217,8 +217,8 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 
 	if (SettingsManager::ms_Dynamic.ShadowMapUpdating)
 	{
-		CalculateBounds(lightDir, frustum);
-		UpdateDebugLines(d3d);
+		CalculateBoundsAndMatrices(eye, lightDir, frustum);
+		UpdateDebugLines(d3d, eye);
 	}		
 
 	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
@@ -227,7 +227,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 	}
 }
 
-void ShadowManager::CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum) 
+void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 lightDir, Frustum& frustum) 
 {	
 	ms_forwardBasis = Normalize(lightDir);
 
@@ -247,7 +247,10 @@ void ShadowManager::CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum)
 
 		//CalculateBounds(args, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 
-		frustum.GetBoundingBoxFromDir(lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+		frustum.GetBoundingBoxFromDir(eyePos, lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+
+		ms_cascadeInfos[i].Width += SettingsManager::ms_Dynamic.ShadowBoundsBias;
+		ms_cascadeInfos[i].Height += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 
 		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
@@ -418,7 +421,7 @@ void ShadowManager::SetDebugLines(vector<DebugLine*>& debugLines)
 	ms_debugLines = debugLines;
 }
 
-void ShadowManager::UpdateDebugLines(D3DClass* d3d)
+void ShadowManager::UpdateDebugLines(D3DClass* d3d, const XMFLOAT3& eyePos)
 {
 	if (!SettingsManager::ms_Dynamic.ShadowBoundsDebugLinesEnabled || ms_debugLines.size() == 0)
 		return;
@@ -428,26 +431,31 @@ void ShadowManager::UpdateDebugLines(D3DClass* d3d)
 
 	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
 	{
-		XMFLOAT3 x = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
+		XMFLOAT3 xe = Mult(rightBasis, ms_cascadeInfos[i].Width * 0.5f);
+		XMFLOAT3 nxe = Subtract(eyePos, xe);
+		xe = Add(eyePos, xe);
+
 		XMFLOAT3 y = Mult(upBasis, ms_cascadeInfos[i].Height * 0.5f);
+		XMFLOAT3 ny = Negate(y);
+
 		XMFLOAT3 zF = Mult(ms_forwardBasis, ms_cascadeInfos[i].Far);
 		XMFLOAT3 zN = Mult(ms_forwardBasis, ms_cascadeInfos[i].Near);
 
 		int lineI = i * 12;
 
-		ms_debugLines[lineI + 0]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(Negate(x), y), zN));
-		ms_debugLines[lineI + 1]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(x, Negate(y)), zN));
-		ms_debugLines[lineI + 2]->SetPositions(d3d, Add(Add(Negate(x), y), zN), Add(Add(Negate(x), Negate(y)), zN));
-		ms_debugLines[lineI + 3]->SetPositions(d3d, Add(Add(x, Negate(y)), zN), Add(Add(Negate(x), Negate(y)), zN));
+		ms_debugLines[lineI + 0]->SetPositions(d3d, Add(Add(xe, y), zN), Add(Add(nxe, y), zN));
+		ms_debugLines[lineI + 1]->SetPositions(d3d, Add(Add(xe, y), zN), Add(Add(xe, ny), zN));
+		ms_debugLines[lineI + 2]->SetPositions(d3d, Add(Add(nxe, y), zN), Add(Add(nxe, ny), zN));
+		ms_debugLines[lineI + 3]->SetPositions(d3d, Add(Add(xe, ny), zN), Add(Add(nxe, ny), zN));
 
-		ms_debugLines[lineI + 4]->SetPositions(d3d, Add(Add(x, y), zF), Add(Add(Negate(x), y), zF));
-		ms_debugLines[lineI + 5]->SetPositions(d3d, Add(Add(x, y), zF), Add(Add(x, Negate(y)), zF));
-		ms_debugLines[lineI + 6]->SetPositions(d3d, Add(Add(Negate(x), y), zF), Add(Add(Negate(x), Negate(y)), zF));
-		ms_debugLines[lineI + 7]->SetPositions(d3d, Add(Add(x, Negate(y)), zF), Add(Add(Negate(x), Negate(y)), zF));
+		ms_debugLines[lineI + 4]->SetPositions(d3d, Add(Add(xe, y), zF), Add(Add(nxe, y), zF));
+		ms_debugLines[lineI + 5]->SetPositions(d3d, Add(Add(xe, y), zF), Add(Add(xe, ny), zF));
+		ms_debugLines[lineI + 6]->SetPositions(d3d, Add(Add(nxe, y), zF), Add(Add(nxe, ny), zF));
+		ms_debugLines[lineI + 7]->SetPositions(d3d, Add(Add(xe, ny), zF), Add(Add(nxe, ny), zF));
 
-		ms_debugLines[lineI + 8]->SetPositions(d3d, Add(Add(x, y), zN), Add(Add(x, y), zF));
-		ms_debugLines[lineI + 9]->SetPositions(d3d, Add(Add(Negate(x), Negate(y)), zN), Add(Add(Negate(x), Negate(y)), zF));
-		ms_debugLines[lineI + 10]->SetPositions(d3d, Add(Add(Negate(x), y), zN), Add(Add(Negate(x), y), zF));
-		ms_debugLines[lineI + 11]->SetPositions(d3d, Add(Add(x, Negate(y)), zN), Add(Add(x, Negate(y)), zF));
+		ms_debugLines[lineI + 8]->SetPositions(d3d, Add(Add(xe, y), zN), Add(Add(xe, y), zF));
+		ms_debugLines[lineI + 9]->SetPositions(d3d, Add(Add(nxe, ny), zN), Add(Add(nxe, ny), zF));
+		ms_debugLines[lineI + 10]->SetPositions(d3d, Add(Add(nxe, y), zN), Add(Add(nxe, y), zF));
+		ms_debugLines[lineI + 11]->SetPositions(d3d, Add(Add(xe, ny), zN), Add(Add(xe, ny), zF));
 	}
 }

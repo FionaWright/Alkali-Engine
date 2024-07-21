@@ -38,13 +38,13 @@ public:
 	static void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, Frustum& frustum);
 	static void Shutdown();
 
-	static void Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, const XMFLOAT3& eyePos);
-	static void UpdateDebugLines(D3DClass* d3d);
-	static void CalculateBounds(XMFLOAT3 lightDir, Frustum& frustum);
+	static void Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, const XMFLOAT3& eyePos);	
+	static void CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 lightDir, Frustum& frustum);
 	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum);
 	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle);
 
 	static void SetDebugLines(vector<DebugLine*>& debugLines);
+	static void UpdateDebugLines(D3DClass* d3d, const XMFLOAT3& eyePos);
 
 	static ID3D12Resource* GetShadowMap();	
 	static XMMATRIX* GetVPMatrices();	

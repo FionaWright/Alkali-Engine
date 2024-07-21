@@ -92,6 +92,7 @@ struct DynamicSettings
 	bool ShadowMapAutoNearFarPercents = true;
 	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
 	float ShadowFarPercents[MAX_SHADOW_MAP_CASCADES];
+	float ShadowBoundsBias = 9.0f;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		
