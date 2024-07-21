@@ -40,7 +40,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	int height = m_pWindow->GetClientHeight();
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
-	m_perFrameCBuffers.DirectionalLight.AmbientColor = Mult(XMFLOAT3_ONE, 0.5f);
+	m_perFrameCBuffers.DirectionalLight.AmbientColor = Mult(XMFLOAT3_ONE, 0.3f);
 	m_perFrameCBuffers.DirectionalLight.LightDiffuse = XMFLOAT3(1, 1, 1);
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
