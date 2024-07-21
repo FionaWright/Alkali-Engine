@@ -57,7 +57,7 @@ void Shader::Compile(ID3D12Device2* device)
 	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
 	if (ms_GlobalCullNone || m_args.cullNone)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-	else if (m_args.cullFrontOnly)
+	else if (m_args.CullFront)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
 	else
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;

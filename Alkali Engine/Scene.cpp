@@ -46,7 +46,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
 
 	m_perFrameCBuffers.ShadowMap.NormalBias = 0.2f;
-	m_perFrameCBuffers.ShadowMapPixel.Bias = 0.001f;	
+	m_perFrameCBuffers.ShadowMapPixel.Bias = -0.001f;	
 	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(MAX_SHADOW_MAP_CASCADES);
 	m_perFrameCBuffers.ShadowMapPixel.TexelSize = XMFLOAT2(1.0f / SettingsManager::ms_Misc.ShadowMapResoWidth, 1.0f / SettingsManager::ms_Misc.ShadowMapResoHeight);
 
