@@ -16,7 +16,7 @@ struct ShaderArgs
 	ID3D12RootSignature* rootSig;
 
 	bool cullNone = false;
-	bool cullFrontOnly = false;
+	bool CullFront = false;
 	bool disableDSV = false;
 	bool disableDSVWrite = false;
 	bool NoPS = false;
@@ -36,7 +36,7 @@ struct ShaderArgs
 		rootSig = other.rootSig;
 
 		cullNone = other.cullNone;
-		cullFrontOnly = other.cullFrontOnly;
+		CullFront = other.CullFront;
 		disableDSV = other.disableDSV;
 		disableDSVWrite = other.disableDSVWrite;
 		Topology = other.Topology;

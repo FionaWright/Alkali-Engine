@@ -56,6 +56,7 @@ struct MiscSettings
 
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
+	bool ShadowCullFront = false;
 
 	float DebugLinesFarPlane = 2000.0f;
 
@@ -92,7 +93,7 @@ struct DynamicSettings
 	bool ShadowMapAutoNearFarPercents = true;
 	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
 	float ShadowFarPercents[MAX_SHADOW_MAP_CASCADES];
-	float ShadowBoundsBias = 9.0f;
+	float ShadowBoundsBias = 0.0f;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		
