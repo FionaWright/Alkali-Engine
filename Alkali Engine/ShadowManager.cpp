@@ -11,7 +11,7 @@ CascadeInfo ShadowManager::ms_cascadeInfos[MAX_SHADOW_MAP_CASCADES];
 XMMATRIX ShadowManager::ms_viewMatrix;
 XMMATRIX ShadowManager::ms_projMatrices[MAX_SHADOW_MAP_CASCADES];
 XMMATRIX ShadowManager::ms_vpMatrices[MAX_SHADOW_MAP_CASCADES];
-XMFLOAT3 ShadowManager::ms_maxBasis, ShadowManager::ms_forwardBasis;
+XMFLOAT3 ShadowManager::ms_maxBasis, ShadowManager::ms_forwardBasis, ShadowManager::ms_eyePos;
 
 ComPtr<ID3D12DescriptorHeap> ShadowManager::ms_dsvHeap;
 UINT ShadowManager::ms_dsvDescriptorSize;
@@ -194,10 +194,10 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 		}
 	}
 
-	XMFLOAT3 eye = XMFLOAT3(eyePos.x, 0, eyePos.z);
-	XMVECTOR eyeV = XMLoadFloat3(&eye);
+	ms_eyePos = XMFLOAT3(eyePos.x, 0, eyePos.z);
+	XMVECTOR eyeV = XMLoadFloat3(&ms_eyePos);
 
-	XMFLOAT3 focus = Add(eye, lightDir);
+	XMFLOAT3 focus = Add(ms_eyePos, lightDir);
 	XMVECTOR focusV = XMLoadFloat3(&focus);
 
 	XMFLOAT3 up = XMFLOAT3(0, 1, 0);
@@ -217,8 +217,8 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 
 	if (SettingsManager::ms_Dynamic.ShadowMapUpdating)
 	{
-		CalculateBoundsAndMatrices(eye, lightDir, frustum);
-		UpdateDebugLines(d3d, eye);
+		CalculateBoundsAndMatrices(ms_eyePos, lightDir, frustum);
+		UpdateDebugLines(d3d, ms_eyePos);
 	}		
 
 	for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
@@ -245,19 +245,25 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 		args.cascadeNear = SettingsManager::ms_Dynamic.ShadowNearPercents[i];
 		args.cascadeFar = SettingsManager::ms_Dynamic.ShadowFarPercents[i];
 
-		//CalculateBounds(args, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+		float sceneWidth, sceneHeight, sceneNear, sceneFar;
+		CalculateSceneBounds(args, eyePos, sceneWidth, sceneHeight, sceneNear, sceneFar);
 
 		frustum.GetBoundingBoxFromDir(eyePos, lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 
 		ms_cascadeInfos[i].Width += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 		ms_cascadeInfos[i].Height += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 
+		ms_cascadeInfos[i].Width = std::max(ms_cascadeInfos[i].Width, sceneWidth);
+		ms_cascadeInfos[i].Height = std::max(ms_cascadeInfos[i].Height, sceneHeight);
+		ms_cascadeInfos[i].Near = std::min(ms_cascadeInfos[i].Near, sceneNear);
+		ms_cascadeInfos[i].Far = std::max(ms_cascadeInfos[i].Far, sceneFar);
+
 		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
 	}
 }
 
-void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& height, float& nearDist, float& farDist)
+void ShadowManager::CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos, float& width, float& height, float& nearDist, float& farDist)
 {
 	// pMax = up * r + right * r = (up + right) * r * sqrt(2)
 	// pMax = [(up + right) * sqrt(2)] * r
@@ -281,6 +287,8 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& h
 			if (!args.frustum.CheckSphere(pos, radius, args.cascadeNear, args.cascadeFar))
 				continue;
 
+			pos = Subtract(pos, eyePos);
+
 			XMFLOAT3 pMax = Add(Abs(pos), Abs(Mult(args.maxBasis, radius)));
 
 			width = std::max(width, pMax.x);
@@ -300,6 +308,8 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, float& width, float& h
 
 			if (!args.frustum.CheckSphere(pos, radius, args.cascadeNear, args.cascadeFar))
 				continue;
+
+			pos = Subtract(pos, eyePos);
 
 			XMFLOAT3 pMax = Add(Abs(pos), Abs(Mult(args.maxBasis, radius)));
 
@@ -346,6 +356,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 		ro.BoundsHeight = ms_cascadeInfos[i].Height;
 		ro.BoundsNear = ms_cascadeInfos[i].Near;
 		ro.BoundsFar = ms_cascadeInfos[i].Far;
+		ro.Origin = ms_eyePos;
 
 		for (auto& it : batchList)
 		{	
