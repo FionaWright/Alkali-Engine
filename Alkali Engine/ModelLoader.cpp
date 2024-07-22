@@ -874,10 +874,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 		specFullFilePath = "MetalRoughSpheres/Spheres_MetalRough.png";
 
 	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex };
+	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex };
 
 	shared_ptr<Material> material = std::make_shared<Material>();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
