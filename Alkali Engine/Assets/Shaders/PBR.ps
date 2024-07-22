@@ -65,7 +65,9 @@ Texture2D g_normalMap : register(t1);
 Texture2D g_specularMap : register(t2);
 TextureCube g_irradiance : register(t3);
 TextureCube g_envMap : register(t4);
-Texture2D g_shadowMap : register(t5);
+Texture2D g_blueNoise : register(t5);
+
+Texture2D g_shadowMap : register(t6);
 
 SamplerState g_sampler : register(s0);
 
@@ -76,6 +78,8 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {
+    float blueNoise = g_blueNoise.Sample(g_sampler, input.UV).r;
+
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
 
     float fCascadeIndex = dot(float4(ShadowPixelCB.CascadeCount > 0, ShadowPixelCB.CascadeCount > 1, ShadowPixelCB.CascadeCount > 2, ShadowPixelCB.CascadeCount > 3), cascadeComparison);
@@ -92,7 +96,8 @@ float4 main(V_OUT input) : SV_Target
     for (float y = -ShadowPixelCB.PCFSampleRange; y <= ShadowPixelCB.PCFSampleRange; y++)
         for (float x = -ShadowPixelCB.PCFSampleRange; x <= ShadowPixelCB.PCFSampleRange; x++)
         {
-            float2 coord = shadowCoords.xy + (float2(x, y) + ShadowPixelCB.PoissonDisc[i].xy) * ShadowPixelCB.TexelSize;
+            int poissonIndex = (i * blueNoise * 16) % 16;
+            float2 coord = shadowCoords.xy + (float2(x, y) + ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
 
             //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
