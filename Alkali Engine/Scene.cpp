@@ -22,6 +22,7 @@ Scene::Scene(const std::wstring& name, Window* pWindow, bool createDSV)
 	, m_viewMatrix(XMMatrixIdentity())
 	, m_projectionMatrix(XMMatrixIdentity())
 	, m_viewProjMatrix(XMMatrixIdentity())
+	, m_viewProjDebugLinesMatrix(XMMatrixIdentity())
 	, m_BackgroundColor(XMFLOAT4(0.4f, 0.6f, 0.9f, 1.0f))
 {	
 }

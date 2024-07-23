@@ -94,6 +94,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
 					ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.ShadowFitToSceneAndFrusta);
 					ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.ShadowUseBoundingSpheres);
+					ImGui::Checkbox("Lock Y to 0", &SettingsManager::ms_Dynamic.ShadowLockYCoordTo0);
 
 					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);
 					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);					

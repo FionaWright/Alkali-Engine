@@ -98,6 +98,7 @@ struct DynamicSettings
 	bool ShadowFitToSceneAndFrusta = false;
 	bool ShadowUseBoundingSpheres = true;
 	int ShadowFrameWait = 5;
+	bool ShadowLockYCoordTo0 = false;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		
