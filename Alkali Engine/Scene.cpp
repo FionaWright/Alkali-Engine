@@ -338,13 +338,6 @@ void Scene::OnRender(TimeEventArgs& e)
 	{
 		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
 
-		auto fenceShadowMapPass = commandQueue->ExecuteCommandList(commandList); // Execute early (Due to MatricesCB being reused)
-		commandQueue->WaitForFenceValue(fenceShadowMapPass);
-		commandList = commandQueue->GetAvailableCommandList();
-		commandList->RSSetViewports(1, &m_viewport);
-		commandList->RSSetScissorRects(1, &m_scissorRect);
-		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
 		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
