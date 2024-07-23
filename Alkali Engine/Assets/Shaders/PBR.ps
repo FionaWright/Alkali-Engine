@@ -97,7 +97,7 @@ float4 main(V_OUT input) : SV_Target
         for (float x = -ShadowPixelCB.PCFSampleRange; x <= ShadowPixelCB.PCFSampleRange; x++)
         {
             int poissonIndex = (i * blueNoise * 16) % 16;
-            float2 coord = shadowCoords.xy + (float2(x, y) + ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize;
+            float2 coord = shadowCoords.xy + (float2(x, y) + ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize * 0.5f;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
 
             //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
