@@ -15,7 +15,11 @@ public:
 	void SetDebugLines(vector<DebugLine*> list);
 	void SetDebugLinesEnabled(bool enabled);
 
+	void GetFrustumCorners(XMFLOAT3* frustumCorners, float nearPercent, float farPercent);
+
 	void GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
+
+	void GetBoundingSphereFromDir(float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist);
 
 private:
 	struct FrustumPlane

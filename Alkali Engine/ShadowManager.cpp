@@ -248,7 +248,10 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 		float sceneWidth, sceneHeight, sceneNear, sceneFar;
 		CalculateSceneBounds(args, eyePos, sceneWidth, sceneHeight, sceneNear, sceneFar);
 
-		frustum.GetBoundingBoxFromDir(eyePos, lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+		if (SettingsManager::ms_Dynamic.ShadowUseBoundingSpheres)
+			frustum.GetBoundingSphereFromDir(args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
+		else
+			frustum.GetBoundingBoxFromDir(eyePos, lightDir, args.cascadeNear, args.cascadeFar, ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);		
 
 		ms_cascadeInfos[i].Width += SettingsManager::ms_Dynamic.ShadowBoundsBias;
 		ms_cascadeInfos[i].Height += SettingsManager::ms_Dynamic.ShadowBoundsBias;
@@ -261,6 +264,11 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 
 		ms_cascadeInfos[i].Near = std::min(ms_cascadeInfos[i].Near, sceneNear);
 		ms_cascadeInfos[i].Far = std::max(ms_cascadeInfos[i].Far, sceneFar);
+
+		double worldUnitsPerTexelX = ms_cascadeInfos[i].Width / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoWidth);
+		double worldUnitsPerTexelY = ms_cascadeInfos[i].Height / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoHeight);
+		ms_cascadeInfos[i].Width = std::floor(ms_cascadeInfos[i].Width / worldUnitsPerTexelX) * worldUnitsPerTexelX;
+		ms_cascadeInfos[i].Height = std::floor(ms_cascadeInfos[i].Height / worldUnitsPerTexelY) * worldUnitsPerTexelY;
 
 		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
