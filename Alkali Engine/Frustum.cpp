@@ -138,20 +138,18 @@ void Frustum::SetDebugLinesEnabled(bool enabled)
     }
 }
 
-void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
-{   
-    XMFLOAT3 frustumCorners[8];
-
+void Frustum::GetFrustumCorners(XMFLOAT3* frustumCorners, float nearPercent, float farPercent)
+{
     auto Intersection = [](const FrustumPlane& p1, const FrustumPlane& p2, const FrustumPlane& p3, float& nearFarOffset) -> XMFLOAT3
-    {
-        XMFLOAT3 u = Cross(p2.Normal, p3.Normal);
-        float denom = Dot(p1.Normal, u);
-        XMFLOAT3 point = Divide(
-            Add(Mult(Cross(p2.Normal, p3.Normal), p1.Distance),
-            Add(Mult(Cross(p3.Normal, p1.Normal), p2.Distance),
-            Mult(Cross(p1.Normal, p2.Normal), p3.Distance + nearFarOffset))), denom);
-        return point;
-    };
+        {
+            XMFLOAT3 u = Cross(p2.Normal, p3.Normal);
+            float denom = Dot(p1.Normal, u);
+            XMFLOAT3 point = Divide(
+                Add(Mult(Cross(p2.Normal, p3.Normal), p1.Distance),
+                    Add(Mult(Cross(p3.Normal, p1.Normal), p2.Distance),
+                        Mult(Cross(p1.Normal, p2.Normal), p3.Distance + nearFarOffset))), denom);
+            return point;
+        };
 
     float nearFarDist = SettingsManager::ms_Dynamic.FarPlane - SettingsManager::ms_Dynamic.NearPlane;
     float nearOffset = nearFarDist * nearPercent;
@@ -166,6 +164,12 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir,
     frustumCorners[5] = Intersection(m_frustumPlanes[0], m_frustumPlanes[3], m_frustumPlanes[5], farOffset); // Left, Bottom, Far
     frustumCorners[6] = Intersection(m_frustumPlanes[1], m_frustumPlanes[2], m_frustumPlanes[5], farOffset); // Right, Top, Far
     frustumCorners[7] = Intersection(m_frustumPlanes[1], m_frustumPlanes[3], m_frustumPlanes[5], farOffset); // Right, Bottom, Far
+}
+
+void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir, float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
+{   
+    XMFLOAT3 frustumCorners[8];
+    GetFrustumCorners(&frustumCorners[0], nearPercent, farPercent);
 
     XMFLOAT3 forwardBasis = Normalize(dir);
     if (Equals(forwardBasis, XMFLOAT3(0, -1, 0)))
@@ -180,7 +184,8 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir,
 
     for (int i = 0; i < 8; i++)
     {
-        XMFLOAT3 p = Subtract(frustumCorners[i], origin);
+        //XMFLOAT3 p = Subtract(frustumCorners[i], origin);
+        XMFLOAT3 p = frustumCorners[i];
         XMFLOAT3 pTransformed = Add(Add(Mult(rightBasis, p.x), Mult(upBasis, p.y)), Mult(forwardBasis, p.z));
 
         maxX = std::max(maxX, abs(pTransformed.x));
@@ -192,4 +197,29 @@ void Frustum::GetBoundingBoxFromDir(const XMFLOAT3& origin, const XMFLOAT3& dir,
 
     width = 2 * maxX;
     height = 2 * maxY;
+}
+
+void Frustum::GetBoundingSphereFromDir(float nearPercent, float farPercent, float& width, float& height, float& nearDist, float& farDist)
+{
+    XMFLOAT3 frustumCorners[8];
+    GetFrustumCorners(&frustumCorners[0], nearPercent, farPercent);
+
+    XMFLOAT3 center = XMFLOAT3_ZERO;
+    for (int i = 0; i < 8; i++)
+    {
+        center = Add(center, frustumCorners[i]);
+    }
+    center = Divide(center, 8);
+
+    float maxMag = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        float mag = Magnitude(Subtract(frustumCorners[i], center));
+        maxMag = std::max(maxMag, mag);
+    }
+
+    width = 2 * maxMag;
+    height = 2 * maxMag;
+    nearDist = center.z - maxMag;
+    farDist = center.z + maxMag;
 }
