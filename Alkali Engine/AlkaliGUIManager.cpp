@@ -55,13 +55,10 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::InputFloat("Near Plane", &SettingsManager::ms_Dynamic.NearPlane);
 				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
 
-				bool prevWireFrame = Shader::ms_GlobalFillWireframeMode;
-				ImGui::Checkbox("Wireframe", &Shader::ms_GlobalFillWireframeMode);
+				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
+				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullFaceEnabled);
 
-				bool prevBackCull = Shader::ms_GlobalCullNone;
-				ImGui::Checkbox("Don't Cull Backfaces", &Shader::ms_GlobalCullNone);
-
-				if (prevWireFrame != Shader::ms_GlobalFillWireframeMode || prevBackCull != Shader::ms_GlobalCullNone)
+				if (wireframeChanged || cullChanged)
 				{
 					for (auto& it : shaderList)
 					{

@@ -2,9 +2,6 @@
 #include "Shader.h"
 #include <iostream>
 
-bool Shader::ms_GlobalFillWireframeMode;
-bool Shader::ms_GlobalCullNone;
-
 void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
 	m_args = args;
@@ -54,8 +51,8 @@ void Shader::Compile(ID3D12Device2* device)
 		rtvFormats.RTFormats[0] = m_args.RTVFormat;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
-	rasterizerDesc.FillMode = ms_GlobalFillWireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
-	if (ms_GlobalCullNone || m_args.cullNone)
+	rasterizerDesc.FillMode = SettingsManager::ms_Dynamic.WireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
+	if (!SettingsManager::ms_Dynamic.CullFaceEnabled || m_args.cullNone)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	else if (m_args.CullFront)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
