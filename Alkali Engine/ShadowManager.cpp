@@ -55,14 +55,14 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		dsvDesc.Height = SettingsManager::ms_Misc.ShadowMapResoHeight;
 		dsvDesc.DepthOrArraySize = 1;
 		dsvDesc.MipLevels = 1;
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		dsvDesc.Format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		dsvDesc.SampleDesc.Count = 1;
 		dsvDesc.SampleDesc.Quality = 0;
 		dsvDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		dsvDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 		D3D12_CLEAR_VALUE clearValue = {};
-		clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		clearValue.Format = dsvDesc.Format;
 		clearValue.DepthStencil.Depth = 1.0f;
 		clearValue.DepthStencil.Stencil = 0.0f;
 
@@ -73,7 +73,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ms_currentDSVState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
-		desc.Format = DXGI_FORMAT_D32_FLOAT;
+		desc.Format = dsvDesc.Format;
 		desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		//desc.Texture2DArray.ArraySize = MAX_SHADOW_MAP_CASCADES;
 
@@ -133,6 +133,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		depthArgs.NoPS = true;
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
 		depthArgs.SlopeScaleDepthBias = 0.02f;
+		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
 
 		ms_depthMat = std::make_shared<Material>();
@@ -431,7 +432,8 @@ void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	commandList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	ms_viewDepthMat->SetDynamicSRV(d3d, 0, DXGI_FORMAT_R32_FLOAT, ms_shadowMapResource.Get());
+	DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+	ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
 
 	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo());
 

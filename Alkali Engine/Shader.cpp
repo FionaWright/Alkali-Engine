@@ -135,7 +135,7 @@ void Shader::Compile(ID3D12Device2* device)
 	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
-	psoStream.DSVFormat = SettingsManager::ms_DX12.DSVFormat;
+	psoStream.DSVFormat = m_args.DSVFormat;
 	psoStream.RTVFormats = rtvFormats;
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };

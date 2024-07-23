@@ -91,6 +91,7 @@ protected:
 private:    
     bool m_dsvEnabled;
     bool m_updated = false;
+    int m_shadowMapCounter = INT_MAX;
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
