@@ -167,7 +167,9 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 	if (SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents)
 		CalculateNearFarPercents();
 
-	ms_eyePos = XMFLOAT3(eyePos.x, 0, eyePos.z);
+	ms_eyePos = eyePos;
+	if (SettingsManager::ms_Dynamic.ShadowLockYCoordTo0)
+		ms_eyePos.y = 0;
 	XMVECTOR eyeV = XMLoadFloat3(&ms_eyePos);
 
 	XMFLOAT3 focus = Add(ms_eyePos, lightDir);
