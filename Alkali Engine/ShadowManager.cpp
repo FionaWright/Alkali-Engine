@@ -202,11 +202,10 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 
 void ShadowManager::CalculateNearFarPercents() 
 {
-	float shadowWidth = 1.0f / float(SettingsManager::ms_Dynamic.ShadowCascadeCount);
-	float currentSize = 0.5f;
-	float currentFar = 1.0f;
+	float base = 2;
+	float sum = 0;
 
-	for (int i = MAX_SHADOW_MAP_CASCADES - 1; i >= 0; i--)
+	for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
 	{
 		if (i >= SettingsManager::ms_Dynamic.ShadowCascadeCount)
 		{
@@ -214,18 +213,23 @@ void ShadowManager::CalculateNearFarPercents()
 			SettingsManager::ms_Dynamic.ShadowFarPercents[i] = NAN;
 			continue;
 		}
-
+		
 		if (i == 0)
-		{
-			SettingsManager::ms_Dynamic.ShadowNearPercents[i] = 0.0f;
-			SettingsManager::ms_Dynamic.ShadowFarPercents[i] = currentFar;
-			return;
-		}
+			SettingsManager::ms_Dynamic.ShadowNearPercents[i] = 0;
+		else
+			SettingsManager::ms_Dynamic.ShadowNearPercents[i] = pow(base, i);
 
-		SettingsManager::ms_Dynamic.ShadowNearPercents[i] = currentFar - currentSize;
-		SettingsManager::ms_Dynamic.ShadowFarPercents[i] = currentFar;
-		currentFar -= currentSize;
-		currentSize *= 0.5f;
+		SettingsManager::ms_Dynamic.ShadowFarPercents[i] = pow(base, i+1);
+		sum += SettingsManager::ms_Dynamic.ShadowFarPercents[i] - SettingsManager::ms_Dynamic.ShadowNearPercents[i];
+	}
+
+	for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
+	{
+		if (i >= SettingsManager::ms_Dynamic.ShadowCascadeCount)
+			continue;
+
+		SettingsManager::ms_Dynamic.ShadowNearPercents[i] /= sum;
+		SettingsManager::ms_Dynamic.ShadowFarPercents[i] /= sum;
 	}
 }
 
