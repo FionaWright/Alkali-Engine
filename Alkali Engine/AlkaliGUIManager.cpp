@@ -113,6 +113,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
 					ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
 
+					ImGui::InputInt("Frame Wait Count", &SettingsManager::ms_Dynamic.ShadowFrameWait);
+
 					ImGui::Text("PCF Samples");
 
 					ImGui::Indent(IM_GUI_INDENTATION);

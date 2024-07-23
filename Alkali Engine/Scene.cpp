@@ -283,7 +283,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
-	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
 		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;		
 		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;
@@ -334,7 +334,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	if (SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
 		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
 
@@ -348,8 +348,11 @@ void Scene::OnRender(TimeEventArgs& e)
 		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
-		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, ShadowManager::GetShadowMap());
+		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, format, ShadowManager::GetShadowMap());
+		m_shadowMapCounter = 0;
 	}
+	m_shadowMapCounter++;
 
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);

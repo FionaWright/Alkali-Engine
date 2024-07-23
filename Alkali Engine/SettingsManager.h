@@ -57,6 +57,7 @@ struct MiscSettings
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
 	bool ShadowCullFront = false;
+	bool ShadowHDFormat = false;
 
 	float DebugLinesFarPlane = 2000.0f;
 
@@ -96,6 +97,7 @@ struct DynamicSettings
 	float ShadowBoundsBias = 30.0f;
 	bool ShadowFitToSceneAndFrusta = false;
 	bool ShadowUseBoundingSpheres = true;
+	int ShadowFrameWait = 100;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		
