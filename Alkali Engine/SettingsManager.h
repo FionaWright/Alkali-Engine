@@ -89,7 +89,7 @@ struct DynamicSettings
 	int ShadowCascadeCount = 4;
 	bool ShadowMapEnabled = true;
 	bool DynamicShadowMapBounds = true;
-	bool ShadowBoundsDebugLinesEnabled = true;
+	bool ShadowBoundsDebugLinesEnabled = false;
 	int ShadowMapPCFSamples = 16;
 	bool ShadowMapAutoNearFarPercents = true;
 	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
@@ -97,7 +97,7 @@ struct DynamicSettings
 	float ShadowBoundsBias = 0.0f;
 	bool ShadowFitToSceneAndFrusta = false;
 	bool ShadowUseBoundingSpheres = true;
-	int ShadowFrameWait = 3;
+	int ShadowFrameWait = 5;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		
