@@ -65,9 +65,6 @@ public:
 
 	wstring m_VSName, m_PSName, m_HSName, m_DSName;
 
-	static bool ms_GlobalFillWireframeMode;
-	static bool ms_GlobalCullNone;
-
 protected:
 	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target);
 

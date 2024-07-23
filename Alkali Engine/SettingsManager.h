@@ -74,6 +74,9 @@ struct DynamicSettings
 	bool VSyncEnabled = false;
 	bool FullscreenEnabled = false;
 
+	bool WireframeMode = false;
+	bool CullFaceEnabled = true;
+
 	bool FrustumCullingEnabled = true;
 	bool DebugLinesEnabled = true;
 	bool AlwaysShowFrustumDebugLines = false;
