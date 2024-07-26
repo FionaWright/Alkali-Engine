@@ -121,6 +121,9 @@ bool Scene::LoadContent()
 		ms_shadowMapMat = std::make_shared<Material>();
 		ms_shadowMapMat->AddDynamicSRVs("Shadow Map", 1);
 		ResourceTracker::AddMaterial(ms_shadowMapMat);
+
+		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, format, ShadowManager::GetShadowMap());
 	}
 
 	m_rpiLine.NumCBV_PerDraw = 1;
@@ -340,10 +343,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
 
 		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
-		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
+		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));	
 
-		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
-		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, format, ShadowManager::GetShadowMap());
 		m_shadowMapCounter = 0;
 	}
 	m_shadowMapCounter++;

@@ -75,7 +75,6 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
 		desc.Format = dsvDesc.Format;
 		desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		//desc.Texture2DArray.ArraySize = MAX_SHADOW_MAP_CASCADES;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(ms_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 		d3d->GetDevice()->CreateDepthStencilView(ms_shadowMapResource.Get(), &desc, dsvHandle);
