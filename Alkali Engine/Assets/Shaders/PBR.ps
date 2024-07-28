@@ -77,26 +77,29 @@ float G_Smith(float NdL, float NdV, float roughness);
 float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
-{
-    float blueNoise = g_blueNoise.Sample(g_sampler, input.UV).r;
+{    
+    float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
 
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
 
     float fCascadeIndex = dot(float4(ShadowPixelCB.CascadeCount > 0, ShadowPixelCB.CascadeCount > 1, ShadowPixelCB.CascadeCount > 2, ShadowPixelCB.CascadeCount > 3), cascadeComparison);
     fCascadeIndex = min(fCascadeIndex, CASCADES); // Why?
-    int iCascadeIndex = (int)fCascadeIndex - 1;
+    int iCascadeIndex = (int)fCascadeIndex - 1;    
 
     float3 shadowCoords = input.ShadowMapCoords[iCascadeIndex];
     shadowCoords.y = 1 - shadowCoords.y;
     shadowCoords.x = ShadowPixelCB.ShadowWidthPercent * (shadowCoords.x + iCascadeIndex);
-    float pixelDepth = shadowCoords.z + ShadowPixelCB.Bias;
+    float pixelDepth = shadowCoords.z + ShadowPixelCB.Bias;    
+
+    float test = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
+    //return float4(test, test, test, 1);
 
     float shadowFactor = 0;
     int i = 0;
     for (float y = -ShadowPixelCB.PCFSampleRange; y <= ShadowPixelCB.PCFSampleRange; y++)
         for (float x = -ShadowPixelCB.PCFSampleRange; x <= ShadowPixelCB.PCFSampleRange; x++)
         {
-            int poissonIndex = (i * blueNoise * 16) % 16;
+            int poissonIndex = (i * blueNoise * ShadowPixelCB.PCFSampleCount) % ShadowPixelCB.PCFSampleCount;
             float2 coord = shadowCoords.xy + (float2(x, y) * ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
 
@@ -105,12 +108,12 @@ float4 main(V_OUT input) : SV_Target
             shadowFactor += pixelDepth < shadowMapDepth;   
             i++;
         }
-    shadowFactor /= ShadowPixelCB.PCFSampleCount;    
+    shadowFactor /= i;        
 
-    float4 tex = g_texture.Sample(g_sampler, input.UV);    
+    float4 tex = g_texture.Sample(g_sampler, input.UV);          
 
     if (tex.a < MatPropCB.AlphaCutoff)
-        discard;
+        discard;    
 
     tex.rgb = pow(tex.rgb, 2.2f);
 
@@ -164,12 +167,13 @@ float4 main(V_OUT input) : SV_Target
     float3 specular = specularDFG * DirLightCB.LightColor * kS;    
     
     float3 diffuse = irradiance * kD * albedo * DirLightCB.LightColor * NdL;  
-    diffuse *= 1 - metalness;
+    diffuse *= 1 - metalness;    
+
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
     float3 Lo = diffuse + specular + ambient + envReflections;
 
-    Lo = pow(Lo, 1.0f / 2.2f);
+    Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);
 }
 

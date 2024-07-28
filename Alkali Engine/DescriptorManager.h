@@ -20,7 +20,7 @@ public:
 	static UINT AddDynamicSRVs(string id, UINT count);
 	static UINT AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing, string id = "");
 
-	static void SetDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT format, ID3D12Resource* resource);
+	static void AssignDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	static ID3D12DescriptorHeap* GetHeap();
 	static UINT GetIncrementSize();

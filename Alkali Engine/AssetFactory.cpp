@@ -63,7 +63,7 @@ shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool preco
 {
 	shared_ptr<Shader> shader;
 	wstring id = args.vs + L" - " + args.ps;
-	if (args.cullNone)
+	if (args.CullNone)
 		id += L" --CullOff";
 
 	if (!ResourceTracker::TryGetShader(id, shader))

@@ -39,7 +39,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
 
-	if (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder)
+	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
 		return;
 
 	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
@@ -166,6 +166,11 @@ void GameObject::SetOccluderState(bool enabled)
 	m_isOccluder = enabled;
 }
 
+void GameObject::SetEnabled(bool enabled)
+{
+	m_enabled = enabled;
+}
+
 void GameObject::AddPosition(float x, float y, float z)
 {
 	m_transform.Position.x += x;
@@ -263,6 +268,11 @@ XMFLOAT3 GameObject::GetWorldPosition() const
 Material* GameObject::GetMaterial() const
 {
 	return m_material.get();
+}
+
+bool* GameObject::GetEnabledPtr()
+{
+	return &m_enabled;
 }
 
 bool GameObject::IsTransparent() const

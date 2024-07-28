@@ -47,6 +47,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		}		
 
 		ms_dsvHeap = ResourceManager::CreateDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		ms_dsvHeap->SetName(L"Shadow DSV Heap");
+
 		ms_dsvDescriptorSize = d3d->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 		D3D12_RESOURCE_DESC dsvDesc = {};
@@ -78,6 +80,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(ms_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 		d3d->GetDevice()->CreateDepthStencilView(ms_shadowMapResource.Get(), &desc, dsvHandle);
+
+		ms_shadowMapResource->SetName(L"Shadow Map Resource");
 	}
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
@@ -97,7 +101,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ms_viewRootSig->InitDefaultSampler("View Shadow Map RS", viewRPI);
 
 		ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, ms_viewRootSig->GetRootSigResource() };
-		viewArgs.cullNone = true;
+		viewArgs.CullNone = true;
 		viewArgs.disableDSV = true;
 		auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
 
@@ -117,6 +121,9 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		dvCB.MinValue = 0.2f;
 
 		ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
+
+		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+		ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
 	}
 
 	if (!ms_depthMat)
@@ -131,7 +138,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
 		depthArgs.NoPS = true;
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
-		depthArgs.SlopeScaleDepthBias = 0.02f;
+		//depthArgs.CullNone = true;
+		//depthArgs.SlopeScaleDepthBias = -0.02f;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
 
@@ -140,7 +148,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ms_depthMat->AddCBVs(d3d, commandList, cbvDrawSizes, false);
 	}
 
-	if (!SettingsManager::ms_Dynamic.ShadowMapUpdating)
+	if (!SettingsManager::ms_Dynamic.ShadowUpdatingBounds)
 	{
 		CalculateBoundsAndMatrices(XMFLOAT3_ZERO, XMFLOAT3(0, -1, 0), frustum);
 		UpdateDebugLines(d3d, XMFLOAT3_ZERO);
@@ -179,17 +187,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 
 	ms_viewMatrix = XMMatrixLookAtLH(eyeV, focusV, upV);
 
-	if (!SettingsManager::ms_Dynamic.DynamicShadowMapBounds)
-	{
-		for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
-		{
-			ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
-			ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];
-		}
-		return;
-	}	
-
-	if (SettingsManager::ms_Dynamic.ShadowMapUpdating)
+	if (SettingsManager::ms_Dynamic.ShadowUpdatingBounds)
 	{
 		CalculateBoundsAndMatrices(ms_eyePos, lightDir, frustum);
 		UpdateDebugLines(d3d, ms_eyePos);
@@ -348,6 +346,9 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos
 
 void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum)
 {
+	if (!SettingsManager::ms_Dynamic.ShadowMapRendering)
+		return;
+
 	if (ms_currentDSVState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		ResourceManager::TransitionResource(commandList, ms_shadowMapResource.Get(), ms_currentDSVState, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
@@ -358,7 +359,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
 	ro.UseShadowMapMat = true;
-	ro.CullAgainstBounds = true;
+	ro.CullAgainstBounds = SettingsManager::ms_Dynamic.ShadowCullAgainstBounds;
 	ro.MaxBasis = Abs(ms_maxBasis);
 	ro.ForwardBasis = ms_forwardBasis;
 
@@ -436,9 +437,6 @@ void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 
 	commandList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
-	ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
 
 	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo());
 

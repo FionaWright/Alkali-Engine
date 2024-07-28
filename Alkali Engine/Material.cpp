@@ -80,7 +80,7 @@ void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT form
     if (registerIndex >= m_addedSRV_dynamic)
         throw std::exception("Invalid register index");
 
-    DescriptorManager::SetDynamicSRV(d3d, m_srvHeapIndex_dynamic + registerIndex, format, resource);
+    DescriptorManager::AssignDynamicSRV(d3d, m_srvHeapIndex_dynamic + registerIndex, format, resource);
 }
 
 void Material::AttachProperties(const MaterialPropertiesCB& matProp)

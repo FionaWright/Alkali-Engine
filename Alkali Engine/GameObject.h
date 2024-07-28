@@ -44,6 +44,7 @@ public:
 	void SetScale(XMFLOAT3 xyz);
 
 	void SetOccluderState(bool enabled);
+	void SetEnabled(bool enabled);
 
 	void AddPosition(float x, float y, float z);
 	void AddPosition(XMFLOAT3 xyz);
@@ -60,6 +61,8 @@ public:
 	void GetBoundingSphere(XMFLOAT3& position, float& radius) const;
 	XMFLOAT3 GetWorldPosition() const;
 	Material* GetMaterial() const;
+	bool* GetEnabledPtr();
+
 	bool IsTransparent() const;
 	bool IsOrthographic() const;
 
@@ -81,5 +84,6 @@ protected:
 	bool m_orthographic;
 	bool m_isTransparent;
 	bool m_isOccluder = true;
+	bool m_enabled = true;
 };
 
