@@ -139,7 +139,7 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 	return heapStart;
 }
 
-void DescriptorManager::SetDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT format, ID3D12Resource* resource)
+void DescriptorManager::AssignDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT format, ID3D12Resource* resource)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
@@ -160,7 +160,7 @@ void DescriptorManager::SetDynamicSRV(D3DClass* d3d, UINT index, DXGI_FORMAT for
 		srvDesc.Texture2D.MostDetailedMip = 0;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(cpuHandle, index, incrementSize);
-		device->CreateShaderResourceView(resource, &srvDesc, srvHandle); // Error
+		device->CreateShaderResourceView(resource, &srvDesc, srvHandle); 
 	}
 }
 

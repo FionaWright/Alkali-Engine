@@ -28,6 +28,9 @@ struct DX12Settings
 	D3D12_FILTER SamplerFilterDefault = D3D12_FILTER_ANISOTROPIC;
 	D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeDefault = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	int SamplerMaxAnisotropicDefault = 16;
+
+	bool EnableValidationLayerOnReleaseMode = false;
+	bool EnableAllValidationLayerMessages = false;
 };
 
 struct WindowSettings
@@ -88,20 +91,22 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 
-	bool ShadowMapUpdating = true;
+	// Refactor this
+	bool ShadowUpdatingBounds = true;
+	bool ShadowMapRendering = true;
 	int ShadowCascadeCount = 4;
 	bool ShadowMapEnabled = true;
-	bool DynamicShadowMapBounds = true;
 	bool ShadowBoundsDebugLinesEnabled = false;
 	int ShadowMapPCFSamples = 16;
 	bool ShadowMapAutoNearFarPercents = true;
 	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
 	float ShadowFarPercents[MAX_SHADOW_MAP_CASCADES];
-	float ShadowBoundsBias = 0.0f;
+	float ShadowBoundsBias = 5.0f;
 	bool ShadowFitToSceneAndFrusta = false;
 	bool ShadowUseBoundingSpheres = true;
-	int ShadowFrameWait = 5;
+	int ShadowFrameWait = 0;
 	bool ShadowLockYCoordTo0 = false;
+	bool ShadowCullAgainstBounds = true;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

@@ -73,15 +73,13 @@ int Application::Run()
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
         }
-        else
-        {
-            m_updateClock.Tick();
-            TimeEventArgs args = m_updateClock.GetTimeArgs();
-            CalculateFPS(args.ElapsedTime);
 
-            m_mainWindow->OnUpdate(args);
-            InputManager::ProgressFrame();
-        }
+        m_updateClock.Tick();
+        TimeEventArgs argsU = m_updateClock.GetTimeArgs();
+        CalculateFPS(argsU.ElapsedTime);
+
+        m_mainWindow->OnUpdate(argsU);
+        InputManager::ProgressFrame();
                
         m_renderClock.Tick();
         TimeEventArgs args = m_renderClock.GetTimeArgs();

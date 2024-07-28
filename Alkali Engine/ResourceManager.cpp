@@ -119,6 +119,7 @@ ComPtr<ID3D12Device2> ResourceManager::CreateDevice(IDXGIAdapter4* adapter)
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_MESSAGE, TRUE);
 
         D3D12_MESSAGE_ID DenyIds[] =
         {
@@ -128,11 +129,22 @@ ComPtr<ID3D12Device2> ResourceManager::CreateDevice(IDXGIAdapter4* adapter)
         };
 
         D3D12_INFO_QUEUE_FILTER NewFilter = {};
-        NewFilter.DenyList.NumSeverities = _countof(SEVERITIES);
-        NewFilter.DenyList.pSeverityList = const_cast<D3D12_MESSAGE_SEVERITY*>(SEVERITIES);
 
-        NewFilter.DenyList.NumIDs = _countof(DenyIds);
-        NewFilter.DenyList.pIDList = DenyIds;
+
+        if (SettingsManager::ms_DX12.EnableAllValidationLayerMessages)
+        {
+            NewFilter.DenyList.NumSeverities = 0;
+            NewFilter.DenyList.pSeverityList = nullptr;
+            NewFilter.DenyList.NumIDs = 0;
+            NewFilter.DenyList.pIDList = nullptr;
+        }
+        else
+        {
+            NewFilter.DenyList.NumSeverities = _countof(SEVERITIES);
+            NewFilter.DenyList.pSeverityList = const_cast<D3D12_MESSAGE_SEVERITY*>(SEVERITIES);
+            NewFilter.DenyList.NumIDs = _countof(DenyIds);
+            NewFilter.DenyList.pIDList = DenyIds;
+        }        
 
         ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
     }

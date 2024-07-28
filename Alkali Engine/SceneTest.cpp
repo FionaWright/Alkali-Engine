@@ -127,7 +127,7 @@ bool SceneTest::LoadContent()
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
-	argsPBR.cullNone = true;
+	argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
@@ -184,7 +184,7 @@ void SceneTest::OnUpdate(TimeEventArgs& e)
 
 	XMFLOAT2 mousePos = InputManager::GetMousePos();
 
-	float angle = static_cast<float>(e.TotalTime * 0.3f);
+	float angle = static_cast<float>(e.TotalTime * 2.0f);
 	//m_goCube->RotateBy(0, angle, 0);
 	//m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(cos(angle), -0.5f, sin(angle)));
 

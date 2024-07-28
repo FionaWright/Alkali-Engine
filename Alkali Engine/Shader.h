@@ -15,7 +15,7 @@ struct ShaderArgs
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 	ID3D12RootSignature* rootSig;
 
-	bool cullNone = false;
+	bool CullNone = false;
 	bool CullFront = false;
 	bool disableDSV = false;
 	bool disableDSVWrite = false;
@@ -36,7 +36,7 @@ struct ShaderArgs
 		inputLayout = other.inputLayout; 
 		rootSig = other.rootSig;
 
-		cullNone = other.cullNone;
+		CullNone = other.CullNone;
 		CullFront = other.CullFront;
 		disableDSV = other.disableDSV;
 		disableDSVWrite = other.disableDSVWrite;

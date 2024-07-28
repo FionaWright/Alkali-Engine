@@ -12,11 +12,17 @@ D3DClass::~D3DClass()
 
 void D3DClass::Init()
 {
-#if defined(_DEBUG)
-    ComPtr<ID3D12Debug> debugInterface;
-    ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
-    debugInterface->EnableDebugLayer();
+    bool debugMode = false;
+#ifdef _DEBUG
+    debugMode = true;
 #endif
+
+    if (debugMode || SettingsManager::ms_DX12.EnableValidationLayerOnReleaseMode)
+    {
+        ComPtr<ID3D12Debug> debugInterface;
+        ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
+        debugInterface->EnableDebugLayer();
+    }    
 
     if (!XMVerifyCPUSupport())
     {

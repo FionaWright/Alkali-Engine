@@ -210,7 +210,7 @@ bool Scene::LoadContent()
 	};
 
 	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, m_viewDepthRootSig->GetRootSigResource() };
-	argsDepth.cullNone = true;
+	argsDepth.CullNone = true;
 	argsDepth.disableDSV = true;
 	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
 
@@ -326,8 +326,6 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	CommandQueue* commandQueue = nullptr;
 	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueue)
-		return;
 	auto commandList = commandQueue->GetAvailableCommandList();
 
 	auto& batchList = ResourceTracker::GetBatches();
@@ -341,13 +339,13 @@ void Scene::OnRender(TimeEventArgs& e)
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
 		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
-
-		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
-		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));	
-
 		m_shadowMapCounter = 0;
 	}
-	m_shadowMapCounter++;
+	else
+		m_shadowMapCounter++;
+
+	m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
+	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);

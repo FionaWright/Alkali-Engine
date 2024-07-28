@@ -94,7 +94,7 @@ bool SceneBistro::LoadContent()
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
-	argsPBR.cullNone = true;
+	argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };

@@ -86,12 +86,13 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Indent(IM_GUI_INDENTATION);
 				{
 					ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.ShadowMapEnabled);
-					ImGui::Checkbox("Dynamic", &SettingsManager::ms_Dynamic.DynamicShadowMapBounds);
-					ImGui::Checkbox("Updating", &SettingsManager::ms_Dynamic.ShadowMapUpdating);					
+					ImGui::Checkbox("Rendering", &SettingsManager::ms_Dynamic.ShadowMapRendering);
+					ImGui::Checkbox("Dynamic Bounds", &SettingsManager::ms_Dynamic.ShadowUpdatingBounds);					
 					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.ShadowMapAutoNearFarPercents);
 					ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.ShadowFitToSceneAndFrusta);
 					ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.ShadowUseBoundingSpheres);
 					ImGui::Checkbox("Lock Y to 0", &SettingsManager::ms_Dynamic.ShadowLockYCoordTo0);
+					ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.ShadowCullAgainstBounds);
 
 					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.ShadowNearPercents);
 					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.ShadowFarPercents);					
@@ -376,6 +377,38 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			goCount += it.second->GetTrans().size();
 		}
 
+		if (ImGui::Button("Enable All"))
+		{
+			for (auto& it : batchList)
+			{
+				for (auto& it2 : it.second->GetOpaques())
+				{
+					it2.SetEnabled(true);
+				}
+
+				for (auto& it2 : it.second->GetTrans())
+				{
+					it2.SetEnabled(true);
+				}
+			}
+		}
+
+		if (ImGui::Button("Disable All"))
+		{
+			for (auto& it : batchList)
+			{
+				for (auto& it2 : it.second->GetOpaques())
+				{
+					it2.SetEnabled(false);
+				}
+
+				for (auto& it2 : it.second->GetTrans())
+				{
+					it2.SetEnabled(false);
+				}
+			}
+		}
+
 		string goTag = "GameObjects (" + std::to_string(goCount) + ")";
 		if (ImGui::CollapsingHeader(goTag.c_str()))
 		{
@@ -383,16 +416,16 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (auto& it : batchList)
 			{
-				auto& trans = it.second->GetOpaques();
-				for (size_t i = 0; i < trans.size(); i++)
+				auto& opaques = it.second->GetOpaques();
+				for (size_t i = 0; i < opaques.size(); i++)
 				{
-					if (ImGui::CollapsingHeader(trans[i].m_Name.c_str()))
+					if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						Transform t = trans[i].GetTransform();
+						Transform t = opaques[i].GetTransform();
 
-						string iStr = "##" + std::to_string(i);
+						string iStr = "##" + opaques[i].m_Name + std::to_string(i);
 
 						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
 						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
@@ -405,18 +438,20 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 						t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
 						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
 
-						trans[i].SetTransform(t);
+						opaques[i].SetTransform(t);
+
+						ImGui::Checkbox(("Enabled" + iStr).c_str(), opaques[i].GetEnabledPtr());
 
 						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
 						{
 							ImGui::Indent(IM_GUI_INDENTATION);
 
-							string vCountStr = "Model Vertex Count: " + std::to_string(trans[i].GetModelVertexCount());
-							string iCountStr = "Model Index Count: " + std::to_string(trans[i].GetModelIndexCount());
+							string vCountStr = "Model Vertex Count: " + std::to_string(opaques[i].GetModelVertexCount());
+							string iCountStr = "Model Index Count: " + std::to_string(opaques[i].GetModelIndexCount());
 
 							XMFLOAT3 pos;
 							float radius;
-							trans[i].GetBoundingSphere(pos, radius);
+							opaques[i].GetBoundingSphere(pos, radius);
 							string radiStr = "Model Bounding Radius: " + std::to_string(radius);
 							string centroidStr = "Model Centroid: " + ToString(pos);
 
@@ -434,7 +469,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 							ImGui::Indent(IM_GUI_INDENTATION);
 
 							wstring vs, ps, hs, ds;
-							trans[i].GetShaderNames(vs, ps, hs, ds);
+							opaques[i].GetShaderNames(vs, ps, hs, ds);
 							vs = L"VS: " + vs;
 							ps = L"PS: " + ps;
 							hs = L"HS: " + hs;
@@ -452,7 +487,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 						{
 							ImGui::Indent(IM_GUI_INDENTATION);
 
-							auto& textures = trans[i].GetMaterial()->GetTextures();
+							auto& textures = opaques[i].GetMaterial()->GetTextures();
 							for (int i = 0; i < textures.size(); i++)
 							{
 								ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
@@ -480,7 +515,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 						Transform t = transGos[i].GetTransform();
 
-						string iStr = "##" + std::to_string(i);
+						string iStr = "##" + transGos[i].m_Name + std::to_string(i);
 
 						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
 						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
@@ -494,6 +529,8 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
 
 						transGos[i].SetTransform(t);
+
+						ImGui::Checkbox(("Enabled" + iStr).c_str(), transGos[i].GetEnabledPtr());
 
 						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
 						{
