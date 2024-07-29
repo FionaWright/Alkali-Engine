@@ -265,13 +265,11 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 		{
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			static char numObjectsStr[256];
-			ImGui::InputText("Number", numObjectsStr, 256, 0);
+			static int num = 1;
+			ImGui::InputInt("Number", &num);
 
 			static XMFLOAT3 range = XMFLOAT3(20, 10, 20);
 			ImGui::InputFloat3("Range", reinterpret_cast<float*>(&range));
-
-			int num = std::atoi(numObjectsStr);
 
 			if (ImGui::Button("Instantiate Cube(s)"))
 				AssetFactory::InstantiateObjects("Cube.model", num, range);
