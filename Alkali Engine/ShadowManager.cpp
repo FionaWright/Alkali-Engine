@@ -120,7 +120,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		dvCB.MaxValue = 1;
 		dvCB.MinValue = 0.2f;
 
-		ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB));
+		for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+			ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB), i);
 
 		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
 		ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
@@ -344,7 +345,7 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos
 	height *= 2;
 }
 
-void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum)
+void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex)
 {
 	if (!SettingsManager::ms_Dynamic.ShadowMapRendering)
 		return;
@@ -380,8 +381,8 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 		for (auto& it : batchList)
 		{	
-			it.second->Render(d3d, commandList, v, p, nullptr, &ro);
-			it.second->RenderTrans(d3d, commandList, v, p, nullptr, &ro);
+			it.second->Render(d3d, commandList, backBufferIndex, v, p, nullptr, &ro);
+			it.second->RenderTrans(d3d, commandList, backBufferIndex, v, p, nullptr, &ro);
 		}
 	}
 
@@ -431,14 +432,14 @@ float ShadowManager::GetPCFSampleRange(int sampleCount)
 	}
 }
 
-void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle)
+void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex)
 {
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
 
 	commandList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo());
+	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo(), backBufferIndex);
 
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }

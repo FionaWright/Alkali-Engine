@@ -6,14 +6,19 @@
 
 Material::Material()
 {	
+    for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+    {
+        m_cbvHeapIndex_perFrame[i] = -1;
+    }
 }
 
 Material::~Material()
 {
-    for (int i = 0; i < m_cbvResources_perFrame.size(); i++)
-    {
-        m_cbvResources_perFrame[i]->Release();
-    }
+    for (int b = 0; b < BACK_BUFFER_COUNT; b++)
+        for (int i = 0; i < m_cbvResources_perFrame[b].size(); i++)
+        {
+            m_cbvResources_perFrame[b][i]->Release();
+        }
 
     for (int i = 0; i < m_cbvResources_perDraw.size(); i++)
     {
@@ -38,7 +43,11 @@ void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDir
 {
     if (perFrame)
     {
-        m_cbvHeapIndex_perFrame = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perFrame, true, id);
+        for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+        {
+            m_cbvHeapIndex_perFrame[i] = DescriptorManager::AddCBVs(d3d, commandListDirect, sizes, m_cbvResources_perFrame[i], true, id + "{" + std::to_string(i) + "}");
+        }        
+
         m_addedCBV_PerFrame += sizes.size();
         return;
     }        
@@ -47,18 +56,18 @@ void Material::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDir
     m_addedCBV_PerDraw += sizes.size();
 }
 
-void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize) 
+void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex)
 {
-    if (m_cbvResources_perFrame.size() <= resourceIndex)
+    if (m_cbvResources_perFrame[backBufferIndex].size() <= resourceIndex)
         throw std::exception("Material does not have ownership of that resource");
 
     void* dstData = nullptr;
     D3D12_RANGE readRange = {};
-    m_cbvResources_perFrame.at(resourceIndex)->Map(0, &readRange, &dstData);
+    m_cbvResources_perFrame[backBufferIndex].at(resourceIndex)->Map(0, &readRange, &dstData);
 
     std::memcpy(dstData, srcData, dataSize);
 
-    m_cbvResources_perFrame.at(resourceIndex)->Unmap(0, nullptr);
+    m_cbvResources_perFrame[backBufferIndex].at(resourceIndex)->Unmap(0, nullptr);
 }
 
 void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize)
@@ -89,7 +98,7 @@ void Material::AttachProperties(const MaterialPropertiesCB& matProp)
     m_attachedProperties = true;
 }
 
-void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo)
+void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo, const int& backBufferIndex)
 {
     if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
         rootParamInfo.NumCBV_PerFrame != m_addedCBV_PerFrame ||
@@ -107,9 +116,9 @@ void Material::AssignMaterial(ID3D12GraphicsCommandList2* commandList, const Roo
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexCBV_PerDraw, cbvHandle);
     }
 
-    if (m_cbvHeapIndex_perFrame != -1 && rootParamInfo.NumCBV_PerFrame > 0 && rootParamInfo.ParamIndexCBV_PerFrame >= 0)
+    if (backBufferIndex >= 0 && m_cbvHeapIndex_perFrame[backBufferIndex] != -1 && rootParamInfo.NumCBV_PerFrame > 0 && rootParamInfo.ParamIndexCBV_PerFrame >= 0)
     {
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(gpuHandle, m_cbvHeapIndex_perFrame, incrementSize);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(gpuHandle, m_cbvHeapIndex_perFrame[backBufferIndex], incrementSize);
         commandList->SetGraphicsRootDescriptorTable(rootParamInfo.ParamIndexCBV_PerFrame, cbvHandle);
     }
 
@@ -139,10 +148,10 @@ vector<shared_ptr<Texture>>& Material::GetTextures()
 	return m_textures;
 }
 
-void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw)
+void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex)
 {
     srv = m_srvHeapIndex;
-    cbvFrame = m_cbvHeapIndex_perFrame;
+    cbvFrame = m_cbvHeapIndex_perFrame[backBufferIndex];
     cbvDraw = m_cbvHeapIndex_perDraw;
 }
 
