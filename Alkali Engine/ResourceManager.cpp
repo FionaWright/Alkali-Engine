@@ -221,3 +221,8 @@ bool ResourceManager::CheckTearingSupport()
     factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
     return allowTearing == TRUE;
 }
+
+void ResourceManager::Shutdown()
+{
+    gs_device = nullptr;
+}
