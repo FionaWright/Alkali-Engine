@@ -35,7 +35,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		return;
 	ms_initialised = true;
 
-	assert(SettingsManager::ms_Dynamic.ShadowCascadeCount <= MAX_SHADOW_MAP_CASCADES);
+	assert(SettingsManager::ms_Dynamic.Shadow.CascadeCount <= MAX_SHADOW_MAP_CASCADES);
 
 	CalculateNearFarPercents();
 
