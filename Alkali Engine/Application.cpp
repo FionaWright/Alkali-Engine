@@ -113,6 +113,7 @@ void Application::Shutdown()
     DescriptorManager::Shutdown();
     Scene::StaticShutdown();
     ShadowManager::Shutdown();
+    ResourceManager::Shutdown();
 
     DestroyScenes();    
     m_mainWindow->Destroy();
