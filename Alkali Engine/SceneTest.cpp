@@ -99,8 +99,11 @@ bool SceneTest::LoadContent()
 	ResourceTracker::AddMaterial(matPBR2);
 
 	MaterialPropertiesCB defaultMatProps;
-	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
-	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
+	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+	{
+		matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
+		matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
+	}	
 
 	cbvSizesDraw = { sizeof(MatricesCB) };
 	textures = { skyboxTex };

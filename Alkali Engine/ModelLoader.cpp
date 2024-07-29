@@ -894,7 +894,8 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;
 	matProperties.Metallic = mat.pbrData.metallicFactor;
-	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
+	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+		material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB), i);
 	material->AttachProperties(matProperties);
 
 	string nodeName(node.name);

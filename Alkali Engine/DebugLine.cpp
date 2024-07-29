@@ -69,7 +69,7 @@ void DebugLine::UpdateDynamicVertexBuffer(D3DClass* d3d)
 	memcpy(m_mappedVertexData, vertices, sizeof(vertices));
 }
 
-void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj)
+void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, const int& backBufferIndex)
 {
 	if (!m_enabled)
 		return;
@@ -89,8 +89,8 @@ void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Root
 	MatricesLineCB matricesCB;
 	matricesCB.VP = viewProj;
 
-	m_material->SetCBV_PerDraw(0, &matricesCB, sizeof(MatricesLineCB));
-	m_material->AssignMaterial(commandListDirect, m_rootParamInfo, -1);
+	m_material->SetCBV_PerDraw(0, &matricesCB, sizeof(MatricesLineCB), backBufferIndex);
+	m_material->AssignMaterial(commandListDirect, m_rootParamInfo, backBufferIndex);
 
 	commandListDirect->DrawInstanced(2, 1, 0, 0);
 }
