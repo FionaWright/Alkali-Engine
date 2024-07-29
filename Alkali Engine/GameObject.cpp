@@ -86,12 +86,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 
 void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
 {
-	XMMATRIX& worldMatrix = m_worldMatrix;
 	if (transform)
-		worldMatrix = TransformToWorldMatrix(*transform);
-
-	matrices->M = worldMatrix;
-	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
+		matrices->M = TransformToWorldMatrix(*transform);
+	else
+		matrices->M = m_worldMatrix;
+	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, matrices->M));
 	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB), backBufferIndex);
 
 	material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
