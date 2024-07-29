@@ -219,6 +219,8 @@ bool Scene::LoadContent()
 	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
 	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, false, "DepthView");
 
+	m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
+
 	DepthViewCB dvCB;
 	dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
 	dvCB.MaxValue = 1.0f;
@@ -368,9 +370,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		// Convert DSV to SRV and assign as a texture to be read in the shader
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get()); // MOVE THIS
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);		
 
 		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI, backBufferIndex);
 		
