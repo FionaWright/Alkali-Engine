@@ -19,7 +19,7 @@ public:
 	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
 	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
-	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);
+	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
@@ -35,9 +35,9 @@ public:
 	void ClearTextures();
 
 private:
-	UINT m_srvHeapIndex = -1, m_srvHeapIndex_dynamic = -1, m_cbvHeapIndex_perFrame[BACK_BUFFER_COUNT], m_cbvHeapIndex_perDraw = -1;
+	UINT m_srvHeapIndex = -1, m_srvHeapIndex_dynamic = -1, m_cbvHeapIndex_perFrame[BACK_BUFFER_COUNT], m_cbvHeapIndex_perDraw[BACK_BUFFER_COUNT];
 	vector<ID3D12Resource*> m_cbvResources_perFrame[BACK_BUFFER_COUNT];		
-	vector<ID3D12Resource*> m_cbvResources_perDraw;		
+	vector<ID3D12Resource*> m_cbvResources_perDraw[BACK_BUFFER_COUNT];
 	vector<shared_ptr<Texture>> m_textures;
 
 	size_t m_addedCBV_PerDraw = 0, m_addedCBV_PerFrame = 0, m_addedSRV = 0, m_addedSRV_dynamic = 0;

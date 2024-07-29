@@ -224,7 +224,8 @@ bool Scene::LoadContent()
 	dvCB.MaxValue = 1.0f;
 	dvCB.MinValue = 0.96f;
 
-	m_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB));
+	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+		m_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB), i);
 
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
@@ -358,7 +359,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		it.second->RenderTrans(m_d3dClass, commandList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
-		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle);
+		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
@@ -538,10 +539,10 @@ DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 	return line.get();
 }
 
-void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv)
+void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, const int& backBufferIndex)
 {
 	for (int i = 0; i < m_debugLineList.size(); i++)
 	{
-		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix);
+		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix, backBufferIndex);
 	}
 }

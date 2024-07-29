@@ -65,7 +65,7 @@ protected:
     void SetDSVFlags(D3D12_DSV_FLAGS flags);
 
     DebugLine* AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color);
-    void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
+    void RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, const int& backBufferIndex);
 
     Window* m_pWindow;
 

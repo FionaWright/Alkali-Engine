@@ -91,7 +91,7 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, cons
 
 	matrices->M = worldMatrix;
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
-	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
+	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB), backBufferIndex);
 
 	material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
 
