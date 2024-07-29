@@ -101,6 +101,7 @@ struct DynamicSettings
 	bool VSyncEnabled = false;
 	bool FullscreenEnabled = false;
 	bool ForceSyncCPUGPU = false;
+	float UpdateTimeScale = 1.0f;
 
 	bool WireframeMode = false;
 	bool CullFaceEnabled = true;

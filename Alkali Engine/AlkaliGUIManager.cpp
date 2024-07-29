@@ -50,6 +50,9 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 		if (ImGui::TreeNode("Engine##2"))
 		{
+			bool visualiseDSV = SettingsManager::ms_Dynamic.VisualiseDSVEnabled;
+			bool visualiseShadow = SettingsManager::ms_Dynamic.VisualiseShadowMap;
+
 			ImGui::SeparatorText("DX12");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -75,67 +78,14 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
-
-				bool visualiseDSV = SettingsManager::ms_Dynamic.VisualiseDSVEnabled;
-				bool visualiseShadow = SettingsManager::ms_Dynamic.VisualiseShadowMap;
+				
 				if (visualiseShadow)
 					ImGui::BeginDisabled(true);
 
 				ImGui::Checkbox("Visualise Depth Buffer", &SettingsManager::ms_Dynamic.VisualiseDSVEnabled);
 
 				if (visualiseShadow)
-					ImGui::EndDisabled();
-
-				ImGui::SeparatorText("Shadow Map");
-				ImGui::Indent(IM_GUI_INDENTATION);
-				{
-					ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.Shadow.Enabled);
-					ImGui::Checkbox("Rendering", &SettingsManager::ms_Dynamic.Shadow.Rendering);
-					ImGui::Checkbox("Dynamic Bounds", &SettingsManager::ms_Dynamic.Shadow.UpdatingBounds);
-					ImGui::Spacing();					
-					ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.Shadow.BoundToScene);
-					ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
-					ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
-					ImGui::Spacing();
-					ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);
-					ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent);
-					ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.Shadow.NearPercents);
-					ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.Shadow.FarPercents);					
-
-					if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
-						ImGui::BeginDisabled(true);
-
-					ImGui::Checkbox("Visualise Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
-
-					if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
-						ImGui::EndDisabled();
-
-					ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.Shadow.ShowDebugBounds);
-					ImGui::InputFloat("Bounds Bias", &SettingsManager::ms_Dynamic.Shadow.BoundsBias);
-					ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
-					ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
-
-					ImGui::InputInt("Frame Wait Count", &SettingsManager::ms_Dynamic.Shadow.TimeSlice);
-
-					ImGui::Text("PCF Samples");
-
-					ImGui::Indent(IM_GUI_INDENTATION);
-
-					static int pcf = 2;
-					if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
-						SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 1;
-					ImGui::SameLine();
-					if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
-						SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 4;
-					ImGui::SameLine();
-					if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
-						SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 16;
-
-					ImGui::Unindent(IM_GUI_INDENTATION);
-					ImGui::Spacing();
-				}
-				
-				ImGui::Unindent(IM_GUI_INDENTATION);
+					ImGui::EndDisabled();				
 
 				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{
@@ -149,6 +99,56 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					scene->LoadContent();
 				}
 			}
+
+			ImGui::Unindent(IM_GUI_INDENTATION);
+			ImGui::SeparatorText("Shadow Map");
+			ImGui::Indent(IM_GUI_INDENTATION);
+			{
+				ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.Shadow.Enabled);
+				ImGui::Checkbox("Rendering", &SettingsManager::ms_Dynamic.Shadow.Rendering);
+				ImGui::Checkbox("Dynamic Bounds", &SettingsManager::ms_Dynamic.Shadow.UpdatingBounds);
+				ImGui::Spacing();
+				ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.Shadow.BoundToScene);
+				ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
+				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
+				ImGui::Spacing();
+				ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);
+				ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent);
+				ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.Shadow.NearPercents);
+				ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.Shadow.FarPercents);
+
+				if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
+					ImGui::BeginDisabled(true);
+
+				ImGui::Checkbox("Visualise Map", &SettingsManager::ms_Dynamic.VisualiseShadowMap);
+
+				if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
+					ImGui::EndDisabled();
+
+				ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.Shadow.ShowDebugBounds);
+				ImGui::InputFloat("Bounds Bias", &SettingsManager::ms_Dynamic.Shadow.BoundsBias);
+				ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+				ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
+
+				ImGui::InputInt("Frame Wait Count", &SettingsManager::ms_Dynamic.Shadow.TimeSlice);
+
+				ImGui::Text("PCF Samples");
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				static int pcf = 2;
+				if (ImGui::RadioButton("1", &pcf, 0) && pcf == 0)
+					SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 1;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("4", &pcf, 1) && pcf == 1)
+					SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 4;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("16", &pcf, 2) && pcf == 2)
+					SettingsManager::ms_Dynamic.Shadow.PCFSampleCount = 16;
+
+				ImGui::Unindent(IM_GUI_INDENTATION);
+				ImGui::Spacing();
+			}			
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Window");
@@ -202,6 +202,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			ImGui::Checkbox("Sort By Depth", &SettingsManager::ms_Dynamic.BatchSortingEnabled);
+
+			ImGui::InputFloat("Time Scale", &SettingsManager::ms_Dynamic.UpdateTimeScale);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Directional Light CBV");
