@@ -6,6 +6,8 @@ struct Transform;
 
 std::string wstringToString(const std::wstring& wstr);
 
+float Clamp(float val, float min, float max);
+
 XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b);
 
 XMFLOAT4 Add(XMFLOAT4 a, XMFLOAT4 b);

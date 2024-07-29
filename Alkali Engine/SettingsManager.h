@@ -52,6 +52,7 @@ struct MiscSettings
 	bool CubemapMipMapsEnabled = false;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
+	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);
 
 	int IrradianceMapResolution = 512;
 
@@ -60,7 +61,7 @@ struct MiscSettings
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
 	bool ShadowCullFront = false;
-	bool ShadowHDFormat = false;
+	bool ShadowHDFormat = false;	
 
 	float DebugLinesFarPlane = 2000.0f;
 

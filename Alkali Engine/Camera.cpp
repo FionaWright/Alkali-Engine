@@ -36,6 +36,10 @@ void Camera::Update(TimeEventArgs& e)
 		MoveFirstPerson(e);
 	else if (m_currentMode == CameraMode::CAMERA_MODE_SCROLL)
 		MoveScroll(e);
+
+	m_transform.Position.x = Clamp(m_transform.Position.x, -SettingsManager::ms_Misc.MaxCameraPosition.x, SettingsManager::ms_Misc.MaxCameraPosition.x);
+	m_transform.Position.y = Clamp(m_transform.Position.y, -SettingsManager::ms_Misc.MaxCameraPosition.y, SettingsManager::ms_Misc.MaxCameraPosition.y);
+	m_transform.Position.z = Clamp(m_transform.Position.z, -SettingsManager::ms_Misc.MaxCameraPosition.z, SettingsManager::ms_Misc.MaxCameraPosition.z);
 }
 
 void Camera::Reset()
@@ -97,7 +101,6 @@ void Camera::MoveFirstPerson(TimeEventArgs& e)
 
 		m_transform.Rotation.x = static_cast<float>(fmod(m_transform.Rotation.x, 360));
 		m_transform.Rotation.z = static_cast<float>(fmod(m_transform.Rotation.z, 360));
-
 		return;
 	}
 
