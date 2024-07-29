@@ -70,6 +70,29 @@ struct MiscSettings
 	} NormalMapChannels = NormalMapAcceptedChannels::ONLY_2_CHANNEL;
 };
 
+struct ShadowDynamicSettings
+{
+	int CascadeCount = 4;
+
+	bool Enabled = true;
+	bool UpdatingBounds = true;
+	bool Rendering = true;	
+
+	bool BoundToScene = false;
+	bool UseBoundingSpheres = true;
+	bool CullAgainstBounds = true;
+
+	bool ShowDebugBounds = false;
+
+	int PCFSampleCount = 16;
+	float BoundsBias = 5.0f;
+	int TimeSlice = 10;
+
+	bool AutoNearFarPercent = true;
+	float NearPercents[MAX_SHADOW_MAP_CASCADES];
+	float FarPercents[MAX_SHADOW_MAP_CASCADES];	
+};
+
 struct DynamicSettings
 {
 	float NearPlane = 0.1f;
@@ -92,22 +115,7 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 
-	// Refactor this
-	bool ShadowUpdatingBounds = true;
-	bool ShadowMapRendering = true;
-	int ShadowCascadeCount = 4;
-	bool ShadowMapEnabled = true;
-	bool ShadowBoundsDebugLinesEnabled = false;
-	int ShadowMapPCFSamples = 16;
-	bool ShadowMapAutoNearFarPercents = true;
-	float ShadowNearPercents[MAX_SHADOW_MAP_CASCADES];
-	float ShadowFarPercents[MAX_SHADOW_MAP_CASCADES];
-	float ShadowBoundsBias = 5.0f;
-	bool ShadowFitToSceneAndFrusta = false;
-	bool ShadowUseBoundingSpheres = true;
-	int ShadowFrameWait = 0;
-	bool ShadowLockYCoordTo0 = false;
-	bool ShadowCullAgainstBounds = true;
+	ShadowDynamicSettings Shadow;
 
 	bool BatchSortingEnabled = true;
 	bool AllowBinTex = true;		

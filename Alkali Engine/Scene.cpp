@@ -287,18 +287,18 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
-	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
-		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;		
-		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;
-		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.ShadowMapPCFSamples;
-		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.ShadowMapPCFSamples);
+		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.Shadow.CascadeCount;
+		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.Shadow.CascadeCount;
+		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.Shadow.PCFSampleCount;
+		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.Shadow.PCFSampleCount);
 		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 
 		ShadowManager::Update(m_d3dClass, lDir, m_frustum, m_camera->GetWorldPosition());
 
 		auto vps = ShadowManager::GetVPMatrices();
-		for (int i = 0; i < SettingsManager::ms_Dynamic.ShadowCascadeCount; i++)
+		for (int i = 0; i < SettingsManager::ms_Dynamic.Shadow.CascadeCount; i++)
 			m_perFrameCBuffers.ShadowMap.ShadowMatrix[i] = vps[i];
 	}	
 
@@ -334,7 +334,7 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
+	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
 		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum, backBufferIndex);
 		m_shadowMapCounter = 0;
@@ -377,7 +377,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	}
 	
-	if (SettingsManager::ms_Dynamic.ShadowMapEnabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
+	if (SettingsManager::ms_Dynamic.Shadow.Enabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
 		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 	}
