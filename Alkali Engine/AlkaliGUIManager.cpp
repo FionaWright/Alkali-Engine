@@ -268,30 +268,33 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 			static char numObjectsStr[256];
 			ImGui::InputText("Number", numObjectsStr, 256, 0);
 
+			static XMFLOAT3 range = XMFLOAT3(20, 10, 20);
+			ImGui::InputFloat3("Range", reinterpret_cast<float*>(&range));
+
 			int num = std::atoi(numObjectsStr);
 
 			if (ImGui::Button("Instantiate Cube(s)"))
-				AssetFactory::InstantiateObjects("Cube.model", num);
+				AssetFactory::InstantiateObjects("Cube.model", num, range);
 
 			ImGui::Spacing();
 
 			if (ImGui::Button("Instantiate Madeline(s)"))
-				AssetFactory::InstantiateObjects("Madeline.model", num);
+				AssetFactory::InstantiateObjects("Madeline.model", num, range);
 
 			ImGui::Spacing();
 
 			if (ImGui::Button("Instantiate Sphere(s)"))
-				AssetFactory::InstantiateObjects("Sphere.model", num);
+				AssetFactory::InstantiateObjects("Sphere.model", num, range);
 
 			ImGui::Spacing();
 
 			if (ImGui::Button("Instantiate Plane(s)"))
-				AssetFactory::InstantiateObjects("Plane.model", num);
+				AssetFactory::InstantiateObjects("Plane.model", num, range);
 
 			ImGui::Spacing();
 
 			if (ImGui::Button("Instantiate TomBox(es)"))
-				AssetFactory::InstantiateObjects("TomBoxTriangulated.model", num);
+				AssetFactory::InstantiateObjects("TomBoxTriangulated.model", num, range);
 
 			ImGui::Spacing();
 

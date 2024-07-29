@@ -23,7 +23,7 @@ public:
     static shared_ptr<Batch> CreateBatch(shared_ptr<RootSig> rootSig);
     static shared_ptr<Material> CreateMaterial();
 
-    static void InstantiateObjects(string modelName, int count);
+    static void InstantiateObjects(string modelName, int count, const XMFLOAT3& range);
 
 private:
     static D3DClass* ms_d3d;
