@@ -45,14 +45,14 @@ void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, 
 	m_vertexInputSize = vertexInputSize;
 
 	ComPtr<ID3D12Resource> intermediateVertexBuffer;
-	ResourceManager::CreateCommittedResource(m_VertexBuffer, m_vertexCount, m_vertexInputSize);
+	ResourceManager::CreateCommittedResourceAsCommon(m_VertexBuffer, m_vertexCount, m_vertexInputSize);
 
 	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
 	m_VertexBufferView.SizeInBytes = static_cast<UINT>(m_vertexCount * m_vertexInputSize);
 	m_VertexBufferView.StrideInBytes = static_cast<UINT>(m_vertexInputSize);
 
 	ComPtr<ID3D12Resource> intermediateIndexBuffer;
-	ResourceManager::CreateCommittedResource(m_IndexBuffer, m_indexCount, sizeof(int32_t));
+	ResourceManager::CreateCommittedResourceAsCommon(m_IndexBuffer, m_indexCount, sizeof(int32_t));
 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;

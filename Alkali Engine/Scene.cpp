@@ -344,6 +344,9 @@ void Scene::OnRender(TimeEventArgs& e)
 	else
 		m_shadowMapCounter++;
 
+	// Make shadow map transition and RTV transition back to back for performance
+	ResourceManager::TransitionResource(commandList.Get(), backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
 	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
@@ -464,11 +467,8 @@ void Scene::ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRI
 void Scene::Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue)
 {
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
-	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
 	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	ResourceManager::TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	m_FenceValues.at(currentBackBufferIndex) = commandQueue->ExecuteCommandList(commandList);
 
