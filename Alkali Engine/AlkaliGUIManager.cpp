@@ -67,7 +67,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				{
 					for (auto& it : shaderList)
 					{
-						it.second->Recompile(d3d->GetDevice());
+						it.second->Compile(d3d->GetDevice());
 					}
 				}
 

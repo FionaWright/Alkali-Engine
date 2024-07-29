@@ -78,6 +78,7 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {    
+    sdfhsdhfsdh
     float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
 
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);

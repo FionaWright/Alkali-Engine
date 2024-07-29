@@ -56,8 +56,8 @@ public:
 	void Init(ID3D12Device2* device, const ShaderArgs& args);
 	void InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args);
 
-	void Compile(ID3D12Device2* device);
-	void Recompile(ID3D12Device2* device);
+	void Compile(ID3D12Device2* device, bool exitOnFail = false);
+	void TryHotReload(ID3D12Device2* device);
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 
@@ -66,12 +66,14 @@ public:
 	wstring m_VSName, m_PSName, m_HSName, m_DSName;
 
 protected:
-	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target);
+	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail);
 
 	ComPtr<ID3DBlob> ReadPreCompiledShader(LPCWSTR path);
 
 private:
 	ComPtr<ID3D12PipelineState> m_pso = nullptr;
+
+	std::chrono::system_clock::duration m_lastVSTime, m_lastPSTime;
 
 	bool m_preCompiled = false;
 	ShaderArgs m_args;
