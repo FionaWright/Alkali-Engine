@@ -14,6 +14,11 @@ string wstringToString(const std::wstring& wstr)
 	return str;
 }
 
+float Clamp(float val, float min, float max) 
+{
+    return std::min(std::max(val, min), max);
+}
+
 XMFLOAT3 Add(XMFLOAT3 a, XMFLOAT3 b)
 {
     return XMFLOAT3(a.x + b.x, a.y + b.y, a.z + b.z);

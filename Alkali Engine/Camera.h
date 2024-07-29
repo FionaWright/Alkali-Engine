@@ -37,6 +37,6 @@ private:
 	float m_rotationSpeed = 0.015f;
 
 	XMFLOAT3 m_upVector, m_forwardVector, m_rightVector;
-	float m_pitch, m_yaw;
+	float m_pitch = 0, m_yaw = 0;
 };
 
