@@ -72,10 +72,9 @@ bool SceneBistro::LoadContent()
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { skyboxTex };
 
-	shared_ptr matSkybox = std::make_shared<Material>();
+	shared_ptr matSkybox = AssetFactory::CreateMaterial();
 	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
-	ResourceTracker::AddMaterial(matSkybox);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{

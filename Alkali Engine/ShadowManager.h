@@ -73,7 +73,7 @@ private:
 	static std::unique_ptr<GameObject> ms_viewGO;
 	static shared_ptr<Shader> ms_depthShader;
 	static shared_ptr<RootSig> ms_depthRootSig;
-	static shared_ptr<Material> ms_depthMat, ms_viewDepthMat;
+	static shared_ptr<Material> ms_viewDepthMat;
 	static shared_ptr<RootSig> ms_viewRootSig;
 
 	static D3D12_VIEWPORT ms_viewports[MAX_SHADOW_MAP_CASCADES];

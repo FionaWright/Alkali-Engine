@@ -22,6 +22,8 @@ public:
 
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;    
 
+    void Shutdown();
+
 private:   
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
     ComPtr<ID3D12Device2> m_d3d12Device;

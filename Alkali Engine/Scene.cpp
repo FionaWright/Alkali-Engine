@@ -110,16 +110,14 @@ bool Scene::LoadContent()
 
 	if (!ms_perFramePBRMat)
 	{
-		ms_perFramePBRMat = std::make_shared<Material>();
+		ms_perFramePBRMat = AssetFactory::CreateMaterial();
 		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), PER_FRAME_PBR_SIZES(), true);
-		ResourceTracker::AddMaterial(ms_perFramePBRMat);
 	}
 
 	if (!ms_shadowMapMat)
 	{
-		ms_shadowMapMat = std::make_shared<Material>();
+		ms_shadowMapMat = AssetFactory::CreateMaterial();
 		ms_shadowMapMat->AddDynamicSRVs("Shadow Map", 1);
-		ResourceTracker::AddMaterial(ms_shadowMapMat);
 
 		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
 		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, format, ShadowManager::GetShadowMap());
@@ -144,9 +142,8 @@ bool Scene::LoadContent()
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
 
-		m_matLine = std::make_shared<Material>();
+		m_matLine = AssetFactory::CreateMaterial();
 		m_matLine->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-		ResourceTracker::AddMaterial(m_matLine);
 	}
 
 	{
@@ -215,7 +212,7 @@ bool Scene::LoadContent()
 
 	vector<UINT> viewCBVFrame = { sizeof(DepthViewCB) };
 
-	m_viewDepthMat = std::make_shared<Material>();
+	m_viewDepthMat = AssetFactory::CreateMaterial();
 	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
 	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, false, "DepthView");
 
@@ -342,10 +339,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		m_shadowMapCounter = 0;
 	}
 	else
-		m_shadowMapCounter++;
-
-	// Make shadow map transition and RTV transition back to back for performance
-	ResourceManager::TransitionResource(commandList.Get(), backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		m_shadowMapCounter++;	
 
 	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
@@ -466,9 +460,12 @@ void Scene::ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRI
 
 void Scene::Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue)
 {
+	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
 	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+
+	ResourceManager::TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	m_FenceValues.at(currentBackBufferIndex) = commandQueue->ExecuteCommandList(commandList);
 

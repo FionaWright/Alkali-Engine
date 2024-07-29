@@ -88,6 +88,13 @@ shared_ptr<Batch> AssetFactory::CreateBatch(shared_ptr<RootSig> rootSig)
 	return batch;
 }
 
+shared_ptr<Material> AssetFactory::CreateMaterial()
+{
+	auto mat = std::make_shared<Material>();
+	ResourceTracker::AddMaterial(mat);
+	return mat;
+}
+
 void AssetFactory::InstantiateObjects(string modelName, int count)
 {
 	CommandQueue* commandQueueCopy = nullptr;

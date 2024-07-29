@@ -21,6 +21,7 @@ public:
     static shared_ptr<Texture> CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* commandList);
     static shared_ptr<Shader> CreateShader(const ShaderArgs& args, bool precompiled = false);
     static shared_ptr<Batch> CreateBatch(shared_ptr<RootSig> rootSig);
+    static shared_ptr<Material> CreateMaterial();
 
     static void InstantiateObjects(string modelName, int count);
 

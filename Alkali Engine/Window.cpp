@@ -226,6 +226,12 @@ ID3D12Resource* Window::GetCurrentBackBuffer() const
     return m_d3d12BackBuffers[m_CurrentBackBufferIndex].Get();
 }
 
+ID3D12Resource* Window::GetNextBackBuffer() const
+{
+    int nextIndex = (m_CurrentBackBufferIndex + 1) % BACK_BUFFER_COUNT;
+    return m_d3d12BackBuffers[nextIndex].Get();
+}
+
 HWND Window::GetHWND()
 {
     return m_hWnd;
