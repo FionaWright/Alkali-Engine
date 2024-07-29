@@ -3,7 +3,7 @@
 
 static ID3D12Device2* gs_device;
 
-void ResourceManager::CreateCommittedResource(ComPtr<ID3D12Resource>& pDestinationResource, size_t numElements, size_t elementSize, D3D12_RESOURCE_FLAGS flags)
+void ResourceManager::CreateCommittedResourceAsCommon(ComPtr<ID3D12Resource>& pDestinationResource, size_t numElements, size_t elementSize, D3D12_RESOURCE_FLAGS flags)
 {
     assert(gs_device);
 
