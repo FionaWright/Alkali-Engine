@@ -95,7 +95,7 @@ shared_ptr<Material> AssetFactory::CreateMaterial()
 	return mat;
 }
 
-void AssetFactory::InstantiateObjects(string modelName, int count)
+void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT3& range)
 {
 	CommandQueue* commandQueueCopy = nullptr;
 	commandQueueCopy = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -153,6 +153,6 @@ void AssetFactory::InstantiateObjects(string modelName, int count)
 		float randY = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
 		float randZ = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
 
-		go->SetPosition(randX * 20, randY * 10, randZ * 20);
+		go->SetPosition(randX * range.x, randY * range.y, randZ * range.z);
 	}
 }
