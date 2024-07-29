@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Shader.h"
 #include <iostream>
+#include <filesystem>
 
 void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
@@ -24,7 +25,7 @@ void Shader::InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args)
 	Compile(device);
 }
 
-void Shader::Compile(ID3D12Device2* device)
+void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 {
 	HRESULT hr;
 
@@ -40,9 +41,15 @@ void Shader::Compile(ID3D12Device2* device)
 	}
 	else
 	{
-		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1");
+		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1", exitOnFail);
 		if (!m_args.NoPS)
-			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1");
+			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1", exitOnFail);
+
+		m_lastVSTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
+		m_lastPSTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+
+		if (vBlob == nullptr || pBlob == nullptr)
+			return;
 	}
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
@@ -141,9 +148,17 @@ void Shader::Compile(ID3D12Device2* device)
 	ThrowIfFailed(hr);
 }
 
-void Shader::Recompile(ID3D12Device2* device)
+void Shader::TryHotReload(ID3D12Device2* device)
 {
-	Compile(device);
+	if (m_preCompiled)
+		return;
+
+	auto vsTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
+	auto psTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+
+	bool hotReload = (vsTime - m_lastVSTime).count() > 1 || (psTime - m_lastPSTime).count() > 1;
+	if (hotReload)
+		Compile(device, true);
 }
 
 ComPtr<ID3D12PipelineState> Shader::GetPSO()
@@ -156,7 +171,7 @@ bool Shader::IsPreCompiled()
 	return m_preCompiled;
 }
 
-ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target)
+ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail)
 {
 	ComPtr<ID3DBlob> shaderBlob;
 	ComPtr<ID3DBlob> errorBlob;
@@ -172,6 +187,9 @@ ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR tar
 
 	if (FAILED(hr))
 	{
+		if (exitOnFail)
+			return nullptr;
+
 		if (errorBlob)
 		{
 			std::string errorMsg = static_cast<char*>(errorBlob->GetBufferPointer());

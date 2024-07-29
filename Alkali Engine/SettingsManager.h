@@ -57,6 +57,7 @@ struct MiscSettings
 	int IrradianceMapResolution = 512;
 
 	bool ImGuiEnabled = true;
+	int HotReloadTimeSlice = 60;
 
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;

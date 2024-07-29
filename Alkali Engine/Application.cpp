@@ -83,6 +83,13 @@ int Application::Run()
 
         m_mainWindow->OnUpdate(argsU);
         InputManager::ProgressFrame();
+
+        m_hotReloadCounter++;
+        if (m_hotReloadCounter >= SettingsManager::ms_Misc.HotReloadTimeSlice)
+        {
+            TryHotReloadShaders();
+            m_hotReloadCounter = 0;
+        }
                
         m_renderClock.Tick();
         TimeEventArgs args = m_renderClock.GetTimeArgs();
@@ -192,4 +199,13 @@ double Application::GetFPS()
 unordered_map<wstring, shared_ptr<Scene>>& Application::GetSceneMap()
 {
     return m_sceneMap;
+}
+
+void Application::TryHotReloadShaders()
+{
+    auto& shaders = ResourceTracker::GetShaders();
+    for (auto& it : shaders)
+    {
+        it.second->TryHotReload(m_d3dClass->GetDevice());
+    }
 }

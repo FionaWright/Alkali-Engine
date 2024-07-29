@@ -43,6 +43,8 @@ public:
     unordered_map<wstring, shared_ptr<Scene>>& GetSceneMap();
 
 private:        
+    void TryHotReloadShaders();
+
     HINSTANCE m_hInstance;
 
     unique_ptr<D3DClass> m_d3dClass;
@@ -61,4 +63,5 @@ private:
     double m_fps;
     double m_fpsTimeSinceUpdate;
     unsigned int m_fpsFramesSinceUpdate;
+    int m_hotReloadCounter = 0;
 };
