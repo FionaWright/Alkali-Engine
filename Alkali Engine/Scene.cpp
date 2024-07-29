@@ -293,6 +293,7 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.ShadowCascadeCount;
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.ShadowMapPCFSamples;
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.ShadowMapPCFSamples);
+		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 
 		ShadowManager::Update(m_d3dClass, lDir, m_frustum, m_camera->GetWorldPosition());
 
@@ -320,10 +321,6 @@ void Scene::OnRender(TimeEventArgs& e)
 	auto rtvHandle = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
-	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
-	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB));
-
 	CommandQueue* commandQueue = nullptr;
 	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetAvailableCommandList();
@@ -344,7 +341,9 @@ void Scene::OnRender(TimeEventArgs& e)
 	else
 		m_shadowMapCounter++;
 
-	m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
+	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
+	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
+	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB));	
 	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
 
 	commandList->RSSetViewports(1, &m_viewport);
@@ -387,6 +386,9 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(commandList.Get(), commandQueue); 
+
+	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU)
+		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
 	
 	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
 	// [!] Can this be removed by simply tracking the resource state?

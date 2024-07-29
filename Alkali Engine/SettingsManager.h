@@ -76,6 +76,7 @@ struct DynamicSettings
 	float FarPlane = 200.0f;
 	bool VSyncEnabled = false;
 	bool FullscreenEnabled = false;
+	bool ForceSyncCPUGPU = true;
 
 	bool WireframeMode = false;
 	bool CullFaceEnabled = true;
@@ -112,6 +113,8 @@ struct DynamicSettings
 	bool AllowBinTex = true;		
 
 	bool ShowImGuiDemoWindow = false;
+
+	bool QuickDebug = false; // Useful for debugging code quickly without making new GUI 
 };
 
 class SettingsManager
