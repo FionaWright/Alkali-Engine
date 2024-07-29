@@ -104,6 +104,9 @@ private:
     unique_ptr<GameObject> m_viewDepthGO;
     shared_ptr<Material> m_viewDepthMat;
 
+    DepthViewCB m_depthViewCB = {};
+    bool m_depthViewChanged = false;
+
     static shared_ptr<Material> ms_shadowMapMat;
     static shared_ptr<Material> ms_perFramePBRMat;
     static shared_ptr<Model> ms_sphereModel;

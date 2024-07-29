@@ -218,13 +218,9 @@ bool Scene::LoadContent()
 
 	m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 
-	DepthViewCB dvCB;
-	dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
-	dvCB.MaxValue = 1.0f;
-	dvCB.MinValue = 0.96f;
-
-	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-		m_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB), i);
+	m_depthViewCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
+	m_depthViewCB.MaxValue = 1.0f;
+	m_depthViewCB.MinValue = 0.96f;		
 
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
@@ -286,6 +282,8 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
 	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
+	m_depthViewCB.Resolution = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
+
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
 		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.Shadow.CascadeCount;
@@ -346,6 +344,8 @@ void Scene::OnRender(TimeEventArgs& e)
 	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB), backBufferIndex);
 
+	m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
+
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
@@ -370,6 +370,8 @@ void Scene::OnRender(TimeEventArgs& e)
 		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);		
 
 		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI, backBufferIndex);
+
+		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		
 		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	}
@@ -386,17 +388,6 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU)
 		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
-	
-	// Forced to wait for execution of current back buffer command list so we can transition the depth buffer back
-	// [!] Can this be removed by simply tracking the resource state?
-	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
-	{
-		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex)); 
-
-		auto commandList = commandQueue->GetAvailableCommandList();
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		commandQueue->ExecuteCommandList(commandList);
-	}
 }
 
 void Scene::OnResize(ResizeEventArgs& e)
@@ -513,6 +504,11 @@ void Scene::SetDSVForSize(int width, int height)
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CreateDepthStencilView(m_depthBufferResource.Get(), &dsv, heapStartHandle);
+
+	if (m_viewDepthMat)
+	{
+		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
+	}
 }
 
 void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags) 
