@@ -26,7 +26,6 @@ GameObject* Batch::AddGameObject(GameObject go)
 		return &m_goListTrans[m_goListTrans.size() - 1];
 	}
 
-	// TODO: Sorting
 	m_goList.push_back(go);
 	return &m_goList[m_goList.size() - 1];
 }
@@ -96,7 +95,7 @@ void Batch::SortObjects(const XMFLOAT3& camPos)
 	std::sort(m_goList.begin(), m_goList.end(), [&camPos](const GameObject& a, const GameObject& b) {
 		float distSqA = SqDist(a.GetWorldPosition(), camPos);
 		float distSqB = SqDist(b.GetWorldPosition(), camPos);
-		return distSqA > distSqB;
+		return distSqA < distSqB;
 	});
 
 	std::sort(m_goListTrans.begin(), m_goListTrans.end(), [&camPos](const GameObject& a, const GameObject& b) {
