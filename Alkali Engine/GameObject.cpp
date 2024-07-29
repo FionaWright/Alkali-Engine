@@ -34,7 +34,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, RenderOverride* renderOverride)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, RenderOverride* renderOverride)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -57,7 +57,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 
 	if (m_orthographic)
 	{
-		m_material->AssignMaterial(commandListDirect, rpi);
+		m_material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
 		m_model->Render(commandListDirect);
 		return;
 	}
@@ -75,15 +75,15 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
 		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-		RenderModel(commandListDirect, rpi, matrices, sphereModel, &modifiedTransform, mat);
+		RenderModel(commandListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, mat);
 		return;
 	}
 
 	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-	RenderModel(commandListDirect, rpi, matrices, m_model.get(), nullptr, mat);
+	RenderModel(commandListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, mat);
 }
 
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
 {
 	XMMATRIX& worldMatrix = m_worldMatrix;
 	if (transform)
@@ -93,7 +93,7 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, cons
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
 	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB));
 
-	material->AssignMaterial(commandListDirect, rpi);
+	material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
 
 	model->Render(commandListDirect);
 }

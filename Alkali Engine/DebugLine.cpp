@@ -90,7 +90,7 @@ void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12Root
 	matricesCB.VP = viewProj;
 
 	m_material->SetCBV_PerDraw(0, &matricesCB, sizeof(MatricesLineCB));
-	m_material->AssignMaterial(commandListDirect, m_rootParamInfo);
+	m_material->AssignMaterial(commandListDirect, m_rootParamInfo, -1);
 
 	commandListDirect->DrawInstanced(2, 1, 0, 0);
 }

@@ -76,7 +76,7 @@ struct DynamicSettings
 	float FarPlane = 200.0f;
 	bool VSyncEnabled = false;
 	bool FullscreenEnabled = false;
-	bool ForceSyncCPUGPU = true;
+	bool ForceSyncCPUGPU = false;
 
 	bool WireframeMode = false;
 	bool CullFaceEnabled = true;

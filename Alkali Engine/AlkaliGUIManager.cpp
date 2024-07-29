@@ -725,15 +725,22 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (size_t i = 0; i < matList.size(); i++)
 			{
-				UINT srv, cbvFrame, cbvDraw;
-				matList[i]->GetIndices(srv, cbvFrame, cbvDraw);
+				UINT srv, cbvDraw;
+				UINT cbvFrame[BACK_BUFFER_COUNT];
+				for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+					matList[i]->GetIndices(srv, cbvFrame[i], cbvDraw, i);
 
 				ImGui::Text(("Material: " + std::to_string(i)).c_str());
 
 				ImGui::Indent(IM_GUI_INDENTATION);
 
-				if (cbvFrame != -1)
-					ImGui::Text(("CBV Index (PerFrame): " + std::to_string(cbvFrame)).c_str());
+				if (cbvFrame[0] != -1)
+				{
+					string indices = "";
+					for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+						indices += std::to_string(cbvFrame[i]) + "~";
+					ImGui::Text(("CBV Index (PerFrame): " + indices).c_str());
+				}					
 				if (cbvDraw != -1)
 					ImGui::Text(("CBV Index (PerDraw): " + std::to_string(cbvDraw)).c_str());
 				if (srv != -1)

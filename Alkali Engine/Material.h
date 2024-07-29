@@ -18,25 +18,25 @@ public:
 	void AddDynamicSRVs(string id, UINT count);	
 	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
-	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize);
+	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
 
-	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo);
+	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
 
 	bool GetHasAlpha();
 	vector<shared_ptr<Texture>>& GetTextures();
-	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw);
+	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex);
 	bool GetProperties(MaterialPropertiesCB& prop);
 	bool HasDynamicSRV();
 
 	void ClearTextures();
 
 private:
-	UINT m_srvHeapIndex = -1, m_srvHeapIndex_dynamic = -1, m_cbvHeapIndex_perFrame = -1, m_cbvHeapIndex_perDraw = -1;
-	vector<ID3D12Resource*> m_cbvResources_perFrame;		
+	UINT m_srvHeapIndex = -1, m_srvHeapIndex_dynamic = -1, m_cbvHeapIndex_perFrame[BACK_BUFFER_COUNT], m_cbvHeapIndex_perDraw = -1;
+	vector<ID3D12Resource*> m_cbvResources_perFrame[BACK_BUFFER_COUNT];		
 	vector<ID3D12Resource*> m_cbvResources_perDraw;		
 	vector<shared_ptr<Texture>> m_textures;
 

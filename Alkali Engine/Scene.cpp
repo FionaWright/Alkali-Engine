@@ -110,9 +110,8 @@ bool Scene::LoadContent()
 
 	if (!ms_perFramePBRMat)
 	{
-		vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 		ms_perFramePBRMat = std::make_shared<Material>();
-		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), PER_FRAME_PBR_SIZES(), true);
 		ResourceTracker::AddMaterial(ms_perFramePBRMat);
 	}
 
@@ -320,6 +319,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtvHandle = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	int backBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 
 	CommandQueue* commandQueue = nullptr;
 	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -335,16 +335,16 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.ShadowFrameWait && SettingsManager::ms_Dynamic.ShadowMapEnabled)
 	{
-		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum);
+		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum, backBufferIndex);
 		m_shadowMapCounter = 0;
 	}
 	else
 		m_shadowMapCounter++;
 
-	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB));
-	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB));
-	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB));	
-	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB));
+	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
+	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
+	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
+	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB), backBufferIndex);
 
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -352,34 +352,33 @@ void Scene::OnRender(TimeEventArgs& e)
 	ClearBackBuffer(commandList.Get());
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, commandList.Get(), m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
+		it.second->Render(m_d3dClass, commandList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(m_d3dClass, commandList.Get(), m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
+		it.second->RenderTrans(m_d3dClass, commandList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle);
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
-		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
+		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 		commandList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Convert DSV to SRV and assign as a texture to be read in the shader
 		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
+		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get()); // MOVE THIS
 
-		//m_viewDepthMat->AssignMaterial(commandList.Get(), m_viewDepthRPI);
-		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI);
+		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI, backBufferIndex);
 		
 		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	}
 	
 	if (SettingsManager::ms_Dynamic.ShadowMapEnabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
-		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle);
+		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 	}
 
 	ImGUIManager::Render(commandList.Get());	
