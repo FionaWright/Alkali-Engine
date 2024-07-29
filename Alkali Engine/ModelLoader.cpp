@@ -532,11 +532,10 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		vector<UINT> cbvSizesFrame = { sizeof(CameraCB), sizeof(DirectionalLightCB) };
 		vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
 
-		shared_ptr<Material> material = std::make_shared<Material>();
+		shared_ptr<Material> material = AssetFactory::CreateMaterial();
 		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 		material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 		material->AddSRVs(d3d, textures);
-		ResourceTracker::AddMaterial(material);
 
 		GameObject go(modelName, model, shader, material);
 		batch->AddGameObject(go);
@@ -880,12 +879,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex };
 
-	shared_ptr<Material> material = std::make_shared<Material>();
+	shared_ptr<Material> material = AssetFactory::CreateMaterial();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
 	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
 	material->AddDynamicSRVs("Shadow Map", 1);
-	ResourceTracker::AddMaterial(material);
 
 	MaterialPropertiesCB matProperties;
 	matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());

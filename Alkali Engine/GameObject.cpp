@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "Scene.h"
 #include "Batch.h"
+#include "AssetFactory.h"
 
 GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
@@ -44,7 +45,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 
 	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
 	{
-		auto mat = std::make_shared<Material>();
+		auto mat = AssetFactory::CreateMaterial();
 		vector<UINT> sizes = { sizeof(MatricesCB) };
 		mat->AddCBVs(d3d, commandListDirect, sizes, false);
 		m_shadowMapMats.push_back(mat);

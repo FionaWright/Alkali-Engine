@@ -22,7 +22,7 @@ D3D12_RESOURCE_STATES ShadowManager::ms_currentDSVState;
 std::unique_ptr<GameObject> ShadowManager::ms_viewGO;
 shared_ptr<Shader> ShadowManager::ms_depthShader;
 shared_ptr<RootSig> ShadowManager::ms_depthRootSig;
-shared_ptr<Material> ShadowManager::ms_depthMat, ShadowManager::ms_viewDepthMat;
+shared_ptr<Material> ShadowManager::ms_viewDepthMat;
 shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
 
 D3D12_VIEWPORT ShadowManager::ms_viewports[MAX_SHADOW_MAP_CASCADES];
@@ -105,7 +105,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		viewArgs.disableDSV = true;
 		auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
 
-		ms_viewDepthMat = std::make_shared<Material>();
+		ms_viewDepthMat = AssetFactory::CreateMaterial();
 		vector<UINT> cbvFrameSizesView = { sizeof(DepthViewCB) };
 		ms_viewDepthMat->AddCBVs(d3d, commandList, cbvFrameSizesView, true, "ShadowView");
 		ms_viewDepthMat->AddDynamicSRVs("Shadow View", 1);
@@ -127,7 +127,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
 	}
 
-	if (!ms_depthMat)
+	if (!ms_depthShader)
 	{
 		RootParamInfo depthRPI;
 		depthRPI.NumCBV_PerDraw = 1;
@@ -139,14 +139,9 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
 		depthArgs.NoPS = true;
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
-		//depthArgs.CullNone = true;
 		//depthArgs.SlopeScaleDepthBias = -0.02f;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
-
-		ms_depthMat = std::make_shared<Material>();
-		vector<UINT> cbvDrawSizes = { sizeof(MatricesCB) };
-		ms_depthMat->AddCBVs(d3d, commandList, cbvDrawSizes, false);
 	}
 
 	if (!SettingsManager::ms_Dynamic.Shadow.UpdatingBounds)
@@ -163,7 +158,6 @@ void ShadowManager::Shutdown()
 	ms_depthShader.reset();
 	ms_viewGO.reset();
 	ms_viewDepthMat.reset();
-	ms_depthMat.reset();
 	ms_viewRootSig.reset();
 	ms_shadowMapResource.Reset();
 

@@ -84,19 +84,17 @@ bool SceneTest::LoadContent()
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex };
 
-	shared_ptr<Material> matPBR1 = std::make_shared<Material>();	
+	shared_ptr<Material> matPBR1 = AssetFactory::CreateMaterial();
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
 	matPBR1->AddDynamicSRVs("Shadow Map", 1);
-	ResourceTracker::AddMaterial(matPBR1);
 
-	shared_ptr<Material> matPBR2 = std::make_shared<Material>();
+	shared_ptr<Material> matPBR2 = AssetFactory::CreateMaterial();
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
 	matPBR2->AddDynamicSRVs("Shadow Map", 1);
-	ResourceTracker::AddMaterial(matPBR2);
 
 	MaterialPropertiesCB defaultMatProps;
 	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
@@ -108,10 +106,9 @@ bool SceneTest::LoadContent()
 	cbvSizesDraw = { sizeof(MatricesCB) };
 	textures = { skyboxTex };
 
-	shared_ptr matSkybox = std::make_shared<Material>();
+	shared_ptr matSkybox = AssetFactory::CreateMaterial();
 	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
-	ResourceTracker::AddMaterial(matSkybox);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{

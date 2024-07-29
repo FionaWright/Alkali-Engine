@@ -44,6 +44,7 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
     ID3D12Resource* GetCurrentBackBuffer() const;
+    ID3D12Resource* GetNextBackBuffer() const;
     HWND GetHWND();
     ID3D12DescriptorHeap* GetRTVDescriptorHeap();
 
