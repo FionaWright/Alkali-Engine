@@ -78,6 +78,9 @@ int Application::Run()
         TimeEventArgs argsU = m_updateClock.GetTimeArgs();
         CalculateFPS(argsU.ElapsedTime);
 
+        argsU.ElapsedTime *= SettingsManager::ms_Dynamic.UpdateTimeScale;
+        argsU.TotalTime *= SettingsManager::ms_Dynamic.UpdateTimeScale;
+
         m_mainWindow->OnUpdate(argsU);
         InputManager::ProgressFrame();
                
