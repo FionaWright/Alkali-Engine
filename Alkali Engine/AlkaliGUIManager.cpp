@@ -46,6 +46,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 	{
 		ImGui::Indent(IM_GUI_INDENTATION);
 
+		ImGui::Checkbox("Quick Debug", &SettingsManager::ms_Dynamic.QuickDebug);
+
 		if (ImGui::TreeNode("Engine##2"))
 		{
 			ImGui::SeparatorText("DX12");
@@ -71,6 +73,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Force Show Frustum Debug Lines", &SettingsManager::ms_Dynamic.AlwaysShowFrustumDebugLines);
 
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
+
+				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
 
 				bool visualiseDSV = SettingsManager::ms_Dynamic.VisualiseDSVEnabled;
 				bool visualiseShadow = SettingsManager::ms_Dynamic.VisualiseShadowMap;
