@@ -130,6 +130,11 @@ bool Equals(XMFLOAT3 a, XMFLOAT3 b)
 	return a.x == b.x && a.y == b.y && a.z == b.z;
 }
 
+bool Equals(XMFLOAT2 a, XMFLOAT2 b)
+{
+    return a.x == b.x && a.y == b.y;
+}
+
 string ToString(XMFLOAT3& v) 
 {
     return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
