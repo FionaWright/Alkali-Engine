@@ -54,7 +54,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends;$(SolutionDir)\Alkali Engine\src\Scenes;$(SolutionDir)\Alkali Engine\src\Managers;$(SolutionDir)\Alkali Engine\src\GPU Objects;$(SolutionDir)\Alkali Engine\src\CPU Objects;$(SolutionDir)\Alkali Engine;$(SolutionDir)\Alkali Engine\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -84,7 +84,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Alkali Engine/Includes/SimdJSON;$(SolutionDir)/Alkali Engine/Includes/imgui-master;$(SolutionDir)/Alkali Engine/Includes/;$(SolutionDir)/Alkali Engine/Includes/imgui-master/backends;$(SolutionDir)\Alkali Engine\src\Scenes;$(SolutionDir)\Alkali Engine\src\Managers;$(SolutionDir)\Alkali Engine\src\GPU Objects;$(SolutionDir)\Alkali Engine\src\CPU Objects;$(SolutionDir)\Alkali Engine;$(SolutionDir)\Alkali Engine\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -105,18 +105,6 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AlkaliGUIManager.cpp" />
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="AssetFactory.cpp" />
-    <ClCompile Include="Batch.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CommandQueue.cpp" />
-    <ClCompile Include="D3DClass.cpp" />
-    <ClCompile Include="DebugLine.cpp" />
-    <ClCompile Include="DescriptorManager.cpp" />
-    <ClCompile Include="Frustum.cpp" />
-    <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="ImGUIManager.cpp" />
     <ClCompile Include="Includes\fastgltf\src\base64.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -210,48 +198,45 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="ModelLoader.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="src\CPU Objects\Camera.cpp" />
+    <ClCompile Include="src\CPU Objects\Frustum.cpp" />
+    <ClCompile Include="src\CPU Objects\HighResolutionClock.cpp" />
+    <ClCompile Include="src\CPU Objects\Window.cpp" />
+    <ClCompile Include="src\GPU Objects\Batch.cpp" />
+    <ClCompile Include="src\GPU Objects\CommandQueue.cpp" />
+    <ClCompile Include="src\GPU Objects\DebugLine.cpp" />
+    <ClCompile Include="src\GPU Objects\GameObject.cpp" />
+    <ClCompile Include="src\GPU Objects\Material.cpp" />
+    <ClCompile Include="src\GPU Objects\Model.cpp" />
+    <ClCompile Include="src\GPU Objects\RootSig.cpp" />
+    <ClCompile Include="src\GPU Objects\Shader.cpp" />
+    <ClCompile Include="src\GPU Objects\Texture.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Managers\AlkaliGUIManager.cpp" />
+    <ClCompile Include="src\Managers\Application.cpp" />
+    <ClCompile Include="src\Managers\AssetFactory.cpp" />
+    <ClCompile Include="src\Managers\D3DClass.cpp" />
+    <ClCompile Include="src\Managers\DescriptorManager.cpp" />
+    <ClCompile Include="src\Managers\ImGUIManager.cpp" />
+    <ClCompile Include="src\Managers\InputManager.cpp" />
+    <ClCompile Include="src\Managers\ModelLoader.cpp" />
+    <ClCompile Include="src\Managers\ResourceManager.cpp" />
+    <ClCompile Include="src\Managers\ResourceTracker.cpp" />
+    <ClCompile Include="src\Managers\SettingsManager.cpp" />
+    <ClCompile Include="src\Managers\ShadowManager.cpp" />
+    <ClCompile Include="src\Managers\TextureLoader.cpp" />
+    <ClCompile Include="src\Managers\WindowManager.cpp" />
+    <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ResourceManager.cpp" />
-    <ClCompile Include="ResourceTracker.cpp" />
-    <ClCompile Include="RootSig.cpp" />
-    <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="HighResolutionClock.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="SceneBistro.cpp" />
-    <ClCompile Include="SettingsManager.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="ShadowManager.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="TextureLoader.cpp" />
-    <ClCompile Include="SceneTest.cpp" />
-    <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="Window.cpp" />
-    <ClCompile Include="WindowManager.cpp" />
+    <ClCompile Include="src\Scenes\Scene.cpp" />
+    <ClCompile Include="src\Scenes\SceneBistro.cpp" />
+    <ClCompile Include="src\Scenes\SceneTest.cpp" />
+    <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlkaliGUIManager.h" />
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="AssetFactory.h" />
     <ClInclude Include="Assets\Resources\resource.h" />
-    <ClInclude Include="Batch.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CBuffers.h" />
-    <ClInclude Include="CommandQueue.h" />
-    <ClInclude Include="D3DClass.h" />
-    <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="DebugLine.h" />
-    <ClInclude Include="DescriptorManager.h" />
-    <ClInclude Include="Events.h" />
-    <ClInclude Include="Frustum.h" />
-    <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ImGUIManager.h" />
     <ClInclude Include="Includes\fastgltf\include\fastgltf\base64.hpp" />
     <ClInclude Include="Includes\fastgltf\include\fastgltf\core.hpp" />
     <ClInclude Include="Includes\fastgltf\include\fastgltf\glm_element_traits.hpp" />
@@ -272,29 +257,44 @@
     <ClInclude Include="Includes\zlib\zconf.h" />
     <ClInclude Include="Includes\zlib\zlib.h" />
     <ClInclude Include="Includes\zlib\zutil.h" />
-    <ClInclude Include="InputManager.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="ResourceTracker.h" />
-    <ClInclude Include="RootSig.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="Helpers.h" />
-    <ClInclude Include="HighResolutionClock.h" />
-    <ClInclude Include="Keycodes.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="SceneBistro.h" />
-    <ClInclude Include="Constants.h" />
-    <ClInclude Include="SettingsManager.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="ShadowManager.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="TextureLoader.h" />
-    <ClInclude Include="SceneTest.h" />
-    <ClInclude Include="Utils.h" />
-    <ClInclude Include="Window.h" />
-    <ClInclude Include="WindowManager.h" />
+    <ClInclude Include="src\CBuffers.h" />
+    <ClInclude Include="src\Constants.h" />
+    <ClInclude Include="src\CPU Objects\Camera.h" />
+    <ClInclude Include="src\CPU Objects\Frustum.h" />
+    <ClInclude Include="src\CPU Objects\HighResolutionClock.h" />
+    <ClInclude Include="src\CPU Objects\Window.h" />
+    <ClInclude Include="src\d3dx12.h" />
+    <ClInclude Include="src\Events.h" />
+    <ClInclude Include="src\GPU Objects\Batch.h" />
+    <ClInclude Include="src\GPU Objects\CommandQueue.h" />
+    <ClInclude Include="src\GPU Objects\DebugLine.h" />
+    <ClInclude Include="src\GPU Objects\GameObject.h" />
+    <ClInclude Include="src\GPU Objects\Material.h" />
+    <ClInclude Include="src\GPU Objects\Model.h" />
+    <ClInclude Include="src\GPU Objects\RootSig.h" />
+    <ClInclude Include="src\GPU Objects\Shader.h" />
+    <ClInclude Include="src\GPU Objects\Texture.h" />
+    <ClInclude Include="src\Helpers.h" />
+    <ClInclude Include="src\Keycodes.h" />
+    <ClInclude Include="src\Managers\AlkaliGUIManager.h" />
+    <ClInclude Include="src\Managers\Application.h" />
+    <ClInclude Include="src\Managers\AssetFactory.h" />
+    <ClInclude Include="src\Managers\D3DClass.h" />
+    <ClInclude Include="src\Managers\DescriptorManager.h" />
+    <ClInclude Include="src\Managers\ImGUIManager.h" />
+    <ClInclude Include="src\Managers\InputManager.h" />
+    <ClInclude Include="src\Managers\ModelLoader.h" />
+    <ClInclude Include="src\Managers\ResourceManager.h" />
+    <ClInclude Include="src\Managers\ResourceTracker.h" />
+    <ClInclude Include="src\Managers\SettingsManager.h" />
+    <ClInclude Include="src\Managers\ShadowManager.h" />
+    <ClInclude Include="src\Managers\TextureLoader.h" />
+    <ClInclude Include="src\Managers\WindowManager.h" />
+    <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\Scenes\Scene.h" />
+    <ClInclude Include="src\Scenes\SceneBistro.h" />
+    <ClInclude Include="src\Scenes\SceneTest.h" />
+    <ClInclude Include="src\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Assets\Resources\Alkali Engine.rc" />
@@ -342,6 +342,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+    <FxCompile Include="Assets\Shaders\IrradianceMap.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateIrradianceMap</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateIrradianceMap</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+    </FxCompile>
     <FxCompile Include="Assets\Shaders\Line_PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
@@ -369,12 +375,6 @@
     <FxCompile Include="Assets\Shaders\Skybox_VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="IrradianceMap.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GenerateIrradianceMap</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GenerateIrradianceMap</EntryPointName>
     </FxCompile>
     <None Include="Assets\Shaders\PBR.ps" />
     <None Include="Assets\Shaders\PBR.vs" />
