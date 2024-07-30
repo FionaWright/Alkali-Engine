@@ -78,7 +78,6 @@ float G_Smith_IBL(float NdL, float NdV, float roughness);
 
 float4 main(V_OUT input) : SV_Target
 {    
-    sdfhsdhfsdh
     float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
 
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
@@ -161,6 +160,7 @@ float4 main(V_OUT input) : SV_Target
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * envMapMipLevels).rgb;
     envReflections *= kS * (1 - roughness) * metalness;
+    envReflections *= NdL;
 
     float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
 
