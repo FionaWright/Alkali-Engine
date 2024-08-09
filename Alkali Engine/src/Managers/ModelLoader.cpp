@@ -874,10 +874,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandList);
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex };
+	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> material = AssetFactory::CreateMaterial();
 	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);

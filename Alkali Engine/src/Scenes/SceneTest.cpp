@@ -48,6 +48,7 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", commandListDirect.Get());
 	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
 
 	//vector<string> skyboxPaths = {
 	//	"Skyboxes/Iceland/negx.tga",
@@ -61,7 +62,7 @@ bool SceneTest::LoadContent()
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 4;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
-	rootParamInfoPBR.NumSRV = 6;
+	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
 	rootParamInfoPBR.ParamIndexCBV_PerFrame = 1;
@@ -82,7 +83,7 @@ bool SceneTest::LoadContent()
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex };
+	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> matPBR1 = AssetFactory::CreateMaterial();
 	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
