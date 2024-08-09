@@ -66,8 +66,9 @@ Texture2D g_specularMap : register(t2);
 TextureCube g_irradiance : register(t3);
 TextureCube g_envMap : register(t4);
 Texture2D g_blueNoise : register(t5);
+Texture2D g_brdfIntMap : register(t6);
 
-Texture2D g_shadowMap : register(t6);
+Texture2D g_shadowMap : register(t7);
 
 SamplerState g_sampler : register(s0);
 
@@ -90,9 +91,6 @@ float4 main(V_OUT input) : SV_Target
     shadowCoords.y = 1 - shadowCoords.y;
     shadowCoords.x = ShadowPixelCB.ShadowWidthPercent * (shadowCoords.x + iCascadeIndex);
     float pixelDepth = shadowCoords.z + ShadowPixelCB.Bias;    
-
-    float test = g_shadowMap.Sample(g_sampler, shadowCoords.xy).r;
-    //return float4(test, test, test, 1);
 
     float shadowFactor = 0;
     int i = 0;
@@ -146,6 +144,8 @@ float4 main(V_OUT input) : SV_Target
 
     float envMapMipLevels = 12;
 
+    float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
+
     //==============================================================         
 
     float3 albedo = tex.rgb * MatPropCB.BaseColorFactor;
@@ -156,13 +156,11 @@ float4 main(V_OUT input) : SV_Target
     float G = G_Smith(NdL, NdV, roughness);
 
     float kS = max(0, F);
-    float kD = (1 - kS);
+    float kD = (1.0f - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * envMapMipLevels).rgb;
-    envReflections *= kS * (1 - roughness) * metalness;
-    envReflections *= NdL;
-
-    float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
+    float2 brdfInt = g_brdfIntMap.SampleLevel(g_sampler, float2(NdV, roughness), 0).rg;
+    float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g); // Temporarily disabled
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * DirLightCB.LightColor * kS;    
@@ -172,7 +170,7 @@ float4 main(V_OUT input) : SV_Target
 
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
-    float3 Lo = diffuse + specular + ambient + envReflections;
+    float3 Lo = diffuse + specular + ambient;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);

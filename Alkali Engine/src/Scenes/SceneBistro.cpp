@@ -45,12 +45,12 @@ bool SceneBistro::LoadContent()
 	};
 
 	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());	
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 4;
 	rootParamInfo.NumCBV_PerDraw = 2;
-	rootParamInfo.NumSRV = 6;
+	rootParamInfo.NumSRV = 7;
 	rootParamInfo.NumSRV_Dynamic = 1;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 	rootParamInfo.ParamIndexCBV_PerFrame = 1;
