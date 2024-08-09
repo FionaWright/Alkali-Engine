@@ -14,8 +14,8 @@ public:
 	Model();
     ~Model();
 
-    void Init(ID3D12GraphicsCommandList2* commandList, wstring filepath);
-    void Init(ID3D12GraphicsCommandList2* commandList, string filepath);
+    bool Init(ID3D12GraphicsCommandList2* commandList, wstring filepath);
+    bool Init(ID3D12GraphicsCommandList2* commandList, string filepath);
     void Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, float boundingRadius, XMFLOAT3 centroid);
 
     void SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBufferData, const void* iBufferData);
@@ -40,4 +40,5 @@ private:
 
     float m_boundingSphereRadius;
     XMFLOAT3 m_centroid;
+    bool m_loadedData = false;
 };

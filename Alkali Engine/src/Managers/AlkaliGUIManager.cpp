@@ -10,6 +10,8 @@
 #include "Application.h"
 #include "AssetFactory.h"
 
+vector<string> AlkaliGUIManager::ms_errorList;
+
 void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 {
 	ImGui::SeparatorText("Stats");
@@ -29,6 +31,28 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 	ImGui::Spacing();
 	ImGui::Unindent(IM_GUI_INDENTATION);
 
+	string errorMsg = "Error Messages";
+	if (ms_errorList.size() > 0)
+		errorMsg += " (!)";
+
+	if (ImGui::TreeNode(errorMsg.c_str()))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		for (size_t i = 0; i < ms_errorList.size(); i++)
+		{
+			ImGui::Text(ms_errorList[i].c_str());
+		}
+
+		if (ms_errorList.size() == 0)
+			ImGui::Text("None :)");
+
+		ImGui::Spacing();
+		ImGui::Unindent(IM_GUI_INDENTATION);
+
+		ImGui::TreePop();
+	}
+
 	RenderGUISettings(d3d, scene);
 	RenderGUITools(d3d, scene);
 	RenderGUISceneList(d3d, scene, app);
@@ -36,6 +60,11 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 
 	if (SettingsManager::ms_Dynamic.ShowImGuiDemoWindow)
 		ImGui::ShowDemoWindow();
+}
+
+void AlkaliGUIManager::LogErrorMessage(string msg)
+{
+	ms_errorList.push_back(msg);
 }
 
 void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
