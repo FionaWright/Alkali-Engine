@@ -8,6 +8,7 @@
 
 #include "fastgltf/include/fastgltf/tools.hpp"
 #include "AssetFactory.h"
+#include <AlkaliGUIManager.h>
 
 namespace filesystem = std::filesystem;
 
@@ -388,7 +389,7 @@ VertexInputData ModelLoader::SetVertexData(ObjFaceVertexIndices i, ObjFaceVertex
 	return vertex;
 }
 
-void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, float& boundingSphereRadius, XMFLOAT3& centroid)
+bool ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, float& boundingSphereRadius, XMFLOAT3& centroid)
 {
 	ifstream fin;
 	wstring longPath = L"Assets/Models/" + filePath;
@@ -397,7 +398,7 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	size_t vertexCount, indexCount;
 
 	if (!fin)
-		throw new std::exception("IO Exception");
+		return false;
 
 	fin.read(reinterpret_cast<char*>(&boundingSphereRadius), sizeof(float));
 	fin.read(reinterpret_cast<char*>(&centroid), sizeof(XMFLOAT3));
@@ -411,6 +412,8 @@ void ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 
 	outIndexBuffer.resize(indexCount);
 	fin.read(reinterpret_cast<char*>(outIndexBuffer.data()), sizeof(int32_t) * indexCount);
+
+	return true;
 }
 
 void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
@@ -574,7 +577,10 @@ void LoadGLTFVertexData(vector<VertexInputData>& vBuffer, fastgltf::Expected<fas
 		std::ifstream file("Assets/Models/" + path, std::ios::binary);
 
 		if (!file.is_open())
-			throw std::runtime_error("Failed to open file");
+		{
+			AlkaliGUIManager::LogErrorMessage("Error loading GLTF model (path=\"" + path + "\")");
+			return;
+		}
 
 		file.seekg(dataOffset + uri.fileByteOffset, std::ios::beg);
 
@@ -972,6 +978,13 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 	string modelNameExtensionless = modelName.substr(0, dotIndex);
 
 	fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath(path);
+
+	if (data.error() == fastgltf::Error::InvalidPath)
+	{
+		AlkaliGUIManager::LogErrorMessage("Error loading GLTF model (path=\"" + path + "\")");
+		return;
+	}		
+
 	if (data.error() != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
 
@@ -984,11 +997,17 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 	fastgltf::Options options = fastgltf::Options::DecomposeNodeMatrices;
 
 	fastgltf::Expected<fastgltf::Asset> asset = ms_parser.loadGltf(data.get(), path, options);
-	auto error = asset.error();
-	if (error != fastgltf::Error::None)
+
+	if (asset.error() == fastgltf::Error::InvalidPath)
+	{
+		AlkaliGUIManager::LogErrorMessage("Error loading GLTF model (path=\"" + path + "\")");
+		return;
+	}
+
+	if (asset.error() != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
 
-	error = fastgltf::validate(asset.get());
+	auto error = fastgltf::validate(asset.get());
 	if (error != fastgltf::Error::None)
 		throw new std::exception("FastGLTF error");
 

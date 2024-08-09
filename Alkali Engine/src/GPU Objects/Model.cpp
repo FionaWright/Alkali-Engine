@@ -16,23 +16,27 @@ Model::~Model()
 {
 }
 
-void Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
+bool Model::Init(ID3D12GraphicsCommandList2* commandList, wstring filepath)
 {
 	vector<VertexInputData> vertexBuffer;
 	vector<int32_t> indexBuffer;
 	float radius;
 	XMFLOAT3 centroid;
 
-	ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
+	bool r = ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
+	if (!r)
+		return false;
 
 	Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), radius, centroid);
 	SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
+
+	return true;
 }
 
-void Model::Init(ID3D12GraphicsCommandList2* commandList, string filepath)
+bool Model::Init(ID3D12GraphicsCommandList2* commandList, string filepath)
 {
 	wstring wFilePath(filepath.begin(), filepath.end());
-	Init(commandList, wFilePath);
+	return Init(commandList, wFilePath);
 }
 
 void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, float boundingRadius, XMFLOAT3 centroid)
@@ -57,6 +61,8 @@ void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_IndexBufferView.SizeInBytes = static_cast<UINT>(m_indexCount * sizeof(int32_t));
+
+	m_loadedData = true;
  }
 
 void Model::SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBufferData, const void* iBufferData)
@@ -67,6 +73,9 @@ void Model::SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBuf
 
 void Model::Render(ID3D12GraphicsCommandList2* commandList)
 {
+	if (!m_loadedData)
+		return;
+
 	commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
 	commandList->IASetIndexBuffer(&m_IndexBufferView);
 
