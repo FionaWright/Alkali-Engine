@@ -926,6 +926,8 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 		throw std::exception("Unsupported transform type");
 	}
 
+	transform.Position.x = -transform.Position.x;
+
 	transform.Position = Add(transform.Position, rollingTransform.Position);
 	transform.Rotation = Add(transform.Rotation, rollingTransform.Rotation);
 	transform.Scale = Mult(transform.Scale, rollingTransform.Scale);
@@ -959,6 +961,8 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 
 	size_t meshIndex = node.meshIndex.value();
 	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
+
+	transform.Position = Mult(transform.Position, transform.Scale);
 
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
