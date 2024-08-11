@@ -49,7 +49,7 @@ struct MiscSettings
 {
 	bool AutoMipLevelsEnabled = true;
 	int DefaultGlobalMipLevels = 3;
-	bool CubemapMipMapsEnabled = false;
+	bool CubemapMipMapsEnabled = true;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
 	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);

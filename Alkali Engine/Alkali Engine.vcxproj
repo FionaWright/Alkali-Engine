@@ -231,6 +231,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Scenes\Scene.cpp" />
+    <ClCompile Include="src\Scenes\SceneChess.cpp" />
     <ClCompile Include="src\Scenes\SceneBistro.cpp" />
     <ClCompile Include="src\Scenes\SceneTest.cpp" />
     <ClCompile Include="src\Utils.cpp" />
@@ -292,6 +293,7 @@
     <ClInclude Include="src\Managers\WindowManager.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Scenes\Scene.h" />
+    <ClInclude Include="src\Scenes\SceneChess.h" />
     <ClInclude Include="src\Scenes\SceneBistro.h" />
     <ClInclude Include="src\Scenes\SceneTest.h" />
     <ClInclude Include="src\Utils.h" />

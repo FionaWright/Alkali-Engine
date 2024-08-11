@@ -79,13 +79,19 @@ struct DepthViewCB
     float MaxValue;
 };
 
+struct EnvMapCB
+{
+    UINT EnvMapMipLevels;
+};
+
 struct PerFrameCBuffers_PBR
 {
     CameraCB Camera;
     DirectionalLightCB DirectionalLight;
     ShadowMapCB ShadowMap;
     ShadowMapPixelCB ShadowMapPixel;
+    EnvMapCB EnvMap;
 };
 constexpr std::vector<UINT> PER_FRAME_PBR_SIZES() { 
-    return { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB), sizeof(ShadowMapPixelCB) }; 
+    return { sizeof(CameraCB), sizeof(DirectionalLightCB), sizeof(ShadowMapCB), sizeof(ShadowMapPixelCB), sizeof(EnvMapCB) };
 }

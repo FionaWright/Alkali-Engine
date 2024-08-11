@@ -3,6 +3,7 @@
 #include "ResourceManager.h"
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
+#include <AlkaliGUIManager.h>
 
 D3DClass* AssetFactory::ms_d3d;
 
@@ -16,8 +17,11 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(path, model))
 	{
-		model->Init(commandList, path);
+		bool success = model->Init(commandList, path);
+		if (!success)
+			AlkaliGUIManager::LogErrorMessage("Failed to load model (path=\"" + path + "\")");
 	}
+
 	return model;
 }
 
