@@ -32,7 +32,7 @@ public:
 
 private:
 	void MakeTexDesc(UINT16 arraySize);
-	void CreateResources(ID3D12Device2* device, int numSubresources);
+	void CreateResources(ID3D12Device2* device);
 	void UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uint8_t** pData);
 
 	int m_textureWidth = -1, m_textureHeight = -1;
@@ -45,7 +45,6 @@ private:
 	int m_channels = -1;
 	bool m_hasAlpha = false;
 	bool m_isCubemap = false;
-	int m_numSubresources = 1;
 
 	string m_filePath;
 };

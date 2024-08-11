@@ -20,7 +20,8 @@ public:
 	static void LoadJPG(string filePath, int& width, int& height, uint8_t** pData, int& channels);
 	static void LoadHDR(string filePath, int& width, int& height, vector<uint8_t*>& pDatas, int& channels);
 
-	static void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc, bool isCubemap = false);
+	static void CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
+	static void CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
 	static void CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
 	static void Shutdown();
