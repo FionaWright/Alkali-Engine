@@ -47,8 +47,10 @@ bool SceneBistro::LoadContent()
 	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
 	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());	
 
+	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
+
 	RootParamInfo rootParamInfo;
-	rootParamInfo.NumCBV_PerFrame = 4;
+	rootParamInfo.NumCBV_PerFrame = 5;
 	rootParamInfo.NumCBV_PerDraw = 2;
 	rootParamInfo.NumSRV = 7;
 	rootParamInfo.NumSRV_Dynamic = 1;

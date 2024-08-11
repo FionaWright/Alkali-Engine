@@ -16,7 +16,7 @@
 #include "AssetFactory.h"
 #include "AlkaliGUIManager.h"
 #include "ShadowManager.h"
-#include <SceneBedroom.h>
+#include <SceneChess.h>
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -48,8 +48,8 @@ Application::Application(HINSTANCE hInst)
     shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
     InitScene(bistroScene);
 
-    auto bedroomScene = std::make_shared<SceneBedroom>(L"Bedroom Scene", m_mainWindow.get());
-    InitScene(bedroomScene);
+    auto ChessScene = std::make_shared<SceneChess>(L"Chess Scene", m_mainWindow.get());
+    InitScene(ChessScene);
 
     AssignScene(testScene.get());
 

@@ -15,15 +15,15 @@ cbuffer CB : register(b0)
 float RadicalInverse_VdC(uint bits);
 float2 RNG_Hammersley(uint i, uint N);
 float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness);
-float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensions);
+float3 GetNormalFromTexCoord(uint face, uint2 texCoord, uint2 faceReso);
 
 [numthreads(8, 8, 1)]
 void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
 {    
-    uint2 dimensions;
-    DstTexture.GetDimensions(dimensions.x, dimensions.y);
+    uint2 faceReso;
+    DstTexture.GetDimensions(faceReso.x, faceReso.y);
     
-    float3 N = GetNormalFromCubemapCoordinates(Face, DTid.xy, dimensions);    
+    float3 N = GetNormalFromTexCoord(Face, DTid.xy, faceReso);
     float3 R = N;
     float3 V = R;
     
@@ -91,9 +91,10 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
     return normalize(sampleVec);
 }
 
-float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensions)
+float3 GetNormalFromTexCoord(uint face, uint2 texCoord, uint2 faceReso)
 {
-    float2 uv = (float2(texCoord) / float2(dimensions - 1)) * 2.0 - 1.0; // Range of [-1, 1]
+    float2 uv = (float2(texCoord) / float2(faceReso - 1)); 
+    uv = uv * 2.0f - 1.0f; // Range of [-1, 1]
 
     float3 normal;
     switch (face)

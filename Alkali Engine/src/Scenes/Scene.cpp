@@ -343,6 +343,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
 	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB), backBufferIndex);
+	ms_perFramePBRMat->SetCBV_PerFrame(4, &m_perFrameCBuffers.EnvMap, sizeof(EnvMapCB), backBufferIndex);
 
 	m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
 
