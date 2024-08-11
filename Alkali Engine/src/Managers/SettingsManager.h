@@ -18,7 +18,7 @@ constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 struct DX12Settings
 {
-	UINT DescriptorHeapSize = 30000;
+	UINT DescriptorHeapSize = 60000;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -50,6 +50,7 @@ struct MiscSettings
 	bool AutoMipLevelsEnabled = true;
 	int DefaultGlobalMipLevels = 3;
 	bool CubemapMipMapsEnabled = true;
+	bool RequireAlphaTextureForDoubleSided = true;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
 	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);
@@ -105,7 +106,7 @@ struct DynamicSettings
 	float UpdateTimeScale = 1.0f;
 
 	bool WireframeMode = false;
-	bool CullFaceEnabled = true;
+	bool CullBackFaceEnabled = true;
 
 	bool FrustumCullingEnabled = true;
 	bool DebugLinesEnabled = true;

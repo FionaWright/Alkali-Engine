@@ -128,6 +128,7 @@ bool SceneTest::LoadContent()
 	};
 
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
+	//argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
@@ -150,7 +151,7 @@ bool SceneTest::LoadContent()
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 
-	m_goTest = batchPBR->CreateGameObject("Test", modelSphere, shaderPBR, matPBR1);
+	m_goTest = batchPBR->CreateGameObject("World", modelSphere, shaderPBR, matPBR1);
 	m_goTest->SetPosition(-50, 3, -10);
 	m_goTest->SetScale(20);
 

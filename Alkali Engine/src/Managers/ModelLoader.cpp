@@ -906,7 +906,8 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	string nodeName(node.name);
 	nodeName = id + "::" + nodeName;
 
-	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
+	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
+	auto& shaderUsed = mat.doubleSided && alphaRequirementMet ? shaderCullOff : shader;
 	GameObject go(nodeName, model, shaderUsed, material);
 	go.SetTransform(transform);
 
