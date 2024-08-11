@@ -50,6 +50,8 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
 
+	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
+
 	//vector<string> skyboxPaths = {
 	//	"Skyboxes/Iceland/negx.tga",
 	//	"Skyboxes/Iceland/posx.tga",
@@ -60,7 +62,7 @@ bool SceneTest::LoadContent()
 	//};
 
 	RootParamInfo rootParamInfoPBR;
-	rootParamInfoPBR.NumCBV_PerFrame = 4;
+	rootParamInfoPBR.NumCBV_PerFrame = 5;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
 	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;

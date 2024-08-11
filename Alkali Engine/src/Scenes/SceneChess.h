@@ -2,10 +2,10 @@
 
 #include "Scene.h"
 
-class SceneBedroom : public Scene
+class SceneChess : public Scene
 {
 public:
-	SceneBedroom(const std::wstring& name, Window* pWindow);
+	SceneChess(const std::wstring& name, Window* pWindow);
 
 	virtual bool LoadContent() override;
 

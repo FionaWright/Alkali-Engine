@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "SceneBedroom.h"
+#include "SceneChess.h"
 #include "ImGUIManager.h"
 #include "ModelLoader.h"
 #include "ResourceTracker.h"
@@ -8,12 +8,12 @@
 #include "RootSig.h"
 #include "AssetFactory.h"
 
-SceneBedroom::SceneBedroom(const std::wstring& name, Window* pWindow)
+SceneChess::SceneChess(const std::wstring& name, Window* pWindow)
 	: Scene(name, pWindow, true)
 {
 }
 
-bool SceneBedroom::LoadContent()
+bool SceneChess::LoadContent()
 {
 	Scene::LoadContent();
 
@@ -37,8 +37,10 @@ bool SceneBedroom::LoadContent()
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
 
+	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
+
 	RootParamInfo rootParamInfoPBR;
-	rootParamInfoPBR.NumCBV_PerFrame = 4;
+	rootParamInfoPBR.NumCBV_PerFrame = 5;
 	rootParamInfoPBR.NumCBV_PerDraw = 2;
 	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
@@ -123,17 +125,17 @@ bool SceneBedroom::LoadContent()
 	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
 
-	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0, -1, 0);
+	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(1, -1, 0);
 
 	return true;
 }
 
-void SceneBedroom::UnloadContent()
+void SceneChess::UnloadContent()
 {
 	Scene::UnloadContent();
 }
 
-void SceneBedroom::OnUpdate(TimeEventArgs& e)
+void SceneChess::OnUpdate(TimeEventArgs& e)
 {
 	Scene::OnUpdate(e);
 
@@ -163,7 +165,7 @@ void SceneBedroom::OnUpdate(TimeEventArgs& e)
 	m_goSkybox->SetPosition(m_camera->GetWorldPosition());
 }
 
-void SceneBedroom::OnRender(TimeEventArgs& e)
+void SceneChess::OnRender(TimeEventArgs& e)
 {
 	Scene::OnRender(e);
 }

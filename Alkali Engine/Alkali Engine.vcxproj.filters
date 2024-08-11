@@ -229,7 +229,7 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scenes\SceneBedroom.cpp">
+    <ClCompile Include="src\Scenes\SceneChess.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -411,7 +411,7 @@
     <ClInclude Include="src\Scenes\SceneTest.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Scenes\SceneBedroom.h">
+    <ClInclude Include="src\Scenes\SceneChess.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>

@@ -48,6 +48,12 @@ struct ShadowMapPixel
 };
 ConstantBuffer<ShadowMapPixel> ShadowPixelCB : register(b5);
 
+struct EnvMap
+{
+    uint EnvMapMipLevels;
+};
+ConstantBuffer<EnvMap> EnvMapCB : register(b6);
+
 struct MaterialProperties
 {
     float3 BaseColorFactor;
@@ -142,8 +148,6 @@ float4 main(V_OUT input) : SV_Target
     float NdH = saturate(dot(N, H));
     float HdL = saturate(dot(H, -L));   
 
-    float envMapMipLevels = 12;
-
     float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
 
     //==============================================================         
@@ -158,7 +162,7 @@ float4 main(V_OUT input) : SV_Target
     float kS = max(0, F);
     float kD = (1.0f - kS);
 
-    float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * envMapMipLevels).rgb;
+    float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_sampler, float2(NdV, roughness), 0).rg;
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
 
