@@ -1,58 +1,99 @@
-Texture2DArray<float4> SrcTexture : register(t0);
-RWTexture2DArray<float4> DstTexture : register(u0);
+#define PI 3.141592654f
+#define SAMPLE_COUNT 1024u
+
+TextureCube<float4> SrcTexture : register(t0);
+RWTexture2D<float4> DstTexture : register(u0);
 SamplerState BilinearClamp : register(s0);
 
 cbuffer CB : register(b0)
 {
     float2 TexelSize;
+    float Roughness;
+    uint Face;
 }
 
+float RadicalInverse_VdC(uint bits);
+float2 RNG_Hammersley(uint i, uint N);
+float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness);
 float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensions);
 
 [numthreads(8, 8, 1)]
 void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
-{
-    //DstTexture[DTid] = float4(DTid, 1);
-    DstTexture[DTid] = float4(1, 0, 0, 1);
-    return;
-    
+{    
     uint2 dimensions;
-    int elements;
-    DstTexture.GetDimensions(dimensions.x, dimensions.y, elements);
+    DstTexture.GetDimensions(dimensions.x, dimensions.y);
     
-    float2 texcoordsC = TexelSize * (DTid.xy);
-    float2 texcoordsN = TexelSize * (DTid.xy + float2(0, 1));
-    float2 texcoordsE = TexelSize * (DTid.xy + float2(1, 0));
-    float2 texcoordsS = TexelSize * (DTid.xy + float2(0, -1));
-    float2 texcoordsW = TexelSize * (DTid.xy + float2(-1, 0));
+    float3 N = GetNormalFromCubemapCoordinates(Face, DTid.xy, dimensions);    
+    float3 R = N;
+    float3 V = R;
     
-    float3 dirC = GetNormalFromCubemapCoordinates(DTid.z, texcoordsC, dimensions);
-    float3 dirN = GetNormalFromCubemapCoordinates(DTid.z, texcoordsN, dimensions);
-    float3 dirE = GetNormalFromCubemapCoordinates(DTid.z, texcoordsE, dimensions);
-    float3 dirS = GetNormalFromCubemapCoordinates(DTid.z, texcoordsS, dimensions);
-    float3 dirW = GetNormalFromCubemapCoordinates(DTid.z, texcoordsW, dimensions);
+    //DstTexture[DTid.xy] = float4(N, 1);
+    //return;
 
-    float4 colorC = SrcTexture.Sample(BilinearClamp, dirC);
-    float4 colorN = SrcTexture.Sample(BilinearClamp, dirN);
-    float4 colorE = SrcTexture.Sample(BilinearClamp, dirE);
-    float4 colorS = SrcTexture.Sample(BilinearClamp, dirS);
-    float4 colorW = SrcTexture.Sample(BilinearClamp, dirW);
-    
-    colorN.rgb = pow(colorN.rgb, 2.2);
-    colorE.rgb = pow(colorE.rgb, 2.2);
-    colorS.rgb = pow(colorS.rgb, 2.2);
-    colorW.rgb = pow(colorW.rgb, 2.2);
-    colorC.rgb = pow(colorC.rgb, 2.2);
-    
-    float4 averagedColor = (colorN + colorE + colorS + colorW + colorC) / 5.0f;
-    averagedColor.rgb = pow(averagedColor.rgb, 1.0f / 2.2f);
+    float totalWeight = 0.0;
+    float3 prefilteredColor = float3(0.0, 0.0, 0.0);
 
-    DstTexture[DTid] = averagedColor;
+    for (uint i = 0u; i < SAMPLE_COUNT; ++i)
+    {
+        float2 Xi = RNG_Hammersley(i, SAMPLE_COUNT);
+        float3 H = ImportanceSampleGGX(Xi, N, Roughness);
+        float3 L = normalize(2.0 * dot(V, H) * H - V);
+
+        float NdotL = max(dot(N, L), 0.0);
+        if (NdotL > 0.0)
+        {
+            prefilteredColor += SrcTexture.Sample(BilinearClamp, L).rgb * NdotL;
+            totalWeight += NdotL;
+        }
+    }
+
+    prefilteredColor = prefilteredColor / totalWeight;
+    DstTexture[DTid.xy] = float4(prefilteredColor, 1.0);
+}
+    
+float RadicalInverse_VdC(uint bits)
+{
+    bits = (bits << 16u) | (bits >> 16u);
+    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+    return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+
+// Low discrepency psuedo random number generator
+float2 RNG_Hammersley(uint i, uint N)
+{
+    return float2(float(i) / float(N), RadicalInverse_VdC(i));
+}
+
+float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+	
+    float phi = 2.0 * PI * Xi.x;
+    float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a2 - 1.0) * Xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+	
+    // from spherical coordinates to cartesian coordinates
+    float3 H;
+    H.x = cos(phi) * sinTheta;
+    H.y = sin(phi) * sinTheta;
+    H.z = cosTheta;
+	
+    // from tangent-space vector to world-space sample vector
+    float3 up = abs(N.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
+    float3 tangent = normalize(cross(up, N));
+    float3 bitangent = cross(N, tangent);
+	
+    float3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    return normalize(sampleVec);
 }
 
 float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensions)
 {
-    float2 uv = (float2(texCoord) / float2(dimensions - 1)) * 2.0 - 1.0;
+    float2 uv = (float2(texCoord) / float2(dimensions - 1)) * 2.0 - 1.0; // Range of [-1, 1]
 
     float3 normal;
     switch (face)
@@ -75,6 +116,8 @@ float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensio
         case 5: // -Z
             normal = float3(-uv.x, -uv.y, -1.0);
             break;
+        default:
+            return 0;
     }
 
     return normalize(normal);

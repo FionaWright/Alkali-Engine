@@ -32,7 +32,7 @@ private:
 	static void InitIrradianceCS(ID3D12Device2* device);
 	static bool ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData);
 
-	static ID3D12RootSignature* ms_mipMapRootSig, * ms_irradianceRootSig;
+	static ID3D12RootSignature* ms_mipMapRootSig, * ms_mipMapRootSigCubemap, * ms_irradianceRootSig;
 	static ID3D12PipelineState* ms_mipMapPSO, *ms_mipMapPSOCubemap, * ms_irradiancePSO;
 
 	static int ms_descriptorSize;
