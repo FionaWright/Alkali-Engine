@@ -1,18 +1,19 @@
-TextureCube<float4> SrcTexture : register(t0);
+Texture2DArray<float4> SrcTexture : register(t0);
 RWTexture2DArray<float4> DstTexture : register(u0);
 SamplerState BilinearClamp : register(s0);
 
 cbuffer CB : register(b0)
 {
-    float2 TexelSize; 
+    float2 TexelSize;
 }
 
 float3 GetNormalFromCubemapCoordinates(uint face, uint2 texCoord, uint2 dimensions);
 
-[numthreads(8, 8, 6)]
+[numthreads(8, 8, 1)]
 void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
-{    
-    DstTexture[DTid] = float4(DTid, 1);
+{
+    //DstTexture[DTid] = float4(DTid, 1);
+    DstTexture[DTid] = float4(1, 0, 0, 1);
     return;
     
     uint2 dimensions;
@@ -44,7 +45,7 @@ void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
     colorC.rgb = pow(colorC.rgb, 2.2);
     
     float4 averagedColor = (colorN + colorE + colorS + colorW + colorC) / 5.0f;
-    averagedColor.rgb = pow(averagedColor.rgb, 1.0f / 2.2f);   
+    averagedColor.rgb = pow(averagedColor.rgb, 1.0f / 2.2f);
 
     DstTexture[DTid] = averagedColor;
 }

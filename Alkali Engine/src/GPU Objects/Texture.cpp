@@ -20,26 +20,26 @@ Texture::~Texture()
     }
 }
 
-void Texture::MakeTexDesc(UINT16 arraySize) 
+void Texture::MakeTexDesc(UINT16 arraySize)
 {
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
-    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2;
+    bool invalidCubemap = m_isCubemap && !SettingsManager::ms_Misc.CubemapMipMapsEnabled;
+    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2 || invalidCubemap;
 
-    if (invalidForMipMaps || (m_isCubemap && !SettingsManager::ms_Misc.CubemapMipMapsEnabled))
+    if (invalidForMipMaps)
         m_textureDesc.MipLevels = 1u;
     else if (SettingsManager::ms_Misc.AutoMipLevelsEnabled)
         m_textureDesc.MipLevels = static_cast<UINT16>(std::log2(std::max(m_textureWidth, m_textureHeight)) + 1.0);
     else
         m_textureDesc.MipLevels = SettingsManager::ms_Misc.DefaultGlobalMipLevels;
 
-    DXGI_FORMAT format =
+    m_textureDesc.Format =
         m_channels == 4 ? DXGI_FORMAT_R8G8B8A8_UNORM :
         m_channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM :
         m_channels == 2 ? DXGI_FORMAT_R8G8_UNORM :
         DXGI_FORMAT_R8_UNORM;
 
-    m_textureDesc.Format = format;
     m_textureDesc.Width = m_textureWidth;
     m_textureDesc.Height = m_textureHeight;
     m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -49,15 +49,13 @@ void Texture::MakeTexDesc(UINT16 arraySize)
     m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
-void Texture::CreateResources(ID3D12Device2* device, int numSubresources)
+void Texture::CreateResources(ID3D12Device2* device)
 {
-    m_numSubresources = numSubresources;
-
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureResource));
     ThrowIfFailed(hr);
 
-    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, numSubresources);
+    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 1) * m_textureDesc.DepthOrArraySize;
 
     heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
@@ -72,21 +70,25 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uin
     int bytesPerRow = channelsPerRow * sizeof(uint8_t);
     int totalBytes = bytesPerRow * m_textureHeight;
 
-    vector< D3D12_SUBRESOURCE_DATA> subresources(m_numSubresources);
+    UINT immediateOffset = 0;
 
-    for (int i = 0; i < m_numSubresources; i++)
+    for (int a = 0; a < m_textureDesc.DepthOrArraySize; a++)
     {
-        subresources[i].pData = pData[i];
-        subresources[i].RowPitch = bytesPerRow;
-        subresources[i].SlicePitch = totalBytes;
-    }    
+        int mip = 0;
+        UINT subresourceIndex = D3D12CalcSubresource(mip, a, 0, m_textureDesc.MipLevels, m_textureDesc.DepthOrArraySize);
 
-    UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), 0, 0, m_numSubresources, subresources.data());    
+        D3D12_SUBRESOURCE_DATA subresource = {};
+        subresource.pData = pData[a];
+        subresource.RowPitch = bytesPerRow;
+        subresource.SlicePitch = totalBytes;
 
-    for (int i = 0; i < m_numSubresources; i++)
-    {
-        delete[] pData[i];
+        UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), immediateOffset, subresourceIndex, 1, &subresource);
+
+        immediateOffset += GetRequiredIntermediateSize(m_textureResource.Get(), subresourceIndex, 1);
     }
+
+    for (int a = 0; a < m_textureDesc.DepthOrArraySize; a++)
+        delete[] pData[a];
 }
 
 void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
@@ -101,7 +103,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
 
     MakeTexDesc(1);
 
-    CreateResources(device, 1);
+    CreateResources(device);
 
     UploadResources(commandListDirect, &pData);
 
@@ -123,8 +125,9 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
 {
     auto device = d3d->GetDevice();
 
+    m_filePath = filePaths.at(0);
     m_isCubemap = true;
-    
+
     if (filePaths.size() != 6)
         throw std::exception("Invalid cubemap parameters");
 
@@ -154,7 +157,7 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
 
     MakeTexDesc(6);
 
-    CreateResources(device, 6);
+    CreateResources(device);
 
     UploadResources(commandListDirect, textureDatas.data());
 
@@ -164,7 +167,7 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
     if (m_textureDesc.MipLevels > 1)
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc, true);
+        TextureLoader::CreateMipMapsCubemap(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
@@ -176,6 +179,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
 {
     auto device = d3d->GetDevice();
 
+    m_filePath = filePath;
     m_isCubemap = true;
 
     vector<uint8_t*> textureDatas(6);
@@ -187,7 +191,9 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
 
     MakeTexDesc(6);
 
-    CreateResources(device, 6);
+    m_textureDesc.MipLevels = 2;
+
+    CreateResources(device);
 
     UploadResources(commandListDirect, textureDatas.data());
 
@@ -197,7 +203,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
     if (m_textureDesc.MipLevels > 1)
     {
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc, true);
+        TextureLoader::CreateMipMapsCubemap(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
         ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
@@ -220,16 +226,16 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_textureResource));
-    ThrowIfFailed(hr);   
+    ThrowIfFailed(hr);
 }
 
 void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, size_t heapOffset)
-{   
+{
     auto device = d3d->GetDevice();
 
     UINT incrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE heapStart = heap->GetCPUDescriptorHandleForHeapStart(); 
+    D3D12_CPU_DESCRIPTOR_HANDLE heapStart = heap->GetCPUDescriptorHandleForHeapStart();
 
     // Assign SRV to material heap
     {
@@ -242,7 +248,7 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, siz
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(heapStart, static_cast<INT>(heapOffset), incrementSize);
         device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvHandle);
-    }    
+    }
 }
 
 bool Texture::GetHasAlpha()
