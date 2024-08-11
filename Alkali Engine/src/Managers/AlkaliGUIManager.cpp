@@ -90,7 +90,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
 
 				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
-				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullFaceEnabled);
+				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullBackFaceEnabled);
 
 				if (wireframeChanged || cullChanged)
 				{

@@ -167,7 +167,7 @@ float4 main(V_OUT input) : SV_Target
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
-    float3 specular = specularDFG * DirLightCB.LightColor * kS;    
+    float3 specular = specularDFG * DirLightCB.LightColor;    // Remove kS
     
     float3 diffuse = irradiance * kD * albedo * DirLightCB.LightColor * NdL;  
     diffuse *= 1 - metalness;    
