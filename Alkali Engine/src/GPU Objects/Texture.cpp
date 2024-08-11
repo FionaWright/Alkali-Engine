@@ -191,7 +191,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
 
     MakeTexDesc(6);
 
-    m_textureDesc.MipLevels = 2;
+    //m_textureDesc.MipLevels = 2;
 
     CreateResources(device);
 

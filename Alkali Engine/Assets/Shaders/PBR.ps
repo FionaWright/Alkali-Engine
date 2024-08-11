@@ -160,7 +160,7 @@ float4 main(V_OUT input) : SV_Target
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * envMapMipLevels).rgb;
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_sampler, float2(NdV, roughness), 0).rg;
-    float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g); // Temporarily disabled 
+    float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * DirLightCB.LightColor * kS;    
@@ -170,7 +170,7 @@ float4 main(V_OUT input) : SV_Target
 
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
-    float3 Lo = diffuse + specular + ambient;
+    float3 Lo = diffuse + specular + ambient + indirectSpecular;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);
