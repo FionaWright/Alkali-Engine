@@ -170,3 +170,8 @@ bool XOR(bool a, bool b)
 {
     return !a != !b;
 }
+
+bool Approx(float a, float b)
+{
+    return abs(a - b) < 0.001f;
+}

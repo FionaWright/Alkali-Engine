@@ -58,6 +58,8 @@ bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool 
 
 bool XOR(bool a, bool b);
 
+bool Approx(float a, float b);
+
 template <typename T>
 bool Contains(vector<T>& v, T& obj)
 {
