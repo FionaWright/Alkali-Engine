@@ -127,7 +127,7 @@ bool Scene::LoadContent()
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
 
 	m_rootSigLine = std::make_shared<RootSig>();
-	m_rootSigLine->InitDefaultSampler("Line Root Sig", m_rpiLine);
+	m_rootSigLine->Init("Line Root Sig", m_rpiLine, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{
@@ -198,7 +198,7 @@ bool Scene::LoadContent()
 	m_viewDepthRPI.ParamIndexSRV_Dynamic = 1;
 
 	m_viewDepthRootSig = std::make_shared<RootSig>();
-	m_viewDepthRootSig->InitDefaultSampler("Depth Buffer Root Sig", m_viewDepthRPI);
+	m_viewDepthRootSig->Init("Depth Buffer Root Sig", m_viewDepthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
 	{

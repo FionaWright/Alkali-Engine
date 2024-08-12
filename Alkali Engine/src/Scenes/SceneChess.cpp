@@ -49,8 +49,16 @@ bool SceneChess::LoadContent()
 	rootParamInfoPBR.ParamIndexSRV = 2;
 	rootParamInfoPBR.ParamIndexSRV_Dynamic = 3;
 
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2];
+	samplerDesc[0] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].ShaderRegister = 1;
+
 	auto rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfoPBR);
+	rootSigPBR->Init("PBR Root Sig", rootParamInfoPBR, samplerDesc, _countof(samplerDesc));
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{
@@ -86,7 +94,7 @@ bool SceneChess::LoadContent()
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
 	auto rootSigSkybox = std::make_shared<RootSig>();
-	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
+	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { skyboxTex };

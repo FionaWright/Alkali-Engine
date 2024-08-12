@@ -98,7 +98,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 		viewRPI.ParamIndexSRV_Dynamic = 1;
 
 		ms_viewRootSig = std::make_shared<RootSig>();
-		ms_viewRootSig->InitDefaultSampler("View Shadow Map RS", viewRPI);
+		ms_viewRootSig->Init("View Shadow Map RS", viewRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 		ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, ms_viewRootSig->GetRootSigResource() };
 		viewArgs.CullNone = true;
