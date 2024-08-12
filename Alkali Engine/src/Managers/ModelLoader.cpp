@@ -781,6 +781,34 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
 }
 
+string LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int textureIndex)
+{
+	fastgltf::Texture& tex = asset->textures[textureIndex];
+	fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+	if (image.data.index() == 2)
+	{
+		string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+		size_t slashIndex = texName.find_last_of('/');
+
+		if (slashIndex != std::string::npos)
+			return texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+
+		return texName;
+	}
+
+	if (image.data.index() == 1)
+	{
+		auto& bufferViewInfo = std::get<fastgltf::sources::BufferView>(image.data);
+		if (bufferViewInfo.mimeType != fastgltf::MimeType::PNG)
+			throw std::exception("GLB Mime type not supported");
+
+		return std::string(image.name) + ".png";
+	}
+
+	return "";
+}
+
 void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
 {
 	shared_ptr<Model> model;
@@ -793,92 +821,30 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 	string diffuseTexPath = "";
 	if (mat.pbrData.baseColorTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.pbrData.baseColorTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		diffuseTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.baseColorTexture.value().textureIndex);
+	else
+		diffuseTexPath = "WhitePOT.png";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
-
-			if (slashIndex != std::string::npos)
-				diffuseTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				diffuseTexPath = texName;
-		}
-	}
+	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(diffuseTexPath, commandList);
 
 	string normalTexPath = "";
 	if (mat.normalTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.normalTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		normalTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.normalTexture.value().textureIndex);
+	else
+		normalTexPath = "DefaultNormal.tga";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
-
-			if (slashIndex != std::string::npos)
-				normalTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				normalTexPath = texName;
-		}
-	}
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(normalTexPath, commandList, false, true);
 
 	string specTexPath = "";
 	if (mat.specular && mat.specular.get()->specularTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.specular.get()->specularTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		specTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.specular.get()->specularTexture.value().textureIndex);
+	else if (mat.pbrData.metallicRoughnessTexture.has_value())
+		specTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.metallicRoughnessTexture.value().textureIndex);	
+	else
+		specTexPath = "MetalRoughSpheres/Spheres_MetalRough.png";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, commandList);
 
-			if (slashIndex != std::string::npos)
-				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				specTexPath = texName;
-		}
-	}
-
-	if (specTexPath == "" && mat.pbrData.metallicRoughnessTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
-
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
-
-			if (slashIndex != std::string::npos)
-				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				specTexPath = texName;
-		}
-	}
-
-	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
-	if (diffuseTexPath == "")
-		texFullFilePath = "WhitePOT.png";
-
-	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(texFullFilePath, commandList);
-	
-	string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
-	if (normalTexPath == "")
-		texNormalFullFilePath = "DefaultNormal.tga";
-
-	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(texNormalFullFilePath, commandList, false, true);
-
-	string specFullFilePath = modelNameExtensionless + "/" + specTexPath;
-	if (specTexPath == "")
-		specFullFilePath = "MetalRoughSpheres/Spheres_MetalRough.png";
-
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandList);
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandList);
 
@@ -894,7 +860,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 
 	MaterialPropertiesCB matProperties;
 	matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
-	matProperties.Roughness = mat.pbrData.roughnessFactor;
+	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410) ? 1.0f : mat.pbrData.roughnessFactor;
 	matProperties.AlphaCutoff = mat.alphaCutoff;
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;

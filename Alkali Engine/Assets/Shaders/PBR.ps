@@ -137,6 +137,11 @@ float4 main(V_OUT input) : SV_Target
     float roughness = occlusionRoughnessMetallic.g * MatPropCB.Roughness;
     float metalness = occlusionRoughnessMetallic.b * MatPropCB.Metallic;
 
+    //return float4(MatPropCB.Roughness.xxx, 1);
+    //return float4(roughness.xxx, 1);
+    //return float4(occlusionRoughnessMetallic.ggg, 1);
+    //return float4(metalness.xxx, 1);
+
     float3 N = normalize(normalTangentSpace.x * input.Tangent + normalTangentSpace.y * input.Binormal + normalTangentSpace.z * input.Normal);    
     float3 L = normalize(DirLightCB.LightDirection);
     float3 V = normalize(input.ViewDirection);
@@ -176,9 +181,7 @@ float4 main(V_OUT input) : SV_Target
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
     float3 Lo = diffuse + specular + ambient + indirectSpecular;
-    //Lo = float3(brdfInt.xy, 0);
-    //Lo = float3(saturate(float2(roughness, 0)), 0);
-    //Lo = indirectSpecular;
+    //float3 Lo = diffuse + specular + ambient;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);
