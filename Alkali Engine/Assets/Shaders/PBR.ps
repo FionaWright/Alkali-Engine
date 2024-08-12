@@ -77,6 +77,7 @@ Texture2D g_brdfIntMap : register(t6);
 Texture2D g_shadowMap : register(t7);
 
 SamplerState g_sampler : register(s0);
+SamplerState g_samplerClamp : register(s1);
 
 float D_GGX(float NdH, float roughness);
 float3 F_Schlick(float cosTheta, float3 F0);
@@ -163,7 +164,7 @@ float4 main(V_OUT input) : SV_Target
     float kD = (1.0f - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
-    float2 brdfInt = g_brdfIntMap.SampleLevel(g_sampler, float2(NdV, roughness), 0).rg;
+    float2 brdfInt = g_brdfIntMap.SampleLevel(g_samplerClamp, saturate(float2(max(NdV, 0), roughness)), 0).rg;
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
@@ -175,6 +176,9 @@ float4 main(V_OUT input) : SV_Target
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
     float3 Lo = diffuse + specular + ambient + indirectSpecular;
+    //Lo = float3(brdfInt.xy, 0);
+    //Lo = float3(saturate(float2(roughness, 0)), 0);
+    //Lo = indirectSpecular;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);

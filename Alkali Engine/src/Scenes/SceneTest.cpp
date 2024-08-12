@@ -71,8 +71,16 @@ bool SceneTest::LoadContent()
 	rootParamInfoPBR.ParamIndexSRV = 2;	
 	rootParamInfoPBR.ParamIndexSRV_Dynamic = 3;
 
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2];
+	samplerDesc[0] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].ShaderRegister = 1;
+
 	auto rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfoPBR);
+	rootSigPBR->Init("PBR Root Sig", rootParamInfoPBR, samplerDesc, _countof(samplerDesc));
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -81,7 +89,7 @@ bool SceneTest::LoadContent()
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
 	auto rootSigSkybox = std::make_shared<RootSig>();
-	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
+	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
@@ -147,7 +155,7 @@ bool SceneTest::LoadContent()
 
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
-	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
+	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 

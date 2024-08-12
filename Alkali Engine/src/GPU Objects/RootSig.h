@@ -24,9 +24,8 @@ public:
 	RootSig();
 	~RootSig();
 
-	void Init(const string& name, const RootParamInfo& rpi, D3D12_STATIC_SAMPLER_DESC* samplerDesc, int samplerCount);
+	void Init(const string& name, const RootParamInfo& rpi, const D3D12_STATIC_SAMPLER_DESC* samplerDesc, int samplerCount);
 	void Init(const string& name, const RootParamInfo& rpi);
-	void InitDefaultSampler(const string& name, const RootParamInfo& rpi);
 
 	ID3D12RootSignature* GetRootSigResource();
 	RootParamInfo& GetRootParamInfo();

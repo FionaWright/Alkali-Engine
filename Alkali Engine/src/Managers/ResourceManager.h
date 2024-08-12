@@ -9,7 +9,7 @@ public:
 
 	static void UploadCommittedResource(ID3D12GraphicsCommandList2* commandList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData);
 
-	static ComPtr<ID3D12RootSignature> CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, D3D12_STATIC_SAMPLER_DESC* pSamplers = nullptr, UINT samplerCount = 0);
+	static ComPtr<ID3D12RootSignature> CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, const D3D12_STATIC_SAMPLER_DESC* pSamplers = nullptr, UINT samplerCount = 0);
 
 	static void TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, UINT subresource = 4294967295U);
 

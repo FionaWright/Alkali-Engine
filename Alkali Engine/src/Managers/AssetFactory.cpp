@@ -127,7 +127,7 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
 
 	shared_ptr<RootSig> rootSig = std::make_shared<RootSig>();
-	rootSig->InitDefaultSampler("Root Sig Cubes", rootParamInfo);
+	rootSig->Init("Root Sig Cubes", rootParamInfo, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{

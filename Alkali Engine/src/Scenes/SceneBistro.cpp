@@ -59,8 +59,16 @@ bool SceneBistro::LoadContent()
 	rootParamInfo.ParamIndexSRV = 2;
 	rootParamInfo.ParamIndexSRV_Dynamic = 3;
 
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2];
+	samplerDesc[0] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].ShaderRegister = 1;
+
 	shared_ptr<RootSig> rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfo);
+	rootSigPBR->Init("PBR Root Sig", rootParamInfo, samplerDesc, _countof(samplerDesc));
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -69,7 +77,7 @@ bool SceneBistro::LoadContent()
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
 	shared_ptr<RootSig> rootSigSkybox = std::make_shared<RootSig>();
-	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
+	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { skyboxTex };

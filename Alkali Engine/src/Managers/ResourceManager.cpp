@@ -41,7 +41,7 @@ void ResourceManager::UploadCommittedResource(ID3D12GraphicsCommandList2* comman
     UpdateSubresources(commandList, pDestinationResource.Get(), *pIntermediateResource, offset, startIndex, resourceCount, &subresourceData);
 }
 
-ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount)
+ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, const D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount)
 {
 	HRESULT hr;
 
@@ -68,7 +68,17 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 	ComPtr<ID3DBlob> rootSignatureBlob;
 	ComPtr<ID3DBlob> errorBlob;
 	hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob);
-	ThrowIfFailed(hr);
+    if (FAILED(hr))
+    {
+        if (errorBlob)
+        {
+            std::string errorMsg = static_cast<char*>(errorBlob->GetBufferPointer());
+            std::wstring wideErrorMsg(errorMsg.begin(), errorMsg.end());
+            wideErrorMsg = L"RootSig Error: " + wideErrorMsg;
+            OutputDebugStringW(wideErrorMsg.c_str());
+        }
+        throw std::exception();
+    }
 
 	ComPtr<ID3D12RootSignature> rootSig;
 	hr = gs_device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig));

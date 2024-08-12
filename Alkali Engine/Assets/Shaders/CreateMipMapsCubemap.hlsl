@@ -27,7 +27,7 @@ void GenerateMipMaps(uint3 DTid : SV_DispatchThreadID)
     float3 R = N;
     float3 V = R;
     
-    //DstTexture[DTid.xy] = float4(N, 1);
+    //DstTexture[DTid.xy] = float4(abs(N), 1);
     //return;
 
     float totalWeight = 0.0;
@@ -120,6 +120,6 @@ float3 GetNormalFromTexCoord(uint face, uint2 texCoord, uint2 faceReso)
         default:
             return 0;
     }
-
+    
     return normalize(normal);
 }

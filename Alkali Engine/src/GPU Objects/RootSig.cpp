@@ -15,7 +15,7 @@ RootSig::~RootSig()
 {
 }
 
-void RootSig::Init(const string& name, const RootParamInfo& rpi, D3D12_STATIC_SAMPLER_DESC* samplerDesc, int samplerCount)
+void RootSig::Init(const string& name, const RootParamInfo& rpi, const D3D12_STATIC_SAMPLER_DESC* samplerDesc, int samplerCount)
 {
 	m_rpi = rpi;
 	m_name = name + " [" + 
@@ -71,26 +71,6 @@ void RootSig::Init(const string& name, const RootParamInfo& rpi, D3D12_STATIC_SA
 void RootSig::Init(const string& name, const RootParamInfo& rpi)
 {
 	Init(name, rpi, nullptr, 0);
-}
-
-void RootSig::InitDefaultSampler(const string& name, const RootParamInfo& rpi)
-{
-	D3D12_STATIC_SAMPLER_DESC sampler[1];
-	sampler[0].Filter = SettingsManager::ms_DX12.SamplerFilterDefault;
-	sampler[0].AddressU = SettingsManager::ms_DX12.SamplerAddressModeDefault;
-	sampler[0].AddressV = SettingsManager::ms_DX12.SamplerAddressModeDefault;
-	sampler[0].AddressW = SettingsManager::ms_DX12.SamplerAddressModeDefault;
-	sampler[0].MipLODBias = 0;
-	sampler[0].MaxAnisotropy = SettingsManager::ms_DX12.SamplerMaxAnisotropicDefault;
-	sampler[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	sampler[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler[0].MinLOD = 0.0f;
-	sampler[0].MaxLOD = D3D12_FLOAT32_MAX;
-	sampler[0].ShaderRegister = 0;
-	sampler[0].RegisterSpace = 0;
-	sampler[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	Init(name, rpi, sampler, 1);
 }
 
 ID3D12RootSignature* RootSig::GetRootSigResource()
