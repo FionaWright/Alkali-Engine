@@ -46,7 +46,7 @@ void ImGUIManager::Begin()
 	ms_currentlyRendering = true;
 }
 
-void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
+void ImGUIManager::Render(ID3D12GraphicsCommandList* cmdList)
 {
 	if (!SettingsManager::ms_Misc.ImGuiEnabled || !ms_currentlyRendering)
 		return;
@@ -55,9 +55,9 @@ void ImGUIManager::Render(ID3D12GraphicsCommandList* commandList)
 	ImGui::Render();
 
 	ID3D12DescriptorHeap* pDescHeap = ms_descHeapSRV.Get();
-	commandList->SetDescriptorHeaps(1, &pDescHeap);
+	cmdList->SetDescriptorHeaps(1, &pDescHeap);
 
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 
 	ms_currentlyRendering = false;
 }

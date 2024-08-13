@@ -63,7 +63,7 @@ void Texture::CreateResources(ID3D12Device2* device)
     ThrowIfFailed(hr);
 }
 
-void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uint8_t** pData)
+void Texture::UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t** pData)
 {
     int realChannels = m_channels == 3 ? 4 : m_channels;
     int channelsPerRow = m_textureWidth * realChannels;
@@ -82,7 +82,7 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uin
         subresource.RowPitch = bytesPerRow;
         subresource.SlicePitch = totalBytes;
 
-        UpdateSubresources(commandListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), immediateOffset, subresourceIndex, 1, &subresource);
+        UpdateSubresources(cmdListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), immediateOffset, subresourceIndex, 1, &subresource);
 
         immediateOffset += GetRequiredIntermediateSize(m_textureResource.Get(), subresourceIndex, 1);
     }
@@ -91,7 +91,7 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uin
         delete[] pData[a];
 }
 
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
 {
     auto device = d3d->GetDevice();
 
@@ -105,23 +105,23 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect,
 
     CreateResources(device);
 
-    UploadResources(commandListDirect, &pData);
+    UploadResources(cmdListDirect, &pData);
 
     wstring debugName(filePath.begin(), filePath.end());
     m_textureResource->SetName(debugName.c_str());
 
     if (m_textureDesc.MipLevels > 1)
     {
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        TextureLoader::CreateMipMaps(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        TextureLoader::CreateMipMaps(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
+    ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
-void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, vector<string>& filePaths, bool flipUpsideDown)
+void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, vector<string>& filePaths, bool flipUpsideDown)
 {
     auto device = d3d->GetDevice();
 
@@ -159,23 +159,23 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList
 
     CreateResources(device);
 
-    UploadResources(commandListDirect, textureDatas.data());
+    UploadResources(cmdListDirect, textureDatas.data());
 
     wstring debugName(L"Unnamed Cubemap");
     m_textureResource->SetName(debugName.c_str());
 
     if (m_textureDesc.MipLevels > 1)
     {
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        TextureLoader::CreateMipMapsCubemap(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        TextureLoader::CreateMipMapsCubemap(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
+    ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
-void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown)
+void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown)
 {
     auto device = d3d->GetDevice();
 
@@ -193,20 +193,20 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandL
 
     CreateResources(device);
 
-    UploadResources(commandListDirect, textureDatas.data());
+    UploadResources(cmdListDirect, textureDatas.data());
 
     wstring debugName(L"Unnamed Cubemap");
     m_textureResource->SetName(debugName.c_str());
 
     if (m_textureDesc.MipLevels > 1)
     {
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        TextureLoader::CreateMipMapsCubemap(d3d, commandListDirect, m_textureResource.Get(), m_textureDesc);
-        ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        TextureLoader::CreateMipMapsCubemap(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
+        ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
 
-    ResourceManager::TransitionResource(commandListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
+    ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)

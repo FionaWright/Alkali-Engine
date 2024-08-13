@@ -999,7 +999,7 @@ void TextureLoader::LoadHDR(string filePath, int& width, int& height, vector<uin
     StoreBinTex(binTexPath5, width, height, pDatas[5], false, channels, false, false);
 }
 
-void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc)
+void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc)
 {
     auto device = d3d->GetDevice();
 
@@ -1028,9 +1028,9 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
     ThrowIfFailed(hr);
     ms_trackedDescHeaps.push_back(heapForCS);
 
-    commandListDirect->SetComputeRootSignature(ms_mipMapRootSig);
-    commandListDirect->SetDescriptorHeaps(1, &heapForCS);
-    commandListDirect->SetPipelineState(ms_mipMapPSO);
+    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSig);
+    cmdListDirect->SetDescriptorHeaps(1, &heapForCS);
+    cmdListDirect->SetPipelineState(ms_mipMapPSO);
 
     auto cpuHandle = heapForCS->GetCPUDescriptorHandleForHeapStart();
     auto gpuHandle = heapForCS->GetGPUDescriptorHandleForHeapStart();
@@ -1047,10 +1047,10 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
             float texelWidth = 1.0f / float(dstWidth);
             float texelHeight = 1.0f / float(dstHeight);
 
-            commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelWidth), 0);
-            commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelHeight), 1);
+            cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelWidth), 0);
+            cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelHeight), 1);
             if (SettingsManager::ms_Dynamic.MipMapDebugMode)
-                commandListDirect->SetComputeRoot32BitConstant(0, mip, 2);
+                cmdListDirect->SetComputeRoot32BitConstant(0, mip, 2);
         }
 
         srcSRVDesc.Texture2D.MipLevels = 1;
@@ -1067,17 +1067,17 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* com
         device->CreateShaderResourceView(pResource, &srcSRVDesc, cpuHandleSrc);
         device->CreateUnorderedAccessView(pResource, nullptr, &dstUAVDesc, cpuHandleDst);
 
-        commandListDirect->SetComputeRootDescriptorTable(1, gpuHandleSrc);
-        commandListDirect->SetComputeRootDescriptorTable(2, gpuHandleDst);
+        cmdListDirect->SetComputeRootDescriptorTable(1, gpuHandleSrc);
+        cmdListDirect->SetComputeRootDescriptorTable(2, gpuHandleDst);
 
-        commandListDirect->Dispatch(std::max(dstWidth / 8, 1), std::max(dstHeight / 8, 1), 1);
+        cmdListDirect->Dispatch(std::max(dstWidth / 8, 1), std::max(dstHeight / 8, 1), 1);
 
         auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(pResource);
-        commandListDirect->ResourceBarrier(1, &uavBarrier);
+        cmdListDirect->ResourceBarrier(1, &uavBarrier);
     }
 }
 
-void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc)
+void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc)
 {
     auto device = d3d->GetDevice();
 
@@ -1112,9 +1112,9 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
     ThrowIfFailed(hr);
     ms_trackedDescHeaps.push_back(heapForCS);
 
-    commandListDirect->SetComputeRootSignature(ms_mipMapRootSigCubemap);
-    commandListDirect->SetDescriptorHeaps(1, &heapForCS);
-    commandListDirect->SetPipelineState(ms_mipMapPSOCubemap);
+    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSigCubemap);
+    cmdListDirect->SetDescriptorHeaps(1, &heapForCS);
+    cmdListDirect->SetPipelineState(ms_mipMapPSOCubemap);
 
     auto cpuHandle = heapForCS->GetCPUDescriptorHandleForHeapStart();
     auto gpuHandle = heapForCS->GetGPUDescriptorHandleForHeapStart();
@@ -1126,7 +1126,7 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandleSrc(gpuHandle, 0, ms_descriptorSize);
 
     device->CreateShaderResourceView(pResource, &srcSRVDesc, cpuHandleSrc);
-    commandListDirect->SetComputeRootDescriptorTable(1, gpuHandleSrc);
+    cmdListDirect->SetComputeRootDescriptorTable(1, gpuHandleSrc);
 
     for (int arraySlice = 0; arraySlice < 6; arraySlice++)
     {
@@ -1140,10 +1140,10 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
                 float texelHeight = 1.0f / float(dstHeight);
                 float roughness = mip / float(texDesc.MipLevels - 2);
 
-                commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelWidth), 0);
-                commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelHeight), 1);
-                commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&roughness), 2);
-                commandListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&arraySlice), 3);
+                cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelWidth), 0);
+                cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&texelHeight), 1);
+                cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&roughness), 2);
+                cmdListDirect->SetComputeRoot32BitConstant(0, *reinterpret_cast<UINT*>(&arraySlice), 3);
             }
 
             dstUAVDesc.Texture2DArray.MipSlice = mip + 1;   
@@ -1157,17 +1157,17 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
             
             device->CreateUnorderedAccessView(pResource, nullptr, &dstUAVDesc, cpuHandleDst);
             
-            commandListDirect->SetComputeRootDescriptorTable(2, gpuHandleDst);
+            cmdListDirect->SetComputeRootDescriptorTable(2, gpuHandleDst);
 
-            commandListDirect->Dispatch(std::max(dstWidth / 8, 1), std::max(dstHeight / 8, 1), 1);
+            cmdListDirect->Dispatch(std::max(dstWidth / 8, 1), std::max(dstHeight / 8, 1), 1);
 
             auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(pResource);
-            commandListDirect->ResourceBarrier(1, &uavBarrier);
+            cmdListDirect->ResourceBarrier(1, &uavBarrier);
         }
     }
 }
 
-void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource)
+void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource)
 {
     auto device = d3d->GetDevice();
 
@@ -1196,9 +1196,9 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
     device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap));
     ms_trackedDescHeaps.push_back(descriptorHeap);
 
-    commandListDirect->SetComputeRootSignature(ms_irradianceRootSig);
-    commandListDirect->SetPipelineState(ms_irradiancePSO);
-    commandListDirect->SetDescriptorHeaps(1, &descriptorHeap);
+    cmdListDirect->SetComputeRootSignature(ms_irradianceRootSig);
+    cmdListDirect->SetPipelineState(ms_irradiancePSO);
+    cmdListDirect->SetDescriptorHeaps(1, &descriptorHeap);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
     CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
@@ -1207,16 +1207,16 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
     currentCPUHandle.Offset(1, ms_descriptorSize);
     device->CreateUnorderedAccessView(dstResource, nullptr, &destTextureUAVDesc, currentCPUHandle);
 
-    commandListDirect->SetComputeRootDescriptorTable(0, currentGPUHandle);
+    cmdListDirect->SetComputeRootDescriptorTable(0, currentGPUHandle);
     currentGPUHandle.Offset(1, ms_descriptorSize);
-    commandListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
+    cmdListDirect->SetComputeRootDescriptorTable(1, currentGPUHandle);
     currentGPUHandle.Offset(1, ms_descriptorSize);
 
     int threads = SettingsManager::ms_Misc.IrradianceMapResolution / 8;
 
-    commandListDirect->Dispatch(threads, threads, 1);
+    cmdListDirect->Dispatch(threads, threads, 1);
 
-    ResourceManager::TransitionResource(commandListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+    ResourceManager::TransitionResource(cmdListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void TextureLoader::Shutdown()

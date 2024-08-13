@@ -17,7 +17,7 @@ void ResourceManager::CreateCommittedResourceAsCommon(ComPtr<ID3D12Resource>& pD
     ThrowIfFailed(hresult);
 }
 
-void ResourceManager::UploadCommittedResource(ID3D12GraphicsCommandList2* commandList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData)
+void ResourceManager::UploadCommittedResource(ID3D12GraphicsCommandList2* cmdList, ComPtr<ID3D12Resource>& pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData)
 {
     assert(gs_device);
 
@@ -38,7 +38,7 @@ void ResourceManager::UploadCommittedResource(ID3D12GraphicsCommandList2* comman
     UINT64 offset = 0;
     UINT startIndex = 0;
     UINT resourceCount = 1;
-    UpdateSubresources(commandList, pDestinationResource.Get(), *pIntermediateResource, offset, startIndex, resourceCount, &subresourceData);
+    UpdateSubresources(cmdList, pDestinationResource.Get(), *pIntermediateResource, offset, startIndex, resourceCount, &subresourceData);
 }
 
 ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, const D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount)
@@ -87,10 +87,10 @@ ComPtr<ID3D12RootSignature> ResourceManager::CreateRootSignature(CD3DX12_ROOT_PA
 	return rootSig;
 }
 
-void ResourceManager::TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, UINT subresource)
+void ResourceManager::TransitionResource(ID3D12GraphicsCommandList2* cmdList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, UINT subresource)
 {
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState, subresource);
-	commandList->ResourceBarrier(1, &barrier);
+	cmdList->ResourceBarrier(1, &barrier);
 }
 
 ComPtr<ID3D12DescriptorHeap> ResourceManager::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)

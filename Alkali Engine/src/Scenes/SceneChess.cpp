@@ -21,7 +21,7 @@ bool SceneChess::LoadContent()
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();	
+	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();	
 
 	vector<string> skyboxPaths = {
 		"Skyboxes/Iceland/negx.tga",
@@ -32,10 +32,10 @@ bool SceneChess::LoadContent()
 		"Skyboxes/Iceland/posz.tga"
 	};
 
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
-	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
 
 	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
@@ -85,7 +85,7 @@ bool SceneChess::LoadContent()
 	Transform t = { XMFLOAT3_ZERO, XMFLOAT3_ZERO, Mult(XMFLOAT3_ONE, 40) };
 	//vector<string> whiteList = { "Pawn_Body_W1", "Pawn_Top_W1"};
 	vector<string> whiteList = { };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Chess.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Chess.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList, t);
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -100,7 +100,7 @@ bool SceneChess::LoadContent()
 	vector<shared_ptr<Texture>> textures = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
@@ -114,11 +114,11 @@ bool SceneChess::LoadContent()
 		if (!commandQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
+		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
@@ -130,7 +130,7 @@ bool SceneChess::LoadContent()
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(1, -1, 0);

@@ -24,15 +24,15 @@ bool SceneTest::LoadContent()
 		if (!commandQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
 
-		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, commandListCopy.Get(), "Sphere.gltf");
+		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, cmdListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
 
-		modelPlane = AssetFactory::CreateModel("Plane.model", commandListCopy.Get());
-		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
+		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
+		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+		auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
 		commandQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
@@ -40,15 +40,15 @@ bool SceneTest::LoadContent()
 	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
 
-	shared_ptr<Texture> baseTex = AssetFactory::CreateTexture("EarthDay.png", commandListDirect.Get());
-	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture("EarthNormal.png", commandListDirect.Get(), false, true);
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture("DefaultSpecular.png", commandListDirect.Get());
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
-	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
+	shared_ptr<Texture> baseTex = AssetFactory::CreateTexture("EarthDay.png", cmdListDirect.Get());
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture("EarthNormal.png", cmdListDirect.Get(), false, true);
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture("DefaultSpecular.png", cmdListDirect.Get());
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
 
 	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
@@ -96,14 +96,14 @@ bool SceneTest::LoadContent()
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> matPBR1 = AssetFactory::CreateMaterial();
-	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
+	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
 	matPBR1->AddDynamicSRVs("Shadow Map", 1);
 
 	shared_ptr<Material> matPBR2 = AssetFactory::CreateMaterial();
-	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+	matPBR2->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
+	matPBR2->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
 	matPBR2->AddSRVs(m_d3dClass, textures);
 	matPBR2->AddDynamicSRVs("Shadow Map", 1);
 
@@ -118,7 +118,7 @@ bool SceneTest::LoadContent()
 	textures = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
@@ -156,8 +156,8 @@ bool SceneTest::LoadContent()
 	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 
 	m_goTest = batchPBR->CreateGameObject("World", modelSphere, shaderPBR, matPBR1);
 	m_goTest->SetPosition(-50, 3, -10);
@@ -175,7 +175,7 @@ bool SceneTest::LoadContent()
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	auto fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	return true;

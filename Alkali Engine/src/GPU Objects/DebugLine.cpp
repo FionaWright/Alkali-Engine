@@ -69,28 +69,28 @@ void DebugLine::UpdateDynamicVertexBuffer(D3DClass* d3d)
 	memcpy(m_mappedVertexData, vertices, sizeof(vertices));
 }
 
-void DebugLine::Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, const int& backBufferIndex)
+void DebugLine::Render(ID3D12GraphicsCommandList2* cmdListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, const int& backBufferIndex)
 {
 	if (!m_enabled)
 		return;
 
-	commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
-	commandListDirect->SetGraphicsRootSignature(rootSig);
-	commandListDirect->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+	cmdListDirect->SetPipelineState(m_shader->GetPSO().Get());
+	cmdListDirect->SetGraphicsRootSignature(rootSig);
+	cmdListDirect->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-	commandListDirect->RSSetViewports(1, &viewPort);
-	commandListDirect->RSSetScissorRects(1, &scissorRect);
+	cmdListDirect->RSSetViewports(1, &viewPort);
+	cmdListDirect->RSSetScissorRects(1, &scissorRect);
 
 	UINT numRenderTargets = 1;
-	commandListDirect->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
+	cmdListDirect->OMSetRenderTargets(numRenderTargets, &rtv, FALSE, &dsv);
 
-	commandListDirect->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	cmdListDirect->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
 	MatricesLineCB matricesCB;
 	matricesCB.VP = viewProj;
 
 	m_material->SetCBV_PerDraw(0, &matricesCB, sizeof(MatricesLineCB), backBufferIndex);
-	m_material->AssignMaterial(commandListDirect, m_rootParamInfo, backBufferIndex);
+	m_material->AssignMaterial(cmdListDirect, m_rootParamInfo, backBufferIndex);
 
-	commandListDirect->DrawInstanced(2, 1, 0, 0);
+	cmdListDirect->DrawInstanced(2, 1, 0, 0);
 }

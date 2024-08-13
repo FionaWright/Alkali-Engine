@@ -12,12 +12,12 @@ void AssetFactory::Init(D3DClass* d3d)
 	ms_d3d = d3d;
 }
 
-shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandList2* commandList)
+shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandList2* cmdList)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(path, model))
 	{
-		bool success = model->Init(commandList, path);
+		bool success = model->Init(cmdList, path);
 		if (!success)
 			AlkaliGUIManager::LogErrorMessage("Failed to load model (path=\"" + path + "\")");
 	}
@@ -25,41 +25,41 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 	return model;
 }
 
-shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown, bool isNormalMap)
+shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown, bool isNormalMap)
 {
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
-		tex->Init(ms_d3d, commandList, path, flipUpsideDown, isNormalMap);
+		tex->Init(ms_d3d, cmdList, path, flipUpsideDown, isNormalMap);
 	}
 	return tex;
 }
 
-shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
+shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown)
 {
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
-		tex->InitCubeMapHDR(ms_d3d, commandList, path, flipUpsideDown);
+		tex->InitCubeMapHDR(ms_d3d, cmdList, path, flipUpsideDown);
 	}
 	return tex;
 }
 
-shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* commandList, bool flipUpsideDown)
+shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown)
 {
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(paths, tex))
 	{
-		tex->InitCubeMap(ms_d3d, commandList, paths, flipUpsideDown);
+		tex->InitCubeMap(ms_d3d, cmdList, paths, flipUpsideDown);
 	}
 	return tex;
 }
 
-shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* commandList)
+shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* cmdList)
 {
 	shared_ptr<Texture> tex = std::make_shared<Texture>();
 	tex->InitCubeMapUAV_Empty(ms_d3d);
-	TextureLoader::CreateIrradianceMap(ms_d3d, commandList, cubemap->GetResource(), tex->GetResource());
+	TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, cubemap->GetResource(), tex->GetResource());
 	return tex;
 }
 
@@ -106,11 +106,11 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 	if (!commandQueueCopy)
 		throw std::exception("Command Queue Error");
 
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
 
-	shared_ptr<Model> model = AssetFactory::CreateModel(modelName, commandListCopy.Get());
+	shared_ptr<Model> model = AssetFactory::CreateModel(modelName, cmdListCopy.Get());
 
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
 	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	CommandQueue* commandQueueDirect = nullptr;
@@ -118,7 +118,7 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
 
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
 
@@ -147,7 +147,7 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 	for (int i = 0; i < count; i++)
 	{
 		shared_ptr<Material> material = std::make_shared<Material>();
-		material->AddCBVs(ms_d3d, commandListDirect.Get(), cbvSizes, false);
+		material->AddCBVs(ms_d3d, cmdListDirect.Get(), cbvSizes, false);
 		ResourceTracker::AddMaterial(material);
 
 		string id = modelName + " #" + std::to_string(i);
