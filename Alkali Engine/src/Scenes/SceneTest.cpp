@@ -19,12 +19,12 @@ bool SceneTest::LoadContent()
 
 	shared_ptr<Model> modelSphere, modelPlane, modelInvertedCube;
 	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
+		CommandQueue* cmdQueueCopy = nullptr;
+		cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!cmdQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
 		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, cmdListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
@@ -32,15 +32,15 @@ bool SceneTest::LoadContent()
 		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
 		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
+		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
 	shared_ptr<Texture> baseTex = AssetFactory::CreateTexture("EarthDay.png", cmdListDirect.Get());
 	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture("EarthNormal.png", cmdListDirect.Get(), false, true);
@@ -175,8 +175,8 @@ bool SceneTest::LoadContent()
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	return true;
 }

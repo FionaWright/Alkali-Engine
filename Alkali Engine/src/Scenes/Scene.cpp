@@ -81,25 +81,25 @@ bool Scene::LoadContent()
 {
 	shared_ptr<Model> modelPlane;
 	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
+		CommandQueue* cmdQueueCopy = nullptr;
+		cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!cmdQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
 		ms_sphereModel = AssetFactory::CreateModel("Sphere.model", cmdListCopy.Get());
 		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
+		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
@@ -225,8 +225,8 @@ bool Scene::LoadContent()
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
     return true;
 }
@@ -319,9 +319,9 @@ void Scene::OnRender(TimeEventArgs& e)
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	int backBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 
-	CommandQueue* commandQueue = nullptr;
-	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto cmdList = commandQueue->GetAvailableCommandList();
+	CommandQueue* cmdQueue = nullptr;
+	cmdQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto cmdList = cmdQueue->GetAvailableCommandList();
 
 	auto& batchList = ResourceTracker::GetBatches();
 
@@ -385,10 +385,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	ImGUIManager::Render(cmdList.Get());	
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
-	Present(cmdList.Get(), commandQueue); 
+	Present(cmdList.Get(), cmdQueue); 
 
 	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU)
-		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
+		cmdQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
 }
 
 void Scene::OnResize(ResizeEventArgs& e)
@@ -450,7 +450,7 @@ void Scene::ClearDepth(ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR
 	cmdList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* commandQueue)
+void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* cmdQueue)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
@@ -459,11 +459,11 @@ void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* commandQu
 
 	ResourceManager::TransitionResource(cmdList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-	m_FenceValues.at(currentBackBufferIndex) = commandQueue->ExecuteCommandList(cmdList);
+	m_FenceValues.at(currentBackBufferIndex) = cmdQueue->ExecuteCommandList(cmdList);
 
 	UINT nextBackBufferIndex = m_pWindow->Present();
 
-	commandQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
+	cmdQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
 }
 
 void Scene::SetDSVForSize(int width, int height)
