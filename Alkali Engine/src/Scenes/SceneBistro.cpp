@@ -16,24 +16,24 @@ bool SceneBistro::LoadContent()
 {
 	Scene::LoadContent();
 
-	CommandQueue* commandQueueCopy = nullptr;
-	commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	if (!commandQueueCopy)
+	CommandQueue* cmdQueueCopy = nullptr;
+	cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!cmdQueueCopy)
 		throw std::exception("Command Queue Error");
 
-	auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
 	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+	cmdQueueCopy->WaitForFenceValue(fenceValue);
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
 
-	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
 	vector<string> skyboxPaths = {
 			"Skyboxes/Iceland/negx.tga",
@@ -121,8 +121,8 @@ bool SceneBistro::LoadContent()
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 
-	fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 3, -5);
 	m_camera->SetRotation(0, 0, 0);

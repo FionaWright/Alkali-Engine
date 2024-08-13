@@ -17,11 +17,11 @@ bool SceneChess::LoadContent()
 {
 	Scene::LoadContent();
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();	
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();	
 
 	vector<string> skyboxPaths = {
 		"Skyboxes/Iceland/negx.tga",
@@ -109,17 +109,17 @@ bool SceneChess::LoadContent()
 
 	shared_ptr<Model> modelInvertedCube;
 	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
+		CommandQueue* cmdQueueCopy = nullptr;
+		cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!cmdQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
 		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
+		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
@@ -130,8 +130,8 @@ bool SceneChess::LoadContent()
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(1, -1, 0);
 

@@ -59,7 +59,7 @@ protected:
     void ClearBackBuffer(ID3D12GraphicsCommandList2* cmdList);
     void ClearDepth(ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
 
-    void Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* commandQueue);
+    void Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* cmdQueue);
 
     void SetDSVForSize(int width, int height);
     void SetDSVFlags(D3D12_DSV_FLAGS flags);

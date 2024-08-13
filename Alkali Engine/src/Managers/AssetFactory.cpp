@@ -101,24 +101,24 @@ shared_ptr<Material> AssetFactory::CreateMaterial()
 
 void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT3& range)
 {
-	CommandQueue* commandQueueCopy = nullptr;
-	commandQueueCopy = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	if (!commandQueueCopy)
+	CommandQueue* cmdQueueCopy = nullptr;
+	cmdQueueCopy = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!cmdQueueCopy)
 		throw std::exception("Command Queue Error");
 
-	auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
 	shared_ptr<Model> model = AssetFactory::CreateModel(modelName, cmdListCopy.Get());
 
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+	cmdQueueCopy->WaitForFenceValue(fenceValue);
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = ms_d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
 
-	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
 	vector<UINT> cbvSizes = { sizeof(MatricesCB) };
 
