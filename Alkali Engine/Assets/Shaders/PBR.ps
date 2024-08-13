@@ -169,7 +169,9 @@ float4 main(V_OUT input) : SV_Target
     float kD = (1.0f - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
+    envReflections = pow(envReflections, 2.2f);
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_samplerClamp, saturate(float2(max(NdV, 0), roughness)), 0).rg;
+    //brdfInt = pow(brdfInt, 2.2f);
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);

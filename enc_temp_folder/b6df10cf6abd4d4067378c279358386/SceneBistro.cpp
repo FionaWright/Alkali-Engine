@@ -128,8 +128,6 @@ bool SceneBistro::LoadContent()
 	m_camera->SetPosition(0, 3, -5);
 	m_camera->SetRotation(0, 0, 0);
 
-	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0.2f, -0.9f, -0.3f);
-
 	return true;
 }
 
