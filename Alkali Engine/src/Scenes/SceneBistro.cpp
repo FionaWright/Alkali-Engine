@@ -21,11 +21,11 @@ bool SceneBistro::LoadContent()
 	if (!commandQueueCopy)
 		throw std::exception("Command Queue Error");
 
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto cmdListCopy = commandQueueCopy->GetAvailableCommandList();
 
-	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
+	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
+	auto fenceValue = commandQueueCopy->ExecuteCommandList(cmdListCopy);
 	commandQueueCopy->WaitForFenceValue(fenceValue);
 
 	CommandQueue* commandQueueDirect = nullptr;
@@ -33,7 +33,7 @@ bool SceneBistro::LoadContent()
 	if (!commandQueueDirect)
 		throw std::exception("Command Queue Error");
 
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = commandQueueDirect->GetAvailableCommandList();
 
 	vector<string> skyboxPaths = {
 			"Skyboxes/Iceland/negx.tga",
@@ -44,8 +44,8 @@ bool SceneBistro::LoadContent()
 			"Skyboxes/Iceland/posz.tga"
 	};
 
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());	
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());	
 
 	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
@@ -83,7 +83,7 @@ bool SceneBistro::LoadContent()
 	vector<shared_ptr<Texture>> textures = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
@@ -117,11 +117,11 @@ bool SceneBistro::LoadContent()
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
 
-	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
-	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+	//ModelLoader::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 
-	fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
+	fenceValue = commandQueueDirect->ExecuteCommandList(cmdListDirect);
 	commandQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 3, -5);

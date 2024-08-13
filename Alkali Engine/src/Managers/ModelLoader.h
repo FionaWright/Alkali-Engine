@@ -75,12 +75,12 @@ public:
 	static VertexInputData SetVertexData(ObjFaceVertexIndices i, ObjFaceVertexIndices i1, ObjFaceVertexIndices i2);	
 	static bool LoadModel(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, float& boundingSphereRadius, XMFLOAT3& centroid);
 
-	static void LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader);
+	static void LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* cmdList, string name, Batch* batch, shared_ptr<Shader> shader);
 
 	//static void LoadModelGLTF(wstring filePath, vector<VertexInputData>& outVertexBuffer, vector<int32_t>& outIndexBuffer, float& boundingSphereRadius, XMFLOAT3& centroid);
-	static void LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string name, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff = nullptr, vector<string>* optNameWhiteList = nullptr, Transform defaultTransform = {});
+	static void LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string name, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff = nullptr, vector<string>* optNameWhiteList = nullptr, Transform defaultTransform = {});
 
-	static vector<shared_ptr<Model>> LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName);
+	static vector<shared_ptr<Model>> LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName);
 
 private:
 	static vector<XMFLOAT3> ms_posList;

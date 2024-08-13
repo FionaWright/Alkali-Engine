@@ -416,7 +416,7 @@ bool ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	return true;
 }
 
-void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
+void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* cmdList, string name, Batch* batch, shared_ptr<Shader> shader)
 {
 	string mtlFilePath = "Assets/Models/" + name + "/" + name + ".mtl";
 
@@ -509,7 +509,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Model> model = std::make_shared<Model>();
 
 		string modelPath = name + "/" + modelName + ".model";
-		model->Init(commandList, modelPath);
+		model->Init(cmdList, modelPath);
 
 		string diffuseTexPath = name + "/" + diffuseName;
 		if (diffuseName == "")
@@ -518,7 +518,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Texture> diffuseTex;
 		if (!ResourceTracker::TryGetTexture(diffuseTexPath, diffuseTex))
 		{
-			diffuseTex->Init(d3d, commandList, diffuseTexPath);
+			diffuseTex->Init(d3d, cmdList, diffuseTexPath);
 		}
 
 		string normalTexPath = name + "/" + normalName;
@@ -528,7 +528,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Texture> normalTex;
 		if (!ResourceTracker::TryGetTexture(normalTexPath, normalTex))
 		{
-			normalTex->Init(d3d, commandList, normalTexPath);
+			normalTex->Init(d3d, cmdList, normalTexPath);
 		}
 
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
@@ -536,8 +536,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
 
 		shared_ptr<Material> material = AssetFactory::CreateMaterial();
-		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
-		material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
+		material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
+		material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
 		material->AddSRVs(d3d, textures);
 
 		GameObject go(modelName, model, shader, material);
@@ -710,7 +710,7 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	}
 }
 
-void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model)
+void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model)
 {
 	vector<VertexInputData> vertexBuffer;
 
@@ -778,7 +778,7 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	LoadGLTFIndices(indexBuffer, asset, primitive);
 
 	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadiusSq, centroidFloat3);
-	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
+	model->SetBuffers(cmdList, vertexBuffer.data(), indexBuffer.data());
 }
 
 string LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int textureIndex)
@@ -809,12 +809,12 @@ string LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int texture
 	return "";
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
 	{
-		LoadModel(d3d, commandList, asset, primitive, model);
+		LoadModel(d3d, cmdList, asset, primitive, model);
 	}
 
 	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
@@ -825,7 +825,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	else
 		diffuseTexPath = "WhitePOT.png";
 
-	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(diffuseTexPath, commandList);
+	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(diffuseTexPath, cmdList);
 
 	string normalTexPath = "";
 	if (mat.normalTexture.has_value())
@@ -833,7 +833,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	else
 		normalTexPath = "DefaultNormal.tga";
 
-	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(normalTexPath, commandList, false, true);
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(normalTexPath, cmdList, false, true);
 
 	string specTexPath = "";
 	if (mat.specular && mat.specular.get()->specularTexture.has_value())
@@ -843,18 +843,18 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	else
 		specTexPath = "MetalRoughSpheres/Spheres_MetalRough.png";
 
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, commandList);
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, cmdList);
 
-	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandList);
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandList);
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdList);
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdList);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> material = AssetFactory::CreateMaterial();
-	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
-	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
+	material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
+	material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
 	material->AddDynamicSRVs("Shadow Map", 1);
 
@@ -880,7 +880,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootP
 	batch->AddGameObject(go);
 }
 
-void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
 	Transform transform;
 	if (node.transform.index() == 0)
@@ -903,7 +903,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
+		LoadNode(d3d, cmdList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -934,11 +934,11 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, commandList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, cmdList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, transform, id);
 	}
 }
 
-void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -991,18 +991,18 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		{
 			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
+			LoadNode(d3d, cmdList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
 		}
 	}
 }
 
-void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList)
+void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList)
 {
 	size_t childCount = node.children.size();
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, childNode, modelList);
+		LoadModelsFromNode(d3d, cmdList, asset, modelNameExtensionless, childNode, modelList);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -1018,13 +1018,13 @@ void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, 
 		shared_ptr<Model> model;
 		if (!ResourceTracker::TryGetModel(id, model))
 		{
-			LoadModel(d3d, commandList, asset, mesh.primitives[i], model);
+			LoadModel(d3d, cmdList, asset, mesh.primitives[i], model);
 		}
 		modelList.push_back(model);
 	}
 }
 
-vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName)
+vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -1060,7 +1060,7 @@ vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12G
 		{
 			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, node, modelList);
+			LoadModelsFromNode(d3d, cmdList, asset, modelNameExtensionless, node, modelList);
 		}
 	}
 

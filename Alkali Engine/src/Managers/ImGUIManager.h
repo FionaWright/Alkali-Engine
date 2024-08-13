@@ -12,7 +12,7 @@ public:
 	static void Init(HWND hwnd, ID3D12Device2* device, int framesInFlight);
 
 	static void Begin();
-	static void Render(ID3D12GraphicsCommandList* commandList);
+	static void Render(ID3D12GraphicsCommandList* cmdList);
 
 	static bool MouseHoveringImGui();
 

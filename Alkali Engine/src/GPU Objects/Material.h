@@ -16,7 +16,7 @@ public:
 
 	void AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures);
 	void AddDynamicSRVs(string id, UINT count);	
-	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
+	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
 	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
@@ -24,7 +24,7 @@ public:
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
 
-	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
+	void AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
 
 	bool GetHasAlpha();
 	vector<shared_ptr<Texture>>& GetTextures();

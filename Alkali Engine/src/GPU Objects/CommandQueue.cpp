@@ -39,11 +39,11 @@ ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator()
 
 ComPtr<ID3D12GraphicsCommandList2> CommandQueue::CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator)
 {
-    ComPtr<ID3D12GraphicsCommandList2> commandList;
-    HRESULT hr = m_device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+    ComPtr<ID3D12GraphicsCommandList2> cmdList;
+    HRESULT hr = m_device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&cmdList));
     ThrowIfFailed(hr);
 
-    return commandList;
+    return cmdList;
 }
 
 ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetAvailableCommandList()
@@ -51,7 +51,7 @@ ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetAvailableCommandList()
     HRESULT hr;
 
     ComPtr<ID3D12CommandAllocator> commandAllocator;
-    ComPtr<ID3D12GraphicsCommandList2> commandList;
+    ComPtr<ID3D12GraphicsCommandList2> cmdList;
 
     if (!m_CommandAllocatorQueue.empty() && IsFenceComplete(m_CommandAllocatorQueue.front().fenceValue))
     {
@@ -68,44 +68,44 @@ ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetAvailableCommandList()
 
     if (!m_CommandListQueue.empty())
     {
-        commandList = m_CommandListQueue.front();
+        cmdList = m_CommandListQueue.front();
         m_CommandListQueue.pop();
 
-        hr = commandList->Reset(commandAllocator.Get(), nullptr);
+        hr = cmdList->Reset(commandAllocator.Get(), nullptr);
         ThrowIfFailed(hr);
     }
     else
     {
-        commandList = CreateCommandList(commandAllocator);
+        cmdList = CreateCommandList(commandAllocator);
     }
 
     // Associate the command allocator with the command list so that it can be
     // retrieved when the command list is executed.
-    hr = commandList->SetPrivateDataInterface(__uuidof(ID3D12CommandAllocator), commandAllocator.Get());
+    hr = cmdList->SetPrivateDataInterface(__uuidof(ID3D12CommandAllocator), commandAllocator.Get());
     ThrowIfFailed(hr);
 
-    return commandList;
+    return cmdList;
 }
 
-uint64_t CommandQueue::ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> commandList)
+uint64_t CommandQueue::ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> cmdList)
 {
     HRESULT hr;
 
-    commandList->Close();
+    cmdList->Close();
 
     ID3D12CommandAllocator* commandAllocator;
     UINT dataSize = sizeof(commandAllocator);
 
-    hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator);
+    hr = cmdList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator);
     ThrowIfFailed(hr);
 
-    ID3D12CommandList* const ppCommandLists[] = { commandList.Get() };
+    ID3D12CommandList* const ppCommandLists[] = { cmdList.Get() };
 
     m_d3d12CommandQueue->ExecuteCommandLists(1, ppCommandLists);
     uint64_t fenceValue = Signal();
 
     m_CommandAllocatorQueue.emplace(CommandAllocatorEntry{ fenceValue, commandAllocator });
-    m_CommandListQueue.push(commandList);
+    m_CommandListQueue.push(cmdList);
 
     // The ownership of the command allocator has been transferred to the ComPtr
     // in the command allocator queue. It is safe to release the reference 
