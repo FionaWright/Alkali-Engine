@@ -60,6 +60,8 @@ bool XOR(bool a, bool b);
 
 bool Approx(float a, float b);
 
+float Rand01();
+
 template <typename T>
 bool Contains(vector<T>& v, T& obj)
 {

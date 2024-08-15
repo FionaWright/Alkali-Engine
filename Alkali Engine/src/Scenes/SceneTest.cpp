@@ -85,6 +85,19 @@ bool SceneTest::LoadContent()
 	auto rootSigPBR = std::make_shared<RootSig>();
 	rootSigPBR->Init("PBR Root Sig", rootParamInfoPBR, samplerDesc, _countof(samplerDesc));
 
+	RootParamInfo rootParamInfoBubble;
+	rootParamInfoBubble.NumCBV_PerFrame = 5;
+	rootParamInfoBubble.NumCBV_PerDraw = 3;
+	rootParamInfoBubble.NumSRV = 4;
+	rootParamInfoBubble.NumSRV_Dynamic = 1;
+	rootParamInfoBubble.ParamIndexCBV_PerDraw = 0;
+	rootParamInfoBubble.ParamIndexCBV_PerFrame = 1;
+	rootParamInfoBubble.ParamIndexSRV = 2;
+	rootParamInfoBubble.ParamIndexSRV_Dynamic = 3;
+
+	auto rootSigBubble = std::make_shared<RootSig>();
+	rootSigBubble->Init("Bubble Root Sig", rootParamInfoBubble, samplerDesc, _countof(samplerDesc));
+
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
 	rootParamInfoSkybox.NumSRV = 1;
@@ -102,14 +115,7 @@ bool SceneTest::LoadContent()
 	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
-	matPBR1->AddDynamicSRVs("Shadow Map", 1);
-
-	textures = { transTex, defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
-	auto matBubble = AssetFactory::CreateMaterial();
-	matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
-	matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
-	matBubble->AddSRVs(m_d3dClass, textures);
-	matBubble->AddDynamicSRVs("Shadow Map", 1);
+	matPBR1->AddDynamicSRVs("Shadow Map", 1);	
 
 	MaterialPropertiesCB defaultMatProps;
 	ThinFilmCB defaultThinFilm;
@@ -118,19 +124,12 @@ bool SceneTest::LoadContent()
 	matPBR1->AttachProperties(defaultMatProps);
 	matPBR1->AttachThinFilm(defaultThinFilm);
 
-	defaultMatProps.AlphaCutoff = 0.0f;
-
-	matBubble->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
-	matBubble->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
-	matBubble->AttachProperties(defaultMatProps);
-	matBubble->AttachThinFilm(defaultThinFilm);
-
-	cbvSizesDraw = { sizeof(MatricesCB) };
-	textures = { skyboxTex };
+	vector<UINT> cbvSizesDrawSkybox = { sizeof(MatricesCB) };
+	vector<shared_ptr<Texture>> texturesSkybox = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
-	matSkybox->AddSRVs(m_d3dClass, textures);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDrawSkybox, false);
+	matSkybox->AddSRVs(m_d3dClass, texturesSkybox);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{
@@ -152,6 +151,10 @@ bool SceneTest::LoadContent()
 	argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
+	ShaderArgs argsBubble = { L"BubblePBR.vs", L"BubblePBR.ps", inputLayoutPBR, rootSigBubble->GetRootSigResource() };
+	argsBubble.CullNone = true;
+	shared_ptr<Shader> shaderBubble = AssetFactory::CreateShader(argsBubble);
+
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;
 	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
@@ -161,6 +164,7 @@ bool SceneTest::LoadContent()
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchBubble = AssetFactory::CreateBatch(rootSigBubble);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 
 	Transform t = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
@@ -177,8 +181,35 @@ bool SceneTest::LoadContent()
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
 
-	auto bubble = batchPBR->CreateGameObject("Bubble", modelSphere, shaderPBRCullOff, matBubble);
-	bubble->SetPosition(5, 5, 10);
+	MaterialPropertiesCB matPropBubble;
+	ThinFilmCB thinFilmBubble;
+	matPropBubble.Roughness = 0.2f;
+	thinFilmBubble.Thickness = 400.0f;
+	thinFilmBubble.n0 = 1.0f;
+	thinFilmBubble.n1 = 1.7f;
+	thinFilmBubble.n2 = 1.0f;
+	vector<shared_ptr<Texture>> texturesBubble = { irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
+
+	for (int i = 0; i < 30; i++)
+	{
+		auto matBubble = AssetFactory::CreateMaterial();
+		matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
+		matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
+		matBubble->AddSRVs(m_d3dClass, texturesBubble);
+		matBubble->AddDynamicSRVs("Shadow Map", 1);
+
+		matBubble->SetCBV_PerDraw(1, &matPropBubble, sizeof(MaterialPropertiesCB));
+		matBubble->SetCBV_PerDraw(2, &thinFilmBubble, sizeof(ThinFilmCB));
+		matBubble->AttachProperties(matPropBubble);
+		matBubble->AttachThinFilm(thinFilmBubble);
+
+		float randX = Rand01() * 2 - 1;
+		float randY = Rand01() * 2 - 1;
+		float randZ = Rand01() * 2 - 1;		
+
+		auto bubble = batchBubble->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderBubble, matBubble);
+		bubble->SetPosition(20 * randX, 10 * randY, 20 * randZ);
+	}
 
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);

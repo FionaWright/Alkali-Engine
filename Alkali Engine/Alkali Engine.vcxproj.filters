@@ -435,6 +435,12 @@
     <None Include="Assets\Shaders\PBR.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\BubblePBR.ps">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\BubblePBR.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
