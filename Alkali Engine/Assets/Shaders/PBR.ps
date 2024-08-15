@@ -130,10 +130,10 @@ float4 main(V_OUT input) : SV_Target
         }
     shadowFactor /= i;        
 
-    float4 tex = g_texture.Sample(g_sampler, input.UV);          
+    float4 tex = g_texture.Sample(g_sampler, input.UV);      
 
     if (tex.a < MatPropCB.AlphaCutoff)
-        discard;    
+        discard;        
 
     tex.rgb = pow(tex.rgb, 2.2f);
 

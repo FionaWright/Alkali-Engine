@@ -41,7 +41,7 @@ struct MaterialPropertiesCB
     XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;
     float Roughness = 0.5f;
 
-    float AlphaCutoff = 0.5f;
+    float AlphaCutoff = 0.9f;
     float IOR = 1.5f;
     float Dispersion = 0.0f;
     float Metallic = 0.5f;

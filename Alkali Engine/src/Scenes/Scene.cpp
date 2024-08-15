@@ -207,7 +207,8 @@ bool Scene::LoadContent()
 
 	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, m_viewDepthRootSig->GetRootSigResource() };
 	argsDepth.CullNone = true;
-	argsDepth.disableDSV = true;
+	argsDepth.DisableDSV = true;
+	argsDepth.DisableStencil = true;
 	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
 
 	vector<UINT> viewCBVFrame = { sizeof(DepthViewCB) };

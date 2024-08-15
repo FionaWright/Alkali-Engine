@@ -720,6 +720,8 @@ void TextureLoader::LoadPNG(string filePath, int& width, int& height, uint8_t** 
     height = ihdr.height;
     channels = GetChannelsFromColorType(ihdr.color_type);
 
+    // If you are trying to parse a transparent image with 2 channels, force set channels to 4
+
     spng_format format = 
         channels == 4 ? SPNG_FMT_RGBA8 :
         channels == 3 ? SPNG_FMT_RGBA8 : // No existing RGB8 DXGI format so we have to leave the alpha empty

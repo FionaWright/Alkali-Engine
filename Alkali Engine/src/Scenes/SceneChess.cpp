@@ -104,7 +104,7 @@ bool SceneChess::LoadContent()
 	matSkybox->AddSRVs(m_d3dClass, textures);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
-	argsSkybox.disableDSVWrite = true;
+	argsSkybox.DisableDSVWriting = true;
 	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
 
 	shared_ptr<Model> modelInvertedCube;

@@ -184,7 +184,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListD
 
     vector<uint8_t*> textureDatas(6);
 
-    m_hasAlpha = true;
+    //m_hasAlpha = true;
 
     string longPath = "Assets/Textures/" + filePath;
     TextureLoader::LoadHDR(longPath, m_textureWidth, m_textureHeight, textureDatas, m_channels);
