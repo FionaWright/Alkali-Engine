@@ -15,7 +15,7 @@ struct DepthViewCB
     float MinValue;
     float MaxValue;
 };
-ConstantBuffer<DepthViewCB> DepthCB : register(b0, FRAME_SPACE);
+ConstantBuffer<DepthViewCB> DepthCB : register(b0, DRAW_SPACE);
 
 Texture2D<float> DepthTexture : register(t0, SRV_DYNAMIC_SPACE);
 SamplerState Sampler : register(s0);
