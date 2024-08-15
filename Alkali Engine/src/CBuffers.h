@@ -49,7 +49,7 @@ struct MaterialPropertiesCB
 
 struct ThinFilmCB
 {
-    float Thickness = 250.0f;
+    float Thickness = 0.0f;
     float n0 = 1, n1 = 1.5f, n2 = 1.25f;
 
     void CalculateDelta()

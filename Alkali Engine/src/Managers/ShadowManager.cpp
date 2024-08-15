@@ -93,8 +93,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 	{
 		RootParamInfo viewRPI;
 		viewRPI.NumSRV_Dynamic = 1;
-		viewRPI.NumCBV_PerFrame = 1;
-		viewRPI.ParamIndexCBV_PerFrame = 0;
+		viewRPI.NumCBV_PerDraw = 1;
+		viewRPI.ParamIndexCBV_PerDraw = 0;
 		viewRPI.ParamIndexSRV_Dynamic = 1;
 
 		ms_viewRootSig = std::make_shared<RootSig>();

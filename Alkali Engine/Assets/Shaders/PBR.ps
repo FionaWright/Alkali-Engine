@@ -128,7 +128,7 @@ float4 main(V_OUT input) : SV_Target
             shadowFactor += pixelDepth < shadowMapDepth;   
             i++;
         }
-    shadowFactor /= i;        
+    shadowFactor /= i;     
 
     float4 tex = g_texture.Sample(g_sampler, input.UV);      
 
@@ -183,9 +183,11 @@ float4 main(V_OUT input) : SV_Target
     envReflections = pow(envReflections, 2.2f);
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_samplerClamp, saturate(float2(max(NdV, 0), roughness)), 0).rg;
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
+    indirectSpecular = max(0, indirectSpecular);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
-    float3 specular = specularDFG * DirLightCB.LightColor;    // Remove kS
+    float3 specular = specularDFG * DirLightCB.LightColor;
+    specular = max(0, specular);
     
     float3 diffuse = irradiance * kD * albedo * DirLightCB.LightColor * NdL;  
     diffuse *= 1 - metalness;    
@@ -194,6 +196,9 @@ float4 main(V_OUT input) : SV_Target
 
     float3 Lo = diffuse + specular + ambient + indirectSpecular;
     //float3 Lo = diffuse + specular + ambient;
+    //float3 Lo = diffuse + ambient;
+    //float3 Lo = specular;
+    //float3 Lo = indirectSpecular;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, tex.a);
