@@ -1,5 +1,8 @@
 #define CASCADES 4
 
+#define DRAW_SPACE space0
+#define FRAME_SPACE space1
+
 struct V_IN
 {
     float3 Position : POSITION;
@@ -30,14 +33,14 @@ struct Matrices
     matrix V;
     matrix P;
 };
-ConstantBuffer<Matrices> MatricesCB : register(b0);
+ConstantBuffer<Matrices> MatricesCB : register(b0, DRAW_SPACE);
 
 struct Camera
 {
     float3 CameraPosition;
     float p;
 };
-ConstantBuffer<Camera> CameraCB : register(b2);
+ConstantBuffer<Camera> CameraCB : register(b0, FRAME_SPACE);
 
 struct ShadowMap
 {
@@ -47,7 +50,7 @@ struct ShadowMap
 
     matrix ShadowMatrix[CASCADES];
 };
-ConstantBuffer<ShadowMap> ShadowCB : register(b4);
+ConstantBuffer<ShadowMap> ShadowCB : register(b2, FRAME_SPACE);
 
 V_OUT main(V_IN input)
 {

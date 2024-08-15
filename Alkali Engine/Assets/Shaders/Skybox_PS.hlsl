@@ -1,3 +1,6 @@
+#define DRAW_SPACE space0
+#define FRAME_SPACE space1
+
 struct V_OUT
 {
     float4 Position : SV_Position;

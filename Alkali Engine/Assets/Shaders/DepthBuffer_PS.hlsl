@@ -1,3 +1,6 @@
+#define DRAW_SPACE space0
+#define FRAME_SPACE space1
+
 struct V_OUT
 {
     float4 Position : SV_Position;
@@ -9,7 +12,7 @@ struct DepthViewCB
     float MinValue;
     float MaxValue;
 };
-ConstantBuffer<DepthViewCB> DepthCB : register(b0);
+ConstantBuffer<DepthViewCB> DepthCB : register(b0, FRAME_SPACE);
 
 Texture2D<float> DepthTexture : register(t0);
 SamplerState Sampler : register(s0);
