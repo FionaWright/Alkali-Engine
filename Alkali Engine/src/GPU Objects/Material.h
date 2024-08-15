@@ -25,6 +25,7 @@ public:
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
+	void AttachThinFilm(const ThinFilmCB& thinFilm);
 
 	void AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
 
@@ -32,6 +33,7 @@ public:
 	vector<shared_ptr<Texture>>& GetTextures();
 	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex);
 	bool GetProperties(MaterialPropertiesCB& prop);
+	bool GetThinFilm(ThinFilmCB& thinFilm);
 	bool HasDynamicSRV();
 
 	void ClearTextures();
@@ -46,5 +48,7 @@ private:
 
 	MaterialPropertiesCB m_propertiesCB;
 	bool m_attachedProperties = false;
+	ThinFilmCB m_thinFilmCB;
+	bool m_attachedThinFilm = false;
 };
 
