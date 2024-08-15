@@ -60,7 +60,7 @@ struct WindowSettings
 struct MiscSettings
 {
 	bool AutoMipLevelsEnabled = true;
-	int DefaultGlobalMipLevels = 3;
+	int DefaultGlobalMipLevels = 1;
 	bool CubemapMipMapsEnabled = true;
 	bool RequireAlphaTextureForDoubleSided = true;
 

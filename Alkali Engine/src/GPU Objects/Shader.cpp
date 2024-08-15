@@ -95,11 +95,11 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;	
 
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
-	depthStencilDesc.DepthEnable = m_args.disableDSV ? FALSE : TRUE;
-	depthStencilDesc.DepthWriteMask = m_args.disableDSVWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = m_args.disableDSVWrite ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
+	depthStencilDesc.DepthEnable = m_args.DisableDSV ? FALSE : TRUE;
+	depthStencilDesc.DepthWriteMask = m_args.DisableDSVWriting ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = m_args.DisableDSVWriting ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
 
-	depthStencilDesc.StencilEnable = m_args.disableDSV ? FALSE : TRUE;
+	depthStencilDesc.StencilEnable = m_args.DisableStencil ? FALSE : TRUE;
 	depthStencilDesc.StencilWriteMask = 0xFF;
 	depthStencilDesc.StencilReadMask = 0xFF;
 

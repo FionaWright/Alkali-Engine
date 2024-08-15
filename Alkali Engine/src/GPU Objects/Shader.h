@@ -17,8 +17,9 @@ struct ShaderArgs
 
 	bool CullNone = false;
 	bool CullFront = false;
-	bool disableDSV = false;
-	bool disableDSVWrite = false;
+	bool DisableDSV = false;
+	bool DisableDSVWriting = false;
+	bool DisableStencil = false;
 	bool NoPS = false;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	DXGI_FORMAT RTVFormat = SettingsManager::ms_DX12.RTVFormat;
@@ -38,13 +39,14 @@ struct ShaderArgs
 
 		CullNone = other.CullNone;
 		CullFront = other.CullFront;
-		disableDSV = other.disableDSV;
-		disableDSVWrite = other.disableDSVWrite;
+		DisableDSV = other.DisableDSV;
+		DisableDSVWriting = other.DisableDSVWriting;
 		Topology = other.Topology;
 		RTVFormat = other.RTVFormat;
 		NoPS = other.NoPS;
 		SlopeScaleDepthBias = other.SlopeScaleDepthBias;
 		DSVFormat = other.DSVFormat;
+		DisableStencil = other.DisableStencil;
 
 		return *this;
 	}

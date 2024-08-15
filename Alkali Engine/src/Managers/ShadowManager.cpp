@@ -102,7 +102,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 
 		ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, ms_viewRootSig->GetRootSigResource() };
 		viewArgs.CullNone = true;
-		viewArgs.disableDSV = true;
+		viewArgs.DisableDSV = true;
+		viewArgs.DisableStencil = true;
 		auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
 
 		ms_viewDepthMat = AssetFactory::CreateMaterial();
