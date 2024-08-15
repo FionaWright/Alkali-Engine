@@ -76,6 +76,12 @@ void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSiz
     m_cbvResources_perFrame[backBufferIndex].at(resourceIndex)->Unmap(0, nullptr);
 }
 
+void Material::SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize)
+{
+    for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+        SetCBV_PerFrame(resourceIndex, srcData, dataSize, i);
+}
+
 void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex)
 {
     if (m_cbvResources_perDraw[backBufferIndex].size() <= resourceIndex)
@@ -88,6 +94,12 @@ void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize
     std::memcpy(dstData, srcData, dataSize);
 
     m_cbvResources_perDraw[backBufferIndex].at(resourceIndex)->Unmap(0, nullptr);
+}
+
+void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize)
+{
+    for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+        SetCBV_PerDraw(resourceIndex, srcData, dataSize, i);
 }
 
 void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource)

@@ -57,6 +57,8 @@ public:
 
 	size_t GetModelVertexCount() const;
 	size_t GetModelIndexCount() const;
+	Model* GetModel() const;
+	Shader* GetShader() const;
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const;
 	void GetBoundingSphere(XMFLOAT3& position, float& radius) const;
 	XMFLOAT3 GetWorldPosition() const;

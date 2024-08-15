@@ -140,7 +140,7 @@ bool Equals(XMFLOAT2 a, XMFLOAT2 b)
     return a.x == b.x && a.y == b.y;
 }
 
-string ToString(XMFLOAT3& v) 
+string ToString(const XMFLOAT3& v) 
 {
     return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
 }
