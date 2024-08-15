@@ -7,6 +7,9 @@
 #define DRAW_SPACE space0
 #define FRAME_SPACE space1
 
+#define SRV_SPACE space0
+#define SRV_DYNAMIC_SPACE space1
+
 struct V_OUT
 {
     float4 Position : SV_Position;
@@ -65,19 +68,19 @@ struct MaterialProperties
     float AlphaCutoff;
     float IOR;
     float Dispersion;
-    float Metallic; // Unused until fixed
+    float Metallic;
 };
 ConstantBuffer<MaterialProperties> MatPropCB : register(b1, DRAW_SPACE);
 
-Texture2D g_texture : register(t0);
-Texture2D g_normalMap : register(t1);
-Texture2D g_specularMap : register(t2);
-TextureCube g_irradiance : register(t3);
-TextureCube g_envMap : register(t4);
-Texture2D g_blueNoise : register(t5);
-Texture2D g_brdfIntMap : register(t6);
+Texture2D g_texture : register(t0, SRV_SPACE);
+Texture2D g_normalMap : register(t1, SRV_SPACE);
+Texture2D g_specularMap : register(t2, SRV_SPACE);
+TextureCube g_irradiance : register(t3, SRV_SPACE);
+TextureCube g_envMap : register(t4, SRV_SPACE);
+Texture2D g_blueNoise : register(t5, SRV_SPACE);
+Texture2D g_brdfIntMap : register(t6, SRV_SPACE);
 
-Texture2D g_shadowMap : register(t7);
+Texture2D g_shadowMap : register(t0, SRV_DYNAMIC_SPACE);
 
 SamplerState g_sampler : register(s0);
 SamplerState g_samplerClamp : register(s1);

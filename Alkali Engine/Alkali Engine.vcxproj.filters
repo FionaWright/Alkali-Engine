@@ -429,14 +429,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\Normals.ps">
-      <Filter>Shaders</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\Normals.vs">
-      <Filter>Shaders</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Assets\Shaders\PBR.ps">
       <Filter>Shaders</Filter>
     </None>

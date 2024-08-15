@@ -56,8 +56,7 @@ void RootSig::Init(const string& name, const RootParamInfo& rpi, const D3D12_STA
 
 	if (rpi.ParamIndexSRV_Dynamic != -1)
 	{
-		int startRegisterX = rpi.NumSRV;
-		rangeSRVDynamic.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rpi.NumSRV_Dynamic, startRegisterX, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE);
+		rangeSRVDynamic.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, rpi.NumSRV_Dynamic, startRegister, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE);
 		rootParameters[rpi.ParamIndexSRV_Dynamic].InitAsDescriptorTable(1, &rangeSRVDynamic, D3D12_SHADER_VISIBILITY_PIXEL);
 	}
 

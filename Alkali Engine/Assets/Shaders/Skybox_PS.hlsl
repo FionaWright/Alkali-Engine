@@ -1,13 +1,16 @@
 #define DRAW_SPACE space0
 #define FRAME_SPACE space1
 
+#define SRV_SPACE space0
+#define SRV_DYNAMIC_SPACE space1
+
 struct V_OUT
 {
     float4 Position : SV_Position;
     float3 ViewDirection : TEXCOORD0;
 };
 
-TextureCube g_cubemap : register(t0);
+TextureCube g_cubemap : register(t0, SRV_SPACE);
 SamplerState g_sampler : register(s0);
 
 float4 main(V_OUT input) : SV_Target
