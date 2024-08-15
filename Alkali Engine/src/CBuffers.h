@@ -59,6 +59,8 @@ struct ThinFilmCB
         Delta = d10 + d12;
     }
 
+    float GetDelta() { return Delta; }
+
 private:
     float Delta = 0.0f;
 };

@@ -116,6 +116,12 @@ void Material::AttachProperties(const MaterialPropertiesCB& matProp)
     m_attachedProperties = true;
 }
 
+void Material::AttachThinFilm(const ThinFilmCB& thinFilm)
+{
+    m_thinFilmCB = thinFilm;
+    m_attachedThinFilm = true;
+}
+
 void Material::AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex)
 {
     if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
@@ -179,6 +185,15 @@ bool Material::GetProperties(MaterialPropertiesCB& prop)
         return false;
 
     prop = m_propertiesCB;
+    return true;
+}
+
+bool Material::GetThinFilm(ThinFilmCB& thinFilm)
+{
+    if (!m_attachedThinFilm)
+        return false;
+
+    thinFilm = m_thinFilmCB;
     return true;
 }
 

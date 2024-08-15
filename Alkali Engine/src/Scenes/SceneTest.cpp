@@ -111,9 +111,13 @@ bool SceneTest::LoadContent()
 	ThinFilmCB defaultThinFilm;
 	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 	matPBR1->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
+	matPBR1->AttachProperties(defaultMatProps);
+	matPBR1->AttachThinFilm(defaultThinFilm);
 
 	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
 	matPBR2->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
+	matPBR2->AttachProperties(defaultMatProps);
+	matPBR2->AttachThinFilm(defaultThinFilm);
 
 	cbvSizesDraw = { sizeof(MatricesCB) };
 	textures = { skyboxTex };

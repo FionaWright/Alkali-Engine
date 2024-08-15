@@ -871,6 +871,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParam
 	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
 	material->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
 	material->AttachProperties(matProperties);
+	material->AttachThinFilm(defaultThinFilm);
 
 	string nodeName(node.name);
 	nodeName = id + "::" + nodeName;

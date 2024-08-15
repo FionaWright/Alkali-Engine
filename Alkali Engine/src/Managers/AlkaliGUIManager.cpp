@@ -12,6 +12,11 @@
 
 vector<string> AlkaliGUIManager::ms_errorList;
 
+void AlkaliGUIManager::FixWidthOnNext(const char* label) 
+{
+	ImGui::SetNextItemWidth(-(ImGui::CalcTextSize(label).x + ImGui::GetStyle().ItemInnerSpacing.x));
+}
+
 void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 {
 	ImGui::SeparatorText("Stats");
@@ -86,7 +91,9 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
+				FixWidthOnNext("Near Plane");
 				ImGui::InputFloat("Near Plane", &SettingsManager::ms_Dynamic.NearPlane);
+				FixWidthOnNext("Far Plane");
 				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
 
 				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
@@ -141,9 +148,14 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
 				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
 				ImGui::Spacing();
+
+				FixWidthOnNext("Cascade Count");
 				ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);
+				FixWidthOnNext("Auto NearFar Percents");
 				ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent);
+				FixWidthOnNext("Near Percents");
 				ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.Shadow.NearPercents);
+				FixWidthOnNext("Far Percents");
 				ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.Shadow.FarPercents);
 
 				if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
@@ -155,12 +167,17 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::EndDisabled();
 
 				ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.Shadow.ShowDebugBounds);
+				FixWidthOnNext("Bounds Bias");
 				ImGui::InputFloat("Bounds Bias", &SettingsManager::ms_Dynamic.Shadow.BoundsBias);
+				FixWidthOnNext("Depth Bias");
 				ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+				FixWidthOnNext("Normal Depth Bias");
 				ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
 
+				FixWidthOnNext("Frame Wait Count");
 				ImGui::InputInt("Frame Wait Count", &SettingsManager::ms_Dynamic.Shadow.TimeSlice);
 
+				FixWidthOnNext("PCF Samples");
 				ImGui::Text("PCF Samples");
 
 				ImGui::Indent(IM_GUI_INDENTATION);
@@ -184,9 +201,11 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
+				FixWidthOnNext("Fullscreen");
 				if (ImGui::Checkbox("Fullscreen", &SettingsManager::ms_Dynamic.FullscreenEnabled))
 					scene->GetWindow()->SetFullscreen(SettingsManager::ms_Dynamic.FullscreenEnabled);
 
+				FixWidthOnNext("VSync");
 				ImGui::Checkbox("VSync", &SettingsManager::ms_Dynamic.VSyncEnabled);
 			}
 
@@ -222,6 +241,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::SeparatorText("Visuals");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Background Color");
 			ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&scene->m_BackgroundColor));
 
 			ImGui::Checkbox("Debug Lines", &SettingsManager::ms_Dynamic.DebugLinesEnabled);
@@ -230,20 +250,26 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::SeparatorText("Rendering");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Sort by Depth");
 			ImGui::Checkbox("Sort By Depth", &SettingsManager::ms_Dynamic.BatchSortingEnabled);
 
+			FixWidthOnNext("Time Scale");
 			ImGui::InputFloat("Time Scale", &SettingsManager::ms_Dynamic.UpdateTimeScale);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Directional Light CBV");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Direction");
 			ImGui::InputFloat3("Direction", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDirection));
 			scene->GetPerFrameCBuffers().DirectionalLight.LightDirection = Normalize(scene->GetPerFrameCBuffers().DirectionalLight.LightDirection);
 
+			FixWidthOnNext("Light Colour");
 			ImGui::ColorEdit4("Light Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDiffuse));
+			FixWidthOnNext("Ambient Colour");
 			ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.AmbientColor));
 
+			FixWidthOnNext("Specular Power");
 			ImGui::InputFloat("Specular Power", &scene->GetPerFrameCBuffers().DirectionalLight.SpecularPower);
 
 			ImGui::TreePop();
@@ -343,7 +369,7 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 	ImGui::Spacing();
 }
 
-void RenderTextureGUI(Texture* tex) 
+void AlkaliGUIManager::RenderTextureGUI(Texture* tex)
 {
 	ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -356,7 +382,7 @@ void RenderTextureGUI(Texture* tex)
 	ImGui::Unindent(IM_GUI_INDENTATION);
 }
 
-void RenderModelGUI(Model* model) 
+void AlkaliGUIManager::RenderModelGUI(Model* model)
 {
 	ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -375,7 +401,7 @@ void RenderModelGUI(Model* model)
 	ImGui::Unindent(IM_GUI_INDENTATION);
 }
 
-void RenderShaderGUI(Shader* shader) 
+void AlkaliGUIManager::RenderShaderGUI(Shader* shader)
 {
 	ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -392,7 +418,7 @@ void RenderShaderGUI(Shader* shader)
 	ImGui::Unindent(IM_GUI_INDENTATION);
 }
 
-void RenderMatGUI(Material* mat) 
+void AlkaliGUIManager::RenderMatGUI(Material* mat)
 {
 	ImGui::Indent(IM_GUI_INDENTATION);
 
@@ -439,11 +465,17 @@ void RenderMatGUI(Material* mat)
 
 		ImGui::Indent(IM_GUI_INDENTATION);
 
-		changed |= ImGui::InputFloat3("Base Color", reinterpret_cast<float*>(&matProp.BaseColorFactor));
-		changed |= ImGui::InputFloat("Roughness", reinterpret_cast<float*>(&matProp.Roughness));
-		changed |= ImGui::InputFloat("Metalness", reinterpret_cast<float*>(&matProp.Metallic));
-		changed |= ImGui::InputFloat("Alpha Cutoff", reinterpret_cast<float*>(&matProp.AlphaCutoff));
+		FixWidthOnNext("Base Color");
+		changed |= ImGui::ColorEdit3("Base Color", reinterpret_cast<float*>(&matProp.BaseColorFactor));
+		FixWidthOnNext("Roughness");
+		changed |= ImGui::SliderFloat("Roughness", reinterpret_cast<float*>(&matProp.Roughness), 0, 1);
+		FixWidthOnNext("Metalness");
+		changed |= ImGui::SliderFloat("Metalness", reinterpret_cast<float*>(&matProp.Metallic), 0, 1);
+		FixWidthOnNext("Alpha Cutoff");
+		changed |= ImGui::SliderFloat("Alpha Cutoff", reinterpret_cast<float*>(&matProp.AlphaCutoff), 0, 1);
+		FixWidthOnNext("Dispersion");
 		changed |= ImGui::InputFloat("Dispersion", reinterpret_cast<float*>(&matProp.Dispersion));
+		FixWidthOnNext("IOR");
 		changed |= ImGui::InputFloat("IOR", reinterpret_cast<float*>(&matProp.IOR));
 
 		ImGui::Unindent(IM_GUI_INDENTATION);
@@ -455,10 +487,39 @@ void RenderMatGUI(Material* mat)
 		}
 	}
 
+	ThinFilmCB thinFilm;
+	if (mat->GetThinFilm(thinFilm))
+	{
+		ImGui::Text("Thin Film Interference:");
+		bool changed = false;
+
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		FixWidthOnNext("Thickness");
+		changed |= ImGui::SliderFloat("Thickness", &thinFilm.Thickness, 0, 3000);
+		FixWidthOnNext("n0 IOR (External)");
+		changed |= ImGui::SliderFloat("n0 IOR (External)", &thinFilm.n0, 0.2f, 3);
+		FixWidthOnNext("n1 IOR (Film)");
+		changed |= ImGui::SliderFloat("n1 IOR (Film)", &thinFilm.n1, 0.2f, 3);
+		FixWidthOnNext("n2 IOR (Internal)");
+		changed |= ImGui::SliderFloat("n2 IOR (Internal)", &thinFilm.n2, 0.2f, 3);
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+
+		if (changed)
+		{
+			thinFilm.CalculateDelta();
+			mat->SetCBV_PerDraw(2, &thinFilm, sizeof(ThinFilmCB));
+			mat->AttachThinFilm(thinFilm);
+		}
+
+		ImGui::Text(("Delta (readonly)" + std::to_string(thinFilm.GetDelta())).c_str());
+	}
+
 	ImGui::Unindent(IM_GUI_INDENTATION);
 }
 
-void RenderGameObjectGUI(GameObject* go, int id) 
+void AlkaliGUIManager::RenderGameObjectGUI(GameObject* go, int id)
 {
 	ImGui::Indent(IM_GUI_INDENTATION);
 
