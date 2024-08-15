@@ -1,3 +1,6 @@
+#define DRAW_SPACE space0
+#define FRAME_SPACE space1
+
 struct VS_IN
 {
     float3 Position : POSITION;
@@ -15,7 +18,7 @@ struct Matrices
     matrix VP;
 };
 
-ConstantBuffer<Matrices> MatricesCB : register(b0);
+ConstantBuffer<Matrices> MatricesCB : register(b0, DRAW_SPACE);
 
 VS_OUT main(VS_IN input)
 {

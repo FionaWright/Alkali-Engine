@@ -136,7 +136,6 @@ bool SceneTest::LoadContent()
 	};
 
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
-	//argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
@@ -153,7 +152,7 @@ bool SceneTest::LoadContent()
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 
-	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
+	Transform t = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
 	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
