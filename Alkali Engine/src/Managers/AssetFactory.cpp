@@ -153,9 +153,9 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 		string id = modelName + " #" + std::to_string(i);
 		auto go = batch->CreateGameObject(id, model, shader, material);
 
-		float randX = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
-		float randY = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
-		float randZ = (std::rand() / static_cast<float>(RAND_MAX)) * 2 - 1;
+		float randX = Rand01() * 2 - 1;
+		float randY = Rand01() * 2 - 1;
+		float randZ = Rand01() * 2 - 1;
 
 		go->SetPosition(randX * range.x, randY * range.y, randZ * range.z);
 	}

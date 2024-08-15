@@ -513,7 +513,7 @@ void AlkaliGUIManager::RenderMatGUI(Material* mat)
 			mat->AttachThinFilm(thinFilm);
 		}
 
-		ImGui::Text(("Delta (readonly)" + std::to_string(thinFilm.GetDelta())).c_str());
+		ImGui::Text(("Delta (readonly): " + std::to_string(thinFilm.GetDelta())).c_str());
 	}
 
 	ImGui::Unindent(IM_GUI_INDENTATION);

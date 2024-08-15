@@ -175,3 +175,8 @@ bool Approx(float a, float b)
 {
     return abs(a - b) < 0.001f;
 }
+
+float Rand01()
+{
+    return std::rand() / static_cast<float>(RAND_MAX);
+}
