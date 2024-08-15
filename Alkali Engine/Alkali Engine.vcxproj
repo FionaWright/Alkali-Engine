@@ -306,14 +306,6 @@
     <Image Include="Assets\Resources\icon1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\Normals.ps">
-      <FileType>Document</FileType>
-    </Text>
-    <Text Include="Assets\Shaders\Normals.vs">
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
