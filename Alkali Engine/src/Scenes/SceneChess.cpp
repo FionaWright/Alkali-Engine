@@ -41,7 +41,7 @@ bool SceneChess::LoadContent()
 
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 5;
-	rootParamInfoPBR.NumCBV_PerDraw = 2;
+	rootParamInfoPBR.NumCBV_PerDraw = 3;
 	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;

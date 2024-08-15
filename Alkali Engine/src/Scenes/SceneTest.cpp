@@ -63,7 +63,7 @@ bool SceneTest::LoadContent()
 
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 5;
-	rootParamInfoPBR.NumCBV_PerDraw = 2;
+	rootParamInfoPBR.NumCBV_PerDraw = 3;
 	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
@@ -91,7 +91,7 @@ bool SceneTest::LoadContent()
 	auto rootSigSkybox = std::make_shared<RootSig>();
 	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
@@ -108,11 +108,12 @@ bool SceneTest::LoadContent()
 	matPBR2->AddDynamicSRVs("Shadow Map", 1);
 
 	MaterialPropertiesCB defaultMatProps;
-	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-	{
-		matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
-		matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
-	}	
+	ThinFilmCB defaultThinFilm;
+	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
+	matPBR1->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
+
+	matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
+	matPBR2->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
 
 	cbvSizesDraw = { sizeof(MatricesCB) };
 	textures = { skyboxTex };

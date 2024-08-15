@@ -25,6 +25,7 @@ public:
     size_t GetIndexCount();
     float GetSphereRadius();
     XMFLOAT3 GetCentroid();
+    string GetFilePath();
 
 private:
     ComPtr<ID3D12Resource> m_VertexBuffer;
@@ -41,4 +42,5 @@ private:
     float m_boundingSphereRadius;
     XMFLOAT3 m_centroid;
     bool m_loadedData = false;
+    string m_filepath = "";
 };

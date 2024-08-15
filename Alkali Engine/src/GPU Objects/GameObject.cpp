@@ -242,6 +242,16 @@ size_t GameObject::GetModelIndexCount() const
 	return m_model->GetIndexCount();
 }
 
+Model* GameObject::GetModel() const
+{
+	return m_model.get();
+}
+
+Shader* GameObject::GetShader() const
+{
+	return m_shader.get();
+}
+
 void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const
 {
 	vs = m_shader->m_VSName;

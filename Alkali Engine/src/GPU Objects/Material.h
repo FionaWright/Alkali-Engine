@@ -19,7 +19,9 @@ public:
 	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
 	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
+	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
+	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);

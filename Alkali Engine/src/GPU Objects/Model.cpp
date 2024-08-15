@@ -23,6 +23,8 @@ bool Model::Init(ID3D12GraphicsCommandList2* cmdList, wstring filepath)
 	float radius;
 	XMFLOAT3 centroid;
 
+	m_filepath = wstringToString(filepath);
+
 	bool r = ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
 	if (!r)
 		return false;
@@ -100,4 +102,9 @@ float Model::GetSphereRadius()
 XMFLOAT3 Model::GetCentroid()
 {
 	return m_centroid;
+}
+
+string Model::GetFilePath()
+{
+	return m_filepath;
 }

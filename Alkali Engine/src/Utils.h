@@ -52,7 +52,7 @@ bool Equals(XMFLOAT3 a, XMFLOAT3 b);
 
 bool Equals(XMFLOAT2 a, XMFLOAT2 b);
 
-std::string ToString(XMFLOAT3& v);
+std::string ToString(const XMFLOAT3& v);
 
 bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool resetPos);
 

@@ -47,6 +47,22 @@ struct MaterialPropertiesCB
     float Metallic = 0.5f;
 };
 
+struct ThinFilmCB
+{
+    float Thickness = 250.0f;
+    float n0 = 1, n1 = 1.5f, n2 = 1.25f;
+
+    void CalculateDelta()
+    {
+        const float d10 = (n1 > n0) ? 0 : PI;
+        const float d12 = (n1 > n2) ? 0 : PI;
+        Delta = d10 + d12;
+    }
+
+private:
+    float Delta = 0.0f;
+};
+
 struct ShadowMapCB
 {
     float NormalBias;

@@ -848,7 +848,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParam
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdList);
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdList);
 
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
@@ -865,8 +865,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParam
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;
 	matProperties.Metallic = mat.pbrData.metallicFactor;
-	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-		material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB), i);
+
+	ThinFilmCB defaultThinFilm;
+
+	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
+	material->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
 	material->AttachProperties(matProperties);
 
 	string nodeName(node.name);

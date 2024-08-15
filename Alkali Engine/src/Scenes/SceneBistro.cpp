@@ -52,7 +52,7 @@ bool SceneBistro::LoadContent()
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 5;
-	rootParamInfo.NumCBV_PerDraw = 2;
+	rootParamInfo.NumCBV_PerDraw = 3;
 	rootParamInfo.NumSRV = 7;
 	rootParamInfo.NumSRV_Dynamic = 1;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
