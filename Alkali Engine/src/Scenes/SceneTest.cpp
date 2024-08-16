@@ -169,7 +169,8 @@ bool SceneTest::LoadContent()
 
 	Transform t = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
-	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
+	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
+	vector<string> whiteList = { "dOORS" };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 

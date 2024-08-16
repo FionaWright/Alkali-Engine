@@ -886,32 +886,35 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParam
 
 void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
 {
-	Transform transform;
+	Transform localTransform;
 	if (node.transform.index() == 0)
 	{
 		fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
-		transform = ToTransform(trs);
+		localTransform = ToTransform(trs);
 	}	
 	else
 	{
 		throw std::exception("Unsupported transform type");
 	}
 
-	transform.Position.x = -transform.Position.x;
+	Transform worldTransform = localTransform;
+	worldTransform.Position.x = -localTransform.Position.x;
 
-	transform.Position = Add(transform.Position, rollingTransform.Position);
-	transform.Rotation = Add(transform.Rotation, rollingTransform.Rotation);
-	transform.Scale = Mult(transform.Scale, rollingTransform.Scale);
+	worldTransform.Position = Add(worldTransform.Position, rollingTransform.Position);
+	worldTransform.Rotation = Add(worldTransform.Rotation, rollingTransform.Rotation);
+	worldTransform.Scale = Mult(worldTransform.Scale, rollingTransform.Scale);
 
 	size_t childCount = node.children.size();
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, cmdList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
+		LoadNode(d3d, cmdList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, worldTransform);
 	}
 
 	if (!node.meshIndex.has_value())
 		return;
+
+	worldTransform.Position = Mult(worldTransform.Position, worldTransform.Scale);
 
 	string nodeName(node.name);
 	if (nameWhiteList && nameWhiteList->size() > 0)
@@ -921,7 +924,7 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParamInfo&
 		{
 			if (nodeName.starts_with(nameWhiteList->at(j)))
 			{
-				found = true;
+ 				found = true;
 				break;
 			}
 		}
@@ -931,14 +934,12 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, RootParamInfo&
 	}
 
 	size_t meshIndex = node.meshIndex.value();
-	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
-
-	transform.Position = Mult(transform.Position, transform.Scale);
+	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);	
 
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, cmdList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, cmdList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, worldTransform, id);
 	}
 }
 
