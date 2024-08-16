@@ -66,10 +66,11 @@ namespace std
 	};
 }
 
-struct GLTFLoadOverrides
+struct GLTFLoadOverride
 {
 	UINT BatchIndex = -1;
 	UINT ShaderIndex = -1;
+	bool UseGlassSRVs = false;
 	vector<string> WhiteList;
 };
 
@@ -87,7 +88,7 @@ struct GLTFLoadArgs
 	UINT DefaultShaderTransIndex = 1;	
 
 	vector<string> CullingWhiteList;
-	vector<GLTFLoadOverrides> Overrides;
+	vector<GLTFLoadOverride> Overrides;
 };
 
 class ModelLoader
