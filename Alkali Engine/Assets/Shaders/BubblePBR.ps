@@ -78,6 +78,8 @@ struct ThinFilmData
     float n0, n1, n2;
 
     float Delta;
+    bool Enabled;
+    float2 p;
 };
 ConstantBuffer<ThinFilmData> ThinFilmCB : register(b2, DRAW_SPACE);
 
