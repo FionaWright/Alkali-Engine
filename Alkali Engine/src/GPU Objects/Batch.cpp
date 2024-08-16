@@ -114,3 +114,8 @@ vector<GameObject>& Batch::GetTrans()
 {
 	return m_goListTrans;
 }
+
+RootParamInfo& Batch::GetRoomParamInfo()
+{
+	return m_rootSig->GetRootParamInfo();
+}

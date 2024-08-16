@@ -44,6 +44,7 @@ public:
 
 	vector<GameObject>& GetOpaques();
 	vector<GameObject>& GetTrans();
+	RootParamInfo& GetRoomParamInfo();
 
 	string m_Name;
 

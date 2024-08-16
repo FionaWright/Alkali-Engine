@@ -135,7 +135,7 @@ float4 main(V_OUT input) : SV_Target
     float4 tex = g_texture.Sample(g_sampler, input.UV);      
 
     if (tex.a < MatPropCB.AlphaCutoff)
-        discard;        
+        discard;            
 
     tex.rgb = pow(tex.rgb, 2.2f);
 
@@ -188,7 +188,7 @@ float4 main(V_OUT input) : SV_Target
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * DirLightCB.LightColor;
-    specular = max(0, specular);
+    specular = max(0, specular); 
     
     float3 diffuse = irradiance * kD * albedo * DirLightCB.LightColor * NdL;  
     diffuse *= 1 - metalness;    
@@ -202,7 +202,7 @@ float4 main(V_OUT input) : SV_Target
     //float3 Lo = indirectSpecular;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
-    return float4(Lo, tex.a);
+    return float4(Lo, 1);
 }
 
 float D_GGX(float NdH, float roughness)
