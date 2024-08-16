@@ -82,10 +82,14 @@ bool SceneChess::LoadContent()
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
 
-	Transform t = { XMFLOAT3_ZERO, XMFLOAT3_ZERO, Mult(XMFLOAT3_ONE, 40) };
-	//vector<string> whiteList = { "Pawn_Body_W1", "Pawn_Top_W1"};
-	vector<string> whiteList = { };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Chess.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList, t);
+	GLTFLoadArgs gltfArgs;
+	gltfArgs.Batches = { batchPBR };
+	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff };
+	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.IrradianceMap = irradianceTex;
+
+	gltfArgs.Transform = { XMFLOAT3_ZERO, XMFLOAT3_ZERO, Mult(XMFLOAT3_ONE, 40) };
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Chess.gltf", gltfArgs);
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;

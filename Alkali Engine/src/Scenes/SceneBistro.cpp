@@ -118,7 +118,13 @@ bool SceneBistro::LoadContent()
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
 
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+	GLTFLoadArgs gltfArgs;
+	gltfArgs.Batches = { batchPBR };
+	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff };
+	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.IrradianceMap = irradianceTex;
+
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 
 	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
