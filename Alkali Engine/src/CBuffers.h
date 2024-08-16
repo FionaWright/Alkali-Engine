@@ -63,6 +63,10 @@ struct ThinFilmCB
 
 private:
     float Delta = 0.0f;
+
+public:
+    BOOL Enabled = FALSE;
+    XMFLOAT2 p;
 };
 
 struct ShadowMapCB

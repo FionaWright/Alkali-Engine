@@ -13207,8 +13207,8 @@
 			],
 			"translation":[
 				634.1204223632812,
-				934.140380859375,
-				-538.560302734375						
+				-538.560302734375,
+				934.140380859375				
 			]
 		},
 		{
@@ -13226,9 +13226,9 @@
 				1.1116313934326172
 			],
 			"translation":[
-				-249.1615447998047,				
-				625.4664916992188,
-				-532.4094848632812
+				-249.1615447998047,
+				-532.4094848632812,
+				625.4664916992188				
 			]
 		},
 		{
@@ -14683,7 +14683,7 @@
 				"baseColorTexture":{
 					"index":2
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14704,7 +14704,7 @@
 				"baseColorTexture":{
 					"index":5
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14725,7 +14725,7 @@
 				"baseColorTexture":{
 					"index":8
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14746,7 +14746,7 @@
 				"baseColorTexture":{
 					"index":11
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14767,7 +14767,8 @@
 				"baseColorTexture":{
 					"index":14
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.4
 			}
 		},
 		{
@@ -14788,7 +14789,7 @@
 				"baseColorTexture":{
 					"index":17
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14809,7 +14810,7 @@
 				"baseColorTexture":{
 					"index":20
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14830,7 +14831,7 @@
 				"baseColorTexture":{
 					"index":23
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14851,7 +14852,7 @@
 				"baseColorTexture":{
 					"index":26
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14872,7 +14873,7 @@
 				"baseColorTexture":{
 					"index":29
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14893,7 +14894,7 @@
 				"baseColorTexture":{
 					"index":32
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14914,7 +14915,7 @@
 				"baseColorTexture":{
 					"index":35
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14935,7 +14936,7 @@
 				"baseColorTexture":{
 					"index":38
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14956,7 +14957,7 @@
 				"baseColorTexture":{
 					"index":41
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14977,7 +14978,7 @@
 				"baseColorTexture":{
 					"index":44
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14998,7 +14999,7 @@
 				"baseColorTexture":{
 					"index":47
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15019,7 +15020,7 @@
 				"baseColorTexture":{
 					"index":50
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15040,7 +15041,7 @@
 				"baseColorTexture":{
 					"index":53
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15061,7 +15062,7 @@
 				"baseColorTexture":{
 					"index":56
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15082,7 +15083,7 @@
 				"baseColorTexture":{
 					"index":59
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15103,7 +15104,7 @@
 				"baseColorTexture":{
 					"index":62
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15124,7 +15125,7 @@
 				"baseColorTexture":{
 					"index":65
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15145,7 +15146,7 @@
 				"baseColorTexture":{
 					"index":68
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15166,7 +15167,7 @@
 				"baseColorTexture":{
 					"index":71
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15187,7 +15188,7 @@
 				"baseColorTexture":{
 					"index":74
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15208,7 +15209,7 @@
 				"baseColorTexture":{
 					"index":77
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15229,7 +15230,7 @@
 				"baseColorTexture":{
 					"index":80
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15258,7 +15259,7 @@
 				"baseColorTexture":{
 					"index":84
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15279,7 +15280,7 @@
 				"baseColorTexture":{
 					"index":87
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15300,7 +15301,7 @@
 				"baseColorTexture":{
 					"index":90
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15321,7 +15322,7 @@
 				"baseColorTexture":{
 					"index":93
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15342,7 +15343,7 @@
 				"baseColorTexture":{
 					"index":96
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15363,7 +15364,7 @@
 				"baseColorTexture":{
 					"index":99
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15384,7 +15385,7 @@
 				"baseColorTexture":{
 					"index":102
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15405,7 +15406,7 @@
 				"baseColorTexture":{
 					"index":105
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15426,7 +15427,7 @@
 				"baseColorTexture":{
 					"index":108
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15447,7 +15448,7 @@
 				"baseColorTexture":{
 					"index":111
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15468,7 +15469,7 @@
 				"baseColorTexture":{
 					"index":114
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15489,7 +15490,7 @@
 				"baseColorTexture":{
 					"index":117
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15510,7 +15511,7 @@
 				"baseColorTexture":{
 					"index":120
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15531,7 +15532,7 @@
 				"baseColorTexture":{
 					"index":123
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15552,7 +15553,7 @@
 				"baseColorTexture":{
 					"index":126
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15573,7 +15574,7 @@
 				"baseColorTexture":{
 					"index":129
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15594,7 +15595,7 @@
 				"baseColorTexture":{
 					"index":132
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15615,7 +15616,7 @@
 				"baseColorTexture":{
 					"index":135
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15636,7 +15637,7 @@
 				"baseColorTexture":{
 					"index":138
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15657,7 +15658,7 @@
 				"baseColorTexture":{
 					"index":141
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15686,7 +15687,7 @@
 				"baseColorTexture":{
 					"index":145
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15707,7 +15708,7 @@
 				"baseColorTexture":{
 					"index":148
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15728,7 +15729,7 @@
 				"baseColorTexture":{
 					"index":151
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15749,7 +15750,7 @@
 				"baseColorTexture":{
 					"index":154
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15770,7 +15771,7 @@
 				"baseColorTexture":{
 					"index":157
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15791,7 +15792,7 @@
 				"baseColorTexture":{
 					"index":160
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15812,7 +15813,7 @@
 				"baseColorTexture":{
 					"index":163
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15833,7 +15834,7 @@
 				"baseColorTexture":{
 					"index":166
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15854,7 +15855,7 @@
 				"baseColorTexture":{
 					"index":169
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15875,7 +15876,7 @@
 				"baseColorTexture":{
 					"index":172
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15896,7 +15897,7 @@
 				"baseColorTexture":{
 					"index":175
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15917,7 +15918,7 @@
 				"baseColorTexture":{
 					"index":178
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15938,7 +15939,7 @@
 				"baseColorTexture":{
 					"index":181
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15959,7 +15960,7 @@
 				"baseColorTexture":{
 					"index":184
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15980,7 +15981,7 @@
 				"baseColorTexture":{
 					"index":187
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16001,7 +16002,7 @@
 				"baseColorTexture":{
 					"index":190
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16022,7 +16023,7 @@
 				"baseColorTexture":{
 					"index":193
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16043,7 +16044,7 @@
 				"baseColorTexture":{
 					"index":196
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16064,7 +16065,7 @@
 				"baseColorTexture":{
 					"index":199
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16085,7 +16086,7 @@
 				"baseColorTexture":{
 					"index":202
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16106,7 +16107,7 @@
 				"baseColorTexture":{
 					"index":205
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16127,7 +16128,7 @@
 				"baseColorTexture":{
 					"index":208
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16148,7 +16149,7 @@
 				"baseColorTexture":{
 					"index":211
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16169,7 +16170,7 @@
 				"baseColorTexture":{
 					"index":214
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16190,7 +16191,7 @@
 				"baseColorTexture":{
 					"index":217
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16211,7 +16212,7 @@
 				"baseColorTexture":{
 					"index":220
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16232,7 +16233,7 @@
 				"baseColorTexture":{
 					"index":223
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16253,7 +16254,7 @@
 				"baseColorTexture":{
 					"index":226
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16274,7 +16275,7 @@
 				"baseColorTexture":{
 					"index":229
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16295,7 +16296,7 @@
 				"baseColorTexture":{
 					"index":232
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16316,7 +16317,7 @@
 				"baseColorTexture":{
 					"index":235
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16337,7 +16338,7 @@
 				"baseColorTexture":{
 					"index":238
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16358,7 +16359,7 @@
 				"baseColorTexture":{
 					"index":241
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16379,7 +16380,7 @@
 				"baseColorTexture":{
 					"index":244
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16400,7 +16401,7 @@
 				"baseColorTexture":{
 					"index":247
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16421,7 +16422,7 @@
 				"baseColorTexture":{
 					"index":250
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16442,7 +16443,7 @@
 				"baseColorTexture":{
 					"index":253
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16463,7 +16464,7 @@
 				"baseColorTexture":{
 					"index":256
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16484,7 +16485,7 @@
 				"baseColorTexture":{
 					"index":259
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16507,7 +16508,7 @@
 				"baseColorTexture":{
 					"index":261
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16528,7 +16529,7 @@
 				"baseColorTexture":{
 					"index":264
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16549,7 +16550,7 @@
 				"baseColorTexture":{
 					"index":267
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16570,7 +16571,7 @@
 				"baseColorTexture":{
 					"index":270
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16591,7 +16592,7 @@
 				"baseColorTexture":{
 					"index":273
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16612,7 +16613,7 @@
 				"baseColorTexture":{
 					"index":276
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16633,7 +16634,7 @@
 				"baseColorTexture":{
 					"index":279
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16654,7 +16655,7 @@
 				"baseColorTexture":{
 					"index":282
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16675,7 +16676,7 @@
 				"baseColorTexture":{
 					"index":285
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16696,7 +16697,7 @@
 				"baseColorTexture":{
 					"index":288
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16717,7 +16718,7 @@
 				"baseColorTexture":{
 					"index":291
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16738,7 +16739,7 @@
 				"baseColorTexture":{
 					"index":294
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16767,7 +16768,7 @@
 				"baseColorTexture":{
 					"index":298
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16796,7 +16797,7 @@
 				"baseColorTexture":{
 					"index":302
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16817,7 +16818,7 @@
 				"baseColorTexture":{
 					"index":305
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16838,7 +16839,7 @@
 				"baseColorTexture":{
 					"index":308
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16859,7 +16860,7 @@
 				"baseColorTexture":{
 					"index":311
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16880,7 +16881,7 @@
 				"baseColorTexture":{
 					"index":314
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16901,7 +16902,7 @@
 				"baseColorTexture":{
 					"index":317
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16922,7 +16923,7 @@
 				"baseColorTexture":{
 					"index":320
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16943,7 +16944,7 @@
 				"baseColorTexture":{
 					"index":323
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16964,7 +16965,7 @@
 				"baseColorTexture":{
 					"index":326
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16985,7 +16986,7 @@
 				"baseColorTexture":{
 					"index":329
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17006,7 +17007,7 @@
 				"baseColorTexture":{
 					"index":332
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17027,7 +17028,7 @@
 				"baseColorTexture":{
 					"index":335
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17048,7 +17049,7 @@
 				"baseColorTexture":{
 					"index":338
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17069,7 +17070,8 @@
 				"baseColorTexture":{
 					"index":341
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.7
 			}
 		},
 		{
@@ -17090,7 +17092,8 @@
 				"baseColorTexture":{
 					"index":344
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.7
 			}
 		},
 		{
@@ -17111,7 +17114,7 @@
 				"baseColorTexture":{
 					"index":347
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17132,7 +17135,7 @@
 				"baseColorTexture":{
 					"index":350
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17153,7 +17156,7 @@
 				"baseColorTexture":{
 					"index":353
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17174,7 +17177,7 @@
 				"baseColorTexture":{
 					"index":356
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17195,7 +17198,7 @@
 				"baseColorTexture":{
 					"index":359
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17216,7 +17219,7 @@
 				"baseColorTexture":{
 					"index":362
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17237,7 +17240,7 @@
 				"baseColorTexture":{
 					"index":365
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17258,7 +17261,7 @@
 				"baseColorTexture":{
 					"index":368
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17279,7 +17282,7 @@
 				"baseColorTexture":{
 					"index":371
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17300,7 +17303,7 @@
 				"baseColorTexture":{
 					"index":374
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17321,7 +17324,7 @@
 				"baseColorTexture":{
 					"index":377
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17342,7 +17345,7 @@
 				"baseColorTexture":{
 					"index":380
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17371,7 +17374,7 @@
 				"baseColorTexture":{
 					"index":384
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17400,7 +17403,7 @@
 				"baseColorTexture":{
 					"index":388
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17429,7 +17432,7 @@
 				"baseColorTexture":{
 					"index":392
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17458,7 +17461,7 @@
 				"baseColorTexture":{
 					"index":396
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17487,7 +17490,7 @@
 				"baseColorTexture":{
 					"index":400
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17516,7 +17519,7 @@
 				"baseColorTexture":{
 					"index":404
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		}
 	],

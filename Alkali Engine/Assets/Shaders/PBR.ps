@@ -78,6 +78,8 @@ struct ThinFilmData
     float n0, n1, n2;
 
     float Delta;
+    bool Enabled;
+    float2 p;
 };
 ConstantBuffer<ThinFilmData> ThinFilmCB : register(b2, DRAW_SPACE);
 
@@ -172,8 +174,7 @@ float4 main(V_OUT input) : SV_Target
     float3 F0 = lerp(0.04f, albedo, metalness);
 
     float D = D_GGX(NdH, roughness);    
-    //float3 F = F_Schlick(HdV, F0);
-    float3 F = F_ThinFilm(NdV);
+    float3 F = ThinFilmCB.Enabled ? F_ThinFilm(NdV) : F_Schlick(HdV, F0);
     float G = G_Smith(NdL, NdV, roughness);
 
     float kS = max(0, F);
@@ -182,7 +183,7 @@ float4 main(V_OUT input) : SV_Target
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
     envReflections = pow(envReflections, 2.2f);
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_samplerClamp, saturate(float2(max(NdV, 0), roughness)), 0).rg;
-    float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g);
+    float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g) * kS;
     indirectSpecular = max(0, indirectSpecular);
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);

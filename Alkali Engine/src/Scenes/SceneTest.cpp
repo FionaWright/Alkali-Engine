@@ -169,8 +169,7 @@ bool SceneTest::LoadContent()
 
 	Transform t = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 
-	//vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
-	vector<string> whiteList = { "dOORS" };
+	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
 
@@ -189,6 +188,7 @@ bool SceneTest::LoadContent()
 	thinFilmBubble.n0 = 1.0f;
 	thinFilmBubble.n1 = 1.7f;
 	thinFilmBubble.n2 = 1.0f;
+	thinFilmBubble.Enabled = true;
 	vector<shared_ptr<Texture>> texturesBubble = { irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
 	for (int i = 0; i < 30; i++)
