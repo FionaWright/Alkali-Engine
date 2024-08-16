@@ -819,6 +819,33 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 
 	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
 
+	UINT shaderIndex = -1;
+	UINT batchIndex = -1;
+	bool useGlassSRVs = false;
+
+	for (size_t i = 0; i < args.Overrides.size(); i++)
+	{
+		if (args.Overrides[i].WhiteList.size() == 0)
+			continue;
+
+		bool found = false;
+		for (auto str : args.Overrides[i].WhiteList)
+		{
+			if (node.name.starts_with(str))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			continue;
+
+		shaderIndex = args.Overrides[i].ShaderIndex;
+		batchIndex = args.Overrides[i].BatchIndex;
+		useGlassSRVs = args.Overrides[i].UseGlassSRVs;
+		break;
+	}
+
 	string diffuseTexPath = "";
 	if (mat.pbrData.baseColorTexture.has_value())
 		diffuseTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.baseColorTexture.value().textureIndex);
@@ -852,7 +879,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex };
+	vector<shared_ptr<Texture>> textures;
+	if (useGlassSRVs)
+		textures = { args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex};
+	else
+		textures = { diffuseTex, normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> material = AssetFactory::CreateMaterial();
 	material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
@@ -885,16 +916,22 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 	material->AttachThinFilm(thinFilm);
 
 	string nodeName(node.name);
-	nodeName = id + "::" + nodeName;
+	nodeName = id + "::" + nodeName;	
 
 	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
-	bool isTransparent = (mat.doubleSided && alphaRequirementMet) || mat.iridescence;
-	auto& shaderUsed = isTransparent ? args.Shaders[args.DefaultShaderTransIndex] : args.Shaders[args.DefaultShaderIndex];
+	bool isTransparent = mat.alphaMode != fastgltf::AlphaMode::Opaque || alphaRequirementMet;
+
+	if (shaderIndex == -1)
+		shaderIndex = isTransparent ? args.DefaultShaderTransIndex : args.DefaultShaderIndex;
+	if (batchIndex == -1)
+		batchIndex = args.DefaultBatchIndex;
+
+	auto& shaderUsed = args.Shaders[shaderIndex];
 	GameObject go(nodeName, model, shaderUsed, material);
 	go.SetTransform(args.Transform);
 	go.ForceSetTransparent(isTransparent);
 
-	args.Batches[args.DefaultBatchIndex]->AddGameObject(go);
+	args.Batches[batchIndex]->AddGameObject(go);
 }
 
 void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args)

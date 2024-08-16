@@ -180,6 +180,12 @@ bool SceneTest::LoadContent()
 	gltfArgs.Transform = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", gltfArgs);
 
+	GLTFLoadOverride override;
+	override.ShaderIndex = 2;
+	override.BatchIndex = 1;
+	override.WhiteList = { "glass" };
+	override.UseGlassSRVs = true;
+	gltfArgs.Overrides = { override };
 	gltfArgs.Transform = { XMFLOAT3(-3.2f, 0.33f, -1.66f), XMFLOAT3_ZERO, XMFLOAT3(30, 30, 30) };
 	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Olives.gltf", gltfArgs);
 
