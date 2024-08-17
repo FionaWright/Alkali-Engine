@@ -30,9 +30,12 @@ GameObject* Batch::AddGameObject(GameObject go)
 	return &m_goList[m_goList.size() - 1];
 }
 
-GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthoGraphic)
+GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthoGraphic, bool forceTransparent)
 {
 	GameObject go(name, pModel, pShader, pMaterial, orthoGraphic);
+	if (forceTransparent)
+		go.ForceSetTransparent(true);
+
 	return AddGameObject(go);
 }
 

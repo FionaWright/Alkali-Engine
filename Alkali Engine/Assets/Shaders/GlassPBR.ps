@@ -83,10 +83,14 @@ struct ThinFilmData
 };
 ConstantBuffer<ThinFilmData> ThinFilmCB : register(b2, DRAW_SPACE);
 
-TextureCube g_irradiance : register(t0, SRV_SPACE);
-TextureCube g_envMap : register(t1, SRV_SPACE);
-Texture2D g_blueNoise : register(t2, SRV_SPACE);
-Texture2D g_brdfIntMap : register(t3, SRV_SPACE);
+Texture2D g_normalMap : register(t0, SRV_SPACE);
+Texture2D g_specularMap : register(t1, SRV_SPACE);
+TextureCube g_irradiance : register(t2, SRV_SPACE);
+TextureCube g_envMap : register(t3, SRV_SPACE);
+Texture2D g_blueNoise : register(t4, SRV_SPACE);
+Texture2D g_brdfIntMap : register(t5, SRV_SPACE);
+Texture2D g_thickMap : register(t6, SRV_SPACE);
+Texture2D g_iridMap : register(t7, SRV_SPACE);
 
 Texture2D g_shadowMap : register(t0, SRV_DYNAMIC_SPACE);
 
@@ -95,7 +99,7 @@ SamplerState g_samplerClamp : register(s1);
 
 float D_GGX(float NdH, float roughness);
 float G_Smith(float NdL, float NdV, float roughness);
-float3 F_ThinFilm(float NdV);
+float3 F_ThinFilm(float NdV, float thickness, float hue);
 
 float4 main(V_OUT input) : SV_Target
 {    
@@ -128,10 +132,31 @@ float4 main(V_OUT input) : SV_Target
         }
     shadowFactor /= i;              
 
-    float roughness = MatPropCB.Roughness;
-    float metalness = MatPropCB.Metallic;
+    float3 occlusionRoughnessMetallic = g_specularMap.Sample(g_sampler, input.UV).rgb;    
+    float roughness = occlusionRoughnessMetallic.g * MatPropCB.Roughness;
+    float metalness = occlusionRoughnessMetallic.b * MatPropCB.Metallic;
 
-    float3 N = normalize(input.Normal);    
+    float thickSample = g_thickMap.Sample(g_sampler, input.UV).r;
+    float thickness = thickSample * ThinFilmCB.Thickness;
+
+    float3 iridSample = g_iridMap.Sample(g_sampler, input.UV).rgb;
+    //iridSample = 1;
+    float iridIntensity = iridSample.r;
+    float iridHue = iridSample.g;
+    float iridFresnel = iridSample.b;
+
+#if BUMP_2_CHANNEL
+    float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
+
+    float3 normalTangentSpace;
+    normalTangentSpace.xy = bump * 2.0f - 1.0f;
+    normalTangentSpace.z = sqrt(1.0f - dot(normalTangentSpace.xy, normalTangentSpace.xy));
+#else
+    float3 normalTangentSpace = g_normalMap.Sample(g_sampler, input.UV).rgb;
+    normalTangentSpace.xyz = normalTangentSpace.xyz * 2.0f - 1.0f;
+#endif    
+
+    float3 N = normalize(normalTangentSpace.x * input.Tangent + normalTangentSpace.y * input.Binormal + normalTangentSpace.z * input.Normal);      
     float3 L = normalize(DirLightCB.LightDirection);
     float3 V = normalize(input.ViewDirection);
     float3 H = normalize(-L + V);
@@ -148,10 +173,10 @@ float4 main(V_OUT input) : SV_Target
     //==============================================================        
 
     float D = D_GGX(NdH, roughness);    
-    float3 F = F_ThinFilm(NdV);
+    float3 F = F_ThinFilm(NdV, thickness, iridHue) * iridIntensity;
     float G = G_Smith(NdL, NdV, roughness);
 
-    float kS = max(0, F);
+    float kS = max(0, F * iridFresnel);
     float kD = (1.0f - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
@@ -162,10 +187,10 @@ float4 main(V_OUT input) : SV_Target
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * DirLightCB.LightColor;
 
-    float3 Lo = specular + indirectSpecular;
+    float3 Lo = MatPropCB.BaseColorFactor * kD * NdL + (specular + indirectSpecular);
 
     Lo = pow(Lo, 1.0f / 2.2f);    
-    return float4(Lo, length(Lo));
+    return float4(Lo, length(Lo) + 0.2f);
 }
 
 float D_GGX(float NdH, float roughness)
@@ -211,7 +236,7 @@ float tp(float n1, float n2, float cosI, float cosT)
     return 2 * n1 * cosI / (n1 * cosT + n2 * cosI); 
 } 
 
-float3 F_ThinFilm(float NdV) 
+float3 F_ThinFilm(float NdV, float thickness, float hue) 
 { 
     float n0 = ThinFilmCB.n0;
     float n1 = ThinFilmCB.n1;
@@ -236,8 +261,9 @@ float3 F_ThinFilm(float NdV)
     float beta_p = tp(n0, n1, cos0, cos1) * tp(n1, n2, cos1, cos2); 
 
     float3 wavelength = float3(650, 510, 475);
+    wavelength *= hue;
     
-    float3 phi = (2 * PI / wavelength) * (2 * n1 * ThinFilmCB.Thickness * cos1) + ThinFilmCB.Delta; 
+    float3 phi = (2 * PI / wavelength) * (2 * n1 * thickness * cos1) + ThinFilmCB.Delta; 
     
     float3 ts = pow(beta_s, 2) / (pow(alpha_s, 2) - 2 * alpha_s * cos(phi) + 1); 
     float3 tp = pow(beta_p, 2) / (pow(alpha_p, 2) - 2 * alpha_p * cos(phi) + 1); 
