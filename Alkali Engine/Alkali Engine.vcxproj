@@ -370,8 +370,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <None Include="Assets\Shaders\BubblePBR.ps" />
-    <None Include="Assets\Shaders\BubblePBR.vs" />
+    <None Include="Assets\Shaders\GlassPBR.ps" />
+    <None Include="Assets\Shaders\GlassPBR.vs" />
     <None Include="Assets\Shaders\PBR.ps" />
     <None Include="Assets\Shaders\PBR.vs" />
   </ItemGroup>

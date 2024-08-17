@@ -35,7 +35,7 @@ public:
 	void Init(string name, shared_ptr<RootSig> pRootSig);
 
 	GameObject* AddGameObject(GameObject go);
-	GameObject* CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false);
+	GameObject* CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial = nullptr, bool orthoGraphic = false, bool forceTransparent = false);
 
 	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* override = nullptr);
 	void RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* override = nullptr);

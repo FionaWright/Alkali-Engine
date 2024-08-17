@@ -47,6 +47,7 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> earthNormalTex = AssetFactory::CreateTexture("EarthNormal.png", cmdListDirect.Get(), false, true);
 	shared_ptr<Texture> defaultNormalTex = AssetFactory::CreateTexture("DefaultNormal.png", cmdListDirect.Get(), false, true);
 	shared_ptr<Texture> defaultSpecTex = AssetFactory::CreateTexture("DefaultSpecular.png", cmdListDirect.Get());
+	shared_ptr<Texture> whiteTex = AssetFactory::CreateTexture("WhitePOT.png", cmdListDirect.Get());
 
 	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
 	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
@@ -85,18 +86,18 @@ bool SceneTest::LoadContent()
 	auto rootSigPBR = std::make_shared<RootSig>();
 	rootSigPBR->Init("PBR Root Sig", rootParamInfoPBR, samplerDesc, _countof(samplerDesc));
 
-	RootParamInfo rootParamInfoBubble;
-	rootParamInfoBubble.NumCBV_PerFrame = 5;
-	rootParamInfoBubble.NumCBV_PerDraw = 3;
-	rootParamInfoBubble.NumSRV = 4;
-	rootParamInfoBubble.NumSRV_Dynamic = 1;
-	rootParamInfoBubble.ParamIndexCBV_PerDraw = 0;
-	rootParamInfoBubble.ParamIndexCBV_PerFrame = 1;
-	rootParamInfoBubble.ParamIndexSRV = 2;
-	rootParamInfoBubble.ParamIndexSRV_Dynamic = 3;
+	RootParamInfo rootParamInfoGlass;
+	rootParamInfoGlass.NumCBV_PerFrame = 5;
+	rootParamInfoGlass.NumCBV_PerDraw = 3;
+	rootParamInfoGlass.NumSRV = 8;
+	rootParamInfoGlass.NumSRV_Dynamic = 1;
+	rootParamInfoGlass.ParamIndexCBV_PerDraw = 0;
+	rootParamInfoGlass.ParamIndexCBV_PerFrame = 1;
+	rootParamInfoGlass.ParamIndexSRV = 2;
+	rootParamInfoGlass.ParamIndexSRV_Dynamic = 3;
 
-	auto rootSigBubble = std::make_shared<RootSig>();
-	rootSigBubble->Init("Bubble Root Sig", rootParamInfoBubble, samplerDesc, _countof(samplerDesc));
+	auto rootSigGlass = std::make_shared<RootSig>();
+	rootSigGlass->Init("Bubble Root Sig", rootParamInfoGlass, samplerDesc, _countof(samplerDesc));
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -151,9 +152,9 @@ bool SceneTest::LoadContent()
 	argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
-	ShaderArgs argsBubble = { L"BubblePBR.vs", L"BubblePBR.ps", inputLayoutPBR, rootSigBubble->GetRootSigResource() };
-	argsBubble.CullNone = true;
-	shared_ptr<Shader> shaderBubble = AssetFactory::CreateShader(argsBubble);
+	ShaderArgs argsGlass = { L"GlassPBR.vs", L"GlassPBR.ps", inputLayoutPBR, rootSigGlass->GetRootSigResource() };
+	argsGlass.CullNone = true;
+	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;
@@ -164,12 +165,12 @@ bool SceneTest::LoadContent()
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
-	shared_ptr<Batch> batchBubble = AssetFactory::CreateBatch(rootSigBubble);
+	shared_ptr<Batch> batchGlass = AssetFactory::CreateBatch(rootSigGlass);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 
 	GLTFLoadArgs gltfArgs;
-	gltfArgs.Batches = { batchPBR, batchBubble };
-	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff, shaderBubble };
+	gltfArgs.Batches = { batchPBR, batchGlass };
+	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff, shaderGlass };
 	gltfArgs.SkyboxTex = skyboxTex;
 	gltfArgs.IrradianceMap = irradianceTex;
 	gltfArgs.CullingWhiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
@@ -200,12 +201,13 @@ bool SceneTest::LoadContent()
 	MaterialPropertiesCB matPropBubble;
 	ThinFilmCB thinFilmBubble;
 	matPropBubble.Roughness = 0.2f;
+	matPropBubble.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
 	thinFilmBubble.Thickness = 400.0f;
 	thinFilmBubble.n0 = 1.0f;
 	thinFilmBubble.n1 = 1.7f;
 	thinFilmBubble.n2 = 1.0f;
 	thinFilmBubble.Enabled = true;
-	vector<shared_ptr<Texture>> texturesBubble = { irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
+	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, whiteTex, whiteTex };
 
 	for (int i = 0; i < 30; i++)
 	{
@@ -224,7 +226,7 @@ bool SceneTest::LoadContent()
 		float randY = Rand01() * 2 - 1;
 		float randZ = Rand01() * 2 - 1;		
 
-		auto bubble = batchBubble->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderBubble, matBubble);
+		auto bubble = batchGlass->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderGlass, matBubble, false, true);
 		bubble->SetPosition(20 * randX, 10 * randY, 20 * randZ);
 	}
 

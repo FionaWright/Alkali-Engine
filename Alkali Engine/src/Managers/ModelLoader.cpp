@@ -874,6 +874,22 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 
 	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, cmdList);
 
+	string thickTexPath = "";
+	if (mat.iridescence && mat.iridescence->iridescenceThicknessTexture.has_value())
+		thickTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.iridescence->iridescenceThicknessTexture.value().textureIndex);
+	else
+		thickTexPath = "WhitePOT.png";
+
+	shared_ptr<Texture> thickTex = AssetFactory::CreateTexture(thickTexPath, cmdList);
+
+	string iridTexPath = "";
+	if (mat.iridescence && mat.iridescence->iridescenceTexture.has_value())
+		iridTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.iridescence->iridescenceTexture.value().textureIndex);
+	else
+		iridTexPath = "WhitePOT.png";
+
+	shared_ptr<Texture> iridTex = AssetFactory::CreateTexture(iridTexPath, cmdList);
+
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdList);
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdList);
 
@@ -881,7 +897,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 	vector<shared_ptr<Texture>> textures;
 	if (useGlassSRVs)
-		textures = { args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex};
+		textures = { normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex, thickTex, iridTex };
 	else
 		textures = { diffuseTex, normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex };
 
@@ -892,7 +908,11 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 	material->AddDynamicSRVs("Shadow Map", 1);
 
 	MaterialPropertiesCB matProperties;
-	matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
+	if (useGlassSRVs)
+		matProperties.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
+	else
+		matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
+
 	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410) ? 1.0f : mat.pbrData.roughnessFactor;
 	matProperties.AlphaCutoff = mat.alphaCutoff;
 	matProperties.Dispersion = mat.dispersion;
@@ -919,7 +939,7 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 	nodeName = id + "::" + nodeName;	
 
 	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
-	bool isTransparent = mat.alphaMode != fastgltf::AlphaMode::Opaque || alphaRequirementMet;
+	bool isTransparent = mat.alphaMode != fastgltf::AlphaMode::Opaque || alphaRequirementMet || useGlassSRVs;
 
 	if (shaderIndex == -1)
 		shaderIndex = isTransparent ? args.DefaultShaderTransIndex : args.DefaultShaderIndex;

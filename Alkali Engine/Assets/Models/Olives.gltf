@@ -104,14 +104,8 @@
                 },
                 "KHR_materials_iridescence": {
                     "iridescenceFactor": 1,
-                    "iridescenceTexture": {
-                        "index": 6
-                    },
                     "iridescenceThicknessMaximum": 550,
-                    "iridescenceThicknessMinimum": 500,
-                    "iridescenceThicknessTexture": {
-                        "index": 6
-                    }
+                    "iridescenceThicknessMinimum": 500
                 },
                 "KHR_materials_transmission": {
                     "transmissionFactor": 1
@@ -141,7 +135,7 @@
 				"KHR_materials_iridescence": {
                     "iridescenceFactor": 1,
                     "iridescenceTexture": {
-                        "index": 8
+                        "index": 9
                     },
                     "iridescenceThicknessMaximum": 550,
                     "iridescenceThicknessMinimum": 500,
@@ -182,12 +176,12 @@
                 "KHR_materials_iridescence": {
                     "iridescenceFactor": 1,
                     "iridescenceTexture": {
-                        "index": 9
+                        "index": 10
                     },
                     "iridescenceThicknessMaximum": 550,
                     "iridescenceThicknessMinimum": 500,
                     "iridescenceThicknessTexture": {
-                        "index": 10
+                        "index": 11
                     }
                 }
 			},
@@ -210,14 +204,14 @@
 				"index":7
 			},
 			"occlusionTexture":{
-				"index":8
+				"index":3
 			},
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":9
+					"index":8
 				},
 				"metallicRoughnessTexture":{
-					"index":8
+					"index":3
 				}
 			}
 		}
@@ -322,10 +316,6 @@
 		},
 		{
 			"sampler":0,
-			"source":3
-		},
-		{
-			"sampler":0,
 			"source":8
 		},
 		{
@@ -335,6 +325,10 @@
 		{
 			"sampler":0,
 			"source":10
+		},
+		{
+			"sampler":0,
+			"source":11
 		}
 	],
 	"images":[
