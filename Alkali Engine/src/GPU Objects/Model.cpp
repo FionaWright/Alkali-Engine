@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Model.h"
-#include "ModelLoader.h"
+#include "ModelLoaderObj.h"
 
 Model::Model()
 	: m_VertexBuffer(nullptr)
@@ -25,7 +25,7 @@ bool Model::Init(ID3D12GraphicsCommandList2* cmdList, wstring filepath)
 
 	m_filepath = wstringToString(filepath);
 
-	bool r = ModelLoader::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
+	bool r = ModelLoaderObj::LoadModel(filepath, vertexBuffer, indexBuffer, radius, centroid);
 	if (!r)
 		return false;
 

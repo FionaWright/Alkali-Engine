@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "SceneChess.h"
 #include "ImGUIManager.h"
-#include "ModelLoader.h"
+#include "ModelLoaderObj.h"
+#include "ModelLoaderGLTF.h"
 #include "ResourceTracker.h"
 #include "Utils.h"
 #include "TextureLoader.h"
@@ -89,7 +90,7 @@ bool SceneChess::LoadContent()
 	gltfArgs.IrradianceMap = irradianceTex;
 
 	gltfArgs.Transform = { XMFLOAT3_ZERO, XMFLOAT3_ZERO, Mult(XMFLOAT3_ONE, 40) };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Chess.gltf", gltfArgs);
+	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Chess.gltf", gltfArgs);
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;

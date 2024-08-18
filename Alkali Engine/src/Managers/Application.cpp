@@ -6,7 +6,6 @@
 #include "CommandQueue.h"
 #include "Scene.h"
 #include "SceneTest.h"
-#include "ModelLoader.h"
 #include "ImGUIManager.h"
 #include "Utils.h"
 #include "SceneBistro.h"

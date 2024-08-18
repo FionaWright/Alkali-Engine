@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "SceneTest.h"
 #include "ImGUIManager.h"
-#include "ModelLoader.h"
+#include "ModelLoaderObj.h"
+#include "ModelLoaderGLTF.h"
 #include "ResourceTracker.h"
 #include "Utils.h"
 #include "TextureLoader.h"
@@ -26,7 +27,7 @@ bool SceneTest::LoadContent()
 
 		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
-		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, cmdListCopy.Get(), "Sphere.gltf");
+		auto sphereList = ModelLoaderGLTF::LoadModelsFromGLTF(m_d3dClass, cmdListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
 
 		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
@@ -176,11 +177,11 @@ bool SceneTest::LoadContent()
 	gltfArgs.IrradianceMap = irradianceTex;
 	gltfArgs.CullingWhiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
+	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
 
 	gltfArgs.CullingWhiteList = {};
 	gltfArgs.Transform = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", gltfArgs);
+	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", gltfArgs);
 
 	GLTFLoadOverride override;
 	override.ShaderIndex = 2;
@@ -189,7 +190,7 @@ bool SceneTest::LoadContent()
 	override.UseGlassSRVs = true;
 	gltfArgs.Overrides = { override };
 	gltfArgs.Transform = { XMFLOAT3(-3.2f, 0.33f, -1.66f), XMFLOAT3_ZERO, XMFLOAT3(30, 30, 30) };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Olives.gltf", gltfArgs);
+	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Olives.gltf", gltfArgs);
 
 	m_goTest = batchPBR->CreateGameObject("World", modelSphere, shaderPBR, matPBR1);
 	m_goTest->SetPosition(-50, 3, -10);

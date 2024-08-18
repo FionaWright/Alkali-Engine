@@ -219,7 +219,8 @@
     <ClCompile Include="src\Managers\DescriptorManager.cpp" />
     <ClCompile Include="src\Managers\ImGUIManager.cpp" />
     <ClCompile Include="src\Managers\InputManager.cpp" />
-    <ClCompile Include="src\Managers\ModelLoader.cpp" />
+    <ClCompile Include="src\Managers\ModelLoaderObj.cpp" />
+    <ClCompile Include="src\Managers\ModelLoaderGLTF.cpp" />
     <ClCompile Include="src\Managers\ResourceManager.cpp" />
     <ClCompile Include="src\Managers\ResourceTracker.cpp" />
     <ClCompile Include="src\Managers\SettingsManager.cpp" />
@@ -284,7 +285,8 @@
     <ClInclude Include="src\Managers\DescriptorManager.h" />
     <ClInclude Include="src\Managers\ImGUIManager.h" />
     <ClInclude Include="src\Managers\InputManager.h" />
-    <ClInclude Include="src\Managers\ModelLoader.h" />
+    <ClInclude Include="src\Managers\ModelLoaderObj.h" />
+    <ClInclude Include="src\Managers\ModelLoaderGLTF.h" />
     <ClInclude Include="src\Managers\ResourceManager.h" />
     <ClInclude Include="src\Managers\ResourceTracker.h" />
     <ClInclude Include="src\Managers\SettingsManager.h" />

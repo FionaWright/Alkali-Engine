@@ -178,7 +178,7 @@
     <ClCompile Include="src\Managers\AssetFactory.cpp">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
-    <ClCompile Include="src\Managers\ModelLoader.cpp">
+    <ClCompile Include="src\Managers\ModelLoaderObj.cpp">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
     <ClCompile Include="src\Managers\ResourceTracker.cpp">
@@ -231,6 +231,9 @@
     </ClCompile>
     <ClCompile Include="src\Scenes\SceneChess.cpp">
       <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Managers\ModelLoaderGLTF.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -363,7 +366,7 @@
     <ClInclude Include="src\Managers\AssetFactory.h">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Managers\ModelLoader.h">
+    <ClInclude Include="src\Managers\ModelLoaderObj.h">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClInclude>
     <ClInclude Include="src\Managers\ResourceTracker.h">
@@ -413,6 +416,9 @@
     </ClInclude>
     <ClInclude Include="src\Scenes\SceneChess.h">
       <Filter>Source Files\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Managers\ModelLoaderGLTF.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
