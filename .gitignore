@@ -407,3 +407,5 @@ Alkali Engine/Assets/Models/Bistro.glb
 Alkali Engine/x64/Debug/Alkali Engine.pch
 Alkali Engine/x64/Release/Alkali Engine.pch
 x64/Debug/Alkali Engine.pdb
+
+*.binTex
