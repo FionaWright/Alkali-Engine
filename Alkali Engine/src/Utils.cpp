@@ -180,3 +180,8 @@ float Rand01()
 {
     return std::rand() / static_cast<float>(RAND_MAX);
 }
+
+float Rand(float min, float max)
+{
+    return min + (max - min) * Rand01();
+}

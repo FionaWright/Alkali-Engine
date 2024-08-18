@@ -495,8 +495,10 @@ void AlkaliGUIManager::RenderMatGUI(Material* mat)
 
 		ImGui::Indent(IM_GUI_INDENTATION);
 
-		FixWidthOnNext("Thickness");
-		changed |= ImGui::SliderFloat("Thickness", &thinFilm.Thickness, 0, 3000);
+		FixWidthOnNext("Thickness Max");
+		changed |= ImGui::SliderFloat("Thickness Max", &thinFilm.ThicknessMax, 0, 3000);
+		FixWidthOnNext("Thickness Min");
+		changed |= ImGui::SliderFloat("Thickness Min", &thinFilm.ThicknessMin, 0, 3000);
 		FixWidthOnNext("n0 IOR (External)");
 		changed |= ImGui::SliderFloat("n0 IOR (External)", &thinFilm.n0, 0.2f, 3);
 		FixWidthOnNext("n1 IOR (Film)");

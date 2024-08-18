@@ -62,6 +62,8 @@ bool Approx(float a, float b);
 
 float Rand01();
 
+float Rand(float min, float max);
+
 template <typename T>
 bool Contains(vector<T>& v, T& obj)
 {

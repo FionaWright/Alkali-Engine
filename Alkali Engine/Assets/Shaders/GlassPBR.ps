@@ -74,12 +74,14 @@ ConstantBuffer<MaterialProperties> MatPropCB : register(b1, DRAW_SPACE);
 
 struct ThinFilmData
 {
-    float Thickness;
-    float n0, n1, n2;
+    float ThicknessMax;
+    float ThicknessMin;
+    float n0, n1;
 
+    float n2;
     float Delta;
     bool Enabled;
-    float2 p;
+    float p;
 };
 ConstantBuffer<ThinFilmData> ThinFilmCB : register(b2, DRAW_SPACE);
 
@@ -99,7 +101,7 @@ SamplerState g_samplerClamp : register(s1);
 
 float D_GGX(float NdH, float roughness);
 float G_Smith(float NdL, float NdV, float roughness);
-float3 F_ThinFilm(float NdV, float thickness, float hue);
+float3 F_ThinFilm(float NdV, float thickness);
 
 float4 main(V_OUT input) : SV_Target
 {    
@@ -136,14 +138,11 @@ float4 main(V_OUT input) : SV_Target
     float roughness = occlusionRoughnessMetallic.g * MatPropCB.Roughness;
     float metalness = occlusionRoughnessMetallic.b * MatPropCB.Metallic;
 
-    float thickSample = g_thickMap.Sample(g_sampler, input.UV).r;
-    float thickness = thickSample * ThinFilmCB.Thickness;
-
     float3 iridSample = g_iridMap.Sample(g_sampler, input.UV).rgb;
-    //iridSample = 1;
     float iridIntensity = iridSample.r;
-    float iridHue = iridSample.g;
-    float iridFresnel = iridSample.b;
+
+    float thickSample = g_thickMap.Sample(g_sampler, input.UV).r;
+    float thickness = lerp(ThinFilmCB.ThicknessMin, ThinFilmCB.ThicknessMax, thickSample);
 
 #if BUMP_2_CHANNEL
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
@@ -173,10 +172,10 @@ float4 main(V_OUT input) : SV_Target
     //==============================================================        
 
     float D = D_GGX(NdH, roughness);    
-    float3 F = F_ThinFilm(NdV, thickness, iridHue) * iridIntensity;
+    float3 F = F_ThinFilm(NdV, thickness) * iridIntensity * 3;
     float G = G_Smith(NdL, NdV, roughness);
 
-    float kS = max(0, F * iridFresnel);
+    float kS = max(0, F);
     float kD = (1.0f - kS);
 
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
@@ -190,7 +189,7 @@ float4 main(V_OUT input) : SV_Target
     float3 Lo = MatPropCB.BaseColorFactor * kD * NdL + (specular + indirectSpecular);
 
     Lo = pow(Lo, 1.0f / 2.2f);    
-    return float4(Lo, length(Lo) + 0.2f);
+    return float4(Lo, max(Lo.r, max(Lo.g, Lo.b)));
 }
 
 float D_GGX(float NdH, float roughness)
@@ -236,7 +235,7 @@ float tp(float n1, float n2, float cosI, float cosT)
     return 2 * n1 * cosI / (n1 * cosT + n2 * cosI); 
 } 
 
-float3 F_ThinFilm(float NdV, float thickness, float hue) 
+float3 F_ThinFilm(float NdV, float thickness) 
 { 
     float n0 = ThinFilmCB.n0;
     float n1 = ThinFilmCB.n1;
@@ -261,7 +260,6 @@ float3 F_ThinFilm(float NdV, float thickness, float hue)
     float beta_p = tp(n0, n1, cos0, cos1) * tp(n1, n2, cos1, cos2); 
 
     float3 wavelength = float3(650, 510, 475);
-    wavelength *= hue;
     
     float3 phi = (2 * PI / wavelength) * (2 * n1 * thickness * cos1) + ThinFilmCB.Delta; 
     

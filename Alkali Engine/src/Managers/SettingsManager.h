@@ -41,6 +41,8 @@ struct DX12Settings
 		D3D12_SHADER_VISIBILITY_PIXEL
 	};
 
+	bool MSAAEnabled = false; // Unsupported for flip models
+
 	bool EnableValidationLayerOnReleaseMode = false;
 	bool EnableAllValidationLayerMessages = false;
 };

@@ -202,9 +202,9 @@ bool SceneTest::LoadContent()
 	ThinFilmCB thinFilmBubble;
 	matPropBubble.Roughness = 0.2f;
 	matPropBubble.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
-	thinFilmBubble.Thickness = 400.0f;
-	thinFilmBubble.n0 = 1.0f;
-	thinFilmBubble.n1 = 1.7f;
+	thinFilmBubble.ThicknessMax = thinFilmBubble.ThicknessMin = 400.0f;
+	thinFilmBubble.n0 = 1.0f;	
+	thinFilmBubble.n1 = 1.7f;	
 	thinFilmBubble.n2 = 1.0f;
 	thinFilmBubble.Enabled = true;
 	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, whiteTex, whiteTex };

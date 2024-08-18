@@ -49,8 +49,16 @@ struct MaterialPropertiesCB
 
 struct ThinFilmCB
 {
-    float Thickness = 0.0f;
+    float ThicknessMax = 0.0f;
+    float ThicknessMin = 0.0f;
     float n0 = 1, n1 = 1.5f, n2 = 1.25f;
+
+private:
+    float Delta = 0.0f;
+
+public:
+    BOOL Enabled = FALSE;
+    float p;
 
     void CalculateDelta()
     {
@@ -60,13 +68,6 @@ struct ThinFilmCB
     }
 
     float GetDelta() { return Delta; }
-
-private:
-    float Delta = 0.0f;
-
-public:
-    BOOL Enabled = FALSE;
-    XMFLOAT2 p;
 };
 
 struct ShadowMapCB
