@@ -48,6 +48,7 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> defaultNormalTex = AssetFactory::CreateTexture("DefaultNormal.png", cmdListDirect.Get(), false, true);
 	shared_ptr<Texture> defaultSpecTex = AssetFactory::CreateTexture("DefaultSpecular.png", cmdListDirect.Get());
 	shared_ptr<Texture> whiteTex = AssetFactory::CreateTexture("WhitePOT.png", cmdListDirect.Get());
+	shared_ptr<Texture> gradientTex = AssetFactory::CreateTexture("Gradient.png", cmdListDirect.Get());
 
 	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
 	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
@@ -202,12 +203,13 @@ bool SceneTest::LoadContent()
 	ThinFilmCB thinFilmBubble;
 	matPropBubble.Roughness = 0.2f;
 	matPropBubble.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
-	thinFilmBubble.ThicknessMax = thinFilmBubble.ThicknessMin = 400.0f;
+	thinFilmBubble.ThicknessMax = 600.0f;
+    thinFilmBubble.ThicknessMin = 400.0f;
 	thinFilmBubble.n0 = 1.0f;	
 	thinFilmBubble.n1 = 1.7f;	
 	thinFilmBubble.n2 = 1.0f;
 	thinFilmBubble.Enabled = true;
-	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, whiteTex, whiteTex };
+	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, gradientTex, whiteTex };
 
 	for (int i = 0; i < 30; i++)
 	{
