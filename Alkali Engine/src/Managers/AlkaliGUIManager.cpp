@@ -4,7 +4,7 @@
 #include "TextureLoader.h"
 #include "DescriptorManager.h"
 #include "InputManager.h"
-#include "ModelLoader.h"
+#include "ModelLoaderObj.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Application.h"
@@ -310,7 +310,7 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 			{
 				string fileNameStr(fileName);
 				string filePath = fileDir + fileNameStr + ".obj";
-				ModelLoader::PreprocessObjFile(filePath, split, invert);
+				ModelLoaderObj::PreprocessObjFile(filePath, split, invert);
 			}
 
 			ImGui::TreePop();

@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "SceneBistro.h"
 #include "ImGUIManager.h"
-#include "ModelLoader.h"
+#include "ModelLoaderObj.h"
+#include "ModelLoaderGLTF.h"
 #include "CBuffers.h"
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
@@ -124,7 +125,7 @@ bool SceneBistro::LoadContent()
 	gltfArgs.SkyboxTex = skyboxTex;
 	gltfArgs.IrradianceMap = irradianceTex;
 
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
+	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
 	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
 
 	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
