@@ -235,6 +235,9 @@
     <ClCompile Include="src\Managers\ModelLoaderGLTF.cpp">
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClCompile>
+    <ClCompile Include="src\Scenes\SceneTrueEmpty.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets\Resources\resource.h">
@@ -419,6 +422,9 @@
     </ClInclude>
     <ClInclude Include="src\Managers\ModelLoaderGLTF.h">
       <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\SceneTrueEmpty.h">
+      <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

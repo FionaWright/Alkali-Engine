@@ -167,6 +167,9 @@ void ShadowManager::Shutdown()
 
 void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, const XMFLOAT3& eyePos)
 {
+	if (!ms_initialised)
+		return;
+
 	if (SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent)
 		CalculateNearFarPercents();
 
@@ -340,6 +343,9 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos
 
 void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex)
 {
+	if (!ms_initialised)
+		return;
+
 	if (!SettingsManager::ms_Dynamic.Shadow.Rendering)
 		return;
 

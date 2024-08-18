@@ -66,9 +66,7 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[12] = XMFLOAT4(-0.24188840f, 0.99706507f, NAN, NAN);
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[13] = XMFLOAT4(-0.81409955f, 0.91437590f, NAN, NAN);
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126f, 0.78641367f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161f, -0.14100790f, NAN, NAN);
-
-	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
+	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161f, -0.14100790f, NAN, NAN);	
 
 	if (m_dsvEnabled)
 		SetDSVForSize(width, height);
@@ -280,7 +278,8 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	m_frustum.SetDebugLinesEnabled(showLines);
 
 	XMFLOAT3& lDir = m_perFrameCBuffers.DirectionalLight.LightDirection;
-	m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
+	if (m_debugLineLightDir)
+		m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
 	m_depthViewCB.Resolution = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
 
@@ -339,13 +338,17 @@ void Scene::OnRender(TimeEventArgs& e)
 	else
 		m_shadowMapCounter++;	
 
-	ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
-	ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
-	ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
-	ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB), backBufferIndex);
-	ms_perFramePBRMat->SetCBV_PerFrame(4, &m_perFrameCBuffers.EnvMap, sizeof(EnvMapCB), backBufferIndex);
+	if (ms_perFramePBRMat)
+	{
+		ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
+		ms_perFramePBRMat->SetCBV_PerFrame(1, &m_perFrameCBuffers.DirectionalLight, sizeof(DirectionalLightCB), backBufferIndex);
+		ms_perFramePBRMat->SetCBV_PerFrame(2, &m_perFrameCBuffers.ShadowMap, sizeof(ShadowMapCB), backBufferIndex);
+		ms_perFramePBRMat->SetCBV_PerFrame(3, &m_perFrameCBuffers.ShadowMapPixel.CascadeDistances, sizeof(ShadowMapPixelCB), backBufferIndex);
+		ms_perFramePBRMat->SetCBV_PerFrame(4, &m_perFrameCBuffers.EnvMap, sizeof(EnvMapCB), backBufferIndex);
+	}
 
-	m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
+	if (m_viewDepthMat)
+		m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
 
 	cmdList->RSSetViewports(1, &m_viewport);
 	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -355,11 +358,11 @@ void Scene::OnRender(TimeEventArgs& e)
 	for (auto& it : batchList)
 		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
-	for (auto& it : batchList)
-		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
-
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
+
+	for (auto& it : batchList)
+		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);	
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{

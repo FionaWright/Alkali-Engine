@@ -85,10 +85,4 @@ UINT D3DClass::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 
 void D3DClass::Shutdown()
 {
-    m_d3d12Device->Release();
-    m_d3d12Device.Reset();
-    m_dxgiAdapter.Reset();
-    m_computeCommandQueue.reset();
-    m_directCommandQueue.reset();
-    m_copyCommandQueue.reset();
 }
