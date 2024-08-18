@@ -18,6 +18,7 @@ constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 struct DX12Settings
 {
+	bool GlobalDescriptorHeapEnabled = true;
 	UINT DescriptorHeapSize = 60000;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

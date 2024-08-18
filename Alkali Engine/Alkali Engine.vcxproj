@@ -235,6 +235,7 @@
     <ClCompile Include="src\Scenes\SceneChess.cpp" />
     <ClCompile Include="src\Scenes\SceneBistro.cpp" />
     <ClCompile Include="src\Scenes\SceneTest.cpp" />
+    <ClCompile Include="src\Scenes\SceneTrueEmpty.cpp" />
     <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -298,6 +299,7 @@
     <ClInclude Include="src\Scenes\SceneChess.h" />
     <ClInclude Include="src\Scenes\SceneBistro.h" />
     <ClInclude Include="src\Scenes\SceneTest.h" />
+    <ClInclude Include="src\Scenes\SceneTrueEmpty.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>
   <ItemGroup>

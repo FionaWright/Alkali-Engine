@@ -10,6 +10,9 @@ vector<string> DescriptorManager::ms_debugHeapList;
 
 void DescriptorManager::Init(D3DClass* d3d, UINT numDescriptors)
 {
+	if (!SettingsManager::ms_DX12.GlobalDescriptorHeapEnabled)
+		numDescriptors = 1;
+
 	ms_nextDescriptorIndex = 0;
 	ms_descriptorIncrementSize = d3d->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	ms_srv_cbv_uav_Heap = ResourceManager::CreateDescriptorHeap(numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);

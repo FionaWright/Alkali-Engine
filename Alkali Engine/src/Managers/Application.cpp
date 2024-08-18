@@ -6,6 +6,7 @@
 #include "CommandQueue.h"
 #include "Scene.h"
 #include "SceneTest.h"
+#include "SceneTrueEmpty.h"
 #include "ImGUIManager.h"
 #include "Utils.h"
 #include "SceneBistro.h"
@@ -40,17 +41,25 @@ Application::Application(HINSTANCE hInst)
     bool vSync = false;
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SettingsManager::ms_Window.ScreenWidth), static_cast<int>(SettingsManager::ms_Window.ScreenHeight), vSync);
     m_mainWindow->Show();
+    
+    DescriptorManager::Init(m_d3dClass.get(), SettingsManager::ms_DX12.DescriptorHeapSize);
 
-    shared_ptr<SceneTest> testScene = std::make_shared<SceneTest>(L"Madeline Scene", m_mainWindow.get());
+    auto testScene = std::make_shared<SceneTest>(L"Test Scene", m_mainWindow.get());
     InitScene(testScene);
 
-    shared_ptr<SceneBistro> bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
+    auto bistroScene = std::make_shared<SceneBistro>(L"Bistro Scene", m_mainWindow.get());
     InitScene(bistroScene);
 
-    auto ChessScene = std::make_shared<SceneChess>(L"Chess Scene", m_mainWindow.get());
-    InitScene(ChessScene);
+    auto chessScene = std::make_shared<SceneChess>(L"Chess Scene", m_mainWindow.get());
+    InitScene(chessScene);
 
-    AssignScene(testScene.get());
+    auto emptyScene = std::make_shared<Scene>(L"Empty Scene", m_mainWindow.get(), true);
+    InitScene(emptyScene);
+
+    auto trueEmptyScene = std::make_shared<SceneTrueEmpty>(L"True Empty Scene", m_mainWindow.get());
+    InitScene(trueEmptyScene);
+
+    AssignScene(trueEmptyScene.get());
 
     ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);   
 }
