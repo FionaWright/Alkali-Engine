@@ -12,6 +12,11 @@
 
 vector<string> AlkaliGUIManager::ms_errorList;
 
+void AlkaliGUIManager::FixWidthOnNext(const char* label) 
+{
+	ImGui::SetNextItemWidth(-(ImGui::CalcTextSize(label).x + ImGui::GetStyle().ItemInnerSpacing.x));
+}
+
 void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 {
 	ImGui::SeparatorText("Stats");
@@ -86,11 +91,13 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
+				FixWidthOnNext("Near Plane");
 				ImGui::InputFloat("Near Plane", &SettingsManager::ms_Dynamic.NearPlane);
+				FixWidthOnNext("Far Plane");
 				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
 
 				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
-				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullFaceEnabled);
+				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullBackFaceEnabled);
 
 				if (wireframeChanged || cullChanged)
 				{
@@ -141,9 +148,14 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
 				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
 				ImGui::Spacing();
+
+				FixWidthOnNext("Cascade Count");
 				ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);
+				FixWidthOnNext("Auto NearFar Percents");
 				ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent);
+				FixWidthOnNext("Near Percents");
 				ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.Shadow.NearPercents);
+				FixWidthOnNext("Far Percents");
 				ImGui::InputFloat4("Far Percents", SettingsManager::ms_Dynamic.Shadow.FarPercents);
 
 				if (visualiseDSV || !SettingsManager::ms_Dynamic.Shadow.Enabled)
@@ -155,12 +167,17 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 					ImGui::EndDisabled();
 
 				ImGui::Checkbox("Show Bounds", &SettingsManager::ms_Dynamic.Shadow.ShowDebugBounds);
+				FixWidthOnNext("Bounds Bias");
 				ImGui::InputFloat("Bounds Bias", &SettingsManager::ms_Dynamic.Shadow.BoundsBias);
+				FixWidthOnNext("Depth Bias");
 				ImGui::InputFloat("Depth Bias", &scene->GetPerFrameCBuffers().ShadowMapPixel.Bias);
+				FixWidthOnNext("Normal Depth Bias");
 				ImGui::InputFloat("Normal Depth Bias", &scene->GetPerFrameCBuffers().ShadowMap.NormalBias);
 
+				FixWidthOnNext("Frame Wait Count");
 				ImGui::InputInt("Frame Wait Count", &SettingsManager::ms_Dynamic.Shadow.TimeSlice);
 
+				FixWidthOnNext("PCF Samples");
 				ImGui::Text("PCF Samples");
 
 				ImGui::Indent(IM_GUI_INDENTATION);
@@ -184,9 +201,11 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 
 			{
+				FixWidthOnNext("Fullscreen");
 				if (ImGui::Checkbox("Fullscreen", &SettingsManager::ms_Dynamic.FullscreenEnabled))
 					scene->GetWindow()->SetFullscreen(SettingsManager::ms_Dynamic.FullscreenEnabled);
 
+				FixWidthOnNext("VSync");
 				ImGui::Checkbox("VSync", &SettingsManager::ms_Dynamic.VSyncEnabled);
 			}
 
@@ -222,6 +241,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::SeparatorText("Visuals");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Background Color");
 			ImGui::ColorEdit4("Background Color", reinterpret_cast<float*>(&scene->m_BackgroundColor));
 
 			ImGui::Checkbox("Debug Lines", &SettingsManager::ms_Dynamic.DebugLinesEnabled);
@@ -230,20 +250,26 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::SeparatorText("Rendering");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Sort by Depth");
 			ImGui::Checkbox("Sort By Depth", &SettingsManager::ms_Dynamic.BatchSortingEnabled);
 
+			FixWidthOnNext("Time Scale");
 			ImGui::InputFloat("Time Scale", &SettingsManager::ms_Dynamic.UpdateTimeScale);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 			ImGui::SeparatorText("Directional Light CBV");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
+			FixWidthOnNext("Direction");
 			ImGui::InputFloat3("Direction", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDirection));
 			scene->GetPerFrameCBuffers().DirectionalLight.LightDirection = Normalize(scene->GetPerFrameCBuffers().DirectionalLight.LightDirection);
 
+			FixWidthOnNext("Light Colour");
 			ImGui::ColorEdit4("Light Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDiffuse));
+			FixWidthOnNext("Ambient Colour");
 			ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.AmbientColor));
 
+			FixWidthOnNext("Specular Power");
 			ImGui::InputFloat("Specular Power", &scene->GetPerFrameCBuffers().DirectionalLight.SpecularPower);
 
 			ImGui::TreePop();
@@ -341,6 +367,220 @@ void AlkaliGUIManager::RenderGUITools(D3DClass* d3d, Scene* scene)
 	}
 
 	ImGui::Spacing();
+}
+
+void AlkaliGUIManager::RenderTextureGUI(Texture* tex)
+{
+	ImGui::Indent(IM_GUI_INDENTATION);
+
+	ImGui::Text(("FilePath: " + tex->GetFilePath()).c_str());
+	ImGui::Text(("Mip Levels: " + std::to_string(tex->GetMipLevels())).c_str());
+	ImGui::Text(("Channels: " + std::to_string(tex->GetChannels())).c_str());
+	if (tex->GetHasAlpha())
+		ImGui::Text("Transparent: TRUE");
+
+	ImGui::Unindent(IM_GUI_INDENTATION);
+}
+
+void AlkaliGUIManager::RenderModelGUI(Model* model)
+{
+	ImGui::Indent(IM_GUI_INDENTATION);
+
+	string vCountStr = "Model Vertex Count: " + std::to_string(model->GetVertexCount());
+	string iCountStr = "Model Index Count: " + std::to_string(model->GetIndexCount());
+
+	string radiStr = "Model Bounding Radius: " + std::to_string(model->GetSphereRadius());
+	string centroidStr = "Model Centroid: " + ToString(model->GetCentroid());
+
+	ImGui::Text(("FilePath: " + model->GetFilePath()).c_str());
+	ImGui::Text(vCountStr.c_str());
+	ImGui::Text(iCountStr.c_str());
+	ImGui::Text(radiStr.c_str());
+	ImGui::Text(centroidStr.c_str());
+
+	ImGui::Unindent(IM_GUI_INDENTATION);
+}
+
+void AlkaliGUIManager::RenderShaderGUI(Shader* shader)
+{
+	ImGui::Indent(IM_GUI_INDENTATION);
+
+	wstring vs, ps, hs, ds;
+	vs = L"VS: " + shader->m_VSName;
+	ps = L"PS: " + shader->m_PSName;
+	hs = L"HS: " + shader->m_HSName;
+	ds = L"DS: " + shader->m_DSName;
+	ImGui::Text(wstringToString(vs).c_str());
+	ImGui::Text(wstringToString(ps).c_str());
+	ImGui::Text(wstringToString(hs).c_str());
+	ImGui::Text(wstringToString(ds).c_str());
+
+	ImGui::Unindent(IM_GUI_INDENTATION);
+}
+
+void AlkaliGUIManager::RenderMatGUI(Material* mat)
+{
+	ImGui::Indent(IM_GUI_INDENTATION);
+
+	UINT srv;
+	UINT cbvFrame[BACK_BUFFER_COUNT];
+	UINT cbvDraw[BACK_BUFFER_COUNT];
+	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+		mat->GetIndices(srv, cbvFrame[i], cbvDraw[i], i);	
+
+	if (cbvFrame[0] != -1)
+	{
+		string indicesFrame = "";
+		string indicesDraw = "";
+		for (int i = 0; i < BACK_BUFFER_COUNT; i++)
+		{
+			indicesFrame += std::to_string(cbvFrame[i]) + "~";
+			indicesDraw += std::to_string(cbvDraw[i]) + "~";
+		}			
+
+		if (cbvDraw[0] != -1)
+			ImGui::Text(("CBV Index (PerDraw): " + indicesDraw).c_str());
+		if (cbvFrame[0] != -1)
+			ImGui::Text(("CBV Index (PerFrame): " + indicesFrame).c_str());		
+	}
+
+	if (srv != -1)
+		ImGui::Text(("SRV Index: " + std::to_string(srv)).c_str());
+
+	ImGui::Indent(IM_GUI_INDENTATION);
+	{
+		auto& matTexList = mat->GetTextures();
+		for (size_t t = 0; t < matTexList.size(); t++)
+		{
+			ImGui::Text(("SRV " + std::to_string(t) + ": " + matTexList[t]->GetFilePath()).c_str());
+		}
+	}	
+	ImGui::Unindent(IM_GUI_INDENTATION);
+
+	MaterialPropertiesCB matProp;
+	if (mat->GetProperties(matProp))
+	{
+		ImGui::Text("Material Properties:");
+		bool changed = false;
+
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		FixWidthOnNext("Base Color");
+		changed |= ImGui::ColorEdit3("Base Color", reinterpret_cast<float*>(&matProp.BaseColorFactor));
+		FixWidthOnNext("Roughness");
+		changed |= ImGui::SliderFloat("Roughness", reinterpret_cast<float*>(&matProp.Roughness), 0, 1);
+		FixWidthOnNext("Metalness");
+		changed |= ImGui::SliderFloat("Metalness", reinterpret_cast<float*>(&matProp.Metallic), 0, 1);
+		FixWidthOnNext("Alpha Cutoff");
+		changed |= ImGui::SliderFloat("Alpha Cutoff", reinterpret_cast<float*>(&matProp.AlphaCutoff), 0, 1);
+		FixWidthOnNext("Dispersion");
+		changed |= ImGui::InputFloat("Dispersion", reinterpret_cast<float*>(&matProp.Dispersion));
+		FixWidthOnNext("IOR");
+		changed |= ImGui::InputFloat("IOR", reinterpret_cast<float*>(&matProp.IOR));
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+
+		if (changed)
+		{
+			mat->SetCBV_PerDraw(1, &matProp, sizeof(MaterialPropertiesCB));
+			mat->AttachProperties(matProp);
+		}
+	}
+
+	ThinFilmCB thinFilm;
+	if (mat->GetThinFilm(thinFilm))
+	{
+		ImGui::Text("Thin Film Interference:");
+		bool changed = false;
+
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		FixWidthOnNext("Thickness Max");
+		changed |= ImGui::SliderFloat("Thickness Max", &thinFilm.ThicknessMax, 0, 3000);
+		FixWidthOnNext("Thickness Min");
+		changed |= ImGui::SliderFloat("Thickness Min", &thinFilm.ThicknessMin, 0, 3000);
+		FixWidthOnNext("n0 IOR (External)");
+		changed |= ImGui::SliderFloat("n0 IOR (External)", &thinFilm.n0, 0.2f, 3);
+		FixWidthOnNext("n1 IOR (Film)");
+		changed |= ImGui::SliderFloat("n1 IOR (Film)", &thinFilm.n1, 0.2f, 3);
+		FixWidthOnNext("n2 IOR (Internal)");
+		changed |= ImGui::SliderFloat("n2 IOR (Internal)", &thinFilm.n2, 0.2f, 3);
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+
+		if (changed)
+		{
+			thinFilm.CalculateDelta();
+			mat->SetCBV_PerDraw(2, &thinFilm, sizeof(ThinFilmCB));
+			mat->AttachThinFilm(thinFilm);
+		}
+
+		ImGui::Text(("Delta (readonly): " + std::to_string(thinFilm.GetDelta())).c_str());
+	}
+
+	ImGui::Unindent(IM_GUI_INDENTATION);
+}
+
+void AlkaliGUIManager::RenderGameObjectGUI(GameObject* go, int id)
+{
+	ImGui::Indent(IM_GUI_INDENTATION);
+
+	Transform t = go->GetTransform();
+
+	string iStr = "##" + go->m_Name + std::to_string(id);
+
+	float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
+	ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
+	float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
+	ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
+	float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
+	ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
+
+	t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
+	t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
+	t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
+
+	go->SetTransform(t);
+
+	ImGui::Checkbox(("Enabled" + iStr).c_str(), go->GetEnabledPtr());
+
+	if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
+	{
+		RenderModelGUI(go->GetModel());
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
+	{
+		RenderShaderGUI(go->GetShader());
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		auto& textures = go->GetMaterial()->GetTextures();
+		for (int i = 0; i < textures.size(); i++)
+		{
+			if (ImGui::CollapsingHeader(textures[i]->GetFilePath().c_str()))
+			{
+				RenderTextureGUI(textures[i].get());
+			}
+		}
+
+		ImGui::TreePop();
+		ImGui::Unindent(IM_GUI_INDENTATION);
+	}
+
+	if (ImGui::TreeNode(("Material Info" + iStr).c_str()))
+	{
+		RenderMatGUI(go->GetMaterial());
+		ImGui::TreePop();
+	}
+
+	ImGui::Spacing();
+	ImGui::Unindent(IM_GUI_INDENTATION);
 }
 
 void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
@@ -456,88 +696,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 				{
 					if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 					{
-						ImGui::Indent(IM_GUI_INDENTATION);
-
-						Transform t = opaques[i].GetTransform();
-
-						string iStr = "##" + opaques[i].m_Name + std::to_string(i);
-
-						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
-						float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
-						ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
-						float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-						ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
-
-						t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-						t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
-						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
-
-						opaques[i].SetTransform(t);
-
-						ImGui::Checkbox(("Enabled" + iStr).c_str(), opaques[i].GetEnabledPtr());
-
-						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							string vCountStr = "Model Vertex Count: " + std::to_string(opaques[i].GetModelVertexCount());
-							string iCountStr = "Model Index Count: " + std::to_string(opaques[i].GetModelIndexCount());
-
-							XMFLOAT3 pos;
-							float radius;
-							opaques[i].GetBoundingSphere(pos, radius);
-							string radiStr = "Model Bounding Radius: " + std::to_string(radius);
-							string centroidStr = "Model Centroid: " + ToString(pos);
-
-							ImGui::Text(vCountStr.c_str());
-							ImGui::Text(iCountStr.c_str());
-							ImGui::Text(radiStr.c_str());
-							ImGui::Text(centroidStr.c_str());
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							wstring vs, ps, hs, ds;
-							opaques[i].GetShaderNames(vs, ps, hs, ds);
-							vs = L"VS: " + vs;
-							ps = L"PS: " + ps;
-							hs = L"HS: " + hs;
-							ds = L"DS: " + ds;
-							ImGui::Text(wstringToString(vs).c_str());
-							ImGui::Text(wstringToString(ps).c_str());
-							ImGui::Text(wstringToString(hs).c_str());
-							ImGui::Text(wstringToString(ds).c_str());
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							auto& textures = opaques[i].GetMaterial()->GetTextures();
-							for (int i = 0; i < textures.size(); i++)
-							{
-								ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
-
-								ImGui::Indent(IM_GUI_INDENTATION);
-								ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
-								ImGui::Unindent(IM_GUI_INDENTATION);
-							}
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						ImGui::Spacing();
-						ImGui::Unindent(IM_GUI_INDENTATION);
+						RenderGameObjectGUI(&opaques[i], i);
 					}
 				}
 
@@ -546,88 +705,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 				{
 					if (ImGui::CollapsingHeader(transGos[i].m_Name.c_str()))
 					{
-						ImGui::Indent(IM_GUI_INDENTATION);
-
-						Transform t = transGos[i].GetTransform();
-
-						string iStr = "##" + transGos[i].m_Name + std::to_string(i);
-
-						float pPos[3] = { t.Position.x, t.Position.y, t.Position.z };
-						ImGui::InputFloat3(("Position" + iStr).c_str(), pPos);
-						float pRot[3] = { t.Rotation.x, t.Rotation.y, t.Rotation.z };
-						ImGui::InputFloat3(("Rotation" + iStr).c_str(), pRot);
-						float pScale[3] = { t.Scale.x, t.Scale.y, t.Scale.z };
-						ImGui::InputFloat3(("Scale" + iStr).c_str(), pScale);
-
-						t.Position = XMFLOAT3(pPos[0], pPos[1], pPos[2]);
-						t.Rotation = XMFLOAT3(pRot[0], pRot[1], pRot[2]);
-						t.Scale = XMFLOAT3(pScale[0], pScale[1], pScale[2]);
-
-						transGos[i].SetTransform(t);
-
-						ImGui::Checkbox(("Enabled" + iStr).c_str(), transGos[i].GetEnabledPtr());
-
-						if (ImGui::TreeNode(("Model Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							string vCountStr = "Model Vertex Count: " + std::to_string(transGos[i].GetModelVertexCount());
-							string iCountStr = "Model Index Count: " + std::to_string(transGos[i].GetModelIndexCount());
-
-							XMFLOAT3 pos;
-							float radius;
-							transGos[i].GetBoundingSphere(pos, radius);
-							string radiStr = "Model Bounding Radius: " + std::to_string(radius);
-							string centroidStr = "Model Centroid: " + ToString(pos);
-
-							ImGui::Text(vCountStr.c_str());
-							ImGui::Text(iCountStr.c_str());
-							ImGui::Text(radiStr.c_str());
-							ImGui::Text(centroidStr.c_str());
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						if (ImGui::TreeNode(("Shader Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							wstring vs, ps, hs, ds;
-							transGos[i].GetShaderNames(vs, ps, hs, ds);
-							vs = L"VS: " + vs;
-							ps = L"PS: " + ps;
-							hs = L"HS: " + hs;
-							ds = L"DS: " + ds;
-							ImGui::Text(wstringToString(vs).c_str());
-							ImGui::Text(wstringToString(ps).c_str());
-							ImGui::Text(wstringToString(hs).c_str());
-							ImGui::Text(wstringToString(ds).c_str());
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						if (ImGui::TreeNode(("Texture Info" + iStr).c_str()))
-						{
-							ImGui::Indent(IM_GUI_INDENTATION);
-
-							auto& textures = transGos[i].GetMaterial()->GetTextures();
-							for (int i = 0; i < textures.size(); i++)
-							{
-								ImGui::Text((std::to_string(i) + ". " + textures[i]->GetFilePath()).c_str());
-
-								ImGui::Indent(IM_GUI_INDENTATION);
-								ImGui::Text(("Mip Levels: " + std::to_string(textures[i]->GetMipLevels())).c_str());
-								ImGui::Unindent(IM_GUI_INDENTATION);
-							}
-
-							ImGui::TreePop();
-							ImGui::Unindent(IM_GUI_INDENTATION);
-						}
-
-						ImGui::Spacing();
-						ImGui::Unindent(IM_GUI_INDENTATION);
+						RenderGameObjectGUI(&transGos[i], i);
 					}
 				}
 			}
@@ -647,30 +725,36 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 				{
 					ImGui::Indent(IM_GUI_INDENTATION);
 
-					auto opaques = it.second->GetOpaques();
+					auto& opaques = it.second->GetOpaques();
 					string tag = "Opaques (" + std::to_string(opaques.size()) + ")##" + it.first;
 					if (ImGui::CollapsingHeader(tag.c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						for (int i = 0; i < opaques.size(); i++)
+						for (size_t i = 0; i < opaques.size(); i++)
 						{
-							ImGui::Text(opaques[i].m_Name.c_str());
+							if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
+							{
+								RenderGameObjectGUI(&opaques[i], i);
+							}
 						}
 
 						ImGui::Spacing();
 						ImGui::Unindent(IM_GUI_INDENTATION);
 					}
 
-					auto trans = it.second->GetTrans();
+					auto& trans = it.second->GetTrans();
 					tag = "Transparents (" + std::to_string(trans.size()) + ")##" + it.first;
 					if (ImGui::CollapsingHeader(tag.c_str()))
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						for (int i = 0; i < trans.size(); i++)
+						for (size_t i = 0; i < trans.size(); i++)
 						{
-							ImGui::Text(trans[i].m_Name.c_str());
+							if (ImGui::CollapsingHeader(trans[i].m_Name.c_str()))
+							{
+								RenderGameObjectGUI(&trans[i], i);
+							}
 						}
 
 						ImGui::Spacing();
@@ -694,15 +778,10 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (auto& it : texList)
 			{
-				ImGui::Text(it.first.c_str());
-
-				ImGui::Indent(IM_GUI_INDENTATION);
-				ImGui::Text(("Mip Levels: " + std::to_string(it.second->GetMipLevels())).c_str());
-				ImGui::Text(("Channels: " + std::to_string(it.second->GetChannels())).c_str());
-				if (it.second->GetHasAlpha())
-					ImGui::Text("Transparent: TRUE");
-
-				ImGui::Unindent(IM_GUI_INDENTATION);
+				if (ImGui::CollapsingHeader(it.first.c_str()))
+				{
+					RenderTextureGUI(it.second.get());
+				}
 			}
 
 			ImGui::Spacing();
@@ -717,7 +796,10 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (auto& it : modelList)
 			{
-				ImGui::Text(it.first.c_str());
+				if (ImGui::CollapsingHeader(it.first.c_str()))
+				{
+					RenderModelGUI(it.second.get());
+				}
 			}
 
 			ImGui::Spacing();
@@ -732,15 +814,9 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (auto& it : shaderList)
 			{
-				ImGui::Text(it.first.c_str());
-
-				if (it.second->IsPreCompiled())
+				if (ImGui::CollapsingHeader(it.first.c_str()))
 				{
-					ImGui::Indent(IM_GUI_INDENTATION);
-
-					ImGui::Text("Precompiled: TRUE");
-
-					ImGui::Unindent(IM_GUI_INDENTATION);
+					RenderShaderGUI(it.second.get());
 				}
 			}
 
@@ -756,55 +832,10 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			for (size_t i = 0; i < matList.size(); i++)
 			{
-				UINT srv, cbvDraw;
-				UINT cbvFrame[BACK_BUFFER_COUNT];
-				for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-					matList[i]->GetIndices(srv, cbvFrame[i], cbvDraw, i);
-
-				ImGui::Text(("Material: " + std::to_string(i)).c_str());
-
-				ImGui::Indent(IM_GUI_INDENTATION);
-
-				if (cbvFrame[0] != -1)
+				if (ImGui::CollapsingHeader(("Material #" + std::to_string(i)).c_str()))
 				{
-					string indices = "";
-					for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-						indices += std::to_string(cbvFrame[i]) + "~";
-					ImGui::Text(("CBV Index (PerFrame): " + indices).c_str());
-				}					
-				if (cbvDraw != -1)
-					ImGui::Text(("CBV Index (PerDraw): " + std::to_string(cbvDraw)).c_str());
-				if (srv != -1)
-					ImGui::Text(("SRV Index: " + std::to_string(srv)).c_str());
-
-				ImGui::Indent(IM_GUI_INDENTATION);
-
-				auto& matTexList = matList[i]->GetTextures();
-				for (size_t t = 0; t < matTexList.size(); t++)
-				{
-					ImGui::Text(("SRV " + std::to_string(t) + ": " + matTexList[t]->GetFilePath()).c_str());
+					RenderMatGUI(matList[i].get());
 				}
-
-				ImGui::Unindent(IM_GUI_INDENTATION);
-
-				MaterialPropertiesCB matProp;
-				if (matList[i]->GetProperties(matProp))
-				{
-					ImGui::Text("Material Properties:");
-
-					ImGui::Indent(IM_GUI_INDENTATION);
-
-					ImGui::Text(("BaseColor: " + ToString(matProp.BaseColorFactor)).c_str());
-					ImGui::Text(("Roughness: " + std::to_string(matProp.Roughness)).c_str());
-					ImGui::Text(("Metalness: " + std::to_string(matProp.Metallic)).c_str());
-					ImGui::Text(("Alpha Cutoff: " + std::to_string(matProp.AlphaCutoff)).c_str());
-					ImGui::Text(("Dispersion: " + std::to_string(matProp.Dispersion)).c_str());
-					ImGui::Text(("IOR: " + std::to_string(matProp.IOR)).c_str());
-
-					ImGui::Unindent(IM_GUI_INDENTATION);
-				}
-
-				ImGui::Unindent(IM_GUI_INDENTATION);
 			}
 
 			ImGui::Spacing();

@@ -17,9 +17,9 @@ public:
 	Texture();
 	~Texture();	
 
-	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false);
-	void InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, vector<string>& filePaths, bool flipUpsideDown = false);
-	void InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, string filePath, bool flipUpsideDown = false);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false);
+	void InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, vector<string>& filePaths, bool flipUpsideDown = false);
+	void InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown = false);
 	void InitCubeMapUAV_Empty(D3DClass* d3d);
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, size_t srvHeapOffset);
@@ -33,7 +33,7 @@ public:
 private:
 	void MakeTexDesc(UINT16 arraySize);
 	void CreateResources(ID3D12Device2* device);
-	void UploadResources(ID3D12GraphicsCommandList2* commandListDirect, uint8_t** pData);
+	void UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t** pData);
 
 	int m_textureWidth = -1, m_textureHeight = -1;
 

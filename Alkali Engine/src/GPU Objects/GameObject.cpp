@@ -35,7 +35,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, RenderOverride* renderOverride)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, RenderOverride* renderOverride)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -47,19 +47,19 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 	{
 		auto mat = AssetFactory::CreateMaterial();
 		vector<UINT> sizes = { sizeof(MatricesCB) };
-		mat->AddCBVs(d3d, commandListDirect, sizes, false);
+		mat->AddCBVs(d3d, cmdListDirect, sizes, false);
 		m_shadowMapMats.push_back(mat);
 	}
 
 	if (renderOverride && renderOverride->ShaderOverride)
-		commandListDirect->SetPipelineState(renderOverride->ShaderOverride->GetPSO().Get());
+		cmdListDirect->SetPipelineState(renderOverride->ShaderOverride->GetPSO().Get());
 	else
-		commandListDirect->SetPipelineState(m_shader->GetPSO().Get());
+		cmdListDirect->SetPipelineState(m_shader->GetPSO().Get());
 
 	if (m_orthographic)
 	{
-		m_material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
-		m_model->Render(commandListDirect);
+		m_material->AssignMaterial(cmdListDirect, rpi, backBufferIndex);
+		m_model->Render(cmdListDirect);
 		return;
 	}
 
@@ -76,15 +76,15 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDi
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
 		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-		RenderModel(commandListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, mat);
+		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, mat);
 		return;
 	}
 
 	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-	RenderModel(commandListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, mat);
+	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, mat);
 }
 
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
+void GameObject::RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
 {
 	if (transform)
 		matrices->M = TransformToWorldMatrix(*transform);
@@ -93,9 +93,9 @@ void GameObject::RenderModel(ID3D12GraphicsCommandList2* commandListDirect, cons
 	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, matrices->M));
 	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB), backBufferIndex);
 
-	material->AssignMaterial(commandListDirect, rpi, backBufferIndex);
+	material->AssignMaterial(cmdListDirect, rpi, backBufferIndex);
 
-	model->Render(commandListDirect);
+	model->Render(cmdListDirect);
 }
 
 Transform GameObject::GetTransform() const
@@ -240,6 +240,16 @@ size_t GameObject::GetModelVertexCount() const
 size_t GameObject::GetModelIndexCount() const
 {
 	return m_model->GetIndexCount();
+}
+
+Model* GameObject::GetModel() const
+{
+	return m_model.get();
+}
+
+Shader* GameObject::GetShader() const
+{
+	return m_shader.get();
 }
 
 void GameObject::GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const

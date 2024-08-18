@@ -69,7 +69,7 @@ UINT DescriptorManager::AddDynamicSRVs(string id, UINT count)
 	return heapStart;
 }
 
-UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing, string id)
+UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const vector<UINT>& sizes, vector<ID3D12Resource*>& cbvResources, bool sharing, string id)
 {
 	if (!ms_initialised)
 		throw std::exception("Uninitialised Descriptor Manager");
@@ -127,7 +127,7 @@ UINT DescriptorManager::AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* comma
 		cbvHandle.ptr += incrementSize * (heapStart + i);
 		d3d->GetDevice()->CreateConstantBufferView(&cbvDesc, cbvHandle);
 
-		ResourceManager::TransitionResource(commandListDirect, cbufferResource, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		ResourceManager::TransitionResource(cmdListDirect, cbufferResource, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 		if (SettingsManager::ms_Dynamic.HeapDebugViewEnabled)
 		{

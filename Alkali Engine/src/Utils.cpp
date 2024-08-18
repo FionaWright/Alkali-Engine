@@ -140,7 +140,7 @@ bool Equals(XMFLOAT2 a, XMFLOAT2 b)
     return a.x == b.x && a.y == b.y;
 }
 
-string ToString(XMFLOAT3& v) 
+string ToString(const XMFLOAT3& v) 
 {
     return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
 }
@@ -169,4 +169,19 @@ bool NextCharactersMatch(std::ifstream& file, const std::string& expected, bool 
 bool XOR(bool a, bool b)
 {
     return !a != !b;
+}
+
+bool Approx(float a, float b)
+{
+    return abs(a - b) < 0.001f;
+}
+
+float Rand01()
+{
+    return std::rand() / static_cast<float>(RAND_MAX);
+}
+
+float Rand(float min, float max)
+{
+    return min + (max - min) * Rand01();
 }

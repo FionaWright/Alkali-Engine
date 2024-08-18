@@ -1,3 +1,9 @@
+#define DRAW_SPACE space0
+#define FRAME_SPACE space1
+
+#define SRV_SPACE space0
+#define SRV_DYNAMIC_SPACE space1
+
 struct V_OUT
 {
     float4 Position : SV_Position;
@@ -9,9 +15,9 @@ struct DepthViewCB
     float MinValue;
     float MaxValue;
 };
-ConstantBuffer<DepthViewCB> DepthCB : register(b0);
+ConstantBuffer<DepthViewCB> DepthCB : register(b0, DRAW_SPACE);
 
-Texture2D<float> DepthTexture : register(t0);
+Texture2D<float> DepthTexture : register(t0, SRV_DYNAMIC_SPACE);
 SamplerState Sampler : register(s0);
 
 float4 main(V_OUT input) : SV_TARGET

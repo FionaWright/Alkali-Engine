@@ -16,42 +16,43 @@ bool SceneBistro::LoadContent()
 {
 	Scene::LoadContent();
 
-	CommandQueue* commandQueueCopy = nullptr;
-	commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	if (!commandQueueCopy)
+	CommandQueue* cmdQueueCopy = nullptr;
+	cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	if (!cmdQueueCopy)
 		throw std::exception("Command Queue Error");
 
-	auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+	auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
-	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
+	shared_ptr<Model> modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-	auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-	commandQueueCopy->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+	cmdQueueCopy->WaitForFenceValue(fenceValue);
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
 
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
-	vector<string> skyboxPaths = {
+	/*vector<string> skyboxPaths = {
 			"Skyboxes/Iceland/negx.tga",
 			"Skyboxes/Iceland/posx.tga",
 			"Skyboxes/Iceland/posy.tga",
 			"Skyboxes/Iceland/negy.tga",
 			"Skyboxes/Iceland/negz.tga",
 			"Skyboxes/Iceland/posz.tga"
-	};
+	};*/
 
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());	
+	//shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get());
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());	
 
 	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 5;
-	rootParamInfo.NumCBV_PerDraw = 2;
+	rootParamInfo.NumCBV_PerDraw = 3;
 	rootParamInfo.NumSRV = 7;
 	rootParamInfo.NumSRV_Dynamic = 1;
 	rootParamInfo.ParamIndexCBV_PerDraw = 0;
@@ -59,8 +60,16 @@ bool SceneBistro::LoadContent()
 	rootParamInfo.ParamIndexSRV = 2;
 	rootParamInfo.ParamIndexSRV_Dynamic = 3;
 
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2];
+	samplerDesc[0] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].ShaderRegister = 1;
+
 	shared_ptr<RootSig> rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfo);
+	rootSigPBR->Init("PBR Root Sig", rootParamInfo, samplerDesc, _countof(samplerDesc));
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -69,13 +78,13 @@ bool SceneBistro::LoadContent()
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
 	shared_ptr<RootSig> rootSigSkybox = std::make_shared<RootSig>();
-	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
+	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
 	vector<shared_ptr<Texture>> textures = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matSkybox->AddSRVs(m_d3dClass, textures);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
@@ -99,7 +108,7 @@ bool SceneBistro::LoadContent()
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
-	argsSkybox.disableDSVWrite = true;
+	argsSkybox.DisableDSVWriting = true;
 	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
@@ -109,14 +118,22 @@ bool SceneBistro::LoadContent()
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
 
-	//ModelLoader::LoadSplitModel(m_d3dClass, commandListDirect.Get(), "Bistro", m_batch.get(), m_shaderPBR);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+	GLTFLoadArgs gltfArgs;
+	gltfArgs.Batches = { batchPBR };
+	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff };
+	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.IrradianceMap = irradianceTex;
 
-	fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
+	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+
+	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(0, 3, -5);
 	m_camera->SetRotation(0, 0, 0);
+
+	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0.2f, -0.9f, -0.3f);
 
 	return true;
 }

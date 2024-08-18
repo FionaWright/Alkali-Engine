@@ -68,7 +68,6 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126f, 0.78641367f, NAN, NAN);
 	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161f, -0.14100790f, NAN, NAN);
 
-
 	DescriptorManager::Init(m_d3dClass, SettingsManager::ms_DX12.DescriptorHeapSize);
 
 	if (m_dsvEnabled)
@@ -81,37 +80,37 @@ bool Scene::LoadContent()
 {
 	shared_ptr<Model> modelPlane;
 	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
+		CommandQueue* cmdQueueCopy = nullptr;
+		cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!cmdQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
-		ms_sphereModel = AssetFactory::CreateModel("Sphere.model", commandListCopy.Get());
-		modelPlane = AssetFactory::CreateModel("Plane.model", commandListCopy.Get());
+		ms_sphereModel = AssetFactory::CreateModel("Sphere.model", cmdListCopy.Get());
+		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
+		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(SettingsManager::ms_Window.FieldOfView), aspectRatio, SettingsManager::ms_Dynamic.NearPlane, SettingsManager::ms_Dynamic.FarPlane);
 	m_viewProjMatrix = XMMatrixMultiply(m_viewMatrix, m_projectionMatrix);
 	m_frustum.UpdateValues(m_viewProjMatrix);
-	ShadowManager::Init(m_d3dClass, commandListDirect.Get(), m_frustum);
+	ShadowManager::Init(m_d3dClass, cmdListDirect.Get(), m_frustum);
 
 	if (!ms_perFramePBRMat)
 	{
 		ms_perFramePBRMat = AssetFactory::CreateMaterial();
-		ms_perFramePBRMat->AddCBVs(m_d3dClass, commandListDirect.Get(), PER_FRAME_PBR_SIZES(), true);
+		ms_perFramePBRMat->AddCBVs(m_d3dClass, cmdListDirect.Get(), PER_FRAME_PBR_SIZES(), true);
 	}
 
 	if (!ms_shadowMapMat)
@@ -127,7 +126,7 @@ bool Scene::LoadContent()
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
 
 	m_rootSigLine = std::make_shared<RootSig>();
-	m_rootSigLine->InitDefaultSampler("Line Root Sig", m_rpiLine);
+	m_rootSigLine->Init("Line Root Sig", m_rpiLine, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{
@@ -143,7 +142,7 @@ bool Scene::LoadContent()
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
 
 		m_matLine = AssetFactory::CreateMaterial();
-		m_matLine->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
+		m_matLine->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	}
 
 	{
@@ -198,7 +197,7 @@ bool Scene::LoadContent()
 	m_viewDepthRPI.ParamIndexSRV_Dynamic = 1;
 
 	m_viewDepthRootSig = std::make_shared<RootSig>();
-	m_viewDepthRootSig->InitDefaultSampler("Depth Buffer Root Sig", m_viewDepthRPI);
+	m_viewDepthRootSig->Init("Depth Buffer Root Sig", m_viewDepthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
 	{
@@ -207,14 +206,15 @@ bool Scene::LoadContent()
 
 	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, m_viewDepthRootSig->GetRootSigResource() };
 	argsDepth.CullNone = true;
-	argsDepth.disableDSV = true;
+	argsDepth.DisableDSV = true;
+	argsDepth.DisableStencil = true;
 	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
 
 	vector<UINT> viewCBVFrame = { sizeof(DepthViewCB) };
 
 	m_viewDepthMat = AssetFactory::CreateMaterial();
 	m_viewDepthMat->AddDynamicSRVs("Depth View", 1);
-	m_viewDepthMat->AddCBVs(m_d3dClass, commandListDirect.Get(), viewCBVFrame, false, "DepthView");
+	m_viewDepthMat->AddCBVs(m_d3dClass, cmdListDirect.Get(), viewCBVFrame, false, "DepthView");
 
 	m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 
@@ -225,8 +225,8 @@ bool Scene::LoadContent()
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
     return true;
 }
@@ -319,21 +319,21 @@ void Scene::OnRender(TimeEventArgs& e)
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	int backBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 
-	CommandQueue* commandQueue = nullptr;
-	commandQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandList = commandQueue->GetAvailableCommandList();
+	CommandQueue* cmdQueue = nullptr;
+	cmdQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto cmdList = cmdQueue->GetAvailableCommandList();
 
 	auto& batchList = ResourceTracker::GetBatches();
 
 	auto globalHeap = DescriptorManager::GetHeap();
 	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
-	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	commandList->RSSetScissorRects(1, &m_scissorRect);
+	cmdList->RSSetScissorRects(1, &m_scissorRect);
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
-		ShadowManager::Render(m_d3dClass, commandList.Get(), batchList, m_frustum, backBufferIndex);
+		ShadowManager::Render(m_d3dClass, cmdList.Get(), batchList, m_frustum, backBufferIndex);
 		m_shadowMapCounter = 0;
 	}
 	else
@@ -347,48 +347,48 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
 
-	commandList->RSSetViewports(1, &m_viewport);
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	cmdList->RSSetViewports(1, &m_viewport);
+	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-	ClearBackBuffer(commandList.Get());
+	ClearBackBuffer(cmdList.Get());
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, commandList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
+		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(m_d3dClass, commandList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
+		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
-		RenderDebugLines(commandList.Get(), rtvHandle, dsvHandle, backBufferIndex);
+		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
-		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-		commandList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		cmdList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
+		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);		
+		ResourceManager::TransitionResource(cmdList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);		
 
-		m_viewDepthGO->Render(m_d3dClass, commandList.Get(), m_viewDepthRPI, backBufferIndex);
+		m_viewDepthGO->Render(m_d3dClass, cmdList.Get(), m_viewDepthRPI, backBufferIndex);
 
-		ResourceManager::TransitionResource(commandList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		ResourceManager::TransitionResource(cmdList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		
-		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	}
 	
 	if (SettingsManager::ms_Dynamic.Shadow.Enabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
-		ShadowManager::RenderDebugView(m_d3dClass, commandList.Get(), rtvHandle, dsvHandle, backBufferIndex);
+		ShadowManager::RenderDebugView(m_d3dClass, cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 	}
 
-	ImGUIManager::Render(commandList.Get());	
+	ImGUIManager::Render(cmdList.Get());	
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
-	Present(commandList.Get(), commandQueue); 
+	Present(cmdList.Get(), cmdQueue); 
 
 	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU)
-		commandQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
+		cmdQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
 }
 
 void Scene::OnResize(ResizeEventArgs& e)
@@ -433,37 +433,37 @@ Camera* Scene::GetCamera()
 	return m_camera.get();
 }
 
-void Scene::ClearBackBuffer(ID3D12GraphicsCommandList2* commandList)
+void Scene::ClearBackBuffer(ID3D12GraphicsCommandList2* cmdList)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
 	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	ResourceManager::TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	ResourceManager::TransitionResource(cmdList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	commandList->ClearRenderTargetView(rtv, reinterpret_cast<FLOAT*>(&m_BackgroundColor), 0, nullptr);
-	ClearDepth(commandList, dsv);
+	cmdList->ClearRenderTargetView(rtv, reinterpret_cast<FLOAT*>(&m_BackgroundColor), 0, nullptr);
+	ClearDepth(cmdList, dsv);
 }
 
-void Scene::ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
+void Scene::ClearDepth(ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
-	commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
+	cmdList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void Scene::Present(ID3D12GraphicsCommandList2* commandList, CommandQueue* commandQueue)
+void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* cmdQueue)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
 	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	ResourceManager::TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	ResourceManager::TransitionResource(cmdList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-	m_FenceValues.at(currentBackBufferIndex) = commandQueue->ExecuteCommandList(commandList);
+	m_FenceValues.at(currentBackBufferIndex) = cmdQueue->ExecuteCommandList(cmdList);
 
 	UINT nextBackBufferIndex = m_pWindow->Present();
 
-	commandQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
+	cmdQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
 }
 
 void Scene::SetDSVForSize(int width, int height)
@@ -533,10 +533,10 @@ DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 	return line.get();
 }
 
-void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* commandListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, const int& backBufferIndex)
+void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* cmdListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, const int& backBufferIndex)
 {
 	for (int i = 0; i < m_debugLineList.size(); i++)
 	{
-		m_debugLineList.at(i)->Render(commandListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix, backBufferIndex);
+		m_debugLineList.at(i)->Render(cmdListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix, backBufferIndex);
 	}
 }

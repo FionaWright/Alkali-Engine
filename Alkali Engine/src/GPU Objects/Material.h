@@ -16,20 +16,24 @@ public:
 
 	void AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures);
 	void AddDynamicSRVs(string id, UINT count);	
-	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
+	void AddCBVs(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const vector<UINT>& sizes, bool perFrame, string id = "");
 
 	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
+	void SetCBV_PerFrame(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize, const int& backBufferIndex);
+	void SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize);
 	void SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource);
 
 	void AttachProperties(const MaterialPropertiesCB& matProp);
+	void AttachThinFilm(const ThinFilmCB& thinFilm);
 
-	void AssignMaterial(ID3D12GraphicsCommandList2* commandList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
+	void AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex);
 
 	bool GetHasAlpha();
 	vector<shared_ptr<Texture>>& GetTextures();
 	void GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex);
 	bool GetProperties(MaterialPropertiesCB& prop);
+	bool GetThinFilm(ThinFilmCB& thinFilm);
 	bool HasDynamicSRV();
 
 	void ClearTextures();
@@ -44,5 +48,7 @@ private:
 
 	MaterialPropertiesCB m_propertiesCB;
 	bool m_attachedProperties = false;
+	ThinFilmCB m_thinFilmCB;
+	bool m_attachedThinFilm = false;
 };
 

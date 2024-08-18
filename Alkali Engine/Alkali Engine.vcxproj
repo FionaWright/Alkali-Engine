@@ -306,14 +306,6 @@
     <Image Include="Assets\Resources\icon1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\Normals.ps">
-      <FileType>Document</FileType>
-    </Text>
-    <Text Include="Assets\Shaders\Normals.vs">
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="Assets\Shaders\CreateMipMaps.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
@@ -378,6 +370,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+    <None Include="Assets\Shaders\GlassPBR.ps" />
+    <None Include="Assets\Shaders\GlassPBR.vs" />
     <None Include="Assets\Shaders\PBR.ps" />
     <None Include="Assets\Shaders\PBR.vs" />
   </ItemGroup>

@@ -13009,11 +13009,11 @@
 		{
 			"mesh":1276,
 			"name":"dOORS_2",
-			"rotation":[
-				-0.3810890316963196,
+			"rotation":[				
 				0.5956266522407532,
-				-0.595626711845398,
-				0.38108906149864197
+				-0.3810890316963196,				
+				-0.38108906149864197,
+				-0.595626711845398
 			],
 			"scale":[
 				0.9999852180480957,
@@ -13021,184 +13021,184 @@
 				0.9999852180480957
 			],
 			"translation":[
-				-79.19945526123047,
-				-95.04718017578125,
-				0.402740478515625
+				-79.19945526123047,				
+				0.402740478515625,
+				-95.04718017578125
 			]
 		},
 		{
 			"mesh":1277,
 			"name":"Lantern_Wind_21",
 			"rotation":[
-				-0.7020106911659241,
 				-0.08474086225032806,
-				0.18763834238052368,
-				0.6817564368247986
+				-0.7020106911659241,
+				-0.6817564368247986,		
+				0.18763834238052368
 			],
 			"translation":[
 				449.69854736328125,
-				325.8226623535156,
-				-318.91229248046875
+				-318.91229248046875,
+				325.8226623535156			
 			]
 		},
 		{
 			"mesh":1278,
 			"name":"Lantern_Wind_22",
 			"rotation":[
-				-0.7032666802406311,
 				-0.07359333336353302,
-				0.19843026995658875,
-				0.6786938905715942
+				-0.7032666802406311,
+				-0.6786938905715942,
+				0.19843026995658875				
 			],
 			"translation":[
 				171.64395141601562,
-				215.79800415039062,
-				-319.0740051269531
+				-319.0740051269531,
+				215.79800415039062				
 			]
 		},
 		{
 			"mesh":1279,
 			"name":"Lantern_Wind_23",
 			"rotation":[
-				-0.617751955986023,
 				0.3440674841403961,
-				-0.3780633807182312,
-				0.5975518226623535
+				-0.617751955986023,	
+				-0.5975518226623535,
+				-0.3780633807182312				
 			],
 			"translation":[
 				-110.21963500976562,
-				-473.937744140625,
-				-319.0740051269531
+				-319.0740051269531,
+				-473.937744140625				
 			]
 		},
 		{
 			"mesh":1280,
 			"name":"Lantern_Wind_24",
 			"rotation":[
-				-0.6275497674942017,
 				0.32585471868515015,
-				-0.395376592874527,
-				0.5862399935722351
+				-0.6275497674942017,				
+				-0.5862399935722351,
+				-0.395376592874527			
 			],
 			"translation":[
 				-0.8420910835266113,
-				-727.9065551757812,
-				-316.0581970214844
+				-316.0581970214844,
+				-727.9065551757812				
 			]
 		},
 		{
 			"mesh":1281,
 			"name":"Lantern_Wind_25",
 			"rotation":[
-				-0.700121283531189,
 				-0.09977405518293381,
-				0.17012043297290802,
-				0.6862466335296631
+				-0.700121283531189,	
+				-0.6862466335296631,
+				0.17012043297290802				
 			],
 			"translation":[
 				726.1474609375,
-				415.791748046875,
-				-316.82501220703125
+				-316.82501220703125,
+				415.791748046875			
 			]
 		},
 		{
 			"mesh":1282,
 			"name":"Manhole2",
 			"rotation":[
-				-0.2961426377296448,
 				-0.6421055197715759,
-				0.6421056389808655,
-				0.2961426079273224
+				-0.2961426377296448,				
+				-0.2961426079273224,
+				0.6421056389808655			
 			],
 			"translation":[
 				-526.6275634765625,
-				-659.4852294921875,
-				2.4712910652160645
+				2.4712910652160645,
+				-659.4852294921875				
 			]
 		},
 		{
 			"mesh":1283,
 			"name":"Manhole3",
 			"rotation":[
-				-0.033893972635269165,
 				-0.7062939405441284,
-				0.706294059753418,
-				0.03389391675591469
+				-0.033893972635269165,				
+				-0.03389391675591469,
+				0.706294059753418			
 			],
 			"translation":[
 				-757.3096313476562,
-				-86.00508880615234,
-				2.4712910652160645
+				2.4712910652160645,
+				-86.00508880615234		
 			]
 		},
 		{
 			"mesh":1284,
 			"name":"Manhole4",
 			"rotation":[
-				-0.6357371211051941,
 				-0.3095776438713074,
-				0.309577614068985,
-				0.6357371211051941
+				-0.6357371211051941,				
+				-0.6357371211051941,
+				0.309577614068985			
 			],
 			"translation":[
 				-517.8763427734375,
-				550.23681640625,
-				2.4712910652160645
+				2.4712910652160645,
+				550.23681640625			
 			]
 		},
 		{
 			"mesh":1285,
 			"name":"Manhole5",
 			"rotation":[
-				-0.40838271379470825,
-				0.5772552490234375,
-				-0.5772551894187927,
-				0.4083826541900635
+				0.5772552490234375,		
+				-0.40838271379470825,			
+				-0.4083826541900635,
+				-0.5772551894187927			
 			],
 			"translation":[
 				19.57115936279297,
-				830.6110229492188,
-				2.4712910652160645
+				2.4712910652160645,
+				830.6110229492188				
 			]
 		},
 		{
 			"mesh":1286,
 			"name":"Manhole6",
 			"rotation":[
-				-0.565105676651001,
 				0.4250360429286957,
-				-0.4250359833240509,
-				0.5651057362556458
+				-0.565105676651001,	
+				-0.5651057362556458,				
+				-0.4250359833240509
 			],
 			"translation":[
 				651.8604125976562,
-				1081.3607177734375,
-				2.4712908267974854
+				2.4712908267974854,
+				1081.3607177734375				
 			]
 		},
 		{
 			"mesh":1287,
 			"name":"Manhole_2",
 			"rotation":[
-				-0.7056498527526855,
 				0.04536872357130051,
-				-0.04536872357130051,
-				0.7056497931480408
+				-0.7056498527526855,
+				-0.7056497931480408,
+				-0.04536872357130051				
 			],
 			"translation":[
-				-101.65928649902344,
-				-1188.2100830078125,
-				2.4712905883789062
+				-101.65928649902344,			
+				2.4712905883789062,
+				-1188.2100830078125
 			]
 		},
 		{
 			"mesh":1288,
 			"name":"StringLight_Wind_14",
 			"rotation":[
-				-0.7491647005081177,
 				-0.15112341940402985,
-				0.12103334814310074,
-				0.6334546804428101
+				-0.7491647005081177,
+				-0.6334546804428101,				
+				0.12103334814310074
 			],
 			"scale":[
 				1.031999945640564,
@@ -13207,18 +13207,18 @@
 			],
 			"translation":[
 				634.1204223632812,
-				934.140380859375,
-				-538.560302734375
+				-538.560302734375,
+				934.140380859375				
 			]
 		},
 		{
 			"mesh":1289,
 			"name":"StringLight_Wind_15",
 			"rotation":[
-				-0.7187994122505188,
 				-0.2210843414068222,
-				0.2015545517206192,
-				0.6275546550750732
+				-0.7187994122505188,				
+				-0.6275546550750732,
+				0.2015545517206192			
 			],
 			"scale":[
 				1.0870542526245117,
@@ -13227,18 +13227,18 @@
 			],
 			"translation":[
 				-249.1615447998047,
-				625.4664916992188,
-				-532.4094848632812
+				-532.4094848632812,
+				625.4664916992188				
 			]
 		},
 		{
 			"mesh":1290,
 			"name":"StringLight_Wind_18",
 			"rotation":[
-				-0.38401374220848083,
 				-0.6270955204963684,
-				0.5921069383621216,
-				0.3296879231929779
+				-0.38401374220848083,				
+				-0.3296879231929779,
+				0.5921069383621216			
 			],
 			"scale":[
 				1.0506999492645264,
@@ -13247,18 +13247,18 @@
 			],
 			"translation":[
 				-574.8795166015625,
-				-710.8211059570312,
-				-515.9829711914062
+				-515.9829711914062,
+				-710.8211059570312				
 			]
 		},
 		{
 			"mesh":1291,
 			"name":"StringLight_Wind_19",
 			"rotation":[
-				-0.34483906626701355,
 				-0.6471415758132935,
-				0.6157447695732117,
-				0.28836122155189514
+				-0.34483906626701355,				
+				-0.28836122155189514,
+				0.6157447695732117			
 			],
 			"scale":[
 				0.9729999303817749,
@@ -13267,18 +13267,18 @@
 			],
 			"translation":[
 				-381.7439270019531,
-				-964.048828125,
-				-504.4026794433594
+				-504.4026794433594,
+				-964.048828125		
 			]
 		},
 		{
 			"mesh":1292,
 			"name":"StringLight_Wind_20",
 			"rotation":[
-				-0.33057138323783875,
 				-0.6897402405738831,
-				0.596237301826477,
-				0.2438897043466568
+				-0.33057138323783875,				
+				-0.2438897043466568,
+				0.596237301826477			
 			],
 			"scale":[
 				0.8899999856948853,
@@ -13287,18 +13287,18 @@
 			],
 			"translation":[
 				-128.57138061523438,
-				-1308.163818359375,
-				-540.9388427734375
+				-540.9388427734375,
+				-1308.163818359375				
 			]
 		},
 		{
 			"mesh":1293,
 			"name":"StringLight_Wind_21",
 			"rotation":[
-				-0.6417776346206665,
 				-0.350452184677124,
-				0.3484877347946167,
-				0.5863966941833496
+				-0.6417776346206665,				
+				-0.5863966941833496,
+				0.3484877347946167			
 			],
 			"scale":[
 				1.0870542526245117,
@@ -13307,18 +13307,18 @@
 			],
 			"translation":[
 				-496.1430969238281,
-				378.4924621582031,
-				-524.1273193359375
+				-524.1273193359375,
+				378.4924621582031				
 			]
 		},
 		{
 			"mesh":1294,
 			"name":"StringLight_Wind_22",
 			"rotation":[
-				-0.5614618062973022,
 				-0.42674359679222107,
-				0.3989279866218567,
-				0.586094856262207
+				-0.5614618062973022,				
+				-0.586094856262207,
+				0.3989279866218567				
 			],
 			"scale":[
 				1.1548371315002441,
@@ -13327,18 +13327,18 @@
 			],
 			"translation":[
 				-766.9567260742188,
-				-21.05321502685547,
-				-482.654296875
+				-482.654296875,
+				-21.05321502685547
 			]
 		},
 		{
 			"mesh":1295,
 			"name":"StringLight_Wind_23",
 			"rotation":[
-				-0.7030051350593567,
 				-0.139618381857872,
-				0.13859955966472626,
-				0.6834329962730408
+				-0.7030051350593567,
+				-0.6834329962730408,				
+				0.13859955966472626
 			],
 			"scale":[
 				1.0870542526245117,
@@ -13347,8 +13347,8 @@
 			],
 			"translation":[
 				150.3522491455078,
-				894.9344482421875,
-				-373.6788024902344
+				-373.6788024902344,
+				894.9344482421875				
 			]
 		},
 		{
@@ -14683,7 +14683,7 @@
 				"baseColorTexture":{
 					"index":2
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14704,7 +14704,7 @@
 				"baseColorTexture":{
 					"index":5
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14725,7 +14725,7 @@
 				"baseColorTexture":{
 					"index":8
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14746,7 +14746,7 @@
 				"baseColorTexture":{
 					"index":11
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14767,7 +14767,8 @@
 				"baseColorTexture":{
 					"index":14
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.4
 			}
 		},
 		{
@@ -14788,7 +14789,7 @@
 				"baseColorTexture":{
 					"index":17
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14809,7 +14810,7 @@
 				"baseColorTexture":{
 					"index":20
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14830,7 +14831,7 @@
 				"baseColorTexture":{
 					"index":23
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14851,7 +14852,7 @@
 				"baseColorTexture":{
 					"index":26
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14872,7 +14873,7 @@
 				"baseColorTexture":{
 					"index":29
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14893,7 +14894,7 @@
 				"baseColorTexture":{
 					"index":32
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14914,7 +14915,7 @@
 				"baseColorTexture":{
 					"index":35
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14935,7 +14936,7 @@
 				"baseColorTexture":{
 					"index":38
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14956,7 +14957,7 @@
 				"baseColorTexture":{
 					"index":41
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14977,7 +14978,7 @@
 				"baseColorTexture":{
 					"index":44
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -14998,7 +14999,7 @@
 				"baseColorTexture":{
 					"index":47
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15019,7 +15020,7 @@
 				"baseColorTexture":{
 					"index":50
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15040,7 +15041,7 @@
 				"baseColorTexture":{
 					"index":53
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15061,7 +15062,7 @@
 				"baseColorTexture":{
 					"index":56
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15082,7 +15083,7 @@
 				"baseColorTexture":{
 					"index":59
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15103,7 +15104,7 @@
 				"baseColorTexture":{
 					"index":62
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15124,7 +15125,7 @@
 				"baseColorTexture":{
 					"index":65
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15145,7 +15146,7 @@
 				"baseColorTexture":{
 					"index":68
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15166,7 +15167,7 @@
 				"baseColorTexture":{
 					"index":71
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15187,7 +15188,7 @@
 				"baseColorTexture":{
 					"index":74
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15208,7 +15209,7 @@
 				"baseColorTexture":{
 					"index":77
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15229,7 +15230,7 @@
 				"baseColorTexture":{
 					"index":80
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15258,7 +15259,7 @@
 				"baseColorTexture":{
 					"index":84
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15279,7 +15280,7 @@
 				"baseColorTexture":{
 					"index":87
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15300,7 +15301,7 @@
 				"baseColorTexture":{
 					"index":90
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15321,7 +15322,7 @@
 				"baseColorTexture":{
 					"index":93
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15342,7 +15343,7 @@
 				"baseColorTexture":{
 					"index":96
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15363,7 +15364,7 @@
 				"baseColorTexture":{
 					"index":99
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15384,7 +15385,7 @@
 				"baseColorTexture":{
 					"index":102
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15405,7 +15406,7 @@
 				"baseColorTexture":{
 					"index":105
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15426,7 +15427,7 @@
 				"baseColorTexture":{
 					"index":108
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15447,7 +15448,7 @@
 				"baseColorTexture":{
 					"index":111
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15468,7 +15469,7 @@
 				"baseColorTexture":{
 					"index":114
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15489,7 +15490,7 @@
 				"baseColorTexture":{
 					"index":117
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15510,7 +15511,7 @@
 				"baseColorTexture":{
 					"index":120
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15531,7 +15532,7 @@
 				"baseColorTexture":{
 					"index":123
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15552,7 +15553,7 @@
 				"baseColorTexture":{
 					"index":126
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15573,7 +15574,7 @@
 				"baseColorTexture":{
 					"index":129
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15594,7 +15595,7 @@
 				"baseColorTexture":{
 					"index":132
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15615,7 +15616,7 @@
 				"baseColorTexture":{
 					"index":135
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15636,7 +15637,7 @@
 				"baseColorTexture":{
 					"index":138
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15657,7 +15658,7 @@
 				"baseColorTexture":{
 					"index":141
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15686,7 +15687,7 @@
 				"baseColorTexture":{
 					"index":145
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15707,7 +15708,7 @@
 				"baseColorTexture":{
 					"index":148
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15728,7 +15729,7 @@
 				"baseColorTexture":{
 					"index":151
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15749,7 +15750,7 @@
 				"baseColorTexture":{
 					"index":154
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15770,7 +15771,7 @@
 				"baseColorTexture":{
 					"index":157
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15791,7 +15792,7 @@
 				"baseColorTexture":{
 					"index":160
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15812,7 +15813,7 @@
 				"baseColorTexture":{
 					"index":163
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15833,7 +15834,7 @@
 				"baseColorTexture":{
 					"index":166
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15854,7 +15855,7 @@
 				"baseColorTexture":{
 					"index":169
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15875,7 +15876,7 @@
 				"baseColorTexture":{
 					"index":172
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15896,7 +15897,7 @@
 				"baseColorTexture":{
 					"index":175
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15917,7 +15918,7 @@
 				"baseColorTexture":{
 					"index":178
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15938,7 +15939,7 @@
 				"baseColorTexture":{
 					"index":181
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15959,7 +15960,7 @@
 				"baseColorTexture":{
 					"index":184
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -15980,7 +15981,7 @@
 				"baseColorTexture":{
 					"index":187
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16001,7 +16002,7 @@
 				"baseColorTexture":{
 					"index":190
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16022,7 +16023,7 @@
 				"baseColorTexture":{
 					"index":193
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16043,7 +16044,7 @@
 				"baseColorTexture":{
 					"index":196
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16064,7 +16065,7 @@
 				"baseColorTexture":{
 					"index":199
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16085,7 +16086,7 @@
 				"baseColorTexture":{
 					"index":202
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16106,7 +16107,7 @@
 				"baseColorTexture":{
 					"index":205
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16127,7 +16128,7 @@
 				"baseColorTexture":{
 					"index":208
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16148,7 +16149,7 @@
 				"baseColorTexture":{
 					"index":211
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16169,7 +16170,7 @@
 				"baseColorTexture":{
 					"index":214
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16190,7 +16191,7 @@
 				"baseColorTexture":{
 					"index":217
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16211,7 +16212,7 @@
 				"baseColorTexture":{
 					"index":220
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16232,7 +16233,7 @@
 				"baseColorTexture":{
 					"index":223
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16253,7 +16254,7 @@
 				"baseColorTexture":{
 					"index":226
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16274,7 +16275,7 @@
 				"baseColorTexture":{
 					"index":229
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16295,7 +16296,7 @@
 				"baseColorTexture":{
 					"index":232
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16316,7 +16317,7 @@
 				"baseColorTexture":{
 					"index":235
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16337,7 +16338,7 @@
 				"baseColorTexture":{
 					"index":238
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16358,7 +16359,7 @@
 				"baseColorTexture":{
 					"index":241
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16379,7 +16380,7 @@
 				"baseColorTexture":{
 					"index":244
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16400,7 +16401,7 @@
 				"baseColorTexture":{
 					"index":247
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16421,7 +16422,7 @@
 				"baseColorTexture":{
 					"index":250
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16442,7 +16443,7 @@
 				"baseColorTexture":{
 					"index":253
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16463,7 +16464,7 @@
 				"baseColorTexture":{
 					"index":256
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16484,7 +16485,7 @@
 				"baseColorTexture":{
 					"index":259
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16507,7 +16508,7 @@
 				"baseColorTexture":{
 					"index":261
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16528,7 +16529,7 @@
 				"baseColorTexture":{
 					"index":264
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16549,7 +16550,7 @@
 				"baseColorTexture":{
 					"index":267
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16570,7 +16571,7 @@
 				"baseColorTexture":{
 					"index":270
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16591,7 +16592,7 @@
 				"baseColorTexture":{
 					"index":273
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16612,7 +16613,7 @@
 				"baseColorTexture":{
 					"index":276
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16633,7 +16634,7 @@
 				"baseColorTexture":{
 					"index":279
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16654,7 +16655,7 @@
 				"baseColorTexture":{
 					"index":282
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16675,7 +16676,7 @@
 				"baseColorTexture":{
 					"index":285
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16696,7 +16697,7 @@
 				"baseColorTexture":{
 					"index":288
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16717,7 +16718,7 @@
 				"baseColorTexture":{
 					"index":291
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16738,7 +16739,7 @@
 				"baseColorTexture":{
 					"index":294
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16767,7 +16768,7 @@
 				"baseColorTexture":{
 					"index":298
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16796,7 +16797,7 @@
 				"baseColorTexture":{
 					"index":302
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16817,7 +16818,7 @@
 				"baseColorTexture":{
 					"index":305
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16838,7 +16839,7 @@
 				"baseColorTexture":{
 					"index":308
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16859,7 +16860,7 @@
 				"baseColorTexture":{
 					"index":311
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16880,7 +16881,7 @@
 				"baseColorTexture":{
 					"index":314
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16901,7 +16902,7 @@
 				"baseColorTexture":{
 					"index":317
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16922,7 +16923,7 @@
 				"baseColorTexture":{
 					"index":320
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16943,7 +16944,7 @@
 				"baseColorTexture":{
 					"index":323
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16964,7 +16965,7 @@
 				"baseColorTexture":{
 					"index":326
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -16985,7 +16986,7 @@
 				"baseColorTexture":{
 					"index":329
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17006,7 +17007,7 @@
 				"baseColorTexture":{
 					"index":332
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17027,7 +17028,7 @@
 				"baseColorTexture":{
 					"index":335
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17048,7 +17049,7 @@
 				"baseColorTexture":{
 					"index":338
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17069,7 +17070,8 @@
 				"baseColorTexture":{
 					"index":341
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.7
 			}
 		},
 		{
@@ -17090,7 +17092,8 @@
 				"baseColorTexture":{
 					"index":344
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0,
+				"metallicFactor":0.7
 			}
 		},
 		{
@@ -17111,7 +17114,7 @@
 				"baseColorTexture":{
 					"index":347
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17132,7 +17135,7 @@
 				"baseColorTexture":{
 					"index":350
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17153,7 +17156,7 @@
 				"baseColorTexture":{
 					"index":353
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17174,7 +17177,7 @@
 				"baseColorTexture":{
 					"index":356
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17195,7 +17198,7 @@
 				"baseColorTexture":{
 					"index":359
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17216,7 +17219,7 @@
 				"baseColorTexture":{
 					"index":362
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17237,7 +17240,7 @@
 				"baseColorTexture":{
 					"index":365
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17258,7 +17261,7 @@
 				"baseColorTexture":{
 					"index":368
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17279,7 +17282,7 @@
 				"baseColorTexture":{
 					"index":371
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17300,7 +17303,7 @@
 				"baseColorTexture":{
 					"index":374
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17321,7 +17324,7 @@
 				"baseColorTexture":{
 					"index":377
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17342,7 +17345,7 @@
 				"baseColorTexture":{
 					"index":380
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17371,7 +17374,7 @@
 				"baseColorTexture":{
 					"index":384
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17400,7 +17403,7 @@
 				"baseColorTexture":{
 					"index":388
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17429,7 +17432,7 @@
 				"baseColorTexture":{
 					"index":392
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17458,7 +17461,7 @@
 				"baseColorTexture":{
 					"index":396
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17487,7 +17490,7 @@
 				"baseColorTexture":{
 					"index":400
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		},
 		{
@@ -17516,7 +17519,7 @@
 				"baseColorTexture":{
 					"index":404
 				},
-				"roughnessFactor":0.5527864098548889
+				"roughnessFactor":1.0
 			}
 		}
 	],

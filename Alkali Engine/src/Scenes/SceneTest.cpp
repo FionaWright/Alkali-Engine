@@ -19,36 +19,40 @@ bool SceneTest::LoadContent()
 
 	shared_ptr<Model> modelSphere, modelPlane, modelInvertedCube;
 	{
-		CommandQueue* commandQueueCopy = nullptr;
-		commandQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		if (!commandQueueCopy)
+		CommandQueue* cmdQueueCopy = nullptr;
+		cmdQueueCopy = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		if (!cmdQueueCopy)
 			throw std::exception("Command Queue Error");
 
-		auto commandListCopy = commandQueueCopy->GetAvailableCommandList();
+		auto cmdListCopy = cmdQueueCopy->GetAvailableCommandList();
 
-		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, commandListCopy.Get(), "Sphere.gltf");
+		auto sphereList = ModelLoader::LoadModelsFromGLTF(m_d3dClass, cmdListCopy.Get(), "Sphere.gltf");
 		modelSphere = sphereList.at(0);
 
-		modelPlane = AssetFactory::CreateModel("Plane.model", commandListCopy.Get());
-		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", commandListCopy.Get());
+		modelPlane = AssetFactory::CreateModel("Plane.model", cmdListCopy.Get());
+		modelInvertedCube = AssetFactory::CreateModel("Cube (Inverted).model", cmdListCopy.Get());
 
-		auto fenceValue = commandQueueCopy->ExecuteCommandList(commandListCopy);
-		commandQueueCopy->WaitForFenceValue(fenceValue);
+		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
+		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
 
-	CommandQueue* commandQueueDirect = nullptr;
-	commandQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	if (!commandQueueDirect)
+	CommandQueue* cmdQueueDirect = nullptr;
+	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
-	auto commandListDirect = commandQueueDirect->GetAvailableCommandList();
+	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
 
-	shared_ptr<Texture> baseTex = AssetFactory::CreateTexture("EarthDay.png", commandListDirect.Get());
-	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture("EarthNormal.png", commandListDirect.Get(), false, true);
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture("DefaultSpecular.png", commandListDirect.Get());
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", commandListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), commandListDirect.Get());
-	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandListDirect.Get());
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandListDirect.Get());
+	shared_ptr<Texture> earthDayTex = AssetFactory::CreateTexture("EarthDay.png", cmdListDirect.Get());
+	shared_ptr<Texture> transTex = AssetFactory::CreateTexture("Transparent.png", cmdListDirect.Get());
+	shared_ptr<Texture> earthNormalTex = AssetFactory::CreateTexture("EarthNormal.png", cmdListDirect.Get(), false, true);
+	shared_ptr<Texture> defaultNormalTex = AssetFactory::CreateTexture("DefaultNormal.png", cmdListDirect.Get(), false, true);
+	shared_ptr<Texture> defaultSpecTex = AssetFactory::CreateTexture("DefaultSpecular.png", cmdListDirect.Get());
+	shared_ptr<Texture> whiteTex = AssetFactory::CreateTexture("WhitePOT.png", cmdListDirect.Get());
+
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
 
 	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
@@ -63,7 +67,7 @@ bool SceneTest::LoadContent()
 
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 5;
-	rootParamInfoPBR.NumCBV_PerDraw = 2;
+	rootParamInfoPBR.NumCBV_PerDraw = 3;
 	rootParamInfoPBR.NumSRV = 7;
 	rootParamInfoPBR.NumSRV_Dynamic = 1;
 	rootParamInfoPBR.ParamIndexCBV_PerDraw = 0;
@@ -71,8 +75,29 @@ bool SceneTest::LoadContent()
 	rootParamInfoPBR.ParamIndexSRV = 2;	
 	rootParamInfoPBR.ParamIndexSRV_Dynamic = 3;
 
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2];
+	samplerDesc[0] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1] = SettingsManager::ms_DX12.DefaultSamplerDesc;
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc[1].ShaderRegister = 1;
+
 	auto rootSigPBR = std::make_shared<RootSig>();
-	rootSigPBR->InitDefaultSampler("PBR Root Sig", rootParamInfoPBR);
+	rootSigPBR->Init("PBR Root Sig", rootParamInfoPBR, samplerDesc, _countof(samplerDesc));
+
+	RootParamInfo rootParamInfoGlass;
+	rootParamInfoGlass.NumCBV_PerFrame = 5;
+	rootParamInfoGlass.NumCBV_PerDraw = 3;
+	rootParamInfoGlass.NumSRV = 8;
+	rootParamInfoGlass.NumSRV_Dynamic = 1;
+	rootParamInfoGlass.ParamIndexCBV_PerDraw = 0;
+	rootParamInfoGlass.ParamIndexCBV_PerFrame = 1;
+	rootParamInfoGlass.ParamIndexSRV = 2;
+	rootParamInfoGlass.ParamIndexSRV_Dynamic = 3;
+
+	auto rootSigGlass = std::make_shared<RootSig>();
+	rootSigGlass->Init("Bubble Root Sig", rootParamInfoGlass, samplerDesc, _countof(samplerDesc));
 
 	RootParamInfo rootParamInfoSkybox;
 	rootParamInfoSkybox.NumCBV_PerDraw = 1;
@@ -81,37 +106,31 @@ bool SceneTest::LoadContent()
 	rootParamInfoSkybox.ParamIndexSRV = 1;
 
 	auto rootSigSkybox = std::make_shared<RootSig>();
-	rootSigSkybox->InitDefaultSampler("Skybox Root Sig", rootParamInfoSkybox);
+	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { baseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 
+	vector<shared_ptr<Texture>> textures = { earthDayTex, earthNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
 	shared_ptr<Material> matPBR1 = AssetFactory::CreateMaterial();
-	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-	matPBR1->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
+	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
+	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
 	matPBR1->AddSRVs(m_d3dClass, textures);
-	matPBR1->AddDynamicSRVs("Shadow Map", 1);
-
-	shared_ptr<Material> matPBR2 = AssetFactory::CreateMaterial();
-	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-	matPBR2->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesFrame, true);
-	matPBR2->AddSRVs(m_d3dClass, textures);
-	matPBR2->AddDynamicSRVs("Shadow Map", 1);
+	matPBR1->AddDynamicSRVs("Shadow Map", 1);	
 
 	MaterialPropertiesCB defaultMatProps;
-	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-	{
-		matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
-		matPBR2->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB), i);
-	}	
+	ThinFilmCB defaultThinFilm;
+	matPBR1->SetCBV_PerDraw(1, &defaultMatProps, sizeof(MaterialPropertiesCB));
+	matPBR1->SetCBV_PerDraw(2, &defaultThinFilm, sizeof(ThinFilmCB));
+	matPBR1->AttachProperties(defaultMatProps);
+	matPBR1->AttachThinFilm(defaultThinFilm);
 
-	cbvSizesDraw = { sizeof(MatricesCB) };
-	textures = { skyboxTex };
+	vector<UINT> cbvSizesDrawSkybox = { sizeof(MatricesCB) };
+	vector<shared_ptr<Texture>> texturesSkybox = { skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
-	matSkybox->AddCBVs(m_d3dClass, commandListDirect.Get(), cbvSizesDraw, false);
-	matSkybox->AddSRVs(m_d3dClass, textures);
+	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDrawSkybox, false);
+	matSkybox->AddSRVs(m_d3dClass, texturesSkybox);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutPBR =
 	{
@@ -133,8 +152,12 @@ bool SceneTest::LoadContent()
 	argsPBR.CullNone = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
+	ShaderArgs argsGlass = { L"GlassPBR.vs", L"GlassPBR.ps", inputLayoutPBR, rootSigGlass->GetRootSigResource() };
+	argsGlass.CullNone = true;
+	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
+
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
-	argsSkybox.disableDSVWrite = true;
+	argsSkybox.DisableDSVWriting = true;
 	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
@@ -142,32 +165,76 @@ bool SceneTest::LoadContent()
 	Scene::AddDebugLine(XMFLOAT3(0, 0, -999), XMFLOAT3(0, 0, 999), XMFLOAT3(0, 0, 1));
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
+	shared_ptr<Batch> batchGlass = AssetFactory::CreateBatch(rootSigGlass);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
 
-	Transform t = { XMFLOAT3(0, 9, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
+	GLTFLoadArgs gltfArgs;
+	gltfArgs.Batches = { batchPBR, batchGlass };
+	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff, shaderGlass };
+	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.IrradianceMap = irradianceTex;
+	gltfArgs.CullingWhiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 
-	vector<string> whiteList = { "Bistro_Research_Exterior_Paris_Street_" };
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "Bistro.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, &whiteList);
-	ModelLoader::LoadSplitModelGLTF(m_d3dClass, commandListDirect.Get(), "MetalRoughSpheres.gltf", rootParamInfoPBR, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff, nullptr, t);
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
 
-	m_goTest = batchPBR->CreateGameObject("Test", modelSphere, shaderPBR, matPBR1);
+	gltfArgs.CullingWhiteList = {};
+	gltfArgs.Transform = { XMFLOAT3(0, 20, 0), XMFLOAT3_ZERO, XMFLOAT3_ONE };
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "MetalRoughSpheres.gltf", gltfArgs);
+
+	GLTFLoadOverride override;
+	override.ShaderIndex = 2;
+	override.BatchIndex = 1;
+	override.WhiteList = { "glass" };
+	override.UseGlassSRVs = true;
+	gltfArgs.Overrides = { override };
+	gltfArgs.Transform = { XMFLOAT3(-3.2f, 0.33f, -1.66f), XMFLOAT3_ZERO, XMFLOAT3(30, 30, 30) };
+	ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Olives.gltf", gltfArgs);
+
+	m_goTest = batchPBR->CreateGameObject("World", modelSphere, shaderPBR, matPBR1);
 	m_goTest->SetPosition(-50, 3, -10);
 	m_goTest->SetScale(20);
-
-	/*m_goPlane = batchPBR->CreateGameObject("Plane", modelPlane, shaderPBR, matPBR2);
-	m_goPlane->SetPosition(0, -10, 0);
-	m_goPlane->SetScale(100);
-	m_goPlane->SetRotation(90, 0, 0);*/
 
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
 
+	MaterialPropertiesCB matPropBubble;
+	ThinFilmCB thinFilmBubble;
+	matPropBubble.Roughness = 0.2f;
+	matPropBubble.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
+	thinFilmBubble.ThicknessMax = thinFilmBubble.ThicknessMin = 400.0f;
+	thinFilmBubble.n0 = 1.0f;	
+	thinFilmBubble.n1 = 1.7f;	
+	thinFilmBubble.n2 = 1.0f;
+	thinFilmBubble.Enabled = true;
+	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, whiteTex, whiteTex };
+
+	for (int i = 0; i < 30; i++)
+	{
+		auto matBubble = AssetFactory::CreateMaterial();
+		matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
+		matBubble->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
+		matBubble->AddSRVs(m_d3dClass, texturesBubble);
+		matBubble->AddDynamicSRVs("Shadow Map", 1);
+
+		matBubble->SetCBV_PerDraw(1, &matPropBubble, sizeof(MaterialPropertiesCB));
+		matBubble->SetCBV_PerDraw(2, &thinFilmBubble, sizeof(ThinFilmCB));
+		matBubble->AttachProperties(matPropBubble);
+		matBubble->AttachThinFilm(thinFilmBubble);
+
+		float randX = Rand01() * 2 - 1;
+		float randY = Rand01() * 2 - 1;
+		float randZ = Rand01() * 2 - 1;		
+
+		auto bubble = batchGlass->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderGlass, matBubble, false, true);
+		bubble->SetPosition(20 * randX, 10 * randY, 20 * randZ);
+	}
+
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
-	auto fenceValue = commandQueueDirect->ExecuteCommandList(commandListDirect);
-	commandQueueDirect->WaitForFenceValue(fenceValue);
+	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
+	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	return true;
 }

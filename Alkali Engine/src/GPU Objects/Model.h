@@ -14,17 +14,18 @@ public:
 	Model();
     ~Model();
 
-    bool Init(ID3D12GraphicsCommandList2* commandList, wstring filepath);
-    bool Init(ID3D12GraphicsCommandList2* commandList, string filepath);
+    bool Init(ID3D12GraphicsCommandList2* cmdList, wstring filepath);
+    bool Init(ID3D12GraphicsCommandList2* cmdList, string filepath);
     void Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, float boundingRadius, XMFLOAT3 centroid);
 
-    void SetBuffers(ID3D12GraphicsCommandList2* commandList, const void* vBufferData, const void* iBufferData);
-    void Render(ID3D12GraphicsCommandList2* commandList);
+    void SetBuffers(ID3D12GraphicsCommandList2* cmdList, const void* vBufferData, const void* iBufferData);
+    void Render(ID3D12GraphicsCommandList2* cmdList);
 
     size_t GetVertexCount();
     size_t GetIndexCount();
     float GetSphereRadius();
     XMFLOAT3 GetCentroid();
+    string GetFilePath();
 
 private:
     ComPtr<ID3D12Resource> m_VertexBuffer;
@@ -41,4 +42,5 @@ private:
     float m_boundingSphereRadius;
     XMFLOAT3 m_centroid;
     bool m_loadedData = false;
+    string m_filepath = "";
 };

@@ -26,7 +26,7 @@ public:
 
 	void UpdateDynamicVertexBuffer(D3DClass* d3d);
 
-	void Render(ID3D12GraphicsCommandList2* commandListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, const int& backBufferIndex);
+	void Render(ID3D12GraphicsCommandList2* cmdListDirect, ID3D12RootSignature* rootSig, D3D12_VIEWPORT viewPort, D3D12_RECT scissorRect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, XMMATRIX viewProj, const int& backBufferIndex);
 
 private:
 	bool m_enabled = true;

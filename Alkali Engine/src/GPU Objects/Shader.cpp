@@ -59,12 +59,13 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.FillMode = SettingsManager::ms_Dynamic.WireframeMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
-	if (!SettingsManager::ms_Dynamic.CullFaceEnabled || m_args.CullNone)
+	if (!SettingsManager::ms_Dynamic.CullBackFaceEnabled || m_args.CullNone)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	else if (m_args.CullFront)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
 	else
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -94,11 +95,11 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	blendDesc.RenderTarget[0] = defaultRenderTargetBlendDesc;	
 
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
-	depthStencilDesc.DepthEnable = m_args.disableDSV ? FALSE : TRUE;
-	depthStencilDesc.DepthWriteMask = m_args.CullNone || m_args.disableDSVWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = m_args.disableDSVWrite ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
+	depthStencilDesc.DepthEnable = m_args.DisableDSV ? FALSE : TRUE;
+	depthStencilDesc.DepthWriteMask = m_args.DisableDSVWriting ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = m_args.DisableDSVWriting ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
 
-	depthStencilDesc.StencilEnable = m_args.CullNone || m_args.disableDSV ? FALSE : TRUE;
+	depthStencilDesc.StencilEnable = m_args.DisableStencil ? FALSE : TRUE;
 	depthStencilDesc.StencilWriteMask = 0xFF;
 	depthStencilDesc.StencilReadMask = 0xFF;
 
@@ -143,6 +144,9 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	psoStream.RTVFormats = rtvFormats;
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };
+
+	if (m_pso)
+		m_pso.Reset();
 
 	hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso));
 	ThrowIfFailed(hr);

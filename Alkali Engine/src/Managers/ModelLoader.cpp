@@ -416,7 +416,7 @@ bool ModelLoader::LoadModel(wstring filePath, vector<VertexInputData>& outVertex
 	return true;
 }
 
-void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* commandList, string name, Batch* batch, shared_ptr<Shader> shader)
+void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12GraphicsCommandList2* cmdList, string name, Batch* batch, shared_ptr<Shader> shader)
 {
 	string mtlFilePath = "Assets/Models/" + name + "/" + name + ".mtl";
 
@@ -509,7 +509,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Model> model = std::make_shared<Model>();
 
 		string modelPath = name + "/" + modelName + ".model";
-		model->Init(commandList, modelPath);
+		model->Init(cmdList, modelPath);
 
 		string diffuseTexPath = name + "/" + diffuseName;
 		if (diffuseName == "")
@@ -518,7 +518,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Texture> diffuseTex;
 		if (!ResourceTracker::TryGetTexture(diffuseTexPath, diffuseTex))
 		{
-			diffuseTex->Init(d3d, commandList, diffuseTexPath);
+			diffuseTex->Init(d3d, cmdList, diffuseTexPath);
 		}
 
 		string normalTexPath = name + "/" + normalName;
@@ -528,7 +528,7 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		shared_ptr<Texture> normalTex;
 		if (!ResourceTracker::TryGetTexture(normalTexPath, normalTex))
 		{
-			normalTex->Init(d3d, commandList, normalTexPath);
+			normalTex->Init(d3d, cmdList, normalTexPath);
 		}
 
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
@@ -536,8 +536,8 @@ void ModelLoader::LoadSplitModel(D3DClass* d3d, RootParamInfo& rpi, ID3D12Graphi
 		vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex };
 
 		shared_ptr<Material> material = AssetFactory::CreateMaterial();
-		material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
-		material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
+		material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
+		material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
 		material->AddSRVs(d3d, textures);
 
 		GameObject go(modelName, model, shader, material);
@@ -710,7 +710,7 @@ void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Ass
 	}
 }
 
-void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model)
+void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model)
 {
 	vector<VertexInputData> vertexBuffer;
 
@@ -778,179 +778,226 @@ void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf:
 	LoadGLTFIndices(indexBuffer, asset, primitive);
 
 	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputData), boundingRadiusSq, centroidFloat3);
-	model->SetBuffers(commandList, vertexBuffer.data(), indexBuffer.data());
+	model->SetBuffers(cmdList, vertexBuffer.data(), indexBuffer.data());
 }
 
-void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, string modelNameExtensionless, fastgltf::Node& node, Transform& transform, string id)
+string LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int textureIndex)
+{
+	fastgltf::Texture& tex = asset->textures[textureIndex];
+	fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+
+	if (image.data.index() == 2)
+	{
+		string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
+		size_t slashIndex = texName.find_last_of('/');
+
+		if (slashIndex != std::string::npos)
+			return texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+
+		return texName;
+	}
+
+	if (image.data.index() == 1)
+	{
+		auto& bufferViewInfo = std::get<fastgltf::sources::BufferView>(image.data);
+		if (bufferViewInfo.mimeType != fastgltf::MimeType::PNG)
+			throw std::exception("GLB Mime type not supported");
+
+		return std::string(image.name) + ".png";
+	}
+
+	return "";
+}
+
+void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
 	{
-		LoadModel(d3d, commandList, asset, primitive, model);
+		LoadModel(d3d, cmdList, asset, primitive, model);
 	}
 
 	fastgltf::Material& mat = asset->materials[primitive.materialIndex.value_or(0)];
 
+	UINT shaderIndex = -1;
+	UINT batchIndex = -1;
+	bool useGlassSRVs = false;
+
+	for (size_t i = 0; i < args.Overrides.size(); i++)
+	{
+		if (args.Overrides[i].WhiteList.size() == 0)
+			continue;
+
+		bool found = false;
+		for (auto str : args.Overrides[i].WhiteList)
+		{
+			if (node.name.starts_with(str))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			continue;
+
+		shaderIndex = args.Overrides[i].ShaderIndex;
+		batchIndex = args.Overrides[i].BatchIndex;
+		useGlassSRVs = args.Overrides[i].UseGlassSRVs;
+		break;
+	}
+
 	string diffuseTexPath = "";
 	if (mat.pbrData.baseColorTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.pbrData.baseColorTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		diffuseTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.baseColorTexture.value().textureIndex);
+	else if (mat.iridescence)
+		diffuseTexPath = "Transparent.png";
+	else
+		diffuseTexPath = "WhitePOT.png";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
-
-			if (slashIndex != std::string::npos)
-				diffuseTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				diffuseTexPath = texName;
-		}
-	}
+	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(diffuseTexPath, cmdList);
 
 	string normalTexPath = "";
 	if (mat.normalTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.normalTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		normalTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.normalTexture.value().textureIndex);
+	else
+		normalTexPath = "DefaultNormal.tga";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
-
-			if (slashIndex != std::string::npos)
-				normalTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				normalTexPath = texName;
-		}
-	}
+	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(normalTexPath, cmdList, false, true);
 
 	string specTexPath = "";
 	if (mat.specular && mat.specular.get()->specularTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.specular.get()->specularTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+		specTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.specular.get()->specularTexture.value().textureIndex);
+	else if (mat.pbrData.metallicRoughnessTexture.has_value())
+		specTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.metallicRoughnessTexture.value().textureIndex);	
+	else
+		specTexPath = "MetalRoughSpheres/Spheres_MetalRough.png";
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, cmdList);
 
-			if (slashIndex != std::string::npos)
-				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				specTexPath = texName;
-		}
-	}
+	string thickTexPath = "";
+	if (mat.iridescence && mat.iridescence->iridescenceThicknessTexture.has_value())
+		thickTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.iridescence->iridescenceThicknessTexture.value().textureIndex);
+	else
+		thickTexPath = "WhitePOT.png";
 
-	if (specTexPath == "" && mat.pbrData.metallicRoughnessTexture.has_value())
-	{
-		fastgltf::Texture& tex = asset->textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex];
-		fastgltf::Image& image = asset->images[tex.imageIndex.value()];
+	shared_ptr<Texture> thickTex = AssetFactory::CreateTexture(thickTexPath, cmdList);
 
-		if (image.data.index() == 2)
-		{
-			string texName(std::get<fastgltf::sources::URI>(image.data).uri.path());
-			size_t slashIndex = texName.find_last_of('/');
+	string iridTexPath = "";
+	if (mat.iridescence && mat.iridescence->iridescenceTexture.has_value())
+		iridTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.iridescence->iridescenceTexture.value().textureIndex);
+	else
+		iridTexPath = "WhitePOT.png";
 
-			if (slashIndex != std::string::npos)
-				specTexPath = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
-			else
-				specTexPath = texName;
-		}
-	}
+	shared_ptr<Texture> iridTex = AssetFactory::CreateTexture(iridTexPath, cmdList);
 
-	string texFullFilePath = modelNameExtensionless + "/" + diffuseTexPath;
-	if (diffuseTexPath == "")
-		texFullFilePath = "WhitePOT.png";
+	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdList);
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdList);
 
-	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(texFullFilePath, commandList);
-	
-	string texNormalFullFilePath = modelNameExtensionless + "/" + normalTexPath;
-	if (normalTexPath == "")
-		texNormalFullFilePath = "DefaultNormal.tga";
-
-	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(texNormalFullFilePath, commandList, false, true);
-
-	string specFullFilePath = modelNameExtensionless + "/" + specTexPath;
-	if (specTexPath == "")
-		specFullFilePath = "MetalRoughSpheres/Spheres_MetalRough.png";
-
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specFullFilePath, commandList);
-	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", commandList);
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", commandList);
-
-	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB) };
+	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
-	vector<shared_ptr<Texture>> textures = { diffuseTex, normalTex, specTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
+	vector<shared_ptr<Texture>> textures;
+	if (useGlassSRVs)
+		textures = { normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex, thickTex, iridTex };
+	else
+		textures = { diffuseTex, normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex };
 
 	shared_ptr<Material> material = AssetFactory::CreateMaterial();
-	material->AddCBVs(d3d, commandList, cbvSizesDraw, false);
-	material->AddCBVs(d3d, commandList, cbvSizesFrame, true);
+	material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
+	material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
 	material->AddSRVs(d3d, textures);
 	material->AddDynamicSRVs("Shadow Map", 1);
 
 	MaterialPropertiesCB matProperties;
-	matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
-	matProperties.Roughness = mat.pbrData.roughnessFactor;
+	if (useGlassSRVs)
+		matProperties.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
+	else
+		matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
+
+	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410) ? 1.0f : mat.pbrData.roughnessFactor;
 	matProperties.AlphaCutoff = mat.alphaCutoff;
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;
 	matProperties.Metallic = mat.pbrData.metallicFactor;
-	for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-		material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB), i);
+
+	ThinFilmCB thinFilm;
+
+	if (mat.iridescence)
+	{
+		thinFilm.Enabled = true;
+		thinFilm.ThicknessMax = mat.iridescence->iridescenceThicknessMaximum;
+		thinFilm.ThicknessMin = mat.iridescence->iridescenceThicknessMinimum;
+		thinFilm.n1 = mat.iridescence->iridescenceIor;
+		thinFilm.n2 = mat.ior;
+		thinFilm.CalculateDelta();
+	}
+
+	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
+	material->SetCBV_PerDraw(2, &thinFilm, sizeof(ThinFilmCB));
 	material->AttachProperties(matProperties);
+	material->AttachThinFilm(thinFilm);
 
 	string nodeName(node.name);
-	nodeName = id + "::" + nodeName;
+	nodeName = id + "::" + nodeName;	
 
-	auto shaderUsed = material->GetHasAlpha() ? shaderCullOff : shader;
+	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
+	bool isTransparent = mat.alphaMode != fastgltf::AlphaMode::Opaque || alphaRequirementMet || useGlassSRVs;
+
+	if (shaderIndex == -1)
+		shaderIndex = isTransparent ? args.DefaultShaderTransIndex : args.DefaultShaderIndex;
+	if (batchIndex == -1)
+		batchIndex = args.DefaultBatchIndex;
+
+	auto& shaderUsed = args.Shaders[shaderIndex];
 	GameObject go(nodeName, model, shaderUsed, material);
-	go.SetTransform(transform);
+	go.SetTransform(args.Transform);
+	go.ForceSetTransparent(isTransparent);
 
-	batch->AddGameObject(go);
+	args.Batches[batchIndex]->AddGameObject(go);
 }
 
-void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamInfo& rpi, fastgltf::Expected<fastgltf::Asset>& asset, Batch* batch, shared_ptr<Shader> shader, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, string modelNameExtensionless, fastgltf::Node& node, Transform& rollingTransform)
+void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args)
 {
-	Transform transform;
+	Transform localTransform;
 	if (node.transform.index() == 0)
 	{
 		fastgltf::TRS& trs = std::get<fastgltf::TRS>(node.transform);
-		transform = ToTransform(trs);
+		localTransform = ToTransform(trs);
 	}	
 	else
 	{
 		throw std::exception("Unsupported transform type");
 	}
 
-	transform.Position.x = -transform.Position.x;
+	Transform worldTransform = localTransform;
+	worldTransform.Position.x = -localTransform.Position.x;
 
-	transform.Position = Add(transform.Position, rollingTransform.Position);
-	transform.Rotation = Add(transform.Rotation, rollingTransform.Rotation);
-	transform.Scale = Mult(transform.Scale, rollingTransform.Scale);
+	worldTransform.Position = Add(worldTransform.Position, args.Transform.Position);
+	worldTransform.Rotation = Add(worldTransform.Rotation, args.Transform.Rotation);
+	worldTransform.Scale = Mult(worldTransform.Scale, args.Transform.Scale);
 
 	size_t childCount = node.children.size();
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, childNode, transform);
+		args.Transform = worldTransform;
+		LoadNode(d3d, cmdList, asset, modelNameExtensionless, childNode, args);
 	}
 
 	if (!node.meshIndex.has_value())
 		return;
 
+	worldTransform.Position = Mult(worldTransform.Position, worldTransform.Scale);
+	args.Transform = worldTransform;
+
 	string nodeName(node.name);
-	if (nameWhiteList && nameWhiteList->size() > 0)
+	if (args.CullingWhiteList.size() > 0)
 	{
 		bool found = false;
-		for (int j = 0; j < nameWhiteList->size(); j++)
+		for (int j = 0; j < args.CullingWhiteList.size(); j++)
 		{
-			if (nodeName.starts_with(nameWhiteList->at(j)))
+			if (nodeName.starts_with(args.CullingWhiteList[j]))
 			{
-				found = true;
+ 				found = true;
 				break;
 			}
 		}
@@ -960,18 +1007,16 @@ void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, RootParamI
 	}
 
 	size_t meshIndex = node.meshIndex.value();
-	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);
-
-	transform.Position = Mult(transform.Position, transform.Scale);
+	fastgltf::Mesh& mesh = asset->meshes.at(meshIndex);	
 
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, commandList, rpi, asset, mesh.primitives[i], batch, shader, skyboxTex, irradianceTex, shaderCullOff, modelNameExtensionless, node, transform, id);
+		LoadPrimitive(d3d, cmdList, asset, mesh.primitives[i], modelNameExtensionless, node, args, id);
 	}
 }
 
-void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName, RootParamInfo& rpi, Batch* batch, shared_ptr<Texture> skyboxTex, shared_ptr<Texture> irradianceTex, shared_ptr<Shader> shader, shared_ptr<Shader> shaderCullOff, vector<string>* nameWhiteList, Transform defaultTransform)
+void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName, GLTFLoadArgs& args)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -994,7 +1039,7 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 
 	if (!ms_initialisedParser)
 	{
-		ms_parser = fastgltf::Parser(fastgltf::Extensions::KHR_materials_specular);
+		ms_parser = fastgltf::Parser(fastgltf::Extensions::KHR_materials_specular | fastgltf::Extensions::KHR_materials_iridescence);
 		ms_initialisedParser = true;
 	}
 
@@ -1024,18 +1069,18 @@ void ModelLoader::LoadSplitModelGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* 
 		{
 			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			LoadNode(d3d, commandList, rpi, asset, batch, shader, skyboxTex, irradianceTex, shaderCullOff, nameWhiteList, modelNameExtensionless, node, defaultTransform);
+			LoadNode(d3d, cmdList, asset, modelNameExtensionless, node, args);
 		}
 	}
 }
 
-void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList)
+void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList)
 {
 	size_t childCount = node.children.size();
 	for (size_t i = 0; i < childCount; i++)
 	{
 		fastgltf::Node& childNode = asset->nodes[node.children[i]];
-		LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, childNode, modelList);
+		LoadModelsFromNode(d3d, cmdList, asset, modelNameExtensionless, childNode, modelList);
 	}
 
 	if (!node.meshIndex.has_value())
@@ -1051,13 +1096,13 @@ void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, 
 		shared_ptr<Model> model;
 		if (!ResourceTracker::TryGetModel(id, model))
 		{
-			LoadModel(d3d, commandList, asset, mesh.primitives[i], model);
+			LoadModel(d3d, cmdList, asset, mesh.primitives[i], model);
 		}
 		modelList.push_back(model);
 	}
 }
 
-vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, string modelName)
+vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName)
 {
 	string path = "Assets/Models/" + modelName;
 
@@ -1093,7 +1138,7 @@ vector<shared_ptr<Model>> ModelLoader::LoadModelsFromGLTF(D3DClass* d3d, ID3D12G
 		{
 			size_t nodeIndex = scene.nodeIndices[n];
 			fastgltf::Node& node = asset->nodes[nodeIndex];
-			LoadModelsFromNode(d3d, commandList, asset, modelNameExtensionless, node, modelList);
+			LoadModelsFromNode(d3d, cmdList, asset, modelNameExtensionless, node, modelList);
 		}
 	}
 

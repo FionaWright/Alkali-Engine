@@ -18,16 +18,30 @@ constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 struct DX12Settings
 {
-	UINT DescriptorHeapSize = 30000;
+	UINT DescriptorHeapSize = 60000;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	D3D12_RESOURCE_STATES SRVFormat = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
-	D3D12_FILTER SamplerFilterDefault = D3D12_FILTER_ANISOTROPIC;
-	D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeDefault = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	int SamplerMaxAnisotropicDefault = 16;
+	D3D12_STATIC_SAMPLER_DESC DefaultSamplerDesc = {
+		D3D12_FILTER_ANISOTROPIC,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		0, // MipLODBias
+		16, // Max Anisotropic
+		D3D12_COMPARISON_FUNC_NEVER,
+		D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+		0.0f, // MinLOD
+		D3D12_FLOAT32_MAX, // MaxLOD
+		0, // Shader Register
+		0, // Register Space
+		D3D12_SHADER_VISIBILITY_PIXEL
+	};
+
+	bool MSAAEnabled = false; // Unsupported for flip models
 
 	bool EnableValidationLayerOnReleaseMode = false;
 	bool EnableAllValidationLayerMessages = false;
@@ -48,8 +62,9 @@ struct WindowSettings
 struct MiscSettings
 {
 	bool AutoMipLevelsEnabled = true;
-	int DefaultGlobalMipLevels = 3;
+	int DefaultGlobalMipLevels = 1;
 	bool CubemapMipMapsEnabled = true;
+	bool RequireAlphaTextureForDoubleSided = true;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
 	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);
@@ -105,7 +120,7 @@ struct DynamicSettings
 	float UpdateTimeScale = 1.0f;
 
 	bool WireframeMode = false;
-	bool CullFaceEnabled = true;
+	bool CullBackFaceEnabled = true;
 
 	bool FrustumCullingEnabled = true;
 	bool DebugLinesEnabled = true;

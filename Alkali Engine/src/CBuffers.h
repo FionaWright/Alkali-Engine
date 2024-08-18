@@ -41,10 +41,33 @@ struct MaterialPropertiesCB
     XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;
     float Roughness = 0.5f;
 
-    float AlphaCutoff = 0.5f;
+    float AlphaCutoff = 0.9f;
     float IOR = 1.5f;
     float Dispersion = 0.0f;
     float Metallic = 0.5f;
+};
+
+struct ThinFilmCB
+{
+    float ThicknessMax = 0.0f;
+    float ThicknessMin = 0.0f;
+    float n0 = 1, n1 = 1.5f, n2 = 1.25f;
+
+private:
+    float Delta = 0.0f;
+
+public:
+    BOOL Enabled = FALSE;
+    float p;
+
+    void CalculateDelta()
+    {
+        const float d10 = (n1 > n0) ? 0 : PI;
+        const float d12 = (n1 > n2) ? 0 : PI;
+        Delta = d10 + d12;
+    }
+
+    float GetDelta() { return Delta; }
 };
 
 struct ShadowMapCB

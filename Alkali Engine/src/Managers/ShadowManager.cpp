@@ -29,7 +29,7 @@ D3D12_VIEWPORT ShadowManager::ms_viewports[MAX_SHADOW_MAP_CASCADES];
 vector<DebugLine*> ShadowManager::ms_debugLines;
 bool ShadowManager::ms_initialised;
 
-void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, Frustum& frustum)
+void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Frustum& frustum)
 {
 	if (ms_initialised)
 		return;
@@ -93,24 +93,25 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList,
 	{
 		RootParamInfo viewRPI;
 		viewRPI.NumSRV_Dynamic = 1;
-		viewRPI.NumCBV_PerFrame = 1;
-		viewRPI.ParamIndexCBV_PerFrame = 0;
+		viewRPI.NumCBV_PerDraw = 1;
+		viewRPI.ParamIndexCBV_PerDraw = 0;
 		viewRPI.ParamIndexSRV_Dynamic = 1;
 
 		ms_viewRootSig = std::make_shared<RootSig>();
-		ms_viewRootSig->InitDefaultSampler("View Shadow Map RS", viewRPI);
+		ms_viewRootSig->Init("View Shadow Map RS", viewRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 		ShaderArgs viewArgs = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, ms_viewRootSig->GetRootSigResource() };
 		viewArgs.CullNone = true;
-		viewArgs.disableDSV = true;
+		viewArgs.DisableDSV = true;
+		viewArgs.DisableStencil = true;
 		auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
 
 		ms_viewDepthMat = AssetFactory::CreateMaterial();
 		vector<UINT> cbvFrameSizesView = { sizeof(DepthViewCB) };
-		ms_viewDepthMat->AddCBVs(d3d, commandList, cbvFrameSizesView, true, "ShadowView");
+		ms_viewDepthMat->AddCBVs(d3d, cmdList, cbvFrameSizesView, true, "ShadowView");
 		ms_viewDepthMat->AddDynamicSRVs("Shadow View", 1);
 
-		auto modelPlane = AssetFactory::CreateModel("Plane.model", commandList);
+		auto modelPlane = AssetFactory::CreateModel("Plane.model", cmdList);
 
 		ms_viewGO = std::make_unique<GameObject>("View Shadow Map", modelPlane, viewDepthShader, ms_viewDepthMat, true);
 		ms_viewGO->SetRotation(90, 0, 0);
@@ -337,18 +338,18 @@ void ShadowManager::CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos
 	height *= 2;
 }
 
-void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex)
+void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex)
 {
 	if (!SettingsManager::ms_Dynamic.Shadow.Rendering)
 		return;
 
 	if (ms_currentDSVState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-		ResourceManager::TransitionResource(commandList, ms_shadowMapResource.Get(), ms_currentDSVState, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		ResourceManager::TransitionResource(cmdList, ms_shadowMapResource.Get(), ms_currentDSVState, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	auto dsvHandle = ms_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	commandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
+	cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
-	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
 	ro.UseShadowMapMat = true;
@@ -360,7 +361,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 	for (int i = 0; i < SettingsManager::ms_Dynamic.Shadow.CascadeCount; i++)
 	{
-		commandList->RSSetViewports(1, &ms_viewports[i]);				
+		cmdList->RSSetViewports(1, &ms_viewports[i]);				
 
 		XMMATRIX p = ms_projMatrices[i];
 
@@ -373,12 +374,12 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandLis
 
 		for (auto& it : batchList)
 		{	
-			it.second->Render(d3d, commandList, backBufferIndex, v, p, nullptr, &ro);
-			it.second->RenderTrans(d3d, commandList, backBufferIndex, v, p, nullptr, &ro);
+			it.second->Render(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro);
+			it.second->RenderTrans(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro);
 		}
 	}
 
-	ResourceManager::TransitionResource(commandList, ms_shadowMapResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, SettingsManager::ms_DX12.SRVFormat);
+	ResourceManager::TransitionResource(cmdList, ms_shadowMapResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, SettingsManager::ms_DX12.SRVFormat);
 	ms_currentDSVState = SettingsManager::ms_DX12.SRVFormat;
 }
 
@@ -424,16 +425,16 @@ float ShadowManager::GetPCFSampleRange(int sampleCount)
 	}
 }
 
-void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex)
+void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex)
 {
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
+	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
 
-	commandList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	ms_viewGO->Render(d3d, commandList, ms_viewRootSig->GetRootParamInfo(), backBufferIndex);
+	ms_viewGO->Render(d3d, cmdList, ms_viewRootSig->GetRootParamInfo(), backBufferIndex);
 
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
 
 void ShadowManager::SetDebugLines(vector<DebugLine*>& debugLines)

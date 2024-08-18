@@ -27,9 +27,9 @@ public:
 	GameObject(string name);
 	~GameObject();
 
-	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices = nullptr, RenderOverride* renderOverride = nullptr);
+	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices = nullptr, RenderOverride* renderOverride = nullptr);
 
-	void RenderModel(ID3D12GraphicsCommandList2* commandListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform = nullptr, Material* materialOverride = nullptr);
+	void RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform = nullptr, Material* materialOverride = nullptr);
 
 	Transform GetTransform() const;
 	void SetTransform(Transform t);
@@ -57,6 +57,8 @@ public:
 
 	size_t GetModelVertexCount() const;
 	size_t GetModelIndexCount() const;
+	Model* GetModel() const;
+	Shader* GetShader() const;
 	void GetShaderNames(wstring& vs, wstring& ps, wstring& hs, wstring& ds) const;
 	void GetBoundingSphere(XMFLOAT3& position, float& radius) const;
 	XMFLOAT3 GetWorldPosition() const;
