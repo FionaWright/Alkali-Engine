@@ -924,7 +924,8 @@ void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf:
 	if (mat.iridescence)
 	{
 		thinFilm.Enabled = true;
-		thinFilm.Thickness = mat.iridescence->iridescenceThicknessMaximum;
+		thinFilm.ThicknessMax = mat.iridescence->iridescenceThicknessMaximum;
+		thinFilm.ThicknessMin = mat.iridescence->iridescenceThicknessMinimum;
 		thinFilm.n1 = mat.iridescence->iridescenceIor;
 		thinFilm.n2 = mat.ior;
 		thinFilm.CalculateDelta();
