@@ -17,7 +17,7 @@ public:
 	Texture();
 	~Texture();	
 
-	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false);
+	void Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
 	void InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, vector<string>& filePaths, bool flipUpsideDown = false);
 	void InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown = false);
 	void InitCubeMapUAV_Empty(D3DClass* d3d);
@@ -31,7 +31,7 @@ public:
 	ID3D12Resource* GetResource();
 
 private:
-	void MakeTexDesc(UINT16 arraySize);
+	void MakeTexDesc(UINT16 arraySize, bool disableMips);
 	void CreateResources(ID3D12Device2* device);
 	void UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t** pData);
 

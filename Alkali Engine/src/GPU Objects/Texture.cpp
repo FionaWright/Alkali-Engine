@@ -20,12 +20,12 @@ Texture::~Texture()
     }
 }
 
-void Texture::MakeTexDesc(UINT16 arraySize)
+void Texture::MakeTexDesc(UINT16 arraySize, bool disableMips)
 {
     // NPOT dimensions not currently supported for mip mapping
     bool dimensionsNotPowerOf2 = ((m_textureWidth & (m_textureWidth - 1)) != 0) || ((m_textureHeight & (m_textureHeight - 1)) != 0);
     bool invalidCubemap = m_isCubemap && !SettingsManager::ms_Misc.CubemapMipMapsEnabled;
-    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2 || invalidCubemap;
+    bool invalidForMipMaps = m_textureWidth < 8 || m_textureHeight < 8 || dimensionsNotPowerOf2 || invalidCubemap || disableMips;
 
     if (invalidForMipMaps)
         m_textureDesc.MipLevels = 1u;
@@ -91,7 +91,7 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t
         delete[] pData[a];
 }
 
-void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown, bool isNormalMap)
+void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown, bool isNormalMap, bool disableMips)
 {
     auto device = d3d->GetDevice();
 
@@ -101,7 +101,7 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, str
     uint8_t* pData;
     TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &pData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);
 
-    MakeTexDesc(1);
+    MakeTexDesc(1, disableMips);
 
     CreateResources(device);
 
@@ -155,7 +155,7 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDire
         }
     }
 
-    MakeTexDesc(6);
+    MakeTexDesc(6, false);
 
     CreateResources(device);
 
@@ -189,7 +189,7 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListD
     string longPath = "Assets/Textures/" + filePath;
     TextureLoader::LoadHDR(longPath, m_textureWidth, m_textureHeight, textureDatas, m_channels);
 
-    MakeTexDesc(6);
+    MakeTexDesc(6, false);
 
     CreateResources(device);
 
@@ -220,7 +220,7 @@ void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)
     m_textureWidth = SettingsManager::ms_Misc.IrradianceMapResolution;
     m_textureHeight = SettingsManager::ms_Misc.IrradianceMapResolution;
 
-    MakeTexDesc(6);
+    MakeTexDesc(6, false);
 
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_textureResource));

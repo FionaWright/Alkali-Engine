@@ -44,6 +44,16 @@ Application::Application(HINSTANCE hInst)
     
     DescriptorManager::Init(m_d3dClass.get(), SettingsManager::ms_DX12.DescriptorHeapSize);
 
+    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);
+
+    if (SettingsManager::ms_DX12.DebugLoadSingleSceneOnly)
+    {
+        auto trueEmptyScene = std::make_shared<SceneTrueEmpty>(L"True Empty Scene", m_mainWindow.get());
+        InitScene(trueEmptyScene);
+        AssignScene(trueEmptyScene.get());
+        return;
+    }
+
     auto testScene = std::make_shared<SceneTest>(L"Test Scene", m_mainWindow.get());
     InitScene(testScene);
 
@@ -59,15 +69,14 @@ Application::Application(HINSTANCE hInst)
     auto trueEmptyScene = std::make_shared<SceneTrueEmpty>(L"True Empty Scene", m_mainWindow.get());
     InitScene(trueEmptyScene);
 
-    AssignScene(trueEmptyScene.get());
-
-    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);   
+    AssignScene(trueEmptyScene.get());     
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
 {
     if (!scene->Init(m_d3dClass.get()))
         throw new std::exception("Failed to initialise scene");
+
     m_sceneMap.emplace(scene->m_Name, scene);
 }
 

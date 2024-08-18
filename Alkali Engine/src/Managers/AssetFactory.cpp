@@ -14,6 +14,9 @@ void AssetFactory::Init(D3DClass* d3d)
 
 shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandList2* cmdList)
 {
+	if (SettingsManager::ms_DX12.DebugCubeModelOnly)
+		path = "Cube.model";
+
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(path, model))
 	{
@@ -25,12 +28,15 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 	return model;
 }
 
-shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown, bool isNormalMap)
+shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown, bool isNormalMap, bool disableMips)
 {
+	if (SettingsManager::ms_DX12.DebugWhiteTextureOnly)
+		path = "WhitePOT.png";
+
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
-		tex->Init(ms_d3d, cmdList, path, flipUpsideDown, isNormalMap);
+		tex->Init(ms_d3d, cmdList, path, flipUpsideDown, isNormalMap, disableMips);
 	}
 	return tex;
 }

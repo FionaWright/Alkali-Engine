@@ -17,6 +17,9 @@ void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 
 bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 {
+	if (SettingsManager::ms_DX12.DebugWhiteTextureOnly)
+		filePath = "WhitePOT.png";
+
 	if (!ms_textureMap.contains(filePath))
 	{
 		tex = std::make_shared<Texture>();
@@ -69,6 +72,9 @@ void ResourceTracker::AddModel(string filePath, shared_ptr<Model> model)
 
 bool ResourceTracker::TryGetModel(string filePath, shared_ptr<Model>& model)
 {
+	if (SettingsManager::ms_DX12.DebugCubeModelOnly)
+		filePath = "Cube.model";
+
 	if (!ms_modelMap.contains(filePath))
 	{
 		model = std::make_shared<Model>();
