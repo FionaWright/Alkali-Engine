@@ -126,7 +126,7 @@ bool SceneBistro::LoadContent()
 	gltfArgs.IrradianceMap = irradianceTex;
 
 	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
-	//ModelLoader::LoadSplitModelGLTF(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", rootParamInfo, batchPBR.get(), skyboxTex, irradianceTex, shaderPBR, shaderPBRCullOff);
+	//ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro.glb", gltfArgs);
 
 	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
 	cmdQueueDirect->WaitForFenceValue(fenceValue);

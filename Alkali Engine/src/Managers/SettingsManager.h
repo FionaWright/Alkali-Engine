@@ -18,8 +18,12 @@ constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 struct DX12Settings
 {
-	bool GlobalDescriptorHeapEnabled = true;
+	bool DebugGlobalDescriptorHeapEnabled = true;
 	UINT DescriptorHeapSize = 60000;
+
+	bool DebugLoadSingleSceneOnly = false;
+	bool DebugWhiteTextureOnly = false;
+	bool DebugCubeModelOnly = false;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -66,6 +70,8 @@ struct MiscSettings
 	int DefaultGlobalMipLevels = 1;
 	bool CubemapMipMapsEnabled = true;
 	bool RequireAlphaTextureForDoubleSided = true;
+	bool BistroLowQualityTexDiffuse = false;
+	bool BistroLowQualityTexNormal = true;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
 	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);

@@ -10,7 +10,7 @@ vector<string> DescriptorManager::ms_debugHeapList;
 
 void DescriptorManager::Init(D3DClass* d3d, UINT numDescriptors)
 {
-	if (!SettingsManager::ms_DX12.GlobalDescriptorHeapEnabled)
+	if (!SettingsManager::ms_DX12.DebugGlobalDescriptorHeapEnabled)
 		numDescriptors = 1;
 
 	ms_nextDescriptorIndex = 0;

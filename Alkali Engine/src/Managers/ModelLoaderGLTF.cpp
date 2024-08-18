@@ -284,7 +284,7 @@ string ModelLoaderGLTF::LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, 
 		size_t slashIndex = texName.find_last_of('/');
 
 		if (slashIndex != std::string::npos)
-			return texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
+			texName = texName.substr(slashIndex + 1, texName.size() - slashIndex - 1);
 
 		return texName;
 	}
@@ -346,6 +346,22 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		diffuseTexPath = "WhitePOT.png";
 
+	if (SettingsManager::ms_Misc.BistroLowQualityTexDiffuse)
+	{
+		size_t hyphenIndex = diffuseTexPath.find_last_of('-');
+		string newDiffusePath = diffuseTexPath;
+
+		if (hyphenIndex != std::string::npos)
+			newDiffusePath = modelNameExtensionless + "/" + diffuseTexPath.substr(hyphenIndex + 1, diffuseTexPath.size() - hyphenIndex - 1);
+
+		size_t _BaseColorIndex = newDiffusePath.find_last_of('_');
+		if (_BaseColorIndex != std::string::npos)
+			newDiffusePath.insert(_BaseColorIndex, "_0");
+
+		if (filesystem::exists("Assets/Textures/" + newDiffusePath))
+			diffuseTexPath = newDiffusePath;
+	}
+
 	shared_ptr<Texture> diffuseTex = AssetFactory::CreateTexture(diffuseTexPath, cmdList);
 
 	string normalTexPath = "";
@@ -353,6 +369,22 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 		normalTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.normalTexture.value().textureIndex);
 	else
 		normalTexPath = "DefaultNormal.tga";
+
+	if (SettingsManager::ms_Misc.BistroLowQualityTexNormal)
+	{
+		size_t hyphenIndex = normalTexPath.find_last_of('-');
+		string newNormalPath = normalTexPath;
+
+		if (hyphenIndex != std::string::npos)
+			newNormalPath = modelNameExtensionless + "/" + normalTexPath.substr(hyphenIndex + 1, normalTexPath.size() - hyphenIndex - 1);
+
+		size_t _NormalIndex = newNormalPath.find_last_of('_');
+		if (_NormalIndex != std::string::npos)
+			newNormalPath.insert(_NormalIndex, "_0");
+
+		if (filesystem::exists("Assets/Textures/" + newNormalPath) && newNormalPath != "")
+			normalTexPath = newNormalPath;
+	}
 
 	shared_ptr<Texture> normalTex = AssetFactory::CreateTexture(normalTexPath, cmdList, false, true);
 
@@ -362,9 +394,9 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else if (mat.pbrData.metallicRoughnessTexture.has_value())
 		specTexPath = modelNameExtensionless + "/" + LoadTexture(asset, mat.pbrData.metallicRoughnessTexture.value().textureIndex);
 	else
-		specTexPath = "MetalRoughSpheres/Spheres_MetalRough.png";
+		specTexPath = "DefaultSpecular.png";
 
-	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, cmdList);
+	shared_ptr<Texture> specTex = AssetFactory::CreateTexture(specTexPath, cmdList, false, false, true);
 
 	string thickTexPath = "";
 	if (mat.iridescence && mat.iridescence->iridescenceThicknessTexture.has_value())
