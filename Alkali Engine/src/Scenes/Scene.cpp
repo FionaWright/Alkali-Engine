@@ -9,6 +9,7 @@
 #include "DescriptorManager.h"
 #include "AssetFactory.h"
 #include "ShadowManager.h"
+#include <LoadManager.h>
 
 shared_ptr<Model> Scene::ms_sphereModel;
 shared_ptr<Material> Scene::ms_perFramePBRMat;
@@ -258,6 +259,8 @@ void Scene::OnUpdate(TimeEventArgs& e)
 		m_camera->Update(e);
 		m_perFrameCBuffers.Camera.CameraPosition = m_camera->GetWorldPosition();
 	}
+
+	LoadManager::ExecuteCPUWaitingLists();
 
 	m_viewMatrix = m_camera->GetViewMatrix();
 

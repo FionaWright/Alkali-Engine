@@ -4,6 +4,7 @@
 #include "ResourceTracker.h"
 #include "TextureLoader.h"
 #include <AlkaliGUIManager.h>
+#include "LoadManager.h"
 
 D3DClass* AssetFactory::ms_d3d;
 
@@ -20,9 +21,17 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(path, model))
 	{
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushModel(model.get(), path))
+			return model;
+
+		if (!cmdList)
+			throw std::exception("Attempted to load model syncronously without command list");
+
 		bool success = model->Init(cmdList, path);
 		if (!success)
 			AlkaliGUIManager::LogErrorMessage("Failed to load model (path=\"" + path + "\")");
+		else
+			model->MarkLoaded();
 	}
 
 	return model;

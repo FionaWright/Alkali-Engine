@@ -10,7 +10,8 @@
 #include "Application.h"
 #include "AssetFactory.h"
 
-vector<string> AlkaliGUIManager::ms_errorList;
+vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog;
+std::shared_mutex AlkaliGUIManager::ms_asyncLogMutex;
 
 void AlkaliGUIManager::FixWidthOnNext(const char* label) 
 {
@@ -36,20 +37,18 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 	ImGui::Spacing();
 	ImGui::Unindent(IM_GUI_INDENTATION);
 
-	string errorMsg = "Error Messages";
-	if (ms_errorList.size() > 0)
+	string errorMsg = "Error Log";
+	if (ms_errorLog.size() > 0)
 		errorMsg += " (!)";
 
 	if (ImGui::TreeNode(errorMsg.c_str()))
 	{
 		ImGui::Indent(IM_GUI_INDENTATION);
 
-		for (size_t i = 0; i < ms_errorList.size(); i++)
-		{
-			ImGui::Text(ms_errorList[i].c_str());
-		}
+		for (size_t i = 0; i < ms_errorLog.size(); i++)
+			ImGui::Text(ms_errorLog[i].c_str());
 
-		if (ms_errorList.size() == 0)
+		if (ms_errorLog.size() == 0)
 			ImGui::Text("None :)");
 
 		ImGui::Spacing();
@@ -57,6 +56,29 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 
 		ImGui::TreePop();
 	}
+
+	std::shared_lock<std::shared_mutex> lock(ms_asyncLogMutex);
+
+	string asyncMsg = "Async Log";
+	if (ms_asyncLog.size() > 0)
+		asyncMsg += " (!)";
+
+	if (ImGui::TreeNode(asyncMsg.c_str()))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		for (size_t i = 0; i < ms_asyncLog.size(); i++)
+			ImGui::Text(ms_asyncLog[i].c_str());
+
+		if (ms_asyncLog.size() == 0)
+			ImGui::Text("None :)");
+
+		ImGui::Spacing();
+		ImGui::Unindent(IM_GUI_INDENTATION);
+
+		ImGui::TreePop();
+	}
+	lock.unlock();
 
 	RenderGUISettings(d3d, scene);
 	RenderGUITools(d3d, scene);
@@ -69,7 +91,16 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 
 void AlkaliGUIManager::LogErrorMessage(string msg)
 {
-	ms_errorList.push_back(msg);
+	ms_errorLog.push_back(msg);
+}
+
+void AlkaliGUIManager::LogAsyncMessage(string msg)
+{
+	if (!SettingsManager::ms_DX12.DebugAsyncLogEnabled)
+		return;
+
+	std::unique_lock<std::shared_mutex> lock(ms_asyncLogMutex);
+	ms_asyncLog.push_back(msg);
 }
 
 void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)

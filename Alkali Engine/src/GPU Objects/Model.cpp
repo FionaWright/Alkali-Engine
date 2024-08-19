@@ -63,8 +63,6 @@ void Model::Init(size_t vertexCount, size_t indexCount, size_t vertexInputSize, 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_IndexBufferView.SizeInBytes = static_cast<UINT>(m_indexCount * sizeof(int32_t));
-
-	m_loadedData = true;
  }
 
 void Model::SetBuffers(ID3D12GraphicsCommandList2* cmdList, const void* vBufferData, const void* iBufferData)
@@ -82,6 +80,11 @@ void Model::Render(ID3D12GraphicsCommandList2* cmdList)
 	cmdList->IASetIndexBuffer(&m_IndexBufferView);
 
 	cmdList->DrawIndexedInstanced(static_cast<UINT>(m_indexCount), 1, 0, 0, 0);
+}
+
+void Model::MarkLoaded()
+{
+	m_loadedData = true;
 }
 
 size_t Model::GetVertexCount()
@@ -107,4 +110,9 @@ XMFLOAT3 Model::GetCentroid()
 string Model::GetFilePath()
 {
 	return m_filepath;
+}
+
+bool Model::IsLoaded()
+{
+	return m_loadedData;
 }

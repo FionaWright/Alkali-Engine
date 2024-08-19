@@ -17,6 +17,8 @@
 #include "AlkaliGUIManager.h"
 #include "ShadowManager.h"
 #include <SceneChess.h>
+#include "SceneCube.h"
+#include <LoadManager.h>
 
 wstring Application::ms_exeDirectoryPath;
 
@@ -34,7 +36,7 @@ Application::Application(HINSTANCE hInst)
     }
 
     m_windowManager->Init(hInst);
-    m_d3dClass->Init();
+    m_d3dClass->Init();    
 
     AssetFactory::Init(m_d3dClass.get());
 
@@ -69,7 +71,10 @@ Application::Application(HINSTANCE hInst)
     auto trueEmptyScene = std::make_shared<SceneTrueEmpty>(L"True Empty Scene", m_mainWindow.get());
     InitScene(trueEmptyScene);
 
-    AssignScene(trueEmptyScene.get());     
+    auto cubeScene = std::make_shared<SceneCube>(L"Cube Scene", m_mainWindow.get());
+    InitScene(cubeScene);
+
+    AssignScene(emptyScene.get());
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
@@ -181,11 +186,15 @@ void Application::AssignScene(Scene* scene)
     m_updateClock.Reset();
     m_renderClock.Reset();
 
+    LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.AsyncLoadingThreadCount);
+
     if (!scene->m_ContentLoaded)
     {
         if (!scene->LoadContent())
             throw new std::exception("Failed to load content of base scene");
     }
+
+    LoadManager::StopOnFlush();
 
     ResizeEventArgs e = { m_mainWindow->GetClientWidth(), m_mainWindow->GetClientHeight() };
     scene->OnResize(e);

@@ -6,6 +6,8 @@
 #include "Constants.h"
 #include "D3DClass.h"
 
+#include <shared_mutex>
+
 using std::string;
 using std::vector;
 
@@ -23,6 +25,7 @@ public:
 	static void FixWidthOnNext(const char* label);
 	static void RenderGUI(D3DClass* d3d, Scene* scene, Application* app);
 	static void LogErrorMessage(string msg);
+	static void LogAsyncMessage(string msg);
 
 private:
 	static void RenderGUISettings(D3DClass* d3d, Scene* scene);
@@ -35,6 +38,7 @@ private:
 	static void RenderGUICurrentScene(D3DClass* d3d, Scene* scene);
 	static void RenderGUISceneList(D3DClass* d3d, Scene* scene, Application* app);
 
-	static vector<string> ms_errorList;
+	static vector<string> ms_errorLog, ms_asyncLog;
+	static std::shared_mutex ms_asyncLogMutex;
 };
 
