@@ -21,11 +21,14 @@ public:
     void SetBuffers(ID3D12GraphicsCommandList2* cmdList, const void* vBufferData, const void* iBufferData);
     void Render(ID3D12GraphicsCommandList2* cmdList);
 
+    void MarkLoaded();
+
     size_t GetVertexCount();
     size_t GetIndexCount();
     float GetSphereRadius();
     XMFLOAT3 GetCentroid();
     string GetFilePath();
+    bool IsLoaded();
 
 private:
     ComPtr<ID3D12Resource> m_VertexBuffer;

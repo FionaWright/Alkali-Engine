@@ -219,6 +219,7 @@
     <ClCompile Include="src\Managers\DescriptorManager.cpp" />
     <ClCompile Include="src\Managers\ImGUIManager.cpp" />
     <ClCompile Include="src\Managers\InputManager.cpp" />
+    <ClCompile Include="src\Managers\LoadManager.cpp" />
     <ClCompile Include="src\Managers\ModelLoaderObj.cpp" />
     <ClCompile Include="src\Managers\ModelLoaderGLTF.cpp" />
     <ClCompile Include="src\Managers\ResourceManager.cpp" />
@@ -234,6 +235,7 @@
     <ClCompile Include="src\Scenes\Scene.cpp" />
     <ClCompile Include="src\Scenes\SceneChess.cpp" />
     <ClCompile Include="src\Scenes\SceneBistro.cpp" />
+    <ClCompile Include="src\Scenes\SceneCube.cpp" />
     <ClCompile Include="src\Scenes\SceneTest.cpp" />
     <ClCompile Include="src\Scenes\SceneTrueEmpty.cpp" />
     <ClCompile Include="src\Utils.cpp" />
@@ -286,6 +288,7 @@
     <ClInclude Include="src\Managers\DescriptorManager.h" />
     <ClInclude Include="src\Managers\ImGUIManager.h" />
     <ClInclude Include="src\Managers\InputManager.h" />
+    <ClInclude Include="src\Managers\LoadManager.h" />
     <ClInclude Include="src\Managers\ModelLoaderObj.h" />
     <ClInclude Include="src\Managers\ModelLoaderGLTF.h" />
     <ClInclude Include="src\Managers\ResourceManager.h" />
@@ -298,6 +301,7 @@
     <ClInclude Include="src\Scenes\Scene.h" />
     <ClInclude Include="src\Scenes\SceneChess.h" />
     <ClInclude Include="src\Scenes\SceneBistro.h" />
+    <ClInclude Include="src\Scenes\SceneCube.h" />
     <ClInclude Include="src\Scenes\SceneTest.h" />
     <ClInclude Include="src\Scenes\SceneTrueEmpty.h" />
     <ClInclude Include="src\Utils.h" />

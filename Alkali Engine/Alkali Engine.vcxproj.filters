@@ -238,6 +238,12 @@
     <ClCompile Include="src\Scenes\SceneTrueEmpty.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\Managers\LoadManager.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\SceneCube.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets\Resources\resource.h">
@@ -424,6 +430,12 @@
       <Filter>Source Files\Managers\Asset Managers</Filter>
     </ClInclude>
     <ClInclude Include="src\Scenes\SceneTrueEmpty.h">
+      <Filter>Source Files\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Managers\LoadManager.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\SceneCube.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
   </ItemGroup>

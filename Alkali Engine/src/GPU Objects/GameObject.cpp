@@ -40,6 +40,9 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
 
+	if (!m_model->IsLoaded())
+		return; // Replace with cube model until loaded
+
 	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
 		return;
 

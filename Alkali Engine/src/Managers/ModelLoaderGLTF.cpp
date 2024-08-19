@@ -210,7 +210,7 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 		output->Position = *reinterpret_cast<const XMFLOAT3*>(address);
 		if (RIGHT_HANDED_TO_LEFT)
 			output->Position.x = -output->Position.x;
-		});
+	});
 
 	size_t vertexCount = vertexBuffer.size();
 	if (vertexCount == 0)
@@ -218,13 +218,13 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TEXCOORD_0", [](const uint8_t* address, VertexInputDataGLTF* output) {
 		output->Texture = *reinterpret_cast<const XMFLOAT2*>(address);
-		});
+	});
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "NORMAL", [](const uint8_t* address, VertexInputDataGLTF* output) {
 		output->Normal = Normalize(*reinterpret_cast<const XMFLOAT3*>(address));
 		if (RIGHT_HANDED_TO_LEFT)
 			output->Normal.x = -output->Normal.x;
-		});
+	});
 
 	LoadGLTFVertexData(vertexBuffer, asset, primitive, "TANGENT", [](const uint8_t* address, VertexInputDataGLTF* output) {
 		const XMFLOAT4* data = reinterpret_cast<const XMFLOAT4*>(address);
@@ -232,7 +232,7 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 		output->Tangent = Normalize(Mult(XMFLOAT3(data->x, data->y, data->z), handedness));
 		if (RIGHT_HANDED_TO_LEFT)
 			output->Tangent.x = -output->Tangent.x;
-		});
+	});
 
 	float boundingRadiusSq = 0;
 	struct Double3
@@ -243,8 +243,6 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 	for (size_t j = 0; j < vertexCount; j++)
 	{
 		vertexBuffer[j].Binormal = Normalize(Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Normal));
-		//if (Dot(Cross(vertexBuffer[j].Tangent, vertexBuffer[j].Binormal), vertexBuffer[j].Normal) < 0.0f)
-		//	vertexBuffer[j].Binormal = Negate(vertexBuffer[j].Binormal);
 
 		rollingCentroidSum.X += vertexBuffer[j].Position.x;
 		rollingCentroidSum.Y += vertexBuffer[j].Position.y;
@@ -271,6 +269,7 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 
 	model->Init(vertexBuffer.size(), indexBuffer.size(), sizeof(VertexInputDataGLTF), boundingRadiusSq, centroidFloat3);
 	model->SetBuffers(cmdList, vertexBuffer.data(), indexBuffer.data());
+	model->MarkLoaded();
 }
 
 string ModelLoaderGLTF::LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int textureIndex)
