@@ -4,6 +4,8 @@
 #include "Model.h"
 #include "GameObject.h"
 #include "Batch.h"
+#include "ModelLoaderGLTF.h"
+
 #include <thread>
 #include <mutex>
 
@@ -16,6 +18,10 @@ struct AsyncModelArgs
 {
 	Model* pModel;
 	string FilePath;
+
+	// Alt Args:
+	Asset Asset;
+	int MeshIndex, PrimitiveIndex;
 };
 
 struct ThreadData
@@ -55,6 +61,7 @@ public:
 
 	static void ExecuteCPUWaitingLists();
 	static bool TryPushModel(Model* pModel, string filePath);	
+	static bool TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex);
 
 private:
 	static void LoadLoop();

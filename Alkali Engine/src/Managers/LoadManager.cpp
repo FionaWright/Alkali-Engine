@@ -17,6 +17,7 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
 		return;
 
+	AlkaliGUIManager::LogAsyncMessage("====================================================");
 	AlkaliGUIManager::LogAsyncMessage("Async Loading Begun");
 
 	ms_d3dClass = d3d;
@@ -191,17 +192,48 @@ bool LoadManager::TryPushModel(Model* pModel, string filePath)
 	return true;
 }
 
+bool LoadManager::TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex)
+{
+	if (!ms_loadingActive)
+	{
+		AlkaliGUIManager::LogAsyncMessage("GLTF Model tried to be pushed to queue but async wasn't enabled");
+		return false;
+	}
+
+	AlkaliGUIManager::LogAsyncMessage("GLTF Model pushed to queue");
+
+	AsyncModelArgs modelArg;
+	modelArg.pModel = pModel;
+	modelArg.Asset = asset;
+	modelArg.MeshIndex = meshIndex;
+	modelArg.PrimitiveIndex = primitiveIndex;
+
+	std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+	ms_modelQueue.push(modelArg);
+	return true;
+}
+
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
 		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
 
-	bool success = args.pModel->Init(ms_threadDatas[threadID]->CmdList.Get(), args.FilePath);
-	if (!success)
+	if (args.FilePath != "")
 	{
-		AlkaliGUIManager::LogErrorMessage("Failed to load model [async] (path=\"" + args.FilePath + "\")");
-		return;
-	}
+		bool success = args.pModel->Init(ms_threadDatas[threadID]->CmdList.Get(), args.FilePath);
+		if (!success)
+		{
+			AlkaliGUIManager::LogErrorMessage("Failed to load model [async] (path=\"" + args.FilePath + "\")");
+			return;
+		}
+	}		
+	else if (args.Asset)
+	{
+		auto& primitive = args.Asset->get().meshes[args.MeshIndex].primitives[args.PrimitiveIndex];
+		ModelLoaderGLTF::LoadModel(ms_d3dClass, ms_threadDatas[threadID]->CmdList.Get(), args.Asset, primitive, args.pModel);
+	}		
+	else
+		throw std::exception();
 
 	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
 

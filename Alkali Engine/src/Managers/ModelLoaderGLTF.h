@@ -18,6 +18,8 @@ using std::ofstream;
 using std::vector;
 using std::unordered_map;
 
+using Asset = std::shared_ptr<fastgltf::Expected<fastgltf::Asset>>;
+
 #pragma pack(push, 1)
 struct VertexInputDataGLTF
 {
@@ -58,14 +60,14 @@ class ModelLoaderGLTF
 {
 public:
 	static Transform ToTransform(fastgltf::TRS& trs);
-	static void LoadGLTFIndices(vector<uint32_t>& iBuffer, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive);
-	static void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, shared_ptr<Model> model);
-	static string LoadTexture(fastgltf::Expected<fastgltf::Asset>& asset, const int textureIndex);
-	static void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id);
-	static void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args);
+	static void LoadGLTFIndices(vector<uint32_t>& iBuffer, Asset& asset, const fastgltf::Primitive& primitive);
+	static void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, Model* model);
+	static string LoadTexture(Asset& asset, const int textureIndex);
+	static void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id, int meshIndex, int primitiveIndex);
+	static void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args);
 	static void LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string name, GLTFLoadArgs& args);
 
-	static void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, fastgltf::Expected<fastgltf::Asset>& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList);
+	static void LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, string modelNameExtensionless, fastgltf::Node& node, vector<shared_ptr<Model>>& modelList);
 	static vector<shared_ptr<Model>> LoadModelsFromGLTF(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string modelName);
 
 private:
