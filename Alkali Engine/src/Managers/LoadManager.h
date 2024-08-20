@@ -88,7 +88,7 @@ private:
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
 
-	static std::atomic<int> ms_numThreads;
+	static int ms_numThreads;
 	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush, ms_fullShutdownActive;
 
 	static vector<std::unique_ptr<ThreadData>> ms_threadDatas;
@@ -98,6 +98,6 @@ private:
 	static queue<AsyncModelArgs> ms_modelQueue;
 	static queue<AsyncTexArgs> ms_texQueue;
 	static queue<AsyncTexCubemapArgs> ms_texCubemapQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexCpuWaitingLists, ms_mutexGpuWaitingLists;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexCpuWaitingLists;
 };
 
