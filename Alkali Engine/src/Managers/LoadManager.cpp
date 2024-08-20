@@ -11,7 +11,7 @@ std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush, Lo
 
 vector<std::unique_ptr<ThreadData>> LoadManager::ms_threadDatas;
 queue<GPUWaitingList> LoadManager::ms_gpuWaitingLists;
-std::unique_ptr<std::thread> LoadManager::ms_mainLoopThread;
+vector<std::jthread> LoadManager::ms_loadThreads;
 
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
@@ -25,13 +25,9 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 
 	AlkaliGUIManager::LogAsyncMessage("====================================================");
 
-	bool prevSceneThreadsActive = ms_loadingActive || ms_mainLoopThread;
+	bool prevSceneThreadsActive = ms_loadingActive || ms_loadThreads.size() > 0;
 	if (prevSceneThreadsActive)
 	{
-		ms_loadingActive = false;
-		if (ms_mainLoopThread)
-			ms_mainLoopThread->join();
-
 		StopLoading();
 		AlkaliGUIManager::LogAsyncMessage("Closed existing threads");
 	}
@@ -43,17 +39,18 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	ms_loadingActive = true;
 	ms_stopOnFlush = false;	
 
-	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // On my todo list to use COPY. Textures need mild refactoring
 
 	ms_threadDatas.clear();
+	ms_loadThreads.clear();
 	for (int i = 0; i < ms_numThreads; i++)
 	{
 		std::unique_ptr<ThreadData> threadData = std::make_unique<ThreadData>();
 		threadData->CmdList = ms_cmdQueue->GetAvailableCommandList();
-		ms_threadDatas.push_back(std::move(threadData)); // std::move is required here probably because of the std::atomic<bool> inside
-	}
+		ms_threadDatas.push_back(std::move(threadData));
 
-	ms_mainLoopThread = std::make_unique<std::thread>(LoadLoop);
+		ms_loadThreads.emplace_back(std::jthread(LoadLoop, i));
+	}
 }
 
 void LoadManager::EnableStopOnFlush()
@@ -67,24 +64,12 @@ void LoadManager::EnableStopOnFlush()
 
 void LoadManager::StopLoading()
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
+	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive || !ms_loadingActive)
 		return;
 
-	AlkaliGUIManager::LogAsyncMessage("Async loading ending");	
+	ms_loadingActive = false;	
 
-	ms_loadingActive = false;
-
-	for (int i = 0; i < ms_numThreads; i++)
-	{
-		if (!ms_threadDatas[i]->pThread)
-			continue;
-		
-		ms_threadDatas[i]->pThread->join();
-		delete ms_threadDatas[i]->pThread;
-		ms_threadDatas[i]->pThread = nullptr;
-	}	
-
-	AlkaliGUIManager::LogAsyncMessage("All threads exited");	
+	AlkaliGUIManager::LogAsyncMessage("Loading stopping, All threads exited");	
 }
 
 void LoadManager::FullShutdown()
@@ -94,30 +79,18 @@ void LoadManager::FullShutdown()
 
 	ms_fullShutdownActive = true;
 	ms_stopOnFlush = false;
-	ms_loadingActive = false;
-	if (ms_mainLoopThread)
-	{
-		ms_mainLoopThread->join();
-		ms_mainLoopThread.reset();
-	}	
 
-	for (int i = 0; i < ms_numThreads; i++)
-	{
-		if (!ms_threadDatas[i]->pThread)
-			continue;
-		
-		if (ms_threadDatas[i]->pThread->joinable())
-			ms_threadDatas[i]->pThread->join();
-		delete ms_threadDatas[i]->pThread;
-		ms_threadDatas[i]->pThread = nullptr;
-	}
+	ms_loadingActive = false;
+	ms_loadThreads.clear();
 
 	ms_threadDatas.clear();
 	AlkaliGUIManager::LogAsyncMessage("Full Shutdown Completed");
 }
 
-void LoadManager::LoadLoop()
+void LoadManager::LoadLoop(int threadID)
 {
+	AlkaliGUIManager::LogAsyncMessage("New thread started up: " + std::to_string(threadID));
+
 	while (ms_loadingActive)
 	{
 		bool modelQueueFlushed = ms_modelQueue.size() == 0;
@@ -128,28 +101,7 @@ void LoadManager::LoadLoop()
 			return;
 		}
 
-		for (int i = 0; i < ms_numThreads; i++)
-		{
-			if (!ms_loadingActive || ms_threadDatas[i]->Active)
-				continue;
-
-			bool modelQueueFlushed = ms_modelQueue.size() == 0;
-			bool texQueueFlushed = ms_texQueue.size() == 0 && ms_texCubemapQueue.size() == 0;
-			if (modelQueueFlushed && texQueueFlushed)
-				break;
-
-			bool canReuseThread = ms_threadDatas[i]->pThread;
-			if (canReuseThread)
-			{
-				ms_threadDatas[i]->pThread->join();
-
-				std::thread newThread(LoadHighestPriority, i);
-				ms_threadDatas[i]->pThread->swap(newThread);
-				continue;
-			}			
-
-			ms_threadDatas[i]->pThread = new std::thread(LoadHighestPriority, i);
-		}
+		LoadHighestPriority(threadID);
 	}
 }
 
@@ -157,8 +109,6 @@ void LoadManager::LoadHighestPriority(int threadID)
 {
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " begun");
-
-	ms_threadDatas[threadID]->Active = true;
 
 	std::unique_lock<std::mutex> lockModel(ms_mutexModelQueue);
 	if (ms_modelQueue.size() > 0)
@@ -170,7 +120,6 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found model (" + modelArgs.FilePath + ")");
 
 		LoadModel(modelArgs, threadID);
-		ms_threadDatas[threadID]->Active = false;
 		return;
 	}
 	lockModel.unlock();
@@ -185,7 +134,6 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found cubemap (" + texArgs.FilePath + ")");
 
 		LoadTexCubemap(texArgs, threadID);
-		ms_threadDatas[threadID]->Active = false;
 		return;
 	}
 	lockTexCubeMap.unlock();
@@ -200,14 +148,12 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found tex (" + texArgs.FilePath + ")");
 
 		LoadTex(texArgs, threadID);
-		ms_threadDatas[threadID]->Active = false;
 		return;
 	}
 	lockTex.unlock();
 
 	// TODO: Shaders
 
-	ms_threadDatas[threadID]->Active = false;
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found nothing");
 }
@@ -217,13 +163,8 @@ void LoadManager::ExecuteCPUWaitingLists()
 	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
 		return;
 
-	bool mainLoopNeedsRejoining = !ms_loadingActive && ms_mainLoopThread;
-	if (mainLoopNeedsRejoining)
-	{
-		ms_mainLoopThread->join();
-		ms_mainLoopThread.reset();
-		AlkaliGUIManager::LogAsyncMessage("Main load loop exited");
-	}	
+	if (!ms_loadingActive && ms_loadThreads.size() > 0)
+		ms_loadThreads.clear();
 
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
