@@ -20,7 +20,7 @@ struct AsyncModelArgs
 	string FilePath = "";
 
 	// Alt GLTF Args:
-	Asset Asset; // Use std::varient?
+	Asset Asset; // Use std::variant?
 	int MeshIndex = -1, PrimitiveIndex = -1;
 };
 
@@ -45,7 +45,6 @@ struct AsyncTexCubemapArgs
 
 struct ThreadData
 {
-	//std::atomic<bool> Active = false;	
 	ComPtr<ID3D12GraphicsCommandList2> CmdList = nullptr;
 
 	vector<Model*> CPU_WaitingListModel;
@@ -83,6 +82,7 @@ private:
 	static void LoadModel(AsyncModelArgs args, int threadID);
 	static void LoadTex(AsyncTexArgs args, int threadID);
 	static void LoadTexCubemap(AsyncTexCubemapArgs args, int threadID);
+	static bool AllQueuesFlushed();
 
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
