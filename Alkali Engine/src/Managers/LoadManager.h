@@ -20,7 +20,7 @@ struct AsyncModelArgs
 	string FilePath = "";
 
 	// Alt GLTF Args:
-	Asset Asset;
+	Asset Asset; // Use std::varient?
 	int MeshIndex = -1, PrimitiveIndex = -1;
 };
 
@@ -31,6 +31,16 @@ struct AsyncTexArgs
 	bool FlipUpsideDown = false;
 	bool IsNormalMap = false;
 	bool DisableMips = false;
+};
+
+struct AsyncTexCubemapArgs
+{
+	Texture* pCubemap = nullptr;
+	Texture* pIrradiance = nullptr;
+
+	string FilePath = "";
+	vector<string> FilePaths;
+	bool FlipUpsideDown = false;
 };
 
 struct ThreadData
@@ -65,12 +75,15 @@ public:
 	static bool TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex);
 
 	static bool TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
+	static bool TryPushCubemap(Texture* pTex, string filePath, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
+	static bool TryPushCubemap(Texture* pTex, vector<string> filePaths, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
 
 private:
 	static void LoadLoop();
 	static void LoadHighestPriority(int threadID);
 	static void LoadModel(AsyncModelArgs args, int threadID);
 	static void LoadTex(AsyncTexArgs args, int threadID);
+	static void LoadTexCubemap(AsyncTexCubemapArgs args, int threadID);
 
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
@@ -84,6 +97,7 @@ private:
 
 	static queue<AsyncModelArgs> ms_modelQueue;
 	static queue<AsyncTexArgs> ms_texQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexCpuWaitingLists, ms_mutexGpuWaitingLists;
+	static queue<AsyncTexCubemapArgs> ms_texCubemapQueue;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexCpuWaitingLists, ms_mutexGpuWaitingLists;
 };
 

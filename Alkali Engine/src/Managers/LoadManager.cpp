@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "LoadManager.h"
 #include <AlkaliGUIManager.h>
+#include <TextureLoader.h>
 
 D3DClass* LoadManager::ms_d3dClass;
 CommandQueue* LoadManager::ms_cmdQueue;
@@ -14,7 +15,8 @@ std::unique_ptr<std::thread> LoadManager::ms_mainLoopThread;
 
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
+queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
@@ -119,7 +121,7 @@ void LoadManager::LoadLoop()
 	while (ms_loadingActive)
 	{
 		bool modelQueueFlushed = ms_modelQueue.size() == 0;
-		bool texQueueFlushed = ms_texQueue.size() == 0;
+		bool texQueueFlushed = ms_texQueue.size() == 0 && ms_texCubemapQueue.size() == 0;
 		if (ms_stopOnFlush && modelQueueFlushed && texQueueFlushed)
 		{
 			StopLoading();
@@ -132,7 +134,7 @@ void LoadManager::LoadLoop()
 				continue;
 
 			bool modelQueueFlushed = ms_modelQueue.size() == 0;
-			bool texQueueFlushed = ms_texQueue.size() == 0;
+			bool texQueueFlushed = ms_texQueue.size() == 0 && ms_texCubemapQueue.size() == 0;
 			if (modelQueueFlushed && texQueueFlushed)
 				break;
 
@@ -172,6 +174,21 @@ void LoadManager::LoadHighestPriority(int threadID)
 		return;
 	}
 	lockModel.unlock();
+
+	std::unique_lock<std::mutex> lockTexCubeMap(ms_mutexTexCubemapQueue);
+	if (ms_texCubemapQueue.size() > 0)
+	{
+		AsyncTexCubemapArgs texArgs = ms_texCubemapQueue.front();
+		ms_texCubemapQueue.pop();
+		lockTexCubeMap.unlock();
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found cubemap (" + texArgs.FilePath + ")");
+
+		LoadTexCubemap(texArgs, threadID);
+		ms_threadDatas[threadID]->Active = false;
+		return;
+	}
+	lockTexCubeMap.unlock();
 
 	std::unique_lock<std::mutex> lockTex(ms_mutexTexQueue);
 	if (ms_texQueue.size() > 0)
@@ -317,6 +334,48 @@ bool LoadManager::TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown
 	return true;
 }
 
+bool LoadManager::TryPushCubemap(Texture* pTex, string filePath, Texture* pIrradiance, bool flipUpsideDown)
+{
+	if (!ms_loadingActive)
+	{
+		AlkaliGUIManager::LogAsyncMessage("Cubemap tried to be pushed to queue: " + filePath + " but async wasn't enabled");
+		return false; // Loads syncronously
+	}
+
+	AlkaliGUIManager::LogAsyncMessage("Cubemap pushed to queue: " + filePath);
+
+	AsyncTexCubemapArgs texArgs;
+	texArgs.pCubemap = pTex;
+	texArgs.pIrradiance = pIrradiance;
+	texArgs.FilePath = filePath;
+	texArgs.FlipUpsideDown = flipUpsideDown;
+
+	std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+	ms_texCubemapQueue.push(texArgs);
+	return true;
+}
+
+bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Texture* pIrradiance, bool flipUpsideDown)
+{
+	if (!ms_loadingActive)
+	{
+		AlkaliGUIManager::LogAsyncMessage("Cubemap tried to be pushed to queue: " + filePaths.at(0) + " but async wasn't enabled");
+		return false; // Loads syncronously
+	}
+
+	AlkaliGUIManager::LogAsyncMessage("Cubemap pushed to queue: " + filePaths.at(0));
+
+	AsyncTexCubemapArgs texArgs;
+	texArgs.pCubemap = pTex;
+	texArgs.pIrradiance = pIrradiance;
+	texArgs.FilePaths = filePaths;
+	texArgs.FlipUpsideDown = flipUpsideDown;
+
+	std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+	ms_texCubemapQueue.push(texArgs);
+	return true;
+}
+
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
@@ -362,4 +421,31 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 
 	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pTexture);
+}
+
+void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
+{
+	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+
+	if (!args.pCubemap || ms_fullShutdownActive)
+		return;
+
+	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
+
+	if (args.FilePath == "")
+		args.pCubemap->InitCubeMap(ms_d3dClass, cmdList, args.FilePaths, args.FlipUpsideDown);
+	else
+		args.pCubemap->InitCubeMapHDR(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown);
+	
+	if (args.pIrradiance)
+	{
+		args.pIrradiance->InitCubeMapUAV_Empty(ms_d3dClass);
+		TextureLoader::CreateIrradianceMap(ms_d3dClass, cmdList, args.pCubemap->GetResource(), args.pIrradiance->GetResource());
+	}
+
+	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
+	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pCubemap);
+	if (args.pIrradiance)
+		ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pIrradiance);
 }

@@ -57,35 +57,63 @@ shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsComma
 	return tex;
 }
 
-shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown)
+shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* cmdList, shared_ptr<Texture> irradianceTex, bool flipUpsideDown)
 {
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushCubemap(tex.get(), path, irradianceTex.get(), flipUpsideDown))
+			return tex;
+
+		if (!cmdList)
+			throw std::exception("Attempted to load model synchronously without command list");
+
 		tex->InitCubeMapHDR(ms_d3d, cmdList, path, flipUpsideDown);
 		tex->MarkLoaded();
 	}
+
+	if (irradianceTex)
+	{
+		irradianceTex->InitCubeMapUAV_Empty(ms_d3d);
+		TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, tex->GetResource(), irradianceTex->GetResource());
+		irradianceTex->MarkLoaded();
+	}
+
 	return tex;
 }
 
-shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown)
+shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* cmdList, shared_ptr<Texture> irradianceTex, bool flipUpsideDown)
 {
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(paths, tex))
 	{
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushCubemap(tex.get(), paths, irradianceTex.get(), flipUpsideDown))
+			return tex;
+
+		if (!cmdList)
+			throw std::exception("Attempted to load model synchronously without command list");
+
 		tex->InitCubeMap(ms_d3d, cmdList, paths, flipUpsideDown);
 		tex->MarkLoaded();
 	}
+
+	if (irradianceTex)
+	{
+		irradianceTex->InitCubeMapUAV_Empty(ms_d3d);
+		TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, tex->GetResource(), irradianceTex->GetResource());
+		irradianceTex->MarkLoaded();
+	}	
+
 	return tex;
 }
 
 shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* cmdList)
 {
-	shared_ptr<Texture> tex = std::make_shared<Texture>();
-	tex->InitCubeMapUAV_Empty(ms_d3d);	
-	TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, cubemap->GetResource(), tex->GetResource());
-	tex->MarkLoaded();
-	return tex;
+	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
+	irradianceTex->InitCubeMapUAV_Empty(ms_d3d);	
+	TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, cubemap->GetResource(), irradianceTex->GetResource());
+	irradianceTex->MarkLoaded();
+	return irradianceTex;
 }
 
 shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool precompiled)
