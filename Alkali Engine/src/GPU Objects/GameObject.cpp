@@ -43,6 +43,9 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_model->IsLoaded())
 		return; // Replace with cube model until loaded
 
+	if (!m_material->IsLoaded() && !m_material->TryUploadSRVs(d3d))
+		return;
+
 	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
 		return;
 

@@ -24,13 +24,23 @@ struct AsyncModelArgs
 	int MeshIndex = -1, PrimitiveIndex = -1;
 };
 
+struct AsyncTexArgs
+{
+	Texture* pTexture = nullptr;
+	string FilePath = "";
+	bool FlipUpsideDown = false;
+	bool IsNormalMap = false;
+	bool DisableMips = false;
+};
+
 struct ThreadData
 {
 	std::thread* pThread = nullptr;
 	std::atomic<bool> Active = false;	
 	ComPtr<ID3D12GraphicsCommandList2> CmdList = nullptr;
 
-	vector<Model*> CPU_WaitingList;
+	vector<Model*> CPU_WaitingListModel;
+	vector<Texture*> CPU_WaitingListTexture;
 
 	ThreadData() {}
 };
@@ -39,6 +49,7 @@ struct GPUWaitingList
 {
 	uint64_t FenceValue = 0;
 	vector<Model*> ModelList;
+	vector<Texture*> TextureList;
 };
 
 class LoadManager
@@ -53,10 +64,13 @@ public:
 	static bool TryPushModel(Model* pModel, string filePath);	
 	static bool TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex);
 
+	static bool TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
+
 private:
 	static void LoadLoop();
 	static void LoadHighestPriority(int threadID);
 	static void LoadModel(AsyncModelArgs args, int threadID);
+	static void LoadTex(AsyncTexArgs args, int threadID);
 
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
@@ -69,6 +83,7 @@ private:
 	static std::unique_ptr<std::thread> ms_mainLoopThread;
 
 	static queue<AsyncModelArgs> ms_modelQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexCpuWaitingLists, ms_mutexGpuWaitingLists;
+	static queue<AsyncTexArgs> ms_texQueue;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexCpuWaitingLists, ms_mutexGpuWaitingLists;
 };
 

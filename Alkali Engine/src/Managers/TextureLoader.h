@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "Texture.h"
+#include <mutex>
 
 class TextureLoader
 {
@@ -24,10 +25,11 @@ public:
 	static void CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, ID3D12Resource* pResource, D3D12_RESOURCE_DESC texDesc);
 	static void CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
+	static void InitMipMapCS(ID3D12Device2* device);
+
 	static void Shutdown();
 
-private:
-	static void InitMipMapCS(ID3D12Device2* device);
+private:	
 	static void InitMipMapPSOCubemap(ID3D12Device2* device);
 	static void InitIrradianceCS(ID3D12Device2* device);
 	static bool ManuallyDetermineHasAlpha(size_t bytes, int channels, uint8_t* pData);
@@ -37,5 +39,6 @@ private:
 
 	static int ms_descriptorSize;
 	static vector<ID3D12DescriptorHeap*> ms_trackedDescHeaps;
+	static std::mutex ms_mutexMipMapGen;
 };
 

@@ -13,7 +13,8 @@ queue<GPUWaitingList> LoadManager::ms_gpuWaitingLists;
 std::unique_ptr<std::thread> LoadManager::ms_mainLoopThread;
 
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
+queue<AsyncTexArgs> LoadManager::ms_texQueue;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
@@ -40,7 +41,7 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	ms_loadingActive = true;
 	ms_stopOnFlush = false;	
 
-	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 	ms_threadDatas.clear();
 	for (int i = 0; i < ms_numThreads; i++)
@@ -118,7 +119,8 @@ void LoadManager::LoadLoop()
 	while (ms_loadingActive)
 	{
 		bool modelQueueFlushed = ms_modelQueue.size() == 0;
-		if (ms_stopOnFlush && modelQueueFlushed)
+		bool texQueueFlushed = ms_texQueue.size() == 0;
+		if (ms_stopOnFlush && modelQueueFlushed && texQueueFlushed)
 		{
 			StopLoading();
 			return;
@@ -129,7 +131,9 @@ void LoadManager::LoadLoop()
 			if (!ms_loadingActive || ms_threadDatas[i]->Active)
 				continue;
 
-			if (ms_modelQueue.size() == 0)
+			bool modelQueueFlushed = ms_modelQueue.size() == 0;
+			bool texQueueFlushed = ms_texQueue.size() == 0;
+			if (modelQueueFlushed && texQueueFlushed)
 				break;
 
 			bool canReuseThread = ms_threadDatas[i]->pThread;
@@ -154,12 +158,12 @@ void LoadManager::LoadHighestPriority(int threadID)
 
 	ms_threadDatas[threadID]->Active = true;
 
-	std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+	std::unique_lock<std::mutex> lockModel(ms_mutexModelQueue);
 	if (ms_modelQueue.size() > 0)
 	{
 		AsyncModelArgs modelArgs = ms_modelQueue.front();
 		ms_modelQueue.pop();	
-		lock.unlock();
+		lockModel.unlock();
 
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found model (" + modelArgs.FilePath + ")");
 
@@ -167,9 +171,22 @@ void LoadManager::LoadHighestPriority(int threadID)
 		ms_threadDatas[threadID]->Active = false;
 		return;
 	}
-	lock.unlock();
+	lockModel.unlock();
 
-	// TODO: Textures
+	std::unique_lock<std::mutex> lockTex(ms_mutexTexQueue);
+	if (ms_texQueue.size() > 0)
+	{
+		AsyncTexArgs texArgs = ms_texQueue.front();
+		ms_texQueue.pop();
+		lockTex.unlock();
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found tex (" + texArgs.FilePath + ")");
+
+		LoadTex(texArgs, threadID);
+		ms_threadDatas[threadID]->Active = false;
+		return;
+	}
+	lockTex.unlock();
 
 	// TODO: Shaders
 
@@ -199,21 +216,26 @@ void LoadManager::ExecuteCPUWaitingLists()
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
-		if (ms_threadDatas[i]->CPU_WaitingList.size() == 0)
+		bool emptyModelList = ms_threadDatas[i]->CPU_WaitingListModel.size() == 0;
+		bool emptyTexList = ms_threadDatas[i]->CPU_WaitingListTexture.size() == 0;
+		if (emptyModelList && emptyTexList)
 			continue;
 
 		GPUWaitingList gpuWaitingList;
-		gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingList;		
+		gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingListModel;		
+		gpuWaitingList.TextureList = ms_threadDatas[i]->CPU_WaitingListTexture;		
 		gpuWaitingList.FenceValue = ms_cmdQueue->ExecuteCommandList(ms_threadDatas[i]->CmdList);
 		ms_gpuWaitingLists.push(gpuWaitingList);
 
-		ms_threadDatas[i]->CPU_WaitingList.clear();
+		ms_threadDatas[i]->CPU_WaitingListModel.clear();
+		ms_threadDatas[i]->CPU_WaitingListTexture.clear();
 		ms_threadDatas[i]->CmdList = ms_cmdQueue->GetAvailableCommandList();		
 
 		string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
 		string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
 	}
+	lockCPU.unlock();
 
 	while (ms_gpuWaitingLists.size() > 0)
 	{
@@ -226,6 +248,9 @@ void LoadManager::ExecuteCPUWaitingLists()
 		for (auto mdl : ms_gpuWaitingLists.front().ModelList)
 			mdl->MarkLoaded();
 
+		for (auto tex : ms_gpuWaitingLists.front().TextureList)
+			tex->MarkLoaded();
+
 		ms_gpuWaitingLists.pop();
 	}
 }
@@ -235,7 +260,7 @@ bool LoadManager::TryPushModel(Model* pModel, string filePath)
 	if (!ms_loadingActive)
 	{
 		AlkaliGUIManager::LogAsyncMessage("Model tried to be pushed to queue: " + filePath + " but async wasn't enabled");
-		return false; // Loads model syncronously
+		return false; // Loads syncronously
 	}
 
 	AlkaliGUIManager::LogAsyncMessage("Model pushed to queue: " + filePath);
@@ -254,7 +279,7 @@ bool LoadManager::TryPushModel(Model* pModel, Asset asset, int meshIndex, int pr
 	if (!ms_loadingActive)
 	{
 		AlkaliGUIManager::LogAsyncMessage("GLTF Model tried to be pushed to queue but async wasn't enabled");
-		return false; // Loads model syncronously
+		return false; // Loads syncronously
 	}
 
 	AlkaliGUIManager::LogAsyncMessage("GLTF Model pushed to queue");
@@ -267,6 +292,28 @@ bool LoadManager::TryPushModel(Model* pModel, Asset asset, int meshIndex, int pr
 
 	std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
 	ms_modelQueue.push(modelArg);
+	return true;
+}
+
+bool LoadManager::TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown, bool isNormalMap, bool disableMips)
+{
+	if (!ms_loadingActive)
+	{
+		AlkaliGUIManager::LogAsyncMessage("Texture tried to be pushed to queue: " + filePath + " but async wasn't enabled");
+		return false; // Loads syncronously
+	}
+
+	AlkaliGUIManager::LogAsyncMessage("Texture pushed to queue: " + filePath);
+
+	AsyncTexArgs texArgs;
+	texArgs.pTexture = pTex;
+	texArgs.FilePath = filePath;
+	texArgs.FlipUpsideDown = flipUpsideDown;
+	texArgs.IsNormalMap = isNormalMap;
+	texArgs.DisableMips = disableMips;
+
+	std::unique_lock<std::mutex> lock(ms_mutexTexQueue);
+	ms_texQueue.push(texArgs);
 	return true;
 }
 
@@ -296,6 +343,23 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 		throw std::exception();
 
 	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
+	ms_threadDatas[threadID]->CPU_WaitingListModel.push_back(args.pModel);
+}
 
-	ms_threadDatas[threadID]->CPU_WaitingList.push_back(args.pModel);
+void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
+{
+	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+
+	if (!args.pTexture || ms_fullShutdownActive)
+		return;
+
+	if (args.FilePath == "")
+		throw std::exception();
+
+	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
+	args.pTexture->Init(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown, args.IsNormalMap, args.DisableMips);
+
+	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
+	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pTexture);
 }

@@ -24,11 +24,14 @@ public:
 
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, size_t srvHeapOffset);
 
+	void MarkLoaded();
+
 	bool GetHasAlpha();
 	string GetFilePath();
 	int GetMipLevels();
 	int GetChannels();
 	ID3D12Resource* GetResource();
+	bool IsLoaded();
 
 private:
 	void MakeTexDesc(UINT16 arraySize, bool disableMips);
@@ -45,6 +48,7 @@ private:
 	int m_channels = -1;
 	bool m_hasAlpha = false;
 	bool m_isCubemap = false;
+	bool m_loadedData = false;
 
 	string m_filePath;
 };

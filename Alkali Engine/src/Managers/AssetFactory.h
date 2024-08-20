@@ -14,8 +14,8 @@ class AssetFactory
 public:
     static void Init(D3DClass* d3d);
 
-    static shared_ptr<Model> CreateModel(string path, ID3D12GraphicsCommandList2* cmdList =  nullptr);
-    static shared_ptr<Texture> CreateTexture(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
+    static shared_ptr<Model> CreateModel(string path, ID3D12GraphicsCommandList2* cmdList = nullptr);
+    static shared_ptr<Texture> CreateTexture(string path, ID3D12GraphicsCommandList2* cmdList = nullptr, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
     static shared_ptr<Texture> CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown = false);
     static shared_ptr<Texture> CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* cmdList, bool flipUpsideDown = false);
     static shared_ptr<Texture> CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* cmdList);

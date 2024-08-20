@@ -43,6 +43,7 @@ ID3D12PipelineState* TextureLoader::ms_mipMapPSOCubemap;
 ID3D12PipelineState* TextureLoader::ms_irradiancePSO;
 int TextureLoader::ms_descriptorSize;
 vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
+std::mutex TextureLoader::ms_mutexMipMapGen;
 
 void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels, bool flipUpsideDown, bool isNormalMap)
 {
@@ -1009,8 +1010,10 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* cmd
     if (texDesc.MipLevels <= 1 || texDesc.DepthOrArraySize != 1)
         return;
 
+    std::unique_lock<std::mutex> lock(ms_mutexMipMapGen);
+
     if (!ms_mipMapRootSig)
-        InitMipMapCS(device);
+        throw std::exception();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srcSRVDesc = {};
     srcSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
