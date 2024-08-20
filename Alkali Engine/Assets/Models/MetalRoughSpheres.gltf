@@ -58,7 +58,14 @@
 	"materials":[
 		{
 			"name":"Material_0",
-			"pbrMetallicRoughness":{}
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":0
+				},
+				"metallicRoughnessTexture":{
+					"index":1
+				}
+			}
 		}
 	],
 	"meshes":[
@@ -136,6 +143,34 @@
 					"material":0
 				}
 			]
+		}
+	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		},
+		{
+			"sampler":0,
+			"source":1
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"Spheres_BaseColor",
+			"uri":"Spheres_BaseColor.png"
+		},
+		{
+			"mimeType":"image/png",
+			"name":"Spheres_MetalRough",
+			"uri":"Spheres_MetalRough.png"
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9729,
+			"minFilter":9987
 		}
 	],
 	"accessors":[
