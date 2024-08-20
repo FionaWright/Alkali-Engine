@@ -51,8 +51,8 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> whiteTex = AssetFactory::CreateTexture("WhitePOT.png", cmdListDirect.Get());
 	shared_ptr<Texture> gradientTex = AssetFactory::CreateTexture("Gradient.png", cmdListDirect.Get());
 
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get());
-	shared_ptr<Texture> irradianceTex = AssetFactory::CreateIrradianceMap(skyboxTex.get(), cmdListDirect.Get());
+	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
+	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get(), irradianceTex);
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
 
