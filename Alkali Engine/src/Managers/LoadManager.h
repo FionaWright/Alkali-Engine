@@ -16,12 +16,12 @@ using std::queue;
 
 struct AsyncModelArgs
 {
-	Model* pModel;
-	string FilePath;
+	Model* pModel = nullptr;
+	string FilePath = "";
 
-	// GLTF Args:
+	// Alt GLTF Args:
 	Asset Asset;
-	int MeshIndex, PrimitiveIndex;
+	int MeshIndex = -1, PrimitiveIndex = -1;
 };
 
 struct ThreadData
@@ -60,8 +60,10 @@ private:
 
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
+
 	static std::atomic<int> ms_numThreads;
 	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush, ms_fullShutdownActive;
+
 	static vector<std::unique_ptr<ThreadData>> ms_threadDatas;
 	static queue<GPUWaitingList> ms_gpuWaitingLists;
 	static std::unique_ptr<std::thread> ms_mainLoopThread;
