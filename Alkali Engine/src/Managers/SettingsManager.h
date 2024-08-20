@@ -29,7 +29,7 @@ struct DX12Settings
 	int AsyncLoadingThreadCount = 6;
 	bool DebugAsyncLogEnabled = true;
 	bool DebugAsyncLogIgnoreInfo = true;
-	float DebugModelLoadDelayMillis = 0;
+	float DebugModelLoadDelayMillis = 5000;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

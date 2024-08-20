@@ -19,7 +19,7 @@ struct AsyncModelArgs
 	Model* pModel;
 	string FilePath;
 
-	// Alt Args:
+	// GLTF Args:
 	Asset Asset;
 	int MeshIndex, PrimitiveIndex;
 };
@@ -32,18 +32,7 @@ struct ThreadData
 
 	vector<Model*> CPU_WaitingList;
 
-	ThreadData(const ThreadData&) = delete;
-
 	ThreadData() {}
-
-	ThreadData(ThreadData&& other) noexcept
-		: pThread(other.pThread)
-		, Active(other.Active.load())
-		, CmdList(std::move(other.CmdList))
-		, CPU_WaitingList(std::move(other.CPU_WaitingList))
-	{
-		other.pThread = nullptr;
-	}
 };
 
 struct GPUWaitingList
@@ -56,8 +45,9 @@ class LoadManager
 {
 public:    
 	static void StartLoading(D3DClass* d3d, int numThreads);
-	static void StopOnFlush();
+	static void EnableStopOnFlush();
 	static void StopLoading();
+	static void FullShutdown();
 
 	static void ExecuteCPUWaitingLists();
 	static bool TryPushModel(Model* pModel, string filePath);	
@@ -71,7 +61,7 @@ private:
 	static D3DClass* ms_d3dClass;
 	static CommandQueue* ms_cmdQueue;
 	static std::atomic<int> ms_numThreads;
-	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush;
+	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush, ms_fullShutdownActive;
 	static vector<std::unique_ptr<ThreadData>> ms_threadDatas;
 	static queue<GPUWaitingList> ms_gpuWaitingLists;
 	static std::unique_ptr<std::thread> ms_mainLoopThread;

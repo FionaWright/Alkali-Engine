@@ -4,7 +4,7 @@
 
 D3DClass* LoadManager::ms_d3dClass;
 std::atomic<int> LoadManager::ms_numThreads;
-std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush;
+std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush, LoadManager::ms_fullShutdownActive;
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 vector<std::unique_ptr<ThreadData>> LoadManager::ms_threadDatas;
 queue<GPUWaitingList> LoadManager::ms_gpuWaitingLists;
@@ -14,10 +14,21 @@ std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexCpuWaitingLists
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
+	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
 		return;
 
 	AlkaliGUIManager::LogAsyncMessage("====================================================");
+
+	if (ms_loadingActive || ms_mainLoopThread)
+	{
+		ms_loadingActive = false;
+		if (ms_mainLoopThread)
+			ms_mainLoopThread->join();
+
+		StopLoading();
+		AlkaliGUIManager::LogAsyncMessage("Closed existing threads");
+	}
+	
 	AlkaliGUIManager::LogAsyncMessage("Async Loading Begun");
 
 	ms_d3dClass = d3d;
@@ -32,15 +43,15 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	{
 		std::unique_ptr<ThreadData> threadData = std::make_unique<ThreadData>();
 		threadData->CmdList = ms_cmdQueue->GetAvailableCommandList();
-		ms_threadDatas.push_back(std::move(threadData));
+		ms_threadDatas.push_back(std::move(threadData)); // std::move is required here probably because of the std::atomic<bool> inside
 	}
 
 	ms_mainLoopThread = std::make_unique<std::thread>(LoadLoop);
 }
 
-void LoadManager::StopOnFlush()
+void LoadManager::EnableStopOnFlush()
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
+	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
 		return;
 
 	AlkaliGUIManager::LogAsyncMessage("Stop on flush enabled");
@@ -49,19 +60,51 @@ void LoadManager::StopOnFlush()
 
 void LoadManager::StopLoading()
 {
+	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
+		return;
+
 	AlkaliGUIManager::LogAsyncMessage("Async loading ending");	
+
+	ms_loadingActive = false;
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
 		if (ms_threadDatas[i]->pThread)
+		{
 			ms_threadDatas[i]->pThread->join();
-
-		delete ms_threadDatas[i]->pThread;
+			delete ms_threadDatas[i]->pThread;
+		}		
 	}	
 
-	AlkaliGUIManager::LogAsyncMessage("All threads exited");
+	AlkaliGUIManager::LogAsyncMessage("All threads exited");	
+}
 
-	ms_loadingActive = false;	
+void LoadManager::FullShutdown()
+{
+	if (ms_fullShutdownActive)
+		return;
+
+	ms_fullShutdownActive = true;
+	ms_stopOnFlush = false;
+	ms_loadingActive = false;
+	if (ms_mainLoopThread)
+	{
+		ms_mainLoopThread->join();
+		ms_mainLoopThread.reset();
+	}	
+
+	for (int i = 0; i < ms_numThreads; i++)
+	{
+		if (ms_threadDatas[i]->pThread)
+		{
+			if (ms_threadDatas[i]->pThread->joinable())
+				ms_threadDatas[i]->pThread->join();
+			delete ms_threadDatas[i]->pThread;
+		}
+	}
+
+	ms_threadDatas.clear();
+	AlkaliGUIManager::LogAsyncMessage("Full Shutdown Completed");
 }
 
 void LoadManager::LoadLoop()
@@ -76,7 +119,7 @@ void LoadManager::LoadLoop()
 
 		for (int i = 0; i < ms_numThreads; i++)
 		{
-			if (ms_threadDatas[i]->Active)
+			if (!ms_loadingActive || ms_threadDatas[i]->Active)
 				continue;
 
 			if (ms_modelQueue.size() == 0)
@@ -217,6 +260,9 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
 		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+
+	if (!args.pModel || ms_fullShutdownActive)
+		return;
 
 	if (args.FilePath != "")
 	{

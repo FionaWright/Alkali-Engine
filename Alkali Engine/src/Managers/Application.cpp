@@ -150,6 +150,7 @@ void Application::Shutdown()
     Scene::StaticShutdown();
     ShadowManager::Shutdown();
     ResourceManager::Shutdown();
+    LoadManager::FullShutdown();
 
     DestroyScenes();    
     m_mainWindow->Destroy();
@@ -194,7 +195,7 @@ void Application::AssignScene(Scene* scene)
             throw new std::exception("Failed to load content of base scene");
     }
 
-    LoadManager::StopOnFlush();
+    LoadManager::EnableStopOnFlush();
 
     ResizeEventArgs e = { m_mainWindow->GetClientWidth(), m_mainWindow->GetClientHeight() };
     scene->OnResize(e);
