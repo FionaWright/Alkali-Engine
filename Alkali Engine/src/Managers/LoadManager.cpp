@@ -3,13 +3,16 @@
 #include <AlkaliGUIManager.h>
 
 D3DClass* LoadManager::ms_d3dClass;
+CommandQueue* LoadManager::ms_cmdQueue;
+
 std::atomic<int> LoadManager::ms_numThreads;
 std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush, LoadManager::ms_fullShutdownActive;
-queue<AsyncModelArgs> LoadManager::ms_modelQueue;
+
 vector<std::unique_ptr<ThreadData>> LoadManager::ms_threadDatas;
 queue<GPUWaitingList> LoadManager::ms_gpuWaitingLists;
 std::unique_ptr<std::thread> LoadManager::ms_mainLoopThread;
-CommandQueue* LoadManager::ms_cmdQueue;
+
+queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
@@ -19,7 +22,8 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 
 	AlkaliGUIManager::LogAsyncMessage("====================================================");
 
-	if (ms_loadingActive || ms_mainLoopThread)
+	bool prevSceneThreadsActive = ms_loadingActive || ms_mainLoopThread;
+	if (prevSceneThreadsActive)
 	{
 		ms_loadingActive = false;
 		if (ms_mainLoopThread)
@@ -69,11 +73,12 @@ void LoadManager::StopLoading()
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
-		if (ms_threadDatas[i]->pThread)
-		{
-			ms_threadDatas[i]->pThread->join();
-			delete ms_threadDatas[i]->pThread;
-		}		
+		if (!ms_threadDatas[i]->pThread)
+			continue;
+		
+		ms_threadDatas[i]->pThread->join();
+		delete ms_threadDatas[i]->pThread;
+		ms_threadDatas[i]->pThread = nullptr;
 	}	
 
 	AlkaliGUIManager::LogAsyncMessage("All threads exited");	
@@ -95,12 +100,13 @@ void LoadManager::FullShutdown()
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
-		if (ms_threadDatas[i]->pThread)
-		{
-			if (ms_threadDatas[i]->pThread->joinable())
-				ms_threadDatas[i]->pThread->join();
-			delete ms_threadDatas[i]->pThread;
-		}
+		if (!ms_threadDatas[i]->pThread)
+			continue;
+		
+		if (ms_threadDatas[i]->pThread->joinable())
+			ms_threadDatas[i]->pThread->join();
+		delete ms_threadDatas[i]->pThread;
+		ms_threadDatas[i]->pThread = nullptr;
 	}
 
 	ms_threadDatas.clear();
@@ -111,7 +117,8 @@ void LoadManager::LoadLoop()
 {
 	while (ms_loadingActive)
 	{
-		if (ms_stopOnFlush && ms_modelQueue.size() == 0)
+		bool modelQueueFlushed = ms_modelQueue.size() == 0;
+		if (ms_stopOnFlush && modelQueueFlushed)
 		{
 			StopLoading();
 			return;
@@ -125,7 +132,8 @@ void LoadManager::LoadLoop()
 			if (ms_modelQueue.size() == 0)
 				break;
 
-			if (ms_threadDatas[i]->pThread)
+			bool canReuseThread = ms_threadDatas[i]->pThread;
+			if (canReuseThread)
 			{
 				ms_threadDatas[i]->pThread->join();
 
@@ -161,6 +169,10 @@ void LoadManager::LoadHighestPriority(int threadID)
 	}
 	lock.unlock();
 
+	// TODO: Textures
+
+	// TODO: Shaders
+
 	ms_threadDatas[threadID]->Active = false;
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found nothing");
@@ -171,7 +183,8 @@ void LoadManager::ExecuteCPUWaitingLists()
 	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
 		return;
 
-	if (!ms_loadingActive && ms_mainLoopThread)
+	bool mainLoopNeedsRejoining = !ms_loadingActive && ms_mainLoopThread;
+	if (mainLoopNeedsRejoining)
 	{
 		ms_mainLoopThread->join();
 		ms_mainLoopThread.reset();
@@ -190,20 +203,21 @@ void LoadManager::ExecuteCPUWaitingLists()
 			continue;
 
 		GPUWaitingList gpuWaitingList;
-
-		gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingList;
-		ms_threadDatas[i]->CPU_WaitingList.clear();
-
+		gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingList;		
 		gpuWaitingList.FenceValue = ms_cmdQueue->ExecuteCommandList(ms_threadDatas[i]->CmdList);
-		ms_threadDatas[i]->CmdList = ms_cmdQueue->GetAvailableCommandList();
-
 		ms_gpuWaitingLists.push(gpuWaitingList);
 
-		AlkaliGUIManager::LogAsyncMessage("CPU waiting list cleared, " + std::to_string(gpuWaitingList.ModelList.size()) + " models put on GPU waiting list with fence " + std::to_string(gpuWaitingList.FenceValue));
+		ms_threadDatas[i]->CPU_WaitingList.clear();
+		ms_threadDatas[i]->CmdList = ms_cmdQueue->GetAvailableCommandList();		
+
+		string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
+		string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
+		AlkaliGUIManager::LogAsyncMessage("CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
 	}
 
 	while (ms_gpuWaitingLists.size() > 0)
 	{
+		// Lowest fence value will always be at the front
 		if (!ms_cmdQueue->IsFenceComplete(ms_gpuWaitingLists.front().FenceValue))
 			return;
 
@@ -221,7 +235,7 @@ bool LoadManager::TryPushModel(Model* pModel, string filePath)
 	if (!ms_loadingActive)
 	{
 		AlkaliGUIManager::LogAsyncMessage("Model tried to be pushed to queue: " + filePath + " but async wasn't enabled");
-		return false;
+		return false; // Loads model syncronously
 	}
 
 	AlkaliGUIManager::LogAsyncMessage("Model pushed to queue: " + filePath);
@@ -240,7 +254,7 @@ bool LoadManager::TryPushModel(Model* pModel, Asset asset, int meshIndex, int pr
 	if (!ms_loadingActive)
 	{
 		AlkaliGUIManager::LogAsyncMessage("GLTF Model tried to be pushed to queue but async wasn't enabled");
-		return false;
+		return false; // Loads model syncronously
 	}
 
 	AlkaliGUIManager::LogAsyncMessage("GLTF Model pushed to queue");

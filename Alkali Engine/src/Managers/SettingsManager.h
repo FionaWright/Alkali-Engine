@@ -25,7 +25,7 @@ struct DX12Settings
 	bool DebugWhiteTextureOnly = false;
 	bool DebugCubeModelOnly = false;
 
-	bool AsyncLoadingEnabled = false;
+	bool AsyncLoadingEnabled = true;
 	int AsyncLoadingThreadCount = 6;
 	bool DebugAsyncLogEnabled = true;
 	bool DebugAsyncLogIgnoreInfo = true;
