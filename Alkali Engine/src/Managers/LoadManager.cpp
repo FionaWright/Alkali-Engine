@@ -58,8 +58,8 @@ void LoadManager::EnableStopOnFlush()
 	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
 		return;
 
-	AlkaliGUIManager::LogAsyncMessage("Stop on flush enabled");
 	ms_stopOnFlush = true;
+	AlkaliGUIManager::LogAsyncMessage("Stop on flush enabled");
 }
 
 void LoadManager::StopLoading()
@@ -68,7 +68,6 @@ void LoadManager::StopLoading()
 		return;
 
 	ms_loadingActive = false;	
-
 	AlkaliGUIManager::LogAsyncMessage("Loading stopping, All threads exited");	
 }
 
@@ -93,9 +92,7 @@ void LoadManager::LoadLoop(int threadID)
 
 	while (ms_loadingActive)
 	{
-		bool modelQueueFlushed = ms_modelQueue.size() == 0;
-		bool texQueueFlushed = ms_texQueue.size() == 0 && ms_texCubemapQueue.size() == 0;
-		if (ms_stopOnFlush && modelQueueFlushed && texQueueFlushed)
+		if (ms_stopOnFlush && AllQueuesFlushed())
 		{
 			StopLoading();
 			return;
@@ -107,9 +104,6 @@ void LoadManager::LoadLoop(int threadID)
 
 void LoadManager::LoadHighestPriority(int threadID)
 {
-	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
-		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " begun");
-
 	std::unique_lock<std::mutex> lockModel(ms_mutexModelQueue);
 	if (ms_modelQueue.size() > 0)
 	{
@@ -388,4 +382,11 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pCubemap);
 	if (args.pIrradiance)
 		ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pIrradiance);
+}
+
+bool LoadManager::AllQueuesFlushed()
+{
+	return ms_modelQueue.size() == 0 &&
+		ms_texQueue.size() == 0 &&
+		ms_texCubemapQueue.size() == 0;
 }
