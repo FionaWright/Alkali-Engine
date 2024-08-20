@@ -57,28 +57,30 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 		ImGui::TreePop();
 	}
 
-	std::shared_lock<std::shared_mutex> lock(ms_asyncLogMutex);
-
-	string asyncMsg = "Async Log";
-	if (ms_asyncLog.size() > 0)
-		asyncMsg += " (!)";
-
-	if (ImGui::TreeNode(asyncMsg.c_str()))
+	if (ms_asyncLogMutex.try_lock_shared())
 	{
-		ImGui::Indent(IM_GUI_INDENTATION);
+		string asyncMsg = "Async Log";
+		if (ms_asyncLog.size() > 0)
+			asyncMsg += " (!)";
 
-		for (size_t i = 0; i < ms_asyncLog.size(); i++)
-			ImGui::Text(ms_asyncLog[i].c_str());
+		if (ImGui::TreeNode(asyncMsg.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
 
-		if (ms_asyncLog.size() == 0)
-			ImGui::Text("None :)");
+			for (size_t i = 0; i < ms_asyncLog.size(); i++)
+				ImGui::Text(ms_asyncLog[i].c_str());
 
-		ImGui::Spacing();
-		ImGui::Unindent(IM_GUI_INDENTATION);
+			if (ms_asyncLog.size() == 0)
+				ImGui::Text("None :)");
 
-		ImGui::TreePop();
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+
+			ImGui::TreePop();
+		}
+
+		ms_asyncLogMutex.unlock_shared();
 	}
-	lock.unlock();
 
 	RenderGUISettings(d3d, scene);
 	RenderGUITools(d3d, scene);

@@ -31,9 +31,10 @@ Material::~Material()
 
 void Material::AddSRVs(D3DClass* d3d, vector<shared_ptr<Texture>> textures)
 {
-    m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, textures);   
     m_textures = textures;
     m_addedSRV += textures.size();
+
+    TryUploadSRVs(d3d);
 }
 
 void Material::AddDynamicSRVs(string id, UINT count)
@@ -102,7 +103,7 @@ void Material::SetCBV_PerDraw(UINT resourceIndex, void* srcData, size_t dataSize
         SetCBV_PerDraw(resourceIndex, srcData, dataSize, i);
 }
 
-void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource)
+void Material::SetDynamicSRV(D3DClass* d3d, UINT registerIndex, DXGI_FORMAT format, ID3D12Resource* resource) const
 {
     if (registerIndex >= m_addedSRV_dynamic)
         throw std::exception("Invalid register index");
@@ -122,7 +123,7 @@ void Material::AttachThinFilm(const ThinFilmCB& thinFilm)
     m_attachedThinFilm = true;
 }
 
-void Material::AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex)
+void Material::AssignMaterial(ID3D12GraphicsCommandList2* cmdList, const RootParamInfo& rootParamInfo, const int& backBufferIndex) const
 {
     if (rootParamInfo.NumCBV_PerDraw != m_addedCBV_PerDraw ||
         rootParamInfo.NumCBV_PerFrame != m_addedCBV_PerFrame ||
@@ -172,14 +173,14 @@ vector<shared_ptr<Texture>>& Material::GetTextures()
 	return m_textures;
 }
 
-void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex)
+void Material::GetIndices(UINT& srv, UINT& cbvFrame, UINT& cbvDraw, const int& backBufferIndex) const
 {
     srv = m_srvHeapIndex;
     cbvFrame = m_cbvHeapIndex_perFrame[backBufferIndex];
     cbvDraw = m_cbvHeapIndex_perDraw[backBufferIndex];
 }
 
-bool Material::GetProperties(MaterialPropertiesCB& prop)
+bool Material::GetProperties(MaterialPropertiesCB& prop) const
 {
     if (!m_attachedProperties)
         return false;
@@ -188,7 +189,7 @@ bool Material::GetProperties(MaterialPropertiesCB& prop)
     return true;
 }
 
-bool Material::GetThinFilm(ThinFilmCB& thinFilm)
+bool Material::GetThinFilm(ThinFilmCB& thinFilm) const
 {
     if (!m_attachedThinFilm)
         return false;
@@ -197,13 +198,38 @@ bool Material::GetThinFilm(ThinFilmCB& thinFilm)
     return true;
 }
 
-bool Material::HasDynamicSRV()
+bool Material::HasDynamicSRV() const
 {
     return m_addedSRV_dynamic > 0;
+}
+
+bool Material::IsLoaded() const
+{
+    return m_texturesLoaded;
+}
+
+bool Material::TryUploadSRVs(D3DClass* d3d)
+{
+    if (!IsTexturesLoaded())
+        return false;
+
+    m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, m_textures);
+    m_texturesLoaded = true;
+    return true;
 }
 
 void Material::ClearTextures()
 {
     m_textures.clear();
     m_addedSRV = 0;
+}
+
+bool Material::IsTexturesLoaded()
+{
+    for (size_t i = 0; i < m_textures.size(); i++)
+    {
+        if (!m_textures[i]->IsLoaded())
+            return false;
+    }
+    return true;
 }

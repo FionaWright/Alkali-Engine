@@ -249,6 +249,11 @@ void Texture::AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* heap, siz
     }
 }
 
+void Texture::MarkLoaded()
+{
+    m_loadedData = true;
+}
+
 bool Texture::GetHasAlpha()
 {
     return m_hasAlpha;
@@ -272,4 +277,9 @@ int Texture::GetChannels()
 ID3D12Resource* Texture::GetResource()
 {
     return m_textureResource.Get();
+}
+
+bool Texture::IsLoaded()
+{
+    return m_loadedData;
 }

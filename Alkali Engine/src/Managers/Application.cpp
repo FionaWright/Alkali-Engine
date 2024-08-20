@@ -39,6 +39,7 @@ Application::Application(HINSTANCE hInst)
     m_d3dClass->Init();    
 
     AssetFactory::Init(m_d3dClass.get());
+    TextureLoader::InitMipMapCS(m_d3dClass->GetDevice());
 
     bool vSync = false;
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SettingsManager::ms_Window.ScreenWidth), static_cast<int>(SettingsManager::ms_Window.ScreenHeight), vSync);

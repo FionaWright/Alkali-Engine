@@ -25,7 +25,7 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 			return model;
 
 		if (!cmdList)
-			throw std::exception("Attempted to load model syncronously without command list");
+			throw std::exception("Attempted to load model synchronously without command list");
 
 		bool success = model->Init(cmdList, path);
 		if (!success)
@@ -45,7 +45,14 @@ shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsComma
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushTex(tex.get(), path, flipUpsideDown, isNormalMap, disableMips))
+			return tex;
+
+		if (!cmdList)
+			throw std::exception("Attempted to load model synchronously without command list");
+
 		tex->Init(ms_d3d, cmdList, path, flipUpsideDown, isNormalMap, disableMips);
+		tex->MarkLoaded();
 	}
 	return tex;
 }
@@ -56,6 +63,7 @@ shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCo
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
 		tex->InitCubeMapHDR(ms_d3d, cmdList, path, flipUpsideDown);
+		tex->MarkLoaded();
 	}
 	return tex;
 }
@@ -66,6 +74,7 @@ shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12Grap
 	if (!ResourceTracker::TryGetTexture(paths, tex))
 	{
 		tex->InitCubeMap(ms_d3d, cmdList, paths, flipUpsideDown);
+		tex->MarkLoaded();
 	}
 	return tex;
 }
@@ -73,8 +82,9 @@ shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12Grap
 shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* cmdList)
 {
 	shared_ptr<Texture> tex = std::make_shared<Texture>();
-	tex->InitCubeMapUAV_Empty(ms_d3d);
+	tex->InitCubeMapUAV_Empty(ms_d3d);	
 	TextureLoader::CreateIrradianceMap(ms_d3d, cmdList, cubemap->GetResource(), tex->GetResource());
+	tex->MarkLoaded();
 	return tex;
 }
 
