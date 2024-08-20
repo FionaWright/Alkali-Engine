@@ -45,8 +45,7 @@ struct AsyncTexCubemapArgs
 
 struct ThreadData
 {
-	std::thread* pThread = nullptr;
-	std::atomic<bool> Active = false;	
+	//std::atomic<bool> Active = false;	
 	ComPtr<ID3D12GraphicsCommandList2> CmdList = nullptr;
 
 	vector<Model*> CPU_WaitingListModel;
@@ -79,7 +78,7 @@ public:
 	static bool TryPushCubemap(Texture* pTex, vector<string> filePaths, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
 
 private:
-	static void LoadLoop();
+	static void LoadLoop(int threadID);
 	static void LoadHighestPriority(int threadID);
 	static void LoadModel(AsyncModelArgs args, int threadID);
 	static void LoadTex(AsyncTexArgs args, int threadID);
@@ -92,8 +91,8 @@ private:
 	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush, ms_fullShutdownActive;
 
 	static vector<std::unique_ptr<ThreadData>> ms_threadDatas;
+	static vector<std::jthread> ms_loadThreads;
 	static queue<GPUWaitingList> ms_gpuWaitingLists;
-	static std::unique_ptr<std::thread> ms_mainLoopThread;
 
 	static queue<AsyncModelArgs> ms_modelQueue;
 	static queue<AsyncTexArgs> ms_texQueue;
