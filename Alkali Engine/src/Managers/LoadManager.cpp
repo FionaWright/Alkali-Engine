@@ -6,7 +6,7 @@
 D3DClass* LoadManager::ms_d3dClass;
 CommandQueue* LoadManager::ms_cmdQueue;
 
-std::atomic<int> LoadManager::ms_numThreads;
+int LoadManager::ms_numThreads;
 std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush, LoadManager::ms_fullShutdownActive;
 
 vector<std::unique_ptr<ThreadData>> LoadManager::ms_threadDatas;
@@ -16,7 +16,7 @@ std::unique_ptr<std::thread> LoadManager::ms_mainLoopThread;
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
 queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexCpuWaitingLists, LoadManager::ms_mutexGpuWaitingLists;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexCpuWaitingLists;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
@@ -229,7 +229,6 @@ void LoadManager::ExecuteCPUWaitingLists()
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
 
 	std::unique_lock<std::mutex> lockCPU(ms_mutexCpuWaitingLists);
-	std::unique_lock<std::mutex> lockGPU(ms_mutexGpuWaitingLists);
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
