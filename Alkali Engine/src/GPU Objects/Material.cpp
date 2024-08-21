@@ -205,17 +205,28 @@ bool Material::HasDynamicSRV() const
 
 bool Material::IsLoaded() const
 {
-    return m_texturesLoaded;
+    return m_texturesUploaded;
 }
 
-bool Material::TryUploadSRVs(D3DClass* d3d)
+void Material::TryUploadSRVs(D3DClass* d3d)
 {
-    if (!IsTexturesLoaded())
-        return false;
+    if (!AreHeldTexturesLoaded() || m_texturesUploaded)
+        return;
 
     m_srvHeapIndex = DescriptorManager::AddSRVs(d3d, m_textures);
-    m_texturesLoaded = true;
-    return true;
+    m_texturesUploaded = true;
+}
+
+bool Material::EnsureCorrectSRVState(ID3D12GraphicsCommandList2* cmdListDirect)
+{
+    bool allTexturesInCorrectState = true;
+    for (int i = 0; i < m_textures.size(); i++)
+    {
+        bool r = m_textures[i]->EnsureCorrectState(cmdListDirect);
+        if (!r)
+            allTexturesInCorrectState = false;
+    }    
+    return allTexturesInCorrectState;
 }
 
 void Material::ClearTextures()
@@ -224,7 +235,7 @@ void Material::ClearTextures()
     m_addedSRV = 0;
 }
 
-bool Material::IsTexturesLoaded()
+bool Material::AreHeldTexturesLoaded()
 {
     for (size_t i = 0; i < m_textures.size(); i++)
     {

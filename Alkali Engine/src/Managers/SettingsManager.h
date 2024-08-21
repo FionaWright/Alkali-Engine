@@ -24,12 +24,15 @@ struct DX12Settings
 	bool DebugLoadSingleSceneOnly = false;
 	bool DebugWhiteTextureOnly = false;
 	bool DebugCubeModelOnly = false;
+	bool DebugRenderSingleFrameOnly = false;
 
 	bool AsyncLoadingEnabled = true;
 	int AsyncLoadingThreadCount = 6;
+
+	bool DebugAsyncOneCmdListPerFrame = false;
 	bool DebugAsyncLogEnabled = true;
 	bool DebugAsyncLogIgnoreInfo = true;
-	float DebugModelLoadDelayMillis = 0;
+	float DebugAsyncLoadDelayMillis = 0;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

@@ -39,7 +39,7 @@ Application::Application(HINSTANCE hInst)
     m_d3dClass->Init();    
 
     AssetFactory::Init(m_d3dClass.get());
-    TextureLoader::InitMipMapCS(m_d3dClass->GetDevice());
+    TextureLoader::InitComputeShaders(m_d3dClass->GetDevice());
 
     bool vSync = false;
     m_mainWindow = WindowManager::GetInstance()->CreateRenderWindow(m_d3dClass.get(), L"Alkali Engine", static_cast<int>(SettingsManager::ms_Window.ScreenWidth), static_cast<int>(SettingsManager::ms_Window.ScreenHeight), vSync);
@@ -75,7 +75,7 @@ Application::Application(HINSTANCE hInst)
     auto cubeScene = std::make_shared<SceneCube>(L"Cube Scene", m_mainWindow.get());
     InitScene(cubeScene);
 
-    AssignScene(emptyScene.get());
+    AssignScene(testScene.get());
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)

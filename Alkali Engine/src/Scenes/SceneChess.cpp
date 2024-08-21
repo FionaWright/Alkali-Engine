@@ -34,11 +34,9 @@ bool SceneChess::LoadContent()
 	};
 
 	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get(), irradianceTex);
+	m_skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get(), irradianceTex);
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
 	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
-
-	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
 
 	RootParamInfo rootParamInfoPBR;
 	rootParamInfoPBR.NumCBV_PerFrame = 5;
@@ -86,7 +84,7 @@ bool SceneChess::LoadContent()
 	GLTFLoadArgs gltfArgs;
 	gltfArgs.Batches = { batchPBR };
 	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff };
-	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.SkyboxTex = m_skyboxTex;
 	gltfArgs.IrradianceMap = irradianceTex;
 
 	gltfArgs.Transform = { XMFLOAT3_ZERO, XMFLOAT3_ZERO, Mult(XMFLOAT3_ONE, 40) };
@@ -102,7 +100,7 @@ bool SceneChess::LoadContent()
 	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
-	vector<shared_ptr<Texture>> textures = { skyboxTex };
+	vector<shared_ptr<Texture>> textures = { m_skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
 	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);

@@ -52,11 +52,9 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> gradientTex = AssetFactory::CreateTexture("Gradient.png", cmdListDirect.Get());
 
 	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get(), irradianceTex);
+	m_skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get(), irradianceTex);
 	shared_ptr<Texture> blueNoiseTex = AssetFactory::CreateTexture("BlueNoise.png", cmdListDirect.Get());
-	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());
-
-	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
+	shared_ptr<Texture> brdfIntTex = AssetFactory::CreateTexture("BRDF Integration Map.png", cmdListDirect.Get());	
 
 	//vector<string> skyboxPaths = {
 	//	"Skyboxes/Iceland/negx.tga",
@@ -113,7 +111,7 @@ bool SceneTest::LoadContent()
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB), sizeof(MaterialPropertiesCB), sizeof(ThinFilmCB) };
 	vector<UINT> cbvSizesFrame = PER_FRAME_PBR_SIZES();
 
-	vector<shared_ptr<Texture>> textures = { earthDayTex, earthNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex };
+	vector<shared_ptr<Texture>> textures = { earthDayTex, earthNormalTex, defaultSpecTex, irradianceTex, m_skyboxTex , blueNoiseTex, brdfIntTex };
 	shared_ptr<Material> matPBR1 = AssetFactory::CreateMaterial();
 	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 	matPBR1->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesFrame, true);
@@ -128,7 +126,7 @@ bool SceneTest::LoadContent()
 	matPBR1->AttachThinFilm(defaultThinFilm);
 
 	vector<UINT> cbvSizesDrawSkybox = { sizeof(MatricesCB) };
-	vector<shared_ptr<Texture>> texturesSkybox = { skyboxTex };
+	vector<shared_ptr<Texture>> texturesSkybox = { m_skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
 	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDrawSkybox, false);
@@ -173,7 +171,7 @@ bool SceneTest::LoadContent()
 	GLTFLoadArgs gltfArgs;
 	gltfArgs.Batches = { batchPBR, batchGlass };
 	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff, shaderGlass };
-	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.SkyboxTex = m_skyboxTex;
 	gltfArgs.IrradianceMap = irradianceTex;
 	gltfArgs.CullingWhiteList = { "Bistro_Research_Exterior_Paris_Street_", "Bistro_Research_Exterior__lod0_Italian", "Bistro_Research_Exterior_bux_hedge" };
 
@@ -210,7 +208,7 @@ bool SceneTest::LoadContent()
 	thinFilmBubble.n1 = 1.7f;	
 	thinFilmBubble.n2 = 1.0f;
 	thinFilmBubble.Enabled = true;
-	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, skyboxTex, blueNoiseTex, brdfIntTex, gradientTex, whiteTex };
+	vector<shared_ptr<Texture>> texturesBubble = { defaultNormalTex, defaultSpecTex, irradianceTex, m_skyboxTex , blueNoiseTex, brdfIntTex, gradientTex, whiteTex };
 
 	for (int i = 0; i < 30; i++)
 	{
