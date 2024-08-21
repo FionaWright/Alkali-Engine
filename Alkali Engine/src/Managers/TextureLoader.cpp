@@ -1090,11 +1090,8 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
     if (texDesc.MipLevels <= 1 || texDesc.DepthOrArraySize != 6)
         return;
 
-    if (!ms_mipMapRootSig)
-        InitMipMapCS(device);
-
-    if (!ms_mipMapPSOCubemap)
-        InitMipMapPSOCubemap(device);
+    if (!ms_mipMapRootSig || !ms_mipMapPSOCubemap)
+        throw std::exception();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srcSRVDesc = {};
     srcSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -1178,7 +1175,7 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
     auto device = d3d->GetDevice();
 
     if (!ms_irradianceRootSig)
-        InitIrradianceCS(device);
+        throw std::exception();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srcTextureSRVDesc = {};
     srcTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -1222,7 +1219,14 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
 
     cmdListDirect->Dispatch(threads, threads, 1);
 
-    ResourceManager::TransitionResource(cmdListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+    //ResourceManager::TransitionResource(cmdListDirect, dstResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
+}
+
+void TextureLoader::InitComputeShaders(ID3D12Device2* device)
+{
+    InitMipMapCS(device);
+    InitMipMapPSOCubemap(device);
+    InitIrradianceCS(device);
 }
 
 void TextureLoader::Shutdown()

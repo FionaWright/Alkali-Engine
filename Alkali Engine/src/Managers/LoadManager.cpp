@@ -16,7 +16,7 @@ vector<std::jthread> LoadManager::ms_loadThreads;
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
 queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexCpuWaitingLists;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexThreadData;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
@@ -39,7 +39,7 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	ms_loadingActive = true;
 	ms_stopOnFlush = false;	
 
-	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // On my todo list to use COPY. Textures need mild refactoring
+	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
 	ms_threadDatas.clear();
 	ms_loadThreads.clear();
@@ -163,7 +163,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
 
-	std::unique_lock<std::mutex> lockCPU(ms_mutexCpuWaitingLists);
+	std::unique_lock<std::mutex> lockCPU(ms_mutexThreadData);
 
 	for (int i = 0; i < ms_numThreads; i++)
 	{
@@ -185,6 +185,9 @@ void LoadManager::ExecuteCPUWaitingLists()
 		string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
 		string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
+
+		if (SettingsManager::ms_DX12.DebugAsyncOneCmdListPerFrame)
+			break;
 	}
 	lockCPU.unlock();
 
@@ -312,11 +315,13 @@ bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Textur
 
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
 
 	if (!args.pModel || ms_fullShutdownActive)
 		return;
+
+	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
 
 	if (args.FilePath != "")
 	{
@@ -334,15 +339,14 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 	}		
 	else
 		throw std::exception();
-
-	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
+	
 	ms_threadDatas[threadID]->CPU_WaitingListModel.push_back(args.pModel);
 }
 
 void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
 
 	if (!args.pTexture || ms_fullShutdownActive)
 		return;
@@ -350,20 +354,23 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 	if (args.FilePath == "")
 		throw std::exception();
 
+	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
+
 	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
 	args.pTexture->Init(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown, args.IsNormalMap, args.DisableMips);
-
-	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
+	
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pTexture);
 }
 
 void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugModelLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugModelLoadDelayMillis);
+	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
 
 	if (!args.pCubemap || ms_fullShutdownActive)
 		return;
+
+	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
 
 	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
 
@@ -378,7 +385,6 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 		TextureLoader::CreateIrradianceMap(ms_d3dClass, cmdList, args.pCubemap->GetResource(), args.pIrradiance->GetResource());
 	}
 
-	std::unique_lock<std::mutex> lock(ms_mutexCpuWaitingLists);
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pCubemap);
 	if (args.pIrradiance)
 		ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pIrradiance);

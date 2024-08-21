@@ -10,7 +10,7 @@ using std::queue;
 class CommandQueue
 {
 public:
-    CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type);
+    CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, bool highPriority);
     virtual ~CommandQueue();
 
     ComPtr<ID3D12GraphicsCommandList2> GetAvailableCommandList();

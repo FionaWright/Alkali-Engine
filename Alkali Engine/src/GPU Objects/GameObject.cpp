@@ -35,7 +35,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, RenderOverride* renderOverride)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -43,11 +43,17 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_model->IsLoaded())
 		return; // Replace with cube model until loaded
 
-	if (!m_material->IsLoaded() && !m_material->TryUploadSRVs(d3d))
-		return;
-
 	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
 		return;
+
+	if (!m_material->IsLoaded())
+	{
+		m_material->TryUploadSRVs(d3d);
+		return; // Replace with dummy mat
+	}			
+
+	if (requireCPUGPUSync)
+		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);
 
 	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
 	{

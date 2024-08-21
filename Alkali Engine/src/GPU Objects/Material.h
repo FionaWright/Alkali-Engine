@@ -37,12 +37,13 @@ public:
 	bool HasDynamicSRV() const;
 	bool IsLoaded() const;
 
-	bool TryUploadSRVs(D3DClass* d3d);
+	void TryUploadSRVs(D3DClass* d3d);
+	bool EnsureCorrectSRVState(ID3D12GraphicsCommandList2* cmdListDirect);
 
 	void ClearTextures();
 
 private:
-	bool IsTexturesLoaded();
+	bool AreHeldTexturesLoaded();
 
 	UINT m_srvHeapIndex = -1, m_srvHeapIndex_dynamic = -1, m_cbvHeapIndex_perFrame[BACK_BUFFER_COUNT], m_cbvHeapIndex_perDraw[BACK_BUFFER_COUNT];
 	vector<ID3D12Resource*> m_cbvResources_perFrame[BACK_BUFFER_COUNT];		
@@ -56,6 +57,6 @@ private:
 	ThinFilmCB m_thinFilmCB;
 	bool m_attachedThinFilm = false;
 	
-	bool m_texturesLoaded = false;
+	bool m_texturesUploaded = false;
 };
 

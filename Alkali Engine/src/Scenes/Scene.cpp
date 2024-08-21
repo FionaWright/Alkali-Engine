@@ -284,6 +284,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	if (m_debugLineLightDir)
 		m_debugLineLightDir->SetPositions(m_d3dClass, Mult(lDir, 999), Mult(lDir, -999));
 
+	if (m_skyboxTex)
+		m_perFrameCBuffers.EnvMap.EnvMapMipLevels = m_skyboxTex->GetMipLevels();
+
 	m_depthViewCB.Resolution = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
@@ -314,6 +317,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 void Scene::OnRender(TimeEventArgs& e)
 {
 	if (!m_updated)
+		return;
+
+	if (SettingsManager::ms_DX12.DebugRenderSingleFrameOnly && m_debugRenderedFrame)
 		return;
 
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
@@ -357,15 +363,17 @@ void Scene::OnRender(TimeEventArgs& e)
 	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	ClearBackBuffer(cmdList.Get());
+
+	bool requireCPUGPUSync = false;
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);
+		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 
 	for (auto& it : batchList)
-		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr);	
+		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
@@ -393,8 +401,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(cmdList.Get(), cmdQueue); 
 
-	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU)
+	if (SettingsManager::ms_Dynamic.ForceSyncCPUGPU || requireCPUGPUSync)
 		cmdQueue->WaitForFenceValue(m_FenceValues.at(currentBackBufferIndex));
+
+	m_debugRenderedFrame = true;
 }
 
 void Scene::OnResize(ResizeEventArgs& e)

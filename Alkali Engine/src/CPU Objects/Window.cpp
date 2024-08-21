@@ -252,8 +252,11 @@ UINT Window::Present()
 {
     UINT syncInterval = SettingsManager::ms_Dynamic.VSyncEnabled ? 1 : 0;
     UINT presentFlags = m_d3dClass->IsTearingSupported() && !SettingsManager::ms_Dynamic.VSyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
-    ThrowIfFailed(m_dxgiSwapChain->Present(syncInterval, presentFlags));
-    m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
 
+    HRESULT hr = m_dxgiSwapChain->Present(syncInterval, presentFlags);
+    ThrowIfFailed(hr);
+
+    OutputDebugString(L"Frame Presented\n");
+    m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
     return m_CurrentBackBufferIndex;
 }

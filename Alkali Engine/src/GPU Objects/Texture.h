@@ -25,13 +25,14 @@ public:
 	void AddToDescriptorHeap(D3DClass* d3d, ID3D12DescriptorHeap* srvHeap, size_t srvHeapOffset);
 
 	void MarkLoaded();
+	bool EnsureCorrectState(ID3D12GraphicsCommandList2* cmdListDirect);
 
 	bool GetHasAlpha();
 	string GetFilePath();
 	int GetMipLevels();
 	int GetChannels();
 	ID3D12Resource* GetResource();
-	bool IsLoaded();
+	bool IsLoaded();	
 
 private:
 	void MakeTexDesc(UINT16 arraySize, bool disableMips);
@@ -44,6 +45,7 @@ private:
 	ComPtr<ID3D12Resource> m_textureResource;
 
 	D3D12_RESOURCE_DESC m_textureDesc;
+	D3D12_RESOURCE_STATES m_currentState;
 
 	int m_channels = -1;
 	bool m_hasAlpha = false;

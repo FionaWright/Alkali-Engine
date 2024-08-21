@@ -85,6 +85,8 @@ protected:
     vector<shared_ptr<DebugLine>> m_debugLineList;
     DebugLine* m_debugLineLightDir = nullptr;
 
+    shared_ptr<Texture> m_skyboxTex;
+
     Frustum m_frustum;
     PerFrameCBuffers_PBR m_perFrameCBuffers = {};
 
@@ -92,12 +94,13 @@ private:
     bool m_dsvEnabled;
     bool m_updated = false;
     int m_shadowMapCounter = INT_MAX;
+    bool m_debugRenderedFrame = false;
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
     shared_ptr<RootSig> m_rootSigLine, m_viewDepthRootSig;
     shared_ptr<Shader> m_shaderLine, m_viewDepthShader;
-    shared_ptr<Material> m_matLine;
+    shared_ptr<Material> m_matLine;    
     RootParamInfo m_rpiLine, m_viewDepthRPI;
 
     ComPtr<ID3D12Resource> m_depthBufferResource;

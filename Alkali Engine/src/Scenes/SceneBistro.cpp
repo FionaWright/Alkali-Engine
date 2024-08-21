@@ -47,9 +47,7 @@ bool SceneBistro::LoadContent()
 
 	//shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemap(skyboxPaths, cmdListDirect.Get());
 	shared_ptr<Texture> irradianceTex = std::make_shared<Texture>();
-	shared_ptr<Texture> skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get(), irradianceTex);
-
-	m_perFrameCBuffers.EnvMap.EnvMapMipLevels = skyboxTex->GetMipLevels();
+	m_skyboxTex = AssetFactory::CreateCubemapHDR("Skyboxes/Bistro_Bridge.hdr", cmdListDirect.Get(), irradianceTex);
 
 	RootParamInfo rootParamInfo;
 	rootParamInfo.NumCBV_PerFrame = 5;
@@ -82,7 +80,7 @@ bool SceneBistro::LoadContent()
 	rootSigSkybox->Init("Skybox Root Sig", rootParamInfoSkybox, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 	vector<UINT> cbvSizesDraw = { sizeof(MatricesCB) };
-	vector<shared_ptr<Texture>> textures = { skyboxTex };
+	vector<shared_ptr<Texture>> textures = { m_skyboxTex };
 
 	shared_ptr matSkybox = AssetFactory::CreateMaterial();
 	matSkybox->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
@@ -122,7 +120,7 @@ bool SceneBistro::LoadContent()
 	GLTFLoadArgs gltfArgs;
 	gltfArgs.Batches = { batchPBR };
 	gltfArgs.Shaders = { shaderPBR, shaderPBRCullOff };
-	gltfArgs.SkyboxTex = skyboxTex;
+	gltfArgs.SkyboxTex = m_skyboxTex;
 	gltfArgs.IrradianceMap = irradianceTex;
 
 	ModelLoaderGLTF::LoadSplitModel(m_d3dClass, cmdListDirect.Get(), "Bistro.gltf", gltfArgs);
