@@ -39,9 +39,9 @@ void D3DClass::Init()
     if (!m_d3d12Device)
         throw new std::exception("Device failed to be created");
 
-    m_directCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, true);
-    m_computeCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE, false);
-    m_copyCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY, false);
+    m_directCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, false, 0);
+    m_computeCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE, false, 5000);
+    m_copyCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY, false, 20000);
 
     m_tearingSupported = ResourceManager::CheckTearingSupport();
 }

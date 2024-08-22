@@ -26,7 +26,8 @@ _Use_decl_annotations_ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPre
 
     app.Shutdown();
 
-    atexit(&ReportLiveObjects);
+    if (SettingsManager::ms_DX12.DebugReportLiveObjects)
+        atexit(&ReportLiveObjects);
 
     return retCode;
 }

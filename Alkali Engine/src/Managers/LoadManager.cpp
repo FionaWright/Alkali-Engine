@@ -4,7 +4,7 @@
 #include <TextureLoader.h>
 
 D3DClass* LoadManager::ms_d3dClass;
-CommandQueue* LoadManager::ms_cmdQueue;
+CommandQueue* LoadManager::ms_copyQueue, * LoadManager::ms_computeQueue;
 
 int LoadManager::ms_numThreads;
 std::atomic<bool> LoadManager::ms_loadingActive, LoadManager::ms_stopOnFlush, LoadManager::ms_fullShutdownActive;
@@ -39,14 +39,16 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	ms_loadingActive = true;
 	ms_stopOnFlush = false;	
 
-	ms_cmdQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	ms_copyQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	ms_computeQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
 	ms_threadDatas.clear();
 	ms_loadThreads.clear();
 	for (int i = 0; i < ms_numThreads; i++)
 	{
 		std::unique_ptr<ThreadData> threadData = std::make_unique<ThreadData>();
-		threadData->CmdList = ms_cmdQueue->GetAvailableCommandList();
+		threadData->CmdListCopy = ms_copyQueue->GetAvailableCommandList();
+		threadData->CmdListCompute = ms_computeQueue->GetAvailableCommandList();
 		ms_threadDatas.push_back(std::move(threadData));
 
 		ms_loadThreads.emplace_back(std::jthread(LoadLoop, i));
@@ -68,7 +70,7 @@ void LoadManager::StopLoading()
 		return;
 
 	ms_loadingActive = false;	
-	AlkaliGUIManager::LogAsyncMessage("Loading stopping, All threads exited");	
+	AlkaliGUIManager::LogAsyncMessage("Loading stopping, Main thread paused until all threads exit");	
 }
 
 void LoadManager::FullShutdown()
@@ -158,10 +160,18 @@ void LoadManager::ExecuteCPUWaitingLists()
 		return;
 
 	if (!ms_loadingActive && ms_loadThreads.size() > 0)
+	{
 		ms_loadThreads.clear();
+		AlkaliGUIManager::LogAsyncMessage("Main thread resuming, all threads exiting");
+	}
 
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
+
+	static int framesSinceExecute = 0;
+	framesSinceExecute++;
+	if (framesSinceExecute < SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice)
+		return;
 
 	std::unique_lock<std::mutex> lockCPU(ms_mutexThreadData);
 
@@ -169,32 +179,55 @@ void LoadManager::ExecuteCPUWaitingLists()
 	{
 		bool emptyModelList = ms_threadDatas[i]->CPU_WaitingListModel.size() == 0;
 		bool emptyTexList = ms_threadDatas[i]->CPU_WaitingListTexture.size() == 0;
-		if (emptyModelList && emptyTexList)
-			continue;
 
-		GPUWaitingList gpuWaitingList;
-		gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingListModel;		
-		gpuWaitingList.TextureList = ms_threadDatas[i]->CPU_WaitingListTexture;		
-		gpuWaitingList.FenceValue = ms_cmdQueue->ExecuteCommandList(ms_threadDatas[i]->CmdList);
-		ms_gpuWaitingLists.push(gpuWaitingList);
+		if (!emptyModelList)
+		{
+			GPUWaitingList gpuWaitingList;
+			gpuWaitingList.ModelList = ms_threadDatas[i]->CPU_WaitingListModel;
+			gpuWaitingList.FenceValue = ms_copyQueue->ExecuteCommandList(ms_threadDatas[i]->CmdListCopy);
+			gpuWaitingList.IsCOPY = true;
+			ms_gpuWaitingLists.push(gpuWaitingList);
 
-		ms_threadDatas[i]->CPU_WaitingListModel.clear();
-		ms_threadDatas[i]->CPU_WaitingListTexture.clear();
-		ms_threadDatas[i]->CmdList = ms_cmdQueue->GetAvailableCommandList();		
+			ms_threadDatas[i]->CPU_WaitingListModel.clear();
+			ms_threadDatas[i]->CmdListCopy = ms_copyQueue->GetAvailableCommandList();
 
-		string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
-		string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
-		AlkaliGUIManager::LogAsyncMessage("CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
+			string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
+			string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
+			AlkaliGUIManager::LogAsyncMessage("COPY CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
 
-		if (SettingsManager::ms_DX12.DebugAsyncOneCmdListPerFrame)
-			break;
+			framesSinceExecute = 0;
+			if (SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice > 0)
+				break;
+		}
+
+		if (!emptyTexList)
+		{
+			GPUWaitingList gpuWaitingList;
+			gpuWaitingList.TextureList = ms_threadDatas[i]->CPU_WaitingListTexture;
+			gpuWaitingList.FenceValue = ms_computeQueue->ExecuteCommandList(ms_threadDatas[i]->CmdListCompute);
+			gpuWaitingList.IsCOPY = false;
+			ms_gpuWaitingLists.push(gpuWaitingList);
+
+			ms_threadDatas[i]->CPU_WaitingListTexture.clear();
+			ms_threadDatas[i]->CmdListCompute = ms_computeQueue->GetAvailableCommandList();
+
+			string strTexCount = std::to_string(gpuWaitingList.TextureList.size());
+			string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
+			AlkaliGUIManager::LogAsyncMessage("COMPUTE CPU waiting list cleared, " + strTexCount + " textures put on GPU waiting list with fence " + strFenceVal);
+
+			framesSinceExecute = 0;
+			if (SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice > 0)
+				break;
+		}
 	}
 	lockCPU.unlock();
 
 	while (ms_gpuWaitingLists.size() > 0)
 	{
+		auto queue = ms_gpuWaitingLists.front().IsCOPY ? ms_copyQueue : ms_computeQueue;
+
 		// Lowest fence value will always be at the front
-		if (!ms_cmdQueue->IsFenceComplete(ms_gpuWaitingLists.front().FenceValue))
+		if (!queue->IsFenceComplete(ms_gpuWaitingLists.front().FenceValue))
 			return;
 
 		AlkaliGUIManager::LogAsyncMessage("GPU waiting list complete with fence " + std::to_string(ms_gpuWaitingLists.front().FenceValue));
@@ -325,7 +358,7 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 
 	if (args.FilePath != "")
 	{
-		bool success = args.pModel->Init(ms_threadDatas[threadID]->CmdList.Get(), args.FilePath);
+		bool success = args.pModel->Init(ms_threadDatas[threadID]->CmdListCopy.Get(), args.FilePath);
 		if (!success)
 		{
 			AlkaliGUIManager::LogErrorMessage("Failed to load model [async] (path=\"" + args.FilePath + "\")");
@@ -335,7 +368,7 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 	else if (args.Asset)
 	{
 		auto& primitive = args.Asset->get().meshes[args.MeshIndex].primitives[args.PrimitiveIndex];
-		ModelLoaderGLTF::LoadModel(ms_d3dClass, ms_threadDatas[threadID]->CmdList.Get(), args.Asset, primitive, args.pModel);
+		ModelLoaderGLTF::LoadModel(ms_d3dClass, ms_threadDatas[threadID]->CmdListCopy.Get(), args.Asset, primitive, args.pModel);
 	}		
 	else
 		throw std::exception();
@@ -356,7 +389,7 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 
 	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
 
-	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
+	auto cmdList = ms_threadDatas[threadID]->CmdListCompute.Get();
 	args.pTexture->Init(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown, args.IsNormalMap, args.DisableMips);
 	
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pTexture);
@@ -372,14 +405,14 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 
 	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
 
-	auto cmdList = ms_threadDatas[threadID]->CmdList.Get();
+	auto cmdList = ms_threadDatas[threadID]->CmdListCompute.Get();
 
 	if (args.FilePath == "")
 		args.pCubemap->InitCubeMap(ms_d3dClass, cmdList, args.FilePaths, args.FlipUpsideDown);
 	else
 		args.pCubemap->InitCubeMapHDR(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown);
 	
-	if (args.pIrradiance)
+	if (args.pIrradiance && SettingsManager::ms_DX12.AsyncIrradianceGenEnabled)
 	{
 		args.pIrradiance->InitCubeMapUAV_Empty(ms_d3dClass);
 		TextureLoader::CreateIrradianceMap(ms_d3dClass, cmdList, args.pCubemap->GetResource(), args.pIrradiance->GetResource());

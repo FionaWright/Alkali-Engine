@@ -45,7 +45,8 @@ struct AsyncTexCubemapArgs
 
 struct ThreadData
 {
-	ComPtr<ID3D12GraphicsCommandList2> CmdList = nullptr;
+	ComPtr<ID3D12GraphicsCommandList2> CmdListCopy = nullptr;
+	ComPtr<ID3D12GraphicsCommandList2> CmdListCompute = nullptr;
 
 	vector<Model*> CPU_WaitingListModel;
 	vector<Texture*> CPU_WaitingListTexture;
@@ -55,6 +56,8 @@ struct ThreadData
 
 struct GPUWaitingList
 {
+	bool IsCOPY = true;
+
 	uint64_t FenceValue = 0;
 	vector<Model*> ModelList;
 	vector<Texture*> TextureList;
@@ -85,7 +88,7 @@ private:
 	static bool AllQueuesFlushed();
 
 	static D3DClass* ms_d3dClass;
-	static CommandQueue* ms_cmdQueue;
+	static CommandQueue* ms_copyQueue, *ms_computeQueue;
 
 	static int ms_numThreads;
 	static std::atomic<bool> ms_loadingActive, ms_stopOnFlush, ms_fullShutdownActive;

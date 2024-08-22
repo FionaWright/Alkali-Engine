@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CommandQueue.h"
 
-CommandQueue::CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, bool highPriority)
+CommandQueue::CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, bool highPriority, int initalFenceValue)
     : m_FenceValue(0)
     , m_CommandListType(type)
     , m_device(device)
@@ -17,6 +17,7 @@ CommandQueue::CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, 
     hr = m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_d3d12CommandQueue));
     ThrowIfFailed(hr);
 
+    m_FenceValue = initalFenceValue;
     hr = m_device->CreateFence(m_FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_d3d12Fence));
     ThrowIfFailed(hr);
 

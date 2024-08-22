@@ -256,7 +256,7 @@ UINT Window::Present()
     HRESULT hr = m_dxgiSwapChain->Present(syncInterval, presentFlags);
     ThrowIfFailed(hr);
 
-    OutputDebugString(L"Frame Presented\n");
+    OutputDebugString((L"Frame Presented: " + std::to_wstring(m_CurrentBackBufferIndex) + L"\n").c_str());
     m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
     return m_CurrentBackBufferIndex;
 }

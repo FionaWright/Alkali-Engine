@@ -35,7 +35,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride, Shader* asyncShader)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -44,16 +44,24 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		return; // Replace with cube model until loaded
 
 	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
+		return;	
+
+	bool matLoaded = m_material->IsLoaded() && !SettingsManager::ms_DX12.DebugAsyncForceAsyncShaderStandIn;
+	if (!matLoaded)
+		m_material->TryUploadSRVs(d3d);
+
+	if (!matLoaded && !asyncShader)
 		return;
 
-	if (!m_material->IsLoaded())
-	{
-		m_material->TryUploadSRVs(d3d);
-		return; // Replace with dummy mat
-	}			
+	if (requireCPUGPUSync && matLoaded)
+		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);	
 
-	if (requireCPUGPUSync)
-		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);
+	if (!matLoaded && !m_asyncMaterial)
+	{
+		vector<UINT> sizes = { sizeof(MatricesCB) };
+		m_asyncMaterial = AssetFactory::CreateMaterial();		
+		m_asyncMaterial->AddCBVs(d3d, cmdListDirect, sizes, false);
+	}
 
 	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
 	{
@@ -78,6 +86,20 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!matrices)
 		throw std::exception("Matrices not given");
 
+	Material* matUsed = m_material.get();
+	RootParamInfo usedRPI = rpi;
+	if (renderOverride && renderOverride->UseShadowMapMat)
+		matUsed = m_shadowMapMats[renderOverride->CascadeIndex].get();
+	else if (!matLoaded)
+	{
+		matUsed = m_asyncMaterial.get();
+
+		RootParamInfo asyncRPI; // Yes this is fucking terrible, fix later
+		asyncRPI.NumCBV_PerDraw = 1;
+		asyncRPI.ParamIndexCBV_PerDraw = 0;
+		usedRPI = asyncRPI;
+	}		
+
 	Model* sphereModel = nullptr;	
 	if (Scene::IsSphereModeOn(&sphereModel))
 	{		
@@ -87,13 +109,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, mat);
+		RenderModel(cmdListDirect, usedRPI, backBufferIndex, matrices, sphereModel, &modifiedTransform, matUsed);
 		return;
 	}
 
-	Material* mat = renderOverride && renderOverride->UseShadowMapMat ? m_shadowMapMats[renderOverride->CascadeIndex].get() : m_material.get();
-	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, mat);
+	RenderModel(cmdListDirect, usedRPI, backBufferIndex, matrices, m_model.get(), nullptr, matUsed);
 }
 
 void GameObject::RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)

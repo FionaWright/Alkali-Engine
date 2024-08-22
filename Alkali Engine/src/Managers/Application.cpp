@@ -75,7 +75,7 @@ Application::Application(HINSTANCE hInst)
     auto cubeScene = std::make_shared<SceneCube>(L"Cube Scene", m_mainWindow.get());
     InitScene(cubeScene);
 
-    AssignScene(testScene.get());
+    AssignScene(bistroScene.get());
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
@@ -207,7 +207,7 @@ void Application::AssignScene(Scene* scene)
     m_currentScene = scene;
 
     std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
-    wstring output = L"Time taken to load " + m_currentScene->m_Name + L" was " + std::to_wstring(timeTaken.count()) + L" ms";
+    wstring output = L"Time taken to load " + m_currentScene->m_Name + L" was " + std::to_wstring(timeTaken.count()) + L" ms\n";
     OutputDebugStringW(output.c_str());
 }
 

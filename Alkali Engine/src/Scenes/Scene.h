@@ -99,7 +99,7 @@ private:
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
     shared_ptr<RootSig> m_rootSigLine, m_viewDepthRootSig;
-    shared_ptr<Shader> m_shaderLine, m_viewDepthShader;
+    shared_ptr<Shader> m_shaderLine, m_viewDepthShader, m_asyncStandInShader;
     shared_ptr<Material> m_matLine;    
     RootParamInfo m_rpiLine, m_viewDepthRPI;
 

@@ -25,14 +25,22 @@ struct DX12Settings
 	bool DebugWhiteTextureOnly = false;
 	bool DebugCubeModelOnly = false;
 	bool DebugRenderSingleFrameOnly = false;
+	bool DebugReportLiveObjects = false;
 
 	bool AsyncLoadingEnabled = true;
 	int AsyncLoadingThreadCount = 6;
+	bool AsyncModelsEnabled = true;
+	bool AsyncTexEnabled = true;
+	bool AsyncTexCubemapEnabled = true;
+	bool AsyncIrradianceGenEnabled = true;
+	bool AsyncShaderStandInEnabled = false;
 
-	bool DebugAsyncOneCmdListPerFrame = false;
 	bool DebugAsyncLogEnabled = true;
 	bool DebugAsyncLogIgnoreInfo = true;
+	bool DebugAsyncPrintLogIntoConsole = false;
 	float DebugAsyncLoadDelayMillis = 0;
+	bool DebugAsyncExecuteFrameSlice = 0;
+	bool DebugAsyncForceAsyncShaderStandIn = false;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -69,6 +77,8 @@ struct WindowSettings
 	bool UseBarrierWarps = false;	
 
 	float FieldOfView = 45.0f;
+
+	bool DebugFlashingBackgroundColors = false;
 
 	wstring WindowName = L"DX12 Alkali Engine Window";
 };
@@ -148,6 +158,7 @@ struct DynamicSettings
 	bool BoundingSphereMode = false;	
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
+	bool DebugFramePresentInfo = false;
 
 	ShadowDynamicSettings Shadow;
 
