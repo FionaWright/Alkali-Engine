@@ -125,6 +125,9 @@ shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool preco
 
 	if (!ResourceTracker::TryGetShader(id, shader))
 	{
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && SettingsManager::ms_DX12.AsyncShadersEnabled && LoadManager::TryPushShader(shader.get(), args, precompiled))
+			return shader;
+
 		if (precompiled)
 			shader->InitPreCompiled(ms_d3d->GetDevice(), args);
 		else
