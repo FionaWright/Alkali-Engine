@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "Application.h"
 #include "AssetFactory.h"
+#include <ShadowManager.h>
 
 vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog;
 std::shared_mutex AlkaliGUIManager::ms_asyncLogMutex;
@@ -162,17 +163,21 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (visualiseShadow)
 					ImGui::EndDisabled();				
 
-				if (ImGui::Checkbox("Mip Map Debug Mode", &SettingsManager::ms_Dynamic.MipMapDebugMode))
+				ImGui::BeginDisabled(true);
+				if (ImGui::Checkbox("Mip Map Debug Mode (Disabled, Compile-Time only)", &SettingsManager::ms_Dynamic.MipMapDebugMode))
 				{
+					d3d->Flush();
 					ResourceTracker::ClearTexList();
 					ResourceTracker::ClearMatList();
 					DescriptorManager::Shutdown();
 					DescriptorManager::Init(d3d, SettingsManager::ms_DX12.DescriptorHeapSize);
 					TextureLoader::Shutdown();
 					Scene::StaticShutdown();
+					TextureLoader::InitComputeShaders(d3d->GetDevice());
 					scene->UnloadContent();
 					scene->LoadContent();
 				}
+				ImGui::EndDisabled();
 			}
 
 			ImGui::Unindent(IM_GUI_INDENTATION);

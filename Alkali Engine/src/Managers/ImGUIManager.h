@@ -22,4 +22,5 @@ private:
 	static ComPtr<ID3D12DescriptorHeap> ms_descHeapSRV;
 	static bool ms_currentlyRendering;
 	static ImVec2 ms_windowSize;
+	static bool ms_initialised;
 };

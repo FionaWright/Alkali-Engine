@@ -89,20 +89,20 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t
 }
 
 void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown, bool isNormalMap, bool disableMips)
-{
+{    
     auto device = d3d->GetDevice();
 
     m_filePath = filePath;
     string longPath = "Assets/Textures/" + filePath;
 
     uint8_t* pData;
-    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &pData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);
+    TextureLoader::LoadTex(longPath, m_textureWidth, m_textureHeight, &pData, m_hasAlpha, m_channels, flipUpsideDown, isNormalMap);    
 
     MakeTexDesc(1, disableMips);
 
     CreateResources(device);
 
-    UploadResources(cmdListDirect, &pData);
+    UploadResources(cmdListDirect, &pData);    
 
     wstring debugName(filePath.begin(), filePath.end());
     m_textureResource->SetName(debugName.c_str());
@@ -113,11 +113,8 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, str
         m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         TextureLoader::CreateMipMaps(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
-        //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
-
-    //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, vector<string>& filePaths, bool flipUpsideDown)

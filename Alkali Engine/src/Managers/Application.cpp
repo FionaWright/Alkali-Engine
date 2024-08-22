@@ -36,7 +36,7 @@ Application::Application(HINSTANCE hInst)
     }
 
     m_windowManager->Init(hInst);
-    m_d3dClass->Init();    
+    m_d3dClass->Init();        
 
     AssetFactory::Init(m_d3dClass.get());
     TextureLoader::InitComputeShaders(m_d3dClass->GetDevice());
@@ -47,7 +47,7 @@ Application::Application(HINSTANCE hInst)
     
     DescriptorManager::Init(m_d3dClass.get(), SettingsManager::ms_DX12.DescriptorHeapSize);
 
-    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);
+    ImGUIManager::Init(m_mainWindow->GetHWND(), m_d3dClass->GetDevice(), BACK_BUFFER_COUNT);    
 
     if (SettingsManager::ms_DX12.DebugLoadSingleSceneOnly)
     {
@@ -55,7 +55,7 @@ Application::Application(HINSTANCE hInst)
         InitScene(trueEmptyScene);
         AssignScene(trueEmptyScene.get());
         return;
-    }
+    }    
 
     auto testScene = std::make_shared<SceneTest>(L"Test Scene", m_mainWindow.get());
     InitScene(testScene);
@@ -142,23 +142,32 @@ void Application::CalculateFPS(double deltaTime)
 
 void Application::Shutdown()
 {
-    m_d3dClass->Flush();
+    LoadManager::FullShutdown();
 
+    if (m_d3dClass)
+        m_d3dClass->Flush();
+    
     ImGUIManager::Shutdown();   
     TextureLoader::Shutdown();
     ResourceTracker::ReleaseAll();
     DescriptorManager::Shutdown();
     Scene::StaticShutdown();
     ShadowManager::Shutdown();
-    ResourceManager::Shutdown();
-    LoadManager::FullShutdown();
+    ResourceManager::Shutdown();    
 
     DestroyScenes();    
-    m_mainWindow->Destroy();
-    m_windowManager.reset();
-    m_mainWindow.reset();
+    if (m_mainWindow)
+    {
+        m_mainWindow->Destroy();
+        m_mainWindow.reset();
+    }        
+
+    if (m_windowManager)
+        m_windowManager.reset();    
+
     m_sceneMap.clear();
-    m_d3dClass.reset();    
+    if (m_d3dClass)
+        m_d3dClass.reset();    
 }
 
 wstring Application::GetEXEDirectoryPath()
@@ -188,7 +197,7 @@ void Application::AssignScene(Scene* scene)
     m_updateClock.Reset();
     m_renderClock.Reset();
 
-    LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.Async.ThreadCount);
+    LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.Async.ThreadCount);    
 
     if (!scene->m_ContentLoaded)
     {

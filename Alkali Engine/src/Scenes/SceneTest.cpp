@@ -35,13 +35,14 @@ bool SceneTest::LoadContent()
 
 		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
 		cmdQueueCopy->WaitForFenceValue(fenceValue);
-	}
+	}	
 
 	CommandQueue* cmdQueueDirect = nullptr;
 	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!cmdQueueDirect)
 		throw std::exception("Command Queue Error");
 	auto cmdListDirect = cmdQueueDirect->GetAvailableCommandList();
+
 
 	shared_ptr<Texture> earthDayTex = AssetFactory::CreateTexture("EarthDay.png", cmdListDirect.Get());
 	shared_ptr<Texture> transTex = AssetFactory::CreateTexture("Transparent.png", cmdListDirect.Get());

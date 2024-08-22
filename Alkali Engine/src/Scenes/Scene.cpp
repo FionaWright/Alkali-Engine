@@ -125,7 +125,6 @@ bool Scene::LoadContent()
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
 
 	m_rootSigLine = std::make_shared<RootSig>();
-	//m_rootSigLine->Init("Line Root Sig", m_rpiLine, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 	m_rootSigLine->Init("Line Root Sig", m_rpiLine);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
@@ -242,6 +241,11 @@ void Scene::UnloadContent()
 	m_matLine.reset();
 	m_viewDepthGO.reset();
 	m_viewDepthMat.reset();
+	m_viewDepthShader.reset();
+	m_viewDepthRootSig.reset();
+	m_rootSigLine.reset();
+	m_skyboxTex.reset();
+	m_debugLineList.clear();
 
 	if (ms_sphereModel)
 	{
