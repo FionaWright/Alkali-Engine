@@ -506,5 +506,8 @@
     <FxCompile Include="Assets\Shaders\IrradianceMap.hlsl">
       <Filter>Shaders\Compute</Filter>
     </FxCompile>
+    <FxCompile Include="Assets\Shaders\Async_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

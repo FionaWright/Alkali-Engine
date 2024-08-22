@@ -17,9 +17,6 @@ void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 
 bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 {
-	if (SettingsManager::ms_DX12.DebugWhiteTextureOnly)
-		filePath = "WhitePOT.png";
-
 	if (!ms_textureMap.contains(filePath))
 	{
 		tex = std::make_shared<Texture>();

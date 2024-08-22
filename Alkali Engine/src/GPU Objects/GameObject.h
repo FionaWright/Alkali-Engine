@@ -27,7 +27,7 @@ public:
 	GameObject(string name);
 	~GameObject();
 
-	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync = nullptr, MatricesCB* matrices = nullptr, RenderOverride* renderOverride = nullptr);
+	void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync = nullptr, MatricesCB* matrices = nullptr, RenderOverride* renderOverride = nullptr, Shader* asyncShader = nullptr);
 
 	void RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform = nullptr, Material* materialOverride = nullptr);
 
@@ -75,7 +75,7 @@ protected:
 
 	shared_ptr<Model> m_model;
 	shared_ptr<Shader> m_shader;
-	shared_ptr<Material> m_material;
+	shared_ptr<Material> m_material, m_asyncMaterial;
 
 	vector<shared_ptr<Material>> m_shadowMapMats;
 

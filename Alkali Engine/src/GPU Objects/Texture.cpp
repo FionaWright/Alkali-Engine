@@ -13,11 +13,6 @@ Texture::Texture()
 
 Texture::~Texture()
 {
-    if (m_textureResource)
-    {
-        m_textureResource->Release();
-        m_textureResource.Reset();
-    }
 }
 
 void Texture::MakeTexDesc(UINT16 arraySize, bool disableMips)
@@ -299,5 +294,5 @@ ID3D12Resource* Texture::GetResource()
 
 bool Texture::IsLoaded()
 {
-    return m_loadedData;
+    return m_textureResource && m_loadedData;
 }

@@ -21,7 +21,7 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(path, model))
 	{
-		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushModel(model.get(), path))
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && SettingsManager::ms_DX12.AsyncModelsEnabled && LoadManager::TryPushModel(model.get(), path))
 			return model;
 
 		if (!cmdList)
@@ -45,7 +45,7 @@ shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsComma
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
-		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushTex(tex.get(), path, flipUpsideDown, isNormalMap, disableMips))
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && SettingsManager::ms_DX12.AsyncTexEnabled && LoadManager::TryPushTex(tex.get(), path, flipUpsideDown, isNormalMap, disableMips))
 			return tex;
 
 		if (!cmdList)
@@ -62,7 +62,7 @@ shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCo
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(path, tex))
 	{
-		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushCubemap(tex.get(), path, irradianceTex.get(), flipUpsideDown))
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && SettingsManager::ms_DX12.AsyncTexEnabled && SettingsManager::ms_DX12.AsyncTexCubemapEnabled && LoadManager::TryPushCubemap(tex.get(), path, irradianceTex.get(), flipUpsideDown))
 			return tex;
 
 		if (!cmdList)
@@ -87,7 +87,7 @@ shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12Grap
 	shared_ptr<Texture> tex;
 	if (!ResourceTracker::TryGetTexture(paths, tex))
 	{
-		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushCubemap(tex.get(), paths, irradianceTex.get(), flipUpsideDown))
+		if (SettingsManager::ms_DX12.AsyncLoadingEnabled && SettingsManager::ms_DX12.AsyncTexEnabled && SettingsManager::ms_DX12.AsyncTexCubemapEnabled && LoadManager::TryPushCubemap(tex.get(), paths, irradianceTex.get(), flipUpsideDown))
 			return tex;
 
 		if (!cmdList)

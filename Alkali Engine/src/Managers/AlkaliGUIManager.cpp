@@ -101,6 +101,12 @@ void AlkaliGUIManager::LogAsyncMessage(string msg)
 	if (!SettingsManager::ms_DX12.DebugAsyncLogEnabled)
 		return;
 
+	if (SettingsManager::ms_DX12.DebugAsyncPrintLogIntoConsole)
+	{
+		wstring wstr(msg.begin(), msg.end());
+		OutputDebugString((wstr + L"\n").c_str());
+	}
+
 	std::unique_lock<std::shared_mutex> lock(ms_asyncLogMutex);
 	ms_asyncLog.push_back(msg);
 }

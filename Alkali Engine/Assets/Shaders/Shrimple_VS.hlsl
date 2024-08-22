@@ -4,10 +4,7 @@
 struct V_IN
 {
     float3 Position : POSITION;
-    float2 Texture : TEXCOORD0;
     float3 Normal : NORMAL;
-    float3 Tangent : TANGENT;
-    float3 Binormal : BINORMAL;
 };
 
 struct Matrices
@@ -20,9 +17,9 @@ struct Matrices
 ConstantBuffer<Matrices> MatricesCB : register(b0, DRAW_SPACE);
 
 struct V_OUT
-{
-    float3 Normal : NORMAL;
+{    
     float4 Position : SV_Position;
+    float3 Normal : NORMAL;
 };
 
 V_OUT main(V_IN input)

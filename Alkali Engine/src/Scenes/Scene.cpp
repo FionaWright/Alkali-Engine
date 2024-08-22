@@ -125,7 +125,8 @@ bool Scene::LoadContent()
 	m_rpiLine.ParamIndexCBV_PerDraw = 0;
 
 	m_rootSigLine = std::make_shared<RootSig>();
-	m_rootSigLine->Init("Line Root Sig", m_rpiLine, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
+	//m_rootSigLine->Init("Line Root Sig", m_rpiLine, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
+	m_rootSigLine->Init("Line Root Sig", m_rpiLine);
 
 	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
 	{
@@ -136,6 +137,25 @@ bool Scene::LoadContent()
 	ShaderArgs args = { L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine->GetRootSigResource() };
 	args.Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 	m_shaderLine = AssetFactory::CreateShader(args, true);
+
+	if (SettingsManager::ms_DX12.AsyncShaderStandInEnabled)
+	{
+		RootParamInfo rpi;
+		rpi.NumCBV_PerDraw = 1;
+		rpi.ParamIndexCBV_PerDraw = 0;
+
+		std::shared_ptr<RootSig> rootSigAsync = std::make_shared<RootSig>();
+		rootSigAsync->Init("Async Root Sig", rpi);
+
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutAsync =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
+		ShaderArgs argsAsync = { L"Shrimple_VS.cso", L"Async_PS.cso", inputLayoutAsync, rootSigAsync->GetRootSigResource() };
+		m_asyncStandInShader = AssetFactory::CreateShader(argsAsync, true); // Mark as non-async loaded
+	}
 
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
@@ -262,6 +282,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 
 	LoadManager::ExecuteCPUWaitingLists();
 
+	if (SettingsManager::ms_Window.DebugFlashingBackgroundColors)
+		m_BackgroundColor = XMFLOAT4(Rand01(), Rand01(), Rand01(), Rand01());
+
 	m_viewMatrix = m_camera->GetViewMatrix();
 
 	float aspectRatio = SettingsManager::ms_Window.ScreenWidth / SettingsManager::ms_Window.ScreenHeight;
@@ -367,7 +390,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	bool requireCPUGPUSync = false;
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync, m_asyncStandInShader.get());
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
@@ -479,7 +502,21 @@ void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* cmdQueue)
 
 	UINT nextBackBufferIndex = m_pWindow->Present();
 
+	if (SettingsManager::ms_Dynamic.DebugFramePresentInfo)
+	{
+		OutputDebugString((L"Presented frame finished on fence " + std::to_wstring(m_FenceValues.at(currentBackBufferIndex)) + L"\n").c_str());
+		OutputDebugString((L"Waiting for fence " + std::to_wstring(m_FenceValues.at(nextBackBufferIndex)) + L"\n").c_str());
+	}
+	auto startTimeProfiler = std::chrono::high_resolution_clock::now();
+
 	cmdQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
+
+	if (SettingsManager::ms_Dynamic.DebugFramePresentInfo)
+	{
+		std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
+		wstring output = L"Time spent waiting for fence was " + std::to_wstring(timeTaken.count()) + L" ms\n";
+		OutputDebugString(output.c_str());
+	}	
 }
 
 void Scene::SetDSVForSize(int width, int height)
