@@ -43,6 +43,13 @@ struct AsyncTexCubemapArgs
 	bool FlipUpsideDown = false;
 };
 
+struct AsyncShaderArgs
+{
+	Shader* pShader;
+	ShaderArgs Args;
+	bool IsPreCompiled = false;
+};
+
 struct ThreadData
 {
 	ComPtr<ID3D12GraphicsCommandList2> CmdListCopy = nullptr;
@@ -78,6 +85,7 @@ public:
 	static bool TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
 	static bool TryPushCubemap(Texture* pTex, string filePath, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
 	static bool TryPushCubemap(Texture* pTex, vector<string> filePaths, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
+	static bool TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, bool isPreCompiled);
 
 private:
 	static void LoadLoop(int threadID);
@@ -85,6 +93,7 @@ private:
 	static void LoadModel(AsyncModelArgs args, int threadID);
 	static void LoadTex(AsyncTexArgs args, int threadID);
 	static void LoadTexCubemap(AsyncTexCubemapArgs args, int threadID);
+	static void LoadShader(AsyncShaderArgs args, int threadID);
 	static bool AllQueuesFlushed();
 
 	static D3DClass* ms_d3dClass;
@@ -100,7 +109,8 @@ private:
 	static queue<AsyncModelArgs> ms_modelQueue;
 	static queue<AsyncTexArgs> ms_texQueue;
 	static queue<AsyncTexCubemapArgs> ms_texCubemapQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue;
+	static queue<AsyncShaderArgs> ms_shaderQueue;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexShaderQueue;
 	static std::mutex ms_mutexThreadDatas[8];
 };
 

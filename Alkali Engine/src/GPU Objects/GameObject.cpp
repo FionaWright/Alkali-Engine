@@ -46,6 +46,9 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
 		return;	
 
+	if (!m_shader->IsInitialised())
+		return;
+
 	bool matLoaded = m_material->IsLoaded() && !SettingsManager::ms_DX12.DebugAsyncForceAsyncShaderStandIn;
 	if (!matLoaded)
 		m_material->TryUploadSRVs(d3d);

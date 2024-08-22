@@ -16,7 +16,8 @@ vector<std::jthread> LoadManager::ms_loadThreads;
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
 queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue;
+queue<AsyncShaderArgs> LoadManager::ms_shaderQueue;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexShaderQueue;;
 std::mutex LoadManager::ms_mutexThreadDatas[8];
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
@@ -152,7 +153,19 @@ void LoadManager::LoadHighestPriority(int threadID)
 	}
 	lockTex.unlock();
 
-	// TODO: Shaders
+	std::unique_lock<std::mutex> lockShader(ms_mutexShaderQueue);
+	if (ms_shaderQueue.size() > 0)
+	{
+		AsyncShaderArgs shaderArgs = ms_shaderQueue.front();
+		ms_shaderQueue.pop();
+		lockShader.unlock();
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found shader (" + wstringToString(shaderArgs.Args.vs) + ")");
+
+		LoadShader(shaderArgs, threadID);
+		return;
+	}
+	lockShader.unlock();
 
 	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found nothing");
@@ -349,6 +362,26 @@ bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Textur
 	return true;
 }
 
+bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, bool isPreCompiled)
+{
+	if (!ms_loadingActive)
+	{
+		AlkaliGUIManager::LogAsyncMessage("Shader tried to be pushed to queue but async wasn't enabled");
+		return false; // Loads syncronously
+	}
+
+	AlkaliGUIManager::LogAsyncMessage("Shader pushed to queue: " + wstringToString(shaderArgs.vs));
+
+	AsyncShaderArgs args;
+	args.pShader = pShader;
+	args.Args = shaderArgs;
+	args.IsPreCompiled = isPreCompiled;
+
+	std::unique_lock<std::mutex> lock(ms_mutexShaderQueue);
+	ms_shaderQueue.push(args);
+	return true;
+}
+
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
@@ -424,6 +457,20 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 	ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pCubemap);
 	if (args.pIrradiance)
 		ms_threadDatas[threadID]->CPU_WaitingListTexture.push_back(args.pIrradiance);
+}
+
+void LoadManager::LoadShader(AsyncShaderArgs args, int threadID)
+{
+	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
+
+	if (ms_fullShutdownActive)
+		return;
+
+	if (args.IsPreCompiled)
+		args.pShader->InitPreCompiled(ms_d3dClass->GetDevice(), args.Args);
+	else
+		args.pShader->Init(ms_d3dClass->GetDevice(), args.Args);
 }
 
 bool LoadManager::AllQueuesFlushed()

@@ -150,6 +150,8 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 
 	hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso));
 	ThrowIfFailed(hr);
+
+	m_initialised = true;
 }
 
 void Shader::TryHotReload(ID3D12Device2* device)
@@ -173,6 +175,11 @@ ComPtr<ID3D12PipelineState> Shader::GetPSO()
 bool Shader::IsPreCompiled()
 {
 	return m_preCompiled;
+}
+
+bool Shader::IsInitialised()
+{
+	return m_initialised;
 }
 
 ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail)

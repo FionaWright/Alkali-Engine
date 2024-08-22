@@ -33,6 +33,7 @@ struct DX12Settings
 	bool AsyncTexEnabled = true;
 	bool AsyncTexCubemapEnabled = true;
 	bool AsyncIrradianceGenEnabled = true;
+	bool AsyncShadersEnabled = true;
 	bool AsyncShaderStandInEnabled = false;
 
 	bool DebugAsyncLogEnabled = true;

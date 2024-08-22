@@ -64,6 +64,7 @@ public:
 	ComPtr<ID3D12PipelineState> GetPSO();
 
 	bool IsPreCompiled();
+	bool IsInitialised();
 
 	wstring m_VSName, m_PSName, m_HSName, m_DSName;
 
@@ -79,5 +80,6 @@ private:
 
 	bool m_preCompiled = false;
 	ShaderArgs m_args;
+	bool m_initialised = false;
 };
 
