@@ -100,6 +100,7 @@ private:
 	static queue<AsyncModelArgs> ms_modelQueue;
 	static queue<AsyncTexArgs> ms_texQueue;
 	static queue<AsyncTexCubemapArgs> ms_texCubemapQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexThreadData;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue;
+	static std::mutex ms_mutexThreadDatas[8];
 };
 

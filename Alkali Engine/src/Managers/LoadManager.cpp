@@ -16,7 +16,8 @@ vector<std::jthread> LoadManager::ms_loadThreads;
 queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
 queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexThreadData;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue;
+std::mutex LoadManager::ms_mutexThreadDatas[8];
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
@@ -38,6 +39,9 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 	ms_numThreads = numThreads;
 	ms_loadingActive = true;
 	ms_stopOnFlush = false;	
+
+	if (ms_numThreads > _countof(ms_mutexThreadDatas))
+		throw std::exception();
 
 	ms_copyQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	ms_computeQueue = d3d->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
@@ -173,10 +177,10 @@ void LoadManager::ExecuteCPUWaitingLists()
 	if (framesSinceExecute < SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice)
 		return;
 
-	std::unique_lock<std::mutex> lockCPU(ms_mutexThreadData);
-
 	for (int i = 0; i < ms_numThreads; i++)
 	{
+		std::unique_lock<std::mutex> lockCPU(ms_mutexThreadDatas[i]);
+
 		bool emptyModelList = ms_threadDatas[i]->CPU_WaitingListModel.size() == 0;
 		bool emptyTexList = ms_threadDatas[i]->CPU_WaitingListTexture.size() == 0;
 
@@ -220,7 +224,6 @@ void LoadManager::ExecuteCPUWaitingLists()
 				break;
 		}
 	}
-	lockCPU.unlock();
 
 	while (ms_gpuWaitingLists.size() > 0)
 	{
@@ -354,7 +357,7 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 	if (!args.pModel || ms_fullShutdownActive)
 		return;
 
-	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
+	std::unique_lock<std::mutex> lock(ms_mutexThreadDatas[threadID]);
 
 	if (args.FilePath != "")
 	{
@@ -387,7 +390,7 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 	if (args.FilePath == "")
 		throw std::exception();
 
-	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
+	std::unique_lock<std::mutex> lock(ms_mutexThreadDatas[threadID]);
 
 	auto cmdList = ms_threadDatas[threadID]->CmdListCompute.Get();
 	args.pTexture->Init(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown, args.IsNormalMap, args.DisableMips);
@@ -403,7 +406,7 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 	if (!args.pCubemap || ms_fullShutdownActive)
 		return;
 
-	std::unique_lock<std::mutex> lock(ms_mutexThreadData);
+	std::unique_lock<std::mutex> lock(ms_mutexThreadDatas[threadID]);
 
 	auto cmdList = ms_threadDatas[threadID]->CmdListCompute.Get();
 
