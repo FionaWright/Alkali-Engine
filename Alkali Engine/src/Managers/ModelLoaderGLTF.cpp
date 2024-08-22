@@ -305,7 +305,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
 	{
-		bool successfulAsyncPush = SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushModel(model.get(), asset, meshIndex, primitiveIndex);
+		bool successfulAsyncPush = SettingsManager::ms_DX12.Async.Enabled && SettingsManager::ms_DX12.Async.LoadModels && LoadManager::TryPushModel(model.get(), asset, meshIndex, primitiveIndex);
 		if (!successfulAsyncPush)
 		{
 			LoadModel(d3d, cmdList, asset, primitive, model.get());
@@ -624,7 +624,7 @@ void ModelLoaderGLTF::LoadModelsFromNode(D3DClass* d3d, ID3D12GraphicsCommandLis
 		shared_ptr<Model> model;
 		if (!ResourceTracker::TryGetModel(id, model))
 		{
-			bool successfulAsyncPush = SettingsManager::ms_DX12.AsyncLoadingEnabled && LoadManager::TryPushModel(model.get(), asset, meshIndex, i);
+			bool successfulAsyncPush = SettingsManager::ms_DX12.Async.Enabled && SettingsManager::ms_DX12.Async.LoadModels && LoadManager::TryPushModel(model.get(), asset, meshIndex, i);
 			if (!successfulAsyncPush)
 			{
 				LoadModel(d3d, cmdList, asset, mesh.primitives[i], model.get());

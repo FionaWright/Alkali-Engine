@@ -55,7 +55,7 @@ bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius)
 	return false;
 }
 
-void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, bool* requireCPUGPUSync, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, Shader* asyncShader)
+void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, bool* requireCPUGPUSync, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride)
 {
 	MatricesCB matrices;
 	matrices.V = view;
@@ -77,20 +77,20 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		float frustumFar = renderOverride ? renderOverride->FrustumFarPercent: 1.0f;
 
 		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || !frustum || frustum->CheckSphere(pos, radius, frustumNear, frustumFar))
-			list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), backBufferIndex, requireCPUGPUSync, &matrices, renderOverride, asyncShader);
+			list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), backBufferIndex, requireCPUGPUSync, &matrices, renderOverride);
 	}
 }
 
-void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync, Shader* asyncShader)
+void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync)
 {
 	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goList, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride, asyncShader);
+	RenderFromList(d3d, m_goList, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride);
 }
 
-void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync, Shader* asyncShader)
+void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync)
 {
 	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goListTrans, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride, asyncShader);
+	RenderFromList(d3d, m_goListTrans, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 

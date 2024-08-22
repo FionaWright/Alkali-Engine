@@ -22,7 +22,7 @@ std::mutex LoadManager::ms_mutexThreadDatas[8];
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
+	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive)
 		return;
 
 	AlkaliGUIManager::LogAsyncMessage("====================================================");
@@ -62,7 +62,7 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 
 void LoadManager::EnableStopOnFlush()
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive)
+	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive)
 		return;
 
 	ms_stopOnFlush = true;
@@ -71,7 +71,7 @@ void LoadManager::EnableStopOnFlush()
 
 void LoadManager::StopLoading()
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled || ms_fullShutdownActive || !ms_loadingActive)
+	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive || !ms_loadingActive)
 		return;
 
 	ms_loadingActive = false;	
@@ -167,13 +167,13 @@ void LoadManager::LoadHighestPriority(int threadID)
 	}
 	lockShader.unlock();
 
-	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
+	if (!SettingsManager::ms_DX12.Async.LogIgnoreInfoMessages)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found nothing");
 }
 
 void LoadManager::ExecuteCPUWaitingLists()
 {
-	if (!SettingsManager::ms_DX12.AsyncLoadingEnabled)
+	if (!SettingsManager::ms_DX12.Async.Enabled)
 		return;
 
 	if (!ms_loadingActive && ms_loadThreads.size() > 0)
@@ -182,12 +182,12 @@ void LoadManager::ExecuteCPUWaitingLists()
 		AlkaliGUIManager::LogAsyncMessage("Main thread resuming, all threads exiting");
 	}
 
-	if (!SettingsManager::ms_DX12.DebugAsyncLogIgnoreInfo)
+	if (!SettingsManager::ms_DX12.Async.LogIgnoreInfoMessages)
 		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
 
 	static int framesSinceExecute = 0;
 	framesSinceExecute++;
-	if (framesSinceExecute < SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice)
+	if (framesSinceExecute < SettingsManager::ms_DX12.Async.DebugExecutionFrameSlice)
 		return;
 
 	for (int i = 0; i < ms_numThreads; i++)
@@ -213,7 +213,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 			AlkaliGUIManager::LogAsyncMessage("COPY CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
 
 			framesSinceExecute = 0;
-			if (SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice > 0)
+			if (SettingsManager::ms_DX12.Async.DebugExecutionFrameSlice > 0)
 				break;
 		}
 
@@ -233,7 +233,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 			AlkaliGUIManager::LogAsyncMessage("COMPUTE CPU waiting list cleared, " + strTexCount + " textures put on GPU waiting list with fence " + strFenceVal);
 
 			framesSinceExecute = 0;
-			if (SettingsManager::ms_DX12.DebugAsyncExecuteFrameSlice > 0)
+			if (SettingsManager::ms_DX12.Async.DebugExecutionFrameSlice > 0)
 				break;
 		}
 	}
@@ -384,8 +384,8 @@ bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, b
 
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
+	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
 
 	if (!args.pModel || ms_fullShutdownActive)
 		return;
@@ -414,8 +414,8 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 
 void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
+	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
 
 	if (!args.pTexture || ms_fullShutdownActive)
 		return;
@@ -433,8 +433,8 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 
 void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
+	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
 
 	if (!args.pCubemap || ms_fullShutdownActive)
 		return;
@@ -448,7 +448,7 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 	else
 		args.pCubemap->InitCubeMapHDR(ms_d3dClass, cmdList, args.FilePath, args.FlipUpsideDown);
 	
-	if (args.pIrradiance && SettingsManager::ms_DX12.AsyncIrradianceGenEnabled)
+	if (args.pIrradiance && SettingsManager::ms_DX12.Async.DispatchIrradianceMaps)
 	{
 		args.pIrradiance->InitCubeMapUAV_Empty(ms_d3dClass);
 		TextureLoader::CreateIrradianceMap(ms_d3dClass, cmdList, args.pCubemap->GetResource(), args.pIrradiance->GetResource());
@@ -461,8 +461,8 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 
 void LoadManager::LoadShader(AsyncShaderArgs args, int threadID)
 {
-	if (SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.DebugAsyncLoadDelayMillis);
+	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
+		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
 
 	if (ms_fullShutdownActive)
 		return;

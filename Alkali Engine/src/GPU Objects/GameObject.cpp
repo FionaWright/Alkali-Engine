@@ -35,7 +35,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride, Shader* asyncShader)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -49,22 +49,15 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_shader->IsInitialised())
 		return;
 
-	bool matLoaded = m_material->IsLoaded() && !SettingsManager::ms_DX12.DebugAsyncForceAsyncShaderStandIn;
+	bool matLoaded = m_material->IsLoaded();
 	if (!matLoaded)
-		m_material->TryUploadSRVs(d3d);
-
-	if (!matLoaded && !asyncShader)
-		return;
-
-	if (requireCPUGPUSync && matLoaded)
-		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);	
-
-	if (!matLoaded && !m_asyncMaterial)
 	{
-		vector<UINT> sizes = { sizeof(MatricesCB) };
-		m_asyncMaterial = AssetFactory::CreateMaterial();		
-		m_asyncMaterial->AddCBVs(d3d, cmdListDirect, sizes, false);
-	}
+		m_material->TryUploadSRVs(d3d);
+		return;
+	}		
+
+	if (requireCPUGPUSync)
+		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);	
 
 	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
 	{
@@ -90,18 +83,8 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		throw std::exception("Matrices not given");
 
 	Material* matUsed = m_material.get();
-	RootParamInfo usedRPI = rpi;
 	if (renderOverride && renderOverride->UseShadowMapMat)
 		matUsed = m_shadowMapMats[renderOverride->CascadeIndex].get();
-	else if (!matLoaded)
-	{
-		matUsed = m_asyncMaterial.get();
-
-		RootParamInfo asyncRPI; // Yes this is fucking terrible, fix later
-		asyncRPI.NumCBV_PerDraw = 1;
-		asyncRPI.ParamIndexCBV_PerDraw = 0;
-		usedRPI = asyncRPI;
-	}		
 
 	Model* sphereModel = nullptr;	
 	if (Scene::IsSphereModeOn(&sphereModel))
@@ -112,11 +95,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(cmdListDirect, usedRPI, backBufferIndex, matrices, sphereModel, &modifiedTransform, matUsed);
+		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, matUsed);
 		return;
 	}
 
-	RenderModel(cmdListDirect, usedRPI, backBufferIndex, matrices, m_model.get(), nullptr, matUsed);
+	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, matUsed);
 }
 
 void GameObject::RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)

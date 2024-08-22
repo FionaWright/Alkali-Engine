@@ -98,10 +98,10 @@ void AlkaliGUIManager::LogErrorMessage(string msg)
 
 void AlkaliGUIManager::LogAsyncMessage(string msg)
 {
-	if (!SettingsManager::ms_DX12.DebugAsyncLogEnabled)
+	if (!SettingsManager::ms_DX12.Async.Enabled)
 		return;
 
-	if (SettingsManager::ms_DX12.DebugAsyncPrintLogIntoConsole)
+	if (SettingsManager::ms_DX12.Async.PrintLogIntoConsole)
 	{
 		wstring wstr(msg.begin(), msg.end());
 		OutputDebugString((wstr + L"\n").c_str());

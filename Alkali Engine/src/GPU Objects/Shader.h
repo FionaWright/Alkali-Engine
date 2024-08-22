@@ -63,8 +63,8 @@ public:
 
 	ComPtr<ID3D12PipelineState> GetPSO();
 
-	bool IsPreCompiled();
-	bool IsInitialised();
+	bool IsPreCompiled() const;
+	bool IsInitialised() const;
 
 	wstring m_VSName, m_PSName, m_HSName, m_DSName;
 

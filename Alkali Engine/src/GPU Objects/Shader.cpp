@@ -172,12 +172,12 @@ ComPtr<ID3D12PipelineState> Shader::GetPSO()
 	return m_pso;
 }
 
-bool Shader::IsPreCompiled()
+bool Shader::IsPreCompiled() const
 {
 	return m_preCompiled;
 }
 
-bool Shader::IsInitialised()
+bool Shader::IsInitialised() const
 {
 	return m_initialised;
 }
