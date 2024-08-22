@@ -138,25 +138,6 @@ bool Scene::LoadContent()
 	args.Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 	m_shaderLine = AssetFactory::CreateShader(args, true);
 
-	if (SettingsManager::ms_DX12.AsyncShaderStandInEnabled)
-	{
-		RootParamInfo rpi;
-		rpi.NumCBV_PerDraw = 1;
-		rpi.ParamIndexCBV_PerDraw = 0;
-
-		std::shared_ptr<RootSig> rootSigAsync = std::make_shared<RootSig>();
-		rootSigAsync->Init("Async Root Sig", rpi);
-
-		vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutAsync =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		ShaderArgs argsAsync = { L"Shrimple_VS.cso", L"Async_PS.cso", inputLayoutAsync, rootSigAsync->GetRootSigResource() };
-		m_asyncStandInShader = AssetFactory::CreateShader(argsAsync, true); // Mark as non-async loaded
-	}
-
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
 
@@ -390,7 +371,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	bool requireCPUGPUSync = false;
 	
 	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync, m_asyncStandInShader.get());
+		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);

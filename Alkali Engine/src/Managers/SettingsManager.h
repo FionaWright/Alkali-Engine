@@ -16,6 +16,23 @@ constexpr int MAX_SHADOW_MAP_CASCADES = 4;
 
 //====================================
 
+struct AsyncLoadingSettings
+{
+	bool Enabled = true;
+	int ThreadCount = 6;
+	bool LoadModels = true;
+	bool LoadTextures = true;
+	bool LoadCubemaps = true;
+	bool DispatchIrradianceMaps = true;
+	bool LoadShaders = true;
+
+	bool LogEnabled = true;
+	bool LogIgnoreInfoMessages = true;
+	bool PrintLogIntoConsole = false;
+	float DebugLoadingDelayMillis = 0;
+	bool DebugExecutionFrameSlice = 0;
+};
+
 struct DX12Settings
 {
 	bool DebugGlobalDescriptorHeapEnabled = true;
@@ -25,23 +42,9 @@ struct DX12Settings
 	bool DebugWhiteTextureOnly = false;
 	bool DebugCubeModelOnly = false;
 	bool DebugRenderSingleFrameOnly = false;
-	bool DebugReportLiveObjects = false;
+	bool DebugReportLiveObjects = true;
 
-	bool AsyncLoadingEnabled = true;
-	int AsyncLoadingThreadCount = 6;
-	bool AsyncModelsEnabled = true;
-	bool AsyncTexEnabled = true;
-	bool AsyncTexCubemapEnabled = true;
-	bool AsyncIrradianceGenEnabled = true;
-	bool AsyncShadersEnabled = true;
-	bool AsyncShaderStandInEnabled = false;
-
-	bool DebugAsyncLogEnabled = true;
-	bool DebugAsyncLogIgnoreInfo = true;
-	bool DebugAsyncPrintLogIntoConsole = false;
-	float DebugAsyncLoadDelayMillis = 0;
-	bool DebugAsyncExecuteFrameSlice = 0;
-	bool DebugAsyncForceAsyncShaderStandIn = false;
+	const AsyncLoadingSettings Async;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

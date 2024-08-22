@@ -188,7 +188,7 @@ void Application::AssignScene(Scene* scene)
     m_updateClock.Reset();
     m_renderClock.Reset();
 
-    LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.AsyncLoadingThreadCount);
+    LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.Async.ThreadCount);
 
     if (!scene->m_ContentLoaded)
     {
