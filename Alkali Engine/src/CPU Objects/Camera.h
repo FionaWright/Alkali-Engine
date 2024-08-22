@@ -19,6 +19,8 @@ public:
 	CameraMode GetMode();
 	void SetSpeed(float speed);
 
+	void SetRotation(float x, float y, float z) override;
+
 	void Update(TimeEventArgs& e);	
 
 	void Reset();

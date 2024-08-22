@@ -36,7 +36,7 @@ public:
 
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3 xyz);
-	void SetRotation(float x, float y, float z);
+	virtual void SetRotation(float x, float y, float z);
 	void SetRotationRadians(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
 	void SetScale(float x);

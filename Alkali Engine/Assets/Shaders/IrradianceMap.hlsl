@@ -1,4 +1,4 @@
-#define SAMPLE_DELTA 0.05f
+#define SAMPLE_DELTA 0.06f
 #define PI 3.141592654f
 
 TextureCube<float4> SrcCubemap : register(t0);

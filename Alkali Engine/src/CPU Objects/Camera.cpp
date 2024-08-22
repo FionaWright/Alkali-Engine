@@ -30,6 +30,25 @@ void Camera::SetSpeed(float speed)
 	m_speed = speed;
 }
 
+void Camera::SetRotation(float x, float y, float z)
+{
+	GameObject::SetRotation(x, y, z);
+	m_pitch = x;
+	m_yaw = y;
+
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
+	rot = XMQuaternionNormalize(rot);
+
+	XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
+	XMStoreFloat3(&m_forwardVector, direction);
+
+	XMVECTOR up = XMVector3Rotate(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rot);
+	XMStoreFloat3(&m_upVector, up);
+
+	XMVECTOR right = XMVector3Rotate(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rot);
+	XMStoreFloat3(&m_rightVector, right);
+}
+
 void Camera::Update(TimeEventArgs& e)
 {
 	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
@@ -143,7 +162,7 @@ void Camera::MoveScroll(TimeEventArgs& e)
 		m_yaw += deltaMouse.x;
 		XMVECTOR rot = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
 		rot = XMQuaternionNormalize(rot);
-		SetRotation(m_pitch, m_yaw, 0);
+		GameObject::SetRotation(m_pitch, m_yaw, 0);
 
 		XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
 		XMStoreFloat3(&m_forwardVector, direction);
