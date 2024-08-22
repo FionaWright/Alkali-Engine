@@ -36,13 +36,13 @@ constexpr bool FLIP_ATI2_BLOCKS_RIGHTSIDE_LEFT = false;
 constexpr bool FLIP_TGA_UPSIDE_DOWN = false;
 constexpr bool FLIP_TGA_RIGHTSIDE_LEFT = false;
 
-ID3D12RootSignature* TextureLoader::ms_mipMapRootSig, *TextureLoader::ms_mipMapRootSigCubemap;
-ID3D12RootSignature* TextureLoader::ms_irradianceRootSig;
-ID3D12PipelineState* TextureLoader::ms_mipMapPSO;
-ID3D12PipelineState* TextureLoader::ms_mipMapPSOCubemap;
-ID3D12PipelineState* TextureLoader::ms_irradiancePSO;
+ComPtr<ID3D12RootSignature> TextureLoader::ms_mipMapRootSig, TextureLoader::ms_mipMapRootSigCubemap;
+ComPtr<ID3D12RootSignature> TextureLoader::ms_irradianceRootSig;
+ComPtr<ID3D12PipelineState> TextureLoader::ms_mipMapPSO;
+ComPtr<ID3D12PipelineState> TextureLoader::ms_mipMapPSOCubemap;
+ComPtr<ID3D12PipelineState> TextureLoader::ms_irradiancePSO;
 int TextureLoader::ms_descriptorSize;
-vector<ID3D12DescriptorHeap*> TextureLoader::ms_trackedDescHeaps;
+vector<ComPtr<ID3D12DescriptorHeap>> TextureLoader::ms_trackedDescHeaps;
 std::mutex TextureLoader::ms_mutexMipMapGen;
 
 void TextureLoader::LoadTex(string filePath, int& width, int& height, uint8_t** pData, bool& hasAlpha, int& channels, bool flipUpsideDown, bool isNormalMap)
@@ -1029,14 +1029,15 @@ void TextureLoader::CreateMipMaps(D3DClass* d3d, ID3D12GraphicsCommandList2* cmd
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    ID3D12DescriptorHeap* heapForCS;
+    ComPtr<ID3D12DescriptorHeap> heapForCS;
     HRESULT hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heapForCS));
     ThrowIfFailed(hr);
-    ms_trackedDescHeaps.push_back(heapForCS);
+    ms_trackedDescHeaps.push_back(heapForCS);    
 
-    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSig);
-    cmdListDirect->SetDescriptorHeaps(1, &heapForCS);
-    cmdListDirect->SetPipelineState(ms_mipMapPSO);
+    ID3D12DescriptorHeap* heaps = heapForCS.Get();
+    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSig.Get());
+    cmdListDirect->SetDescriptorHeaps(1, &heaps);
+    cmdListDirect->SetPipelineState(ms_mipMapPSO.Get());
 
     auto cpuHandle = heapForCS->GetCPUDescriptorHandleForHeapStart();
     auto gpuHandle = heapForCS->GetGPUDescriptorHandleForHeapStart();
@@ -1110,14 +1111,16 @@ void TextureLoader::CreateMipMapsCubemap(D3DClass* d3d, ID3D12GraphicsCommandLis
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    ID3D12DescriptorHeap* heapForCS;
+    ComPtr<ID3D12DescriptorHeap> heapForCS;
     HRESULT hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heapForCS));
     ThrowIfFailed(hr);
     ms_trackedDescHeaps.push_back(heapForCS);
 
-    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSigCubemap);
-    cmdListDirect->SetDescriptorHeaps(1, &heapForCS);
-    cmdListDirect->SetPipelineState(ms_mipMapPSOCubemap);
+    ID3D12DescriptorHeap* heaps = heapForCS.Get();
+
+    cmdListDirect->SetComputeRootSignature(ms_mipMapRootSigCubemap.Get());
+    cmdListDirect->SetDescriptorHeaps(1, &heaps);
+    cmdListDirect->SetPipelineState(ms_mipMapPSOCubemap.Get());
 
     auto cpuHandle = heapForCS->GetCPUDescriptorHandleForHeapStart();
     auto gpuHandle = heapForCS->GetGPUDescriptorHandleForHeapStart();
@@ -1195,16 +1198,19 @@ void TextureLoader::CreateIrradianceMap(D3DClass* d3d, ID3D12GraphicsCommandList
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    ID3D12DescriptorHeap* descriptorHeap;
-    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap));
-    ms_trackedDescHeaps.push_back(descriptorHeap);
+    ComPtr<ID3D12DescriptorHeap> heapForCS;
+    HRESULT hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heapForCS));
+    ThrowIfFailed(hr);
+    ms_trackedDescHeaps.push_back(heapForCS);
 
-    cmdListDirect->SetComputeRootSignature(ms_irradianceRootSig);
-    cmdListDirect->SetPipelineState(ms_irradiancePSO);
-    cmdListDirect->SetDescriptorHeaps(1, &descriptorHeap);
+    ID3D12DescriptorHeap* heaps = heapForCS.Get();
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
+    cmdListDirect->SetComputeRootSignature(ms_irradianceRootSig.Get());
+    cmdListDirect->SetPipelineState(ms_irradiancePSO.Get());
+    cmdListDirect->SetDescriptorHeaps(1, &heaps);
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(heapForCS->GetCPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(heapForCS->GetGPUDescriptorHandleForHeapStart(), 0, ms_descriptorSize);
 
     device->CreateShaderResourceView(srcResource, &srcTextureSRVDesc, currentCPUHandle);
     currentCPUHandle.Offset(1, ms_descriptorSize);
@@ -1231,35 +1237,24 @@ void TextureLoader::InitComputeShaders(ID3D12Device2* device)
 
 void TextureLoader::Shutdown()
 {
-    if (ms_mipMapRootSig)
-    {
-        ms_mipMapRootSig->Release();
-        ms_mipMapRootSig = 0;
-    }
-
     if (ms_mipMapPSO)
-    {
-        ms_mipMapPSO->Release();
-        ms_mipMapPSO = 0;
-    }
+        ms_mipMapPSO.Reset();
    
     if (ms_mipMapPSOCubemap)
-    {
-        ms_mipMapPSOCubemap->Release();
-        ms_mipMapPSOCubemap = 0;
-    }
+        ms_mipMapPSOCubemap.Reset();
+
+    if (ms_mipMapRootSig)
+        ms_mipMapRootSig.Reset();
 
     if (ms_mipMapRootSigCubemap)
-    {
-        ms_mipMapRootSigCubemap->Release();
-        ms_mipMapRootSigCubemap = 0;
-    }
+        ms_mipMapRootSigCubemap.Reset();
 
-    for (int i = 0; i < ms_trackedDescHeaps.size(); i++)
-    {
-        if (ms_trackedDescHeaps.at(i))
-            ms_trackedDescHeaps.at(i)->Release();
-    }
+    if (ms_irradianceRootSig)
+        ms_irradianceRootSig.Reset();
+
+    if (ms_irradiancePSO)
+        ms_irradiancePSO.Reset();
+
     ms_trackedDescHeaps.clear();
 }
 
@@ -1307,7 +1302,7 @@ void TextureLoader::InitMipMapCS(ID3D12Device2* device)
     ThrowIfFailed(hr);
 
     D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = ms_mipMapRootSig;
+    psoDesc.pRootSignature = ms_mipMapRootSig.Get();
     psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
 
     device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_mipMapPSO));
@@ -1354,7 +1349,7 @@ void TextureLoader::InitMipMapPSOCubemap(ID3D12Device2* device)
     ThrowIfFailed(hr);
 
     D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = ms_mipMapRootSigCubemap;
+    psoDesc.pRootSignature = ms_mipMapRootSigCubemap.Get();
     psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
 
     device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_mipMapPSOCubemap));
@@ -1402,7 +1397,7 @@ void TextureLoader::InitIrradianceCS(ID3D12Device2* device)
     ThrowIfFailed(hr);
 
     D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = ms_irradianceRootSig;
+    psoDesc.pRootSignature = ms_irradianceRootSig.Get();
     psoDesc.CS = { reinterpret_cast<UINT8*>(cBlob->GetBufferPointer()), cBlob->GetBufferSize() };
 
     device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&ms_irradiancePSO));

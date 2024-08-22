@@ -6,6 +6,7 @@
 ComPtr<ID3D12DescriptorHeap> ImGUIManager::ms_descHeapSRV;
 bool ImGUIManager::ms_currentlyRendering;
 ImVec2 ImGUIManager::ms_windowSize;
+bool ImGUIManager::ms_initialised;
 
 void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight)
 {
@@ -26,6 +27,8 @@ void ImGUIManager::Init(HWND hwnd, ID3D12Device2* device, int framesInFlight)
 
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX12_Init(device, framesInFlight, rtvFormat, ms_descHeapSRV.Get(), ms_descHeapSRV->GetCPUDescriptorHandleForHeapStart(), ms_descHeapSRV->GetGPUDescriptorHandleForHeapStart());
+
+	ms_initialised = true;
 }
 
 void ImGUIManager::Begin()
@@ -70,7 +73,7 @@ bool ImGUIManager::MouseHoveringImGui()
 
 void ImGUIManager::Shutdown()
 {
-	if (!SettingsManager::ms_Misc.ImGuiEnabled)
+	if (!SettingsManager::ms_Misc.ImGuiEnabled || !ms_initialised)
 		return;
 
 	ImGui_ImplDX12_Shutdown();
