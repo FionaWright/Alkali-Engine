@@ -138,8 +138,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
 		depthArgs.NoPS = true;
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
-		//depthArgs.SlopeScaleDepthBias = -0.02f;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
+		depthArgs.IsDepthShader = true;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, true);
 	}
 

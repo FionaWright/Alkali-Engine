@@ -224,6 +224,24 @@ bool Scene::LoadContent()
 	m_viewDepthGO = std::make_unique<GameObject>("Depth Tex", modelPlane, m_viewDepthShader, m_viewDepthMat, true);
 	m_viewDepthGO->SetRotation(90, 0, 0);
 
+	if (!m_depthPrepassShader)
+	{
+		RootParamInfo depthRPI;
+		depthRPI.NumCBV_PerDraw = 1;
+		depthRPI.ParamIndexCBV_PerDraw = 0;
+
+		m_depthPrepassRootSig = std::make_shared<RootSig>();
+		m_depthPrepassRootSig->Init("Depth RS", depthRPI);
+
+		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
+		depthArgs.NoPS = true;
+		depthArgs.CullNone = true;
+		depthArgs.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		depthArgs.IsDepthShader = true;
+		depthArgs.DepthBias = 100.0f;
+		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, true);
+	}
+
 	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
 	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
@@ -246,6 +264,8 @@ void Scene::UnloadContent()
 	m_rootSigLine.reset();
 	m_skyboxTex.reset();
 	m_debugLineList.clear();
+	m_depthPrepassRootSig.reset();
+	m_depthPrepassShader.reset();
 
 	if (ms_sphereModel)
 	{
@@ -369,6 +389,9 @@ void Scene::OnRender(TimeEventArgs& e)
 	else
 		m_shadowMapCounter++;	
 
+	cmdList->RSSetViewports(1, &m_viewport);
+	ClearBackBuffer(cmdList.Get());
+
 	if (ms_perFramePBRMat)
 	{
 		ms_perFramePBRMat->SetCBV_PerFrame(0, &m_perFrameCBuffers.Camera, sizeof(CameraCB), backBufferIndex);
@@ -381,10 +404,26 @@ void Scene::OnRender(TimeEventArgs& e)
 	if (m_viewDepthMat)
 		m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
 
-	cmdList->RSSetViewports(1, &m_viewport);
-	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	if (SettingsManager::ms_Dynamic.DepthPrePassEnabled)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_BLACK, "Depth Pre-Pass");
+		cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
-	ClearBackBuffer(cmdList.Get());
+		RenderOverride ro = { m_depthPrepassShader.get(), m_depthPrepassRootSig.get() };
+		ro.UseShadowMapMat = true;
+		ro.CascadeIndex = MAX_SHADOW_MAP_CASCADES; // Change
+
+		Shader* lastSetShader = nullptr;
+		for (auto& it : batchList)
+		{
+			it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+			it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+		}
+
+		PIXEndEvent(cmdList.Get());		
+	}
+	
+	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);	
 
 	bool requireCPUGPUSync = false;
 

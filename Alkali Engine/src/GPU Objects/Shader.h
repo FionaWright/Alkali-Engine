@@ -12,13 +12,14 @@ const wstring g_dirPath = L"Assets/Shaders/";
 struct ShaderArgs
 {
 	wstring vs, ps;
-	vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-	ID3D12RootSignature* rootSig;
+	vector<D3D12_INPUT_ELEMENT_DESC> InputLayout;
+	ID3D12RootSignature* RootSig = nullptr;
 
 	bool CullNone = false;
 	bool CullFront = false;
 	bool DisableDSV = false;
 	bool DisableDSVWriting = false;
+	bool IsDepthShader = false;
 	bool DisableStencil = false;
 	bool NoPS = false;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -26,6 +27,7 @@ struct ShaderArgs
 	DXGI_FORMAT DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	float SlopeScaleDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	float DepthBias = 0.0f;
 
 	ShaderArgs& operator=(const ShaderArgs& other)
 	{
@@ -34,8 +36,8 @@ struct ShaderArgs
 
 		vs = other.vs;
 		ps = other.ps;
-		inputLayout = other.inputLayout; 
-		rootSig = other.rootSig;
+		InputLayout = other.InputLayout; 
+		RootSig = other.RootSig;
 
 		CullNone = other.CullNone;
 		CullFront = other.CullFront;
@@ -47,6 +49,8 @@ struct ShaderArgs
 		SlopeScaleDepthBias = other.SlopeScaleDepthBias;
 		DSVFormat = other.DSVFormat;
 		DisableStencil = other.DisableStencil;
+		IsDepthShader = other.IsDepthShader;
+		DepthBias = other.DepthBias;
 
 		return *this;
 	}

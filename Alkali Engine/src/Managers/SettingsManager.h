@@ -161,6 +161,7 @@ struct DynamicSettings
 
 	bool ShaderCompilerOptimizationEnabled = true;
 	bool TransparentGOEnabled = true;
+	bool DepthPrePassEnabled = true;
 
 	bool HeapDebugViewEnabled = false;
 	bool VisualiseDSVEnabled = false;
@@ -177,6 +178,7 @@ struct DynamicSettings
 	bool ShowImGuiDemoWindow = false;
 
 	bool QuickDebug = false; // Useful for debugging code quickly without making new GUI 
+	float QuickDebugFloat = 0; // Useful for debugging code quickly without making new GUI 
 };
 
 class SettingsManager
