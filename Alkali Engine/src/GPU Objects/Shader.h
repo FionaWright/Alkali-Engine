@@ -19,6 +19,7 @@ struct ShaderArgs
 	bool CullFront = false;
 	bool DisableDSV = false;
 	bool DisableDSVWriting = false;
+	bool EnableDSVWritingForce = false;
 	bool IsDepthShader = false;
 	bool DisableStencil = false;
 	bool NoPS = false;
@@ -51,6 +52,7 @@ struct ShaderArgs
 		DisableStencil = other.DisableStencil;
 		IsDepthShader = other.IsDepthShader;
 		DepthBias = other.DepthBias;
+		EnableDSVWritingForce = other.EnableDSVWritingForce;
 
 		return *this;
 	}

@@ -14667,7 +14667,7 @@
 	"materials":[
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14709,7 +14709,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14730,7 +14730,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14751,7 +14751,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14773,7 +14773,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14920,7 +14920,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14941,7 +14941,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14962,7 +14962,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -14983,7 +14983,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15004,7 +15004,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15025,7 +15025,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15046,7 +15046,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15067,7 +15067,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15088,7 +15088,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15109,7 +15109,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15130,7 +15130,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15151,7 +15151,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15172,7 +15172,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15193,7 +15193,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15214,7 +15214,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15264,7 +15264,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15285,7 +15285,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15327,7 +15327,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15369,7 +15369,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15390,7 +15390,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15411,7 +15411,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15432,7 +15432,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15453,7 +15453,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15474,7 +15474,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15495,7 +15495,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15516,7 +15516,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15579,7 +15579,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15600,7 +15600,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15621,7 +15621,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15642,7 +15642,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15663,7 +15663,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -15692,7 +15692,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15755,7 +15755,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15776,7 +15776,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15797,7 +15797,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15818,7 +15818,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15839,7 +15839,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15860,7 +15860,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15881,7 +15881,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15902,7 +15902,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15923,7 +15923,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15944,7 +15944,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15965,7 +15965,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15986,7 +15986,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16007,7 +16007,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16070,7 +16070,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16091,7 +16091,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16112,7 +16112,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16133,7 +16133,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16154,7 +16154,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16175,7 +16175,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16196,7 +16196,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16217,7 +16217,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16238,7 +16238,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16259,7 +16259,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16280,7 +16280,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16301,7 +16301,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16322,7 +16322,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16343,7 +16343,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16364,7 +16364,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16385,7 +16385,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16469,7 +16469,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16490,7 +16490,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularColorFactor":[
@@ -16513,7 +16513,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16534,7 +16534,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16555,7 +16555,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16576,7 +16576,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16597,7 +16597,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16618,7 +16618,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16639,7 +16639,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16660,7 +16660,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16681,7 +16681,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16702,7 +16702,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16723,7 +16723,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16744,7 +16744,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -16773,7 +16773,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -16802,7 +16802,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16844,7 +16844,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16865,7 +16865,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16886,7 +16886,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16907,7 +16907,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16928,7 +16928,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16949,7 +16949,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16970,7 +16970,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16991,7 +16991,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17012,7 +17012,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17033,7 +17033,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17054,7 +17054,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17098,7 +17098,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17119,7 +17119,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17140,7 +17140,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17161,7 +17161,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17182,7 +17182,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17203,7 +17203,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17224,7 +17224,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17245,7 +17245,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17266,7 +17266,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17308,7 +17308,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17329,7 +17329,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -17350,7 +17350,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -17379,7 +17379,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -17408,7 +17408,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -17437,7 +17437,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -17466,7 +17466,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,
@@ -17495,7 +17495,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":true,
+			"doubleSided":false,
 			"emissiveFactor":[
 				1,
 				1,

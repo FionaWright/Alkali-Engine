@@ -124,8 +124,16 @@ void ResourceTracker::RecompileAllShaders(ID3D12Device2* device)
 {
 	for (auto& it : ms_shaderMap)
 	{
+		if (!it.second->IsInitialised())
+			continue;
+
 		it.second->Compile(device);
 	}
+}
+
+void ResourceTracker::ClearShaderList()
+{
+	ms_shaderMap.clear();
 }
 
 void ResourceTracker::AddBatch(string filePath, shared_ptr<Batch> batch)

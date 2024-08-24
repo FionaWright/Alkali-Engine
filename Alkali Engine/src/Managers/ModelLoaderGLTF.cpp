@@ -468,7 +468,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	nodeName = id + "::" + nodeName;
 
 	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
-	bool isTransparent = alphaRequirementMet || useGlassSRVs;
+	bool isTransparent = alphaRequirementMet || useGlassSRVs || mat.doubleSided;
 
 	if (shaderIndex == -1)
 		shaderIndex = isTransparent ? args.DefaultShaderTransIndex : args.DefaultShaderIndex;

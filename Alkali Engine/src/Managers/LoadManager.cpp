@@ -477,5 +477,6 @@ bool LoadManager::AllQueuesFlushed()
 {
 	return ms_modelQueue.size() == 0 &&
 		ms_texQueue.size() == 0 &&
-		ms_texCubemapQueue.size() == 0;
+		ms_texCubemapQueue.size() == 0 &&
+		ms_shaderQueue.size() == 0;
 }
