@@ -103,6 +103,12 @@ float3 F_ThinFilm(float NdV);
 
 float4 main(V_OUT input) : SV_Target
 {    
+    float4 tex = g_texture.Sample(g_sampler, input.UV);                
+    float alpha = tex.a > MatPropCB.AlphaCutoff;
+    clip(alpha - 0.5f);
+
+    tex.rgb = pow(tex.rgb, 2.2f);    
+
     float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
 
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
@@ -125,19 +131,10 @@ float4 main(V_OUT input) : SV_Target
             float2 coord = shadowCoords.xy + (float2(x, y) * ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
 
-            //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
-
             shadowFactor += pixelDepth < shadowMapDepth;   
             i++;
         }
-    shadowFactor /= i;     
-
-    float4 tex = g_texture.Sample(g_sampler, input.UV);      
-
-    if (tex.a < MatPropCB.AlphaCutoff)
-        discard;            
-
-    tex.rgb = pow(tex.rgb, 2.2f);
+    shadowFactor /= i;      
 
 #if BUMP_2_CHANNEL
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
@@ -196,10 +193,6 @@ float4 main(V_OUT input) : SV_Target
     float3 ambient = irradiance * kD * albedo * DirLightCB.AmbientColor; 
 
     float3 Lo = diffuse + specular + ambient + indirectSpecular;
-    //float3 Lo = diffuse + specular + ambient;
-    //float3 Lo = diffuse + ambient;
-    //float3 Lo = specular;
-    //float3 Lo = indirectSpecular;
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, 1);

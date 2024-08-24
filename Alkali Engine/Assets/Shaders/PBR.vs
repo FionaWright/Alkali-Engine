@@ -68,9 +68,9 @@ V_OUT main(V_IN input)
     o.ViewDirection = CameraCB.CameraPosition.xyz - worldPos.xyz;
     o.ViewDirection = normalize(o.ViewDirection);
 
+    float4 biasedPos = float4(worldPos.xyz + o.Normal * ShadowCB.NormalBias, worldPos.w);
     for (int i = 0; i < ShadowCB.CascadeCount; i++)
-    {
-        float4 biasedPos = float4(worldPos.xyz + o.Normal * ShadowCB.NormalBias, worldPos.w);
+    {        
         float4 shadowPos = mul(ShadowCB.ShadowMatrix[i], biasedPos);
         o.ShadowMapCoords[i].xyz = shadowPos.xyz / shadowPos.w;
         o.ShadowMapCoords[i].xy = o.ShadowMapCoords[i].xy * 0.5f + 0.5f;

@@ -120,6 +120,14 @@ unordered_map<string, shared_ptr<Shader>>& ResourceTracker::GetShaders()
 	return ms_shaderMap;
 }
 
+void ResourceTracker::RecompileAllShaders(ID3D12Device2* device)
+{
+	for (auto& it : ms_shaderMap)
+	{
+		it.second->Compile(device);
+	}
+}
+
 void ResourceTracker::AddBatch(string filePath, shared_ptr<Batch> batch)
 {
 	if (ms_batchMap.contains(filePath))

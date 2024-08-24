@@ -402,14 +402,17 @@ void Scene::OnRender(TimeEventArgs& e)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
 	PIXEndEvent(cmdList.Get());
 
-	PIXBeginEvent(cmdList.Get(), COLOR_LIME, "Trans Pass");
-	for (auto& it : batchList)
+	if (SettingsManager::ms_Dynamic.TransparentGOEnabled)
 	{
-		PIXBeginEvent(cmdList.Get(), COLOR_LIME, it.second->m_Name.c_str());
-		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+		PIXBeginEvent(cmdList.Get(), COLOR_LIME, "Trans Pass");
+		for (auto& it : batchList)
+		{
+			PIXBeginEvent(cmdList.Get(), COLOR_LIME, it.second->m_Name.c_str());
+			it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+			PIXEndEvent(cmdList.Get());
+		}
 		PIXEndEvent(cmdList.Get());
-	}		
-	PIXEndEvent(cmdList.Get());
+	}	
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
