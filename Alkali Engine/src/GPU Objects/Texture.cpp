@@ -8,6 +8,7 @@ constexpr int NUM_CHANNELS = 4;
 
 Texture::Texture()
     : m_textureDesc({})
+    , m_currentState(D3D12_RESOURCE_STATE_COMMON)
 {
 }
 
@@ -81,7 +82,7 @@ void Texture::UploadResources(ID3D12GraphicsCommandList2* cmdListDirect, uint8_t
 
         UpdateSubresources(cmdListDirect, m_textureResource.Get(), m_textureUploadHeap.Get(), immediateOffset, subresourceIndex, 1, &subresource);
 
-        immediateOffset += GetRequiredIntermediateSize(m_textureResource.Get(), subresourceIndex, 1);
+        immediateOffset += static_cast<UINT>(GetRequiredIntermediateSize(m_textureResource.Get(), subresourceIndex, 1));
     }
 
     for (int a = 0; a < m_textureDesc.DepthOrArraySize; a++)

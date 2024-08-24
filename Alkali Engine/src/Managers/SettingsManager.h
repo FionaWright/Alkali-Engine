@@ -30,7 +30,7 @@ struct AsyncLoadingSettings
 	bool LogIgnoreInfoMessages = true;
 	bool PrintLogIntoConsole = false;
 	float DebugLoadingDelayMillis = 0;
-	bool DebugExecutionFrameSlice = 1;
+	int DebugExecutionFrameSlice = 1;
 };
 
 struct DX12Settings

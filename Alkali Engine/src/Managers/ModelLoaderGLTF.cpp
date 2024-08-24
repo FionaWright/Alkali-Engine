@@ -272,7 +272,7 @@ void ModelLoaderGLTF::LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLi
 	model->SetBuffers(cmdList, vertexBuffer.data(), indexBuffer.data());	
 }
 
-string ModelLoaderGLTF::LoadTexture(Asset& asset, const int textureIndex)
+string ModelLoaderGLTF::LoadTexture(Asset& asset, const size_t textureIndex)
 {
 	fastgltf::Texture& tex = (*asset)->textures[textureIndex];
 	fastgltf::Image& image = (*asset)->images[tex.imageIndex.value()];
@@ -300,7 +300,7 @@ string ModelLoaderGLTF::LoadTexture(Asset& asset, const int textureIndex)
 	return "";
 }
 
-void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id, int meshIndex, int primitiveIndex)
+void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id, size_t meshIndex, size_t primitiveIndex)
 {
 	shared_ptr<Model> model;
 	if (!ResourceTracker::TryGetModel(id, model))
@@ -441,7 +441,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
 
-	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410) ? 1.0f : mat.pbrData.roughnessFactor;
+	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410f) ? 1.0f : mat.pbrData.roughnessFactor;
 	matProperties.AlphaCutoff = mat.alphaCutoff;
 	matProperties.Dispersion = mat.dispersion;
 	matProperties.IOR = mat.ior;

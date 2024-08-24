@@ -21,7 +21,7 @@ struct AsyncModelArgs
 
 	// Alt GLTF Args:
 	Asset Asset; // Use std::variant?
-	int MeshIndex = -1, PrimitiveIndex = -1;
+	size_t MeshIndex = -1, PrimitiveIndex = -1;
 };
 
 struct AsyncTexArgs
@@ -80,7 +80,7 @@ public:
 
 	static void ExecuteCPUWaitingLists();
 	static bool TryPushModel(Model* pModel, string filePath);	
-	static bool TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex);
+	static bool TryPushModel(Model* pModel, Asset asset, size_t meshIndex, size_t primitiveIndex);
 
 	static bool TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
 	static bool TryPushCubemap(Texture* pTex, string filePath, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);

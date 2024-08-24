@@ -295,13 +295,15 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	if (m_skyboxTex)
 		m_perFrameCBuffers.EnvMap.EnvMapMipLevels = m_skyboxTex->GetMipLevels();
 
-	m_depthViewCB.Resolution = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
+	float screenWidth = static_cast<float>(m_pWindow->GetClientWidth());
+	float screenHeight = static_cast<float>(m_pWindow->GetClientHeight());
+	m_depthViewCB.Resolution = XMFLOAT2(screenWidth, screenHeight);
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
-		m_perFrameCBuffers.ShadowMap.CascadeCount = SettingsManager::ms_Dynamic.Shadow.CascadeCount;
-		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = SettingsManager::ms_Dynamic.Shadow.CascadeCount;
-		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = SettingsManager::ms_Dynamic.Shadow.PCFSampleCount;
+		m_perFrameCBuffers.ShadowMap.CascadeCount = static_cast<float>(SettingsManager::ms_Dynamic.Shadow.CascadeCount);
+		m_perFrameCBuffers.ShadowMapPixel.CascadeCount = static_cast<float>(SettingsManager::ms_Dynamic.Shadow.CascadeCount);
+		m_perFrameCBuffers.ShadowMapPixel.PCFSampleCount = static_cast<float>(SettingsManager::ms_Dynamic.Shadow.PCFSampleCount);
 		m_perFrameCBuffers.ShadowMapPixel.PCFSampleRange = ShadowManager::GetPCFSampleRange(SettingsManager::ms_Dynamic.Shadow.PCFSampleCount);
 		m_perFrameCBuffers.ShadowMapPixel.CascadeDistances = ShadowManager::GetCascadeDistances();
 
@@ -431,7 +433,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	
 	if (SettingsManager::ms_Dynamic.Shadow.Enabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
-		const XMFLOAT2 screenReso = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
+		float screenWidth = static_cast<float>(m_pWindow->GetClientWidth());
+		float screenHeight = static_cast<float>(m_pWindow->GetClientHeight());
+		const XMFLOAT2 screenReso = XMFLOAT2(screenWidth, screenHeight);
+
 		PIXBeginEvent(cmdList.Get(), COLOR_GREY, "Visualise Shadow Map Pass");
 		ShadowManager::RenderDebugView(m_d3dClass, cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex, screenReso);
 		PIXEndEvent(cmdList.Get());

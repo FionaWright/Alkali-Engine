@@ -62,8 +62,8 @@ public:
 
     void CalculateDelta()
     {
-        const float d10 = (n1 > n0) ? 0 : PI;
-        const float d12 = (n1 > n2) ? 0 : PI;
+        const float d10 = (n1 > n0) ? 0.0f : static_cast<float>(PI);
+        const float d12 = (n1 > n2) ? 0.0f : static_cast<float>(PI);
         Delta = d10 + d12;
     }
 
