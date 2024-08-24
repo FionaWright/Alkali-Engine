@@ -139,21 +139,23 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
 				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullBackFaceEnabled);
 
-				if (wireframeChanged || cullChanged)
-				{
-					for (auto& it : shaderList)
-					{
-						it.second->Compile(d3d->GetDevice());
-					}
-				}
-
 				ImGui::Checkbox("Freeze Frustum Culling", &SettingsManager::ms_Dynamic.FreezeFrustum);
 
 				ImGui::Checkbox("Force Show Frustum Debug Lines", &SettingsManager::ms_Dynamic.AlwaysShowFrustumDebugLines);
 
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
+				ImGui::Checkbox("Transparents Enabled", &SettingsManager::ms_Dynamic.TransparentGOEnabled);
+
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
+
+				ImGui::Checkbox("Shader Optimization", &SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled);
+
+				if (wireframeChanged || cullChanged || ImGui::Button("Recompile Shaders"))
+				{
+					d3d->Flush();
+					ResourceTracker::RecompileAllShaders(d3d->GetDevice());
+				}					
 				
 				if (visualiseShadow)
 					ImGui::BeginDisabled(true);

@@ -30,7 +30,7 @@ struct AsyncLoadingSettings
 	bool LogIgnoreInfoMessages = true;
 	bool PrintLogIntoConsole = false;
 	float DebugLoadingDelayMillis = 0;
-	int DebugExecutionFrameSlice = 1;
+	int DebugExecutionFrameSlice = 0;
 };
 
 struct DX12Settings
@@ -45,6 +45,8 @@ struct DX12Settings
 	bool DebugReportLiveObjects = true;
 
 	const AsyncLoadingSettings Async;
+
+	bool ShaderCompilationWarningsAsErrors = false;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -156,6 +158,9 @@ struct DynamicSettings
 	bool DebugLinesEnabled = true;
 	bool AlwaysShowFrustumDebugLines = false;
 	bool FreezeFrustum = false;
+
+	bool ShaderCompilerOptimizationEnabled = true;
+	bool TransparentGOEnabled = true;
 
 	bool HeapDebugViewEnabled = false;
 	bool VisualiseDSVEnabled = false;

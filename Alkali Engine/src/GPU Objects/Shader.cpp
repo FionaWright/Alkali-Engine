@@ -187,7 +187,9 @@ ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR tar
 	ComPtr<ID3DBlob> shaderBlob;
 	ComPtr<ID3DBlob> errorBlob;
 
-	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS; // Also see DEBUG and OPTIMIZATION flags
+	UINT optimizationFlag = SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled ? D3DCOMPILE_OPTIMIZATION_LEVEL3 : D3DCOMPILE_SKIP_OPTIMIZATION;
+	UINT warningsFlag = SettingsManager::ms_DX12.ShaderCompilationWarningsAsErrors ? D3DCOMPILE_WARNINGS_ARE_ERRORS : 0;
+	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | optimizationFlag | warningsFlag;
 	UINT effectFlags = 0; // Does nothing as of 2024
 
 #ifdef _DEBUG

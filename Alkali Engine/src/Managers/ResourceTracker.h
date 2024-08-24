@@ -29,6 +29,7 @@ public:
 	static bool TryGetShader(string filePath, shared_ptr<Shader>& shader);
 	static bool TryGetShader(wstring filePath, shared_ptr<Shader>& shader);
 	static unordered_map<string, shared_ptr<Shader>>& GetShaders();
+	static void RecompileAllShaders(ID3D12Device2* device);
 
 	static void AddBatch(string filePath, shared_ptr<Batch> batch);
 	static bool TryGetBatch(string filePath, shared_ptr<Batch>& batch);
