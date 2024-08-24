@@ -42,7 +42,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 	{
 		for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; i++)
 		{
-			float topLeftX = SettingsManager::ms_Misc.ShadowMapResoWidth * i;
+			float topLeftX = static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoWidth) * i;
 			ms_viewports[i] = CD3DX12_VIEWPORT(topLeftX, 0.0f, static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoWidth), static_cast<float>(SettingsManager::ms_Misc.ShadowMapResoHeight));
 		}		
 
@@ -66,7 +66,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		D3D12_CLEAR_VALUE clearValue = {};
 		clearValue.Format = dsvDesc.Format;
 		clearValue.DepthStencil.Depth = 1.0f;
-		clearValue.DepthStencil.Stencil = 0.0f;
+		clearValue.DepthStencil.Stencil = 0;
 
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 		HRESULT hr = d3d->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &dsvDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&ms_shadowMapResource));
@@ -211,9 +211,9 @@ void ShadowManager::CalculateNearFarPercents()
 		if (i == 0)
 			SettingsManager::ms_Dynamic.Shadow.NearPercents[i] = 0;
 		else
-			SettingsManager::ms_Dynamic.Shadow.NearPercents[i] = pow(base, i);
+			SettingsManager::ms_Dynamic.Shadow.NearPercents[i] = static_cast<float>(pow(base, i));
 
-		SettingsManager::ms_Dynamic.Shadow.FarPercents[i] = pow(base, i+1);
+		SettingsManager::ms_Dynamic.Shadow.FarPercents[i] = static_cast<float>(pow(base, i + 1));
 		sum += SettingsManager::ms_Dynamic.Shadow.FarPercents[i] - SettingsManager::ms_Dynamic.Shadow.NearPercents[i];
 	}
 
@@ -236,7 +236,8 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 
 	XMFLOAT3 rightBasis = Normalize(Cross(ms_forwardBasis, XMFLOAT3(0, 1, 0)));
 	XMFLOAT3 upBasis = Normalize(Cross(ms_forwardBasis, rightBasis));
-	ms_maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt(2));
+	float sqrt2 = static_cast<float>(sqrt(2));
+	ms_maxBasis = Mult(Normalize(Add(rightBasis, upBasis)), sqrt2);
 
 	BoundsArgs args = { ms_forwardBasis, ms_maxBasis, ResourceTracker::GetBatches(), frustum };
 
@@ -265,10 +266,10 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 		ms_cascadeInfos[i].Near = std::min(ms_cascadeInfos[i].Near, sceneNear);
 		ms_cascadeInfos[i].Far = std::max(ms_cascadeInfos[i].Far, sceneFar);
 
-		double worldUnitsPerTexelX = ms_cascadeInfos[i].Width / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoWidth);
-		double worldUnitsPerTexelY = ms_cascadeInfos[i].Height / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoHeight);
-		ms_cascadeInfos[i].Width = std::floor(ms_cascadeInfos[i].Width / worldUnitsPerTexelX) * worldUnitsPerTexelX;
-		ms_cascadeInfos[i].Height = std::floor(ms_cascadeInfos[i].Height / worldUnitsPerTexelY) * worldUnitsPerTexelY;
+		double worldUnitsPerTexelX = static_cast<double>(ms_cascadeInfos[i].Width) / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoWidth);
+		double worldUnitsPerTexelY = static_cast<double>(ms_cascadeInfos[i].Height) / static_cast<double>(SettingsManager::ms_Misc.ShadowMapResoHeight);
+		ms_cascadeInfos[i].Width = static_cast<float>(std::floor(ms_cascadeInfos[i].Width / worldUnitsPerTexelX) * worldUnitsPerTexelX);
+		ms_cascadeInfos[i].Height = static_cast<float>(std::floor(ms_cascadeInfos[i].Height / worldUnitsPerTexelY) * worldUnitsPerTexelY);
 
 		ms_projMatrices[i] = XMMatrixOrthographicLH(ms_cascadeInfos[i].Width, ms_cascadeInfos[i].Height, ms_cascadeInfos[i].Near, ms_cascadeInfos[i].Far);
 		ms_vpMatrices[i] = ms_viewMatrix * ms_projMatrices[i];

@@ -277,7 +277,7 @@ bool LoadManager::TryPushModel(Model* pModel, string filePath)
 	return true;
 }
 
-bool LoadManager::TryPushModel(Model* pModel, Asset asset, int meshIndex, int primitiveIndex)
+bool LoadManager::TryPushModel(Model* pModel, Asset asset, size_t meshIndex, size_t primitiveIndex)
 {
 	if (!ms_loadingActive)
 	{
@@ -385,7 +385,7 @@ bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, b
 void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
+		Sleep(static_cast<DWORD>(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis));
 
 	if (!args.pModel || ms_fullShutdownActive)
 		return;
@@ -415,7 +415,7 @@ void LoadManager::LoadModel(AsyncModelArgs args, int threadID)
 void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
+		Sleep(static_cast<DWORD>(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis));
 
 	if (!args.pTexture || ms_fullShutdownActive)
 		return;
@@ -434,7 +434,7 @@ void LoadManager::LoadTex(AsyncTexArgs args, int threadID)
 void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
+		Sleep(static_cast<DWORD>(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis));
 
 	if (!args.pCubemap || ms_fullShutdownActive)
 		return;
@@ -462,7 +462,7 @@ void LoadManager::LoadTexCubemap(AsyncTexCubemapArgs args, int threadID)
 void LoadManager::LoadShader(AsyncShaderArgs args, int threadID)
 {
 	if (SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis > 0)
-		Sleep(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis);
+		Sleep(static_cast<DWORD>(SettingsManager::ms_DX12.Async.DebugLoadingDelayMillis));
 
 	if (ms_fullShutdownActive)
 		return;

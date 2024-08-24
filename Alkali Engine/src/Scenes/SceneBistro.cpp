@@ -129,8 +129,8 @@ bool SceneBistro::LoadContent()
 	fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
 	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
-	m_camera->SetPosition(13.9, 4.3, 8);
-	m_camera->SetRotation(0, PI, 0);
+	m_camera->SetPosition(13.9f, 4.3f, 8.0f);
+	m_camera->SetRotation(0.0f, static_cast<float>(PI), 0.0f);
 
 	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0.2f, -0.9f, -0.3f);
 

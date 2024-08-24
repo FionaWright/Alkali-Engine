@@ -736,7 +736,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			for (auto& it : batchList)
 			{
 				auto& opaques = it.second->GetOpaques();
-				for (size_t i = 0; i < opaques.size(); i++)
+				for (int i = 0; i < opaques.size(); i++)
 				{
 					if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 					{
@@ -745,7 +745,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 				}
 
 				auto& transGos = it.second->GetTrans();
-				for (size_t i = 0; i < transGos.size(); i++)
+				for (int i = 0; i < transGos.size(); i++)
 				{
 					if (ImGui::CollapsingHeader(transGos[i].m_Name.c_str()))
 					{
@@ -775,7 +775,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						for (size_t i = 0; i < opaques.size(); i++)
+						for (int i = 0; i < opaques.size(); i++)
 						{
 							if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 							{
@@ -793,7 +793,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 					{
 						ImGui::Indent(IM_GUI_INDENTATION);
 
-						for (size_t i = 0; i < trans.size(); i++)
+						for (int i = 0; i < trans.size(); i++)
 						{
 							if (ImGui::CollapsingHeader(trans[i].m_Name.c_str()))
 							{

@@ -62,8 +62,8 @@ public:
 	static Transform ToTransform(fastgltf::TRS& trs);
 	static void LoadGLTFIndices(vector<uint32_t>& iBuffer, Asset& asset, const fastgltf::Primitive& primitive);
 	static void LoadModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, Model* model);
-	static string LoadTexture(Asset& asset, const int textureIndex);
-	static void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id, int meshIndex, int primitiveIndex);
+	static string LoadTexture(Asset& asset, const size_t textureIndex);
+	static void LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, const fastgltf::Primitive& primitive, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args, string id, size_t meshIndex, size_t primitiveIndex);
 	static void LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Asset& asset, string modelNameExtensionless, fastgltf::Node& node, GLTFLoadArgs args);
 	static void LoadSplitModel(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, string name, GLTFLoadArgs& args);
 
