@@ -330,6 +330,15 @@ void Scene::OnRender(TimeEventArgs& e)
 	if (SettingsManager::ms_DX12.DebugRenderSingleFrameOnly && m_debugRenderedFrame)
 		return;
 
+	const UINT64 COLOR_BLACK = PIX_COLOR(0, 0, 0);
+	const UINT64 COLOR_GREY = PIX_COLOR(28, 91, 90);
+	const UINT64 COLOR_CYAN = PIX_COLOR(74, 217, 255);
+	const UINT64 COLOR_LIME = PIX_COLOR(209, 255, 161);
+	const UINT64 COLOR_GREEN = PIX_COLOR(94, 191, 114);
+	const UINT64 COLOR_DARKGREEN = PIX_COLOR(30, 123, 32);
+	const UINT64 COLOR_PURPLE = PIX_COLOR(101, 56, 172);
+	const UINT64 COLOR_PINK = PIX_COLOR(185, 158, 235);
+
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtvHandle = m_pWindow->GetCurrentRenderTargetView();
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -349,7 +358,10 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
+		PIXBeginEvent(cmdList.Get(), COLOR_BLACK, "Shadow Pass");
 		ShadowManager::Render(m_d3dClass, cmdList.Get(), batchList, m_frustum, backBufferIndex);
+		PIXEndEvent(cmdList.Get());
+
 		m_shadowMapCounter = 0;
 	}
 	else
@@ -373,18 +385,34 @@ void Scene::OnRender(TimeEventArgs& e)
 	ClearBackBuffer(cmdList.Get());
 
 	bool requireCPUGPUSync = false;
-	
-	for (auto& it : batchList)
-		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
 
+	PIXBeginEvent(cmdList.Get(), COLOR_GREEN, "Opaque Pass");	
+	for (auto& it : batchList)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_GREEN, it.second->m_Name.c_str());
+		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+		PIXEndEvent(cmdList.Get());
+	}		
+	PIXEndEvent(cmdList.Get());
+
+	PIXBeginEvent(cmdList.Get(), COLOR_CYAN, "Line Pass");
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
+	PIXEndEvent(cmdList.Get());
 
+	PIXBeginEvent(cmdList.Get(), COLOR_LIME, "Trans Pass");
 	for (auto& it : batchList)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_LIME, it.second->m_Name.c_str());
 		it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+		PIXEndEvent(cmdList.Get());
+	}		
+	PIXEndEvent(cmdList.Get());
 
 	if (SettingsManager::ms_Dynamic.VisualiseDSVEnabled && m_viewDepthGO)
 	{
+		PIXBeginEvent(cmdList.Get(), COLOR_GREY, "Visualise DSV Pass");
+
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 		cmdList->SetGraphicsRootSignature(m_viewDepthRootSig->GetRootSigResource());
@@ -397,14 +425,22 @@ void Scene::OnRender(TimeEventArgs& e)
 		ResourceManager::TransitionResource(cmdList.Get(), m_depthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+		PIXEndEvent(cmdList.Get());
 	}
 	
 	if (SettingsManager::ms_Dynamic.Shadow.Enabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
+		PIXBeginEvent(cmdList.Get(), COLOR_GREY, "Visualise Shadow Map Pass");
+
 		ShadowManager::RenderDebugView(m_d3dClass, cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
+
+		PIXEndEvent(cmdList.Get());
 	}
 
+	PIXBeginEvent(cmdList.Get(), COLOR_PURPLE, "GUI Pass");
 	ImGUIManager::Render(cmdList.Get());	
+	PIXEndEvent(cmdList.Get());
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(cmdList.Get(), cmdQueue); 
@@ -573,8 +609,9 @@ DebugLine* Scene::AddDebugLine(XMFLOAT3 start, XMFLOAT3 end, XMFLOAT3 color)
 
 void Scene::RenderDebugLines(ID3D12GraphicsCommandList2* cmdListDirect, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv, const int& backBufferIndex)
 {
+	Shader* lastSetShader = nullptr;
 	for (int i = 0; i < m_debugLineList.size(); i++)
 	{
-		m_debugLineList.at(i)->Render(cmdListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix, backBufferIndex);
+		m_debugLineList.at(i)->Render(cmdListDirect, m_rootSigLine->GetRootSigResource(), m_viewport, m_scissorRect, rtv, dsv, m_viewProjDebugLinesMatrix, backBufferIndex, &lastSetShader);
 	}
 }

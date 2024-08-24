@@ -35,7 +35,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride, Shader** lastSetShader)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -67,10 +67,17 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		m_shadowMapMats.push_back(mat);
 	}
 
+	Shader* usedShader = m_shader.get();
 	if (renderOverride && renderOverride->ShaderOverride)
-		cmdListDirect->SetPipelineState(renderOverride->ShaderOverride->GetPSO().Get());
-	else
-		cmdListDirect->SetPipelineState(m_shader->GetPSO().Get());
+		usedShader = renderOverride->ShaderOverride;	
+
+	if (!lastSetShader || usedShader != *lastSetShader)
+	{
+		cmdListDirect->SetPipelineState(usedShader->GetPSO().Get());
+
+		if (lastSetShader)
+			*lastSetShader = usedShader;
+	}		
 
 	if (m_orthographic)
 	{
