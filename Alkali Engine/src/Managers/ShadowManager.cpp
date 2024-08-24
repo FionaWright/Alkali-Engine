@@ -365,6 +365,8 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 
 	XMMATRIX v = ms_viewMatrix;
 
+	Shader* lastSetShader = nullptr;
+
 	for (int i = 0; i < SettingsManager::ms_Dynamic.Shadow.CascadeCount; i++)
 	{
 		cmdList->RSSetViewports(1, &ms_viewports[i]);				
@@ -380,8 +382,8 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 
 		for (auto& it : batchList)
 		{	
-			it.second->Render(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro);
-			it.second->RenderTrans(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro);
+			it.second->Render(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro, nullptr, &lastSetShader);
+			it.second->RenderTrans(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro, nullptr, &lastSetShader);
 		}
 	}
 

@@ -46,5 +46,8 @@
 // Resources
 #include "Assets/Resources/resource.h"
 
+// Packages and Includes
+#include "pix3.h"
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
