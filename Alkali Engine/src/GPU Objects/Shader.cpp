@@ -67,8 +67,8 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 		rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 
 	rasterizerDesc.FrontCounterClockwise = FALSE;
-	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+	rasterizerDesc.DepthBias = m_args.DepthBias;
+	rasterizerDesc.DepthBiasClamp = m_args.DepthBias > 0 ? 1.0f : 0.0f;
 	rasterizerDesc.SlopeScaledDepthBias = m_args.SlopeScaleDepthBias;
 	rasterizerDesc.DepthClipEnable = TRUE;
 	rasterizerDesc.MultisampleEnable = FALSE;
@@ -96,10 +96,19 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = m_args.DisableDSV ? FALSE : TRUE;
-	depthStencilDesc.DepthWriteMask = m_args.DisableDSVWriting ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = m_args.DisableDSVWriting ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_LESS;
 
-	depthStencilDesc.StencilEnable = m_args.DisableStencil ? FALSE : TRUE;
+	bool disableDepthWrite = m_args.DisableDSVWriting || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader);
+	depthStencilDesc.DepthWriteMask = disableDepthWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
+
+	if (m_args.DisableDSVWriting)
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	else if (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader)
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	else
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+
+	bool disableStencil = m_args.DisableStencil || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader);
+	depthStencilDesc.StencilEnable = disableStencil ? FALSE : TRUE;
 	depthStencilDesc.StencilWriteMask = 0xFF;
 	depthStencilDesc.StencilReadMask = 0xFF;
 
@@ -113,7 +122,7 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	depthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 	depthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	UINT inputLayoutCount = static_cast<UINT>(m_args.inputLayout.size());
+	UINT inputLayoutCount = static_cast<UINT>(m_args.InputLayout.size());
 
 	// For full list of fields (Order matters!)
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type
@@ -131,8 +140,8 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
 	} psoStream;
 
-	psoStream.pRootSignature = m_args.rootSig;
-	psoStream.InputLayout = { m_args.inputLayout.data(), inputLayoutCount };
+	psoStream.pRootSignature = m_args.RootSig;
+	psoStream.InputLayout = { m_args.InputLayout.data(), inputLayoutCount };
 	psoStream.PrimitiveTopologyType = m_args.Topology;
 	psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
 	if (!m_args.NoPS)

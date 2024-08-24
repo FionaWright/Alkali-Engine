@@ -121,6 +121,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 		ImGui::Indent(IM_GUI_INDENTATION);
 
 		ImGui::Checkbox("Quick Debug", &SettingsManager::ms_Dynamic.QuickDebug);
+		ImGui::InputFloat("Quick Debug Float", &SettingsManager::ms_Dynamic.QuickDebugFloat);
 
 		if (ImGui::TreeNode("Engine##2"))
 		{
@@ -147,11 +148,13 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Transparents Enabled", &SettingsManager::ms_Dynamic.TransparentGOEnabled);
 
+				float prePassChanged = ImGui::Checkbox("Depth Pre-Pass", &SettingsManager::ms_Dynamic.DepthPrePassEnabled);
+
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
 
 				ImGui::Checkbox("Shader Optimization", &SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled);
 
-				if (wireframeChanged || cullChanged || ImGui::Button("Recompile Shaders"))
+				if (wireframeChanged || cullChanged || prePassChanged || ImGui::Button("Recompile Shaders"))
 				{
 					d3d->Flush();
 					ResourceTracker::RecompileAllShaders(d3d->GetDevice());
