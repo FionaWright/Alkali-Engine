@@ -431,10 +431,9 @@ void Scene::OnRender(TimeEventArgs& e)
 	
 	if (SettingsManager::ms_Dynamic.Shadow.Enabled && SettingsManager::ms_Dynamic.VisualiseShadowMap)
 	{
+		const XMFLOAT2 screenReso = XMFLOAT2(m_pWindow->GetClientWidth(), m_pWindow->GetClientHeight());
 		PIXBeginEvent(cmdList.Get(), COLOR_GREY, "Visualise Shadow Map Pass");
-
-		ShadowManager::RenderDebugView(m_d3dClass, cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
-
+		ShadowManager::RenderDebugView(m_d3dClass, cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex, screenReso);
 		PIXEndEvent(cmdList.Get());
 	}
 

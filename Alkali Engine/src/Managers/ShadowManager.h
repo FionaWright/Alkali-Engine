@@ -43,7 +43,7 @@ public:
 
 	static void CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 lightDir, Frustum& frustum);
 	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex);
-	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex);
+	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex, const XMFLOAT2 screenReso);
 
 	static void SetDebugLines(vector<DebugLine*>& debugLines);
 	static void UpdateDebugLines(D3DClass* d3d, const XMFLOAT3& eyePos);
