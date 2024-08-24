@@ -97,12 +97,10 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = m_args.DisableDSV ? FALSE : TRUE;
 
-	bool disableDepthWrite = m_args.DisableDSVWriting || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader);
+	bool disableDepthWrite = (m_args.DisableDSVWriting || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader)) && !m_args.EnableDSVWritingForce;
 	depthStencilDesc.DepthWriteMask = disableDepthWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
 
-	if (m_args.DisableDSVWriting)
-		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	else if (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader)
+	if (disableDepthWrite)
 		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	else
 		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
@@ -188,7 +186,7 @@ bool Shader::IsPreCompiled() const
 
 bool Shader::IsInitialised() const
 {
-	return m_initialised;
+	return m_initialised && m_pso;
 }
 
 ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail)

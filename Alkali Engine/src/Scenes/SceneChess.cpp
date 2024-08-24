@@ -77,6 +77,7 @@ bool SceneChess::LoadContent()
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
+	argsPBR.EnableDSVWritingForce = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);

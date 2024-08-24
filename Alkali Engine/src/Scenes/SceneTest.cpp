@@ -151,10 +151,12 @@ bool SceneTest::LoadContent()
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
+	argsPBR.EnableDSVWritingForce = true;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	ShaderArgs argsGlass = { L"GlassPBR.vs", L"GlassPBR.ps", inputLayoutPBR, rootSigGlass->GetRootSigResource() };
 	argsGlass.CullNone = true;
+	argsGlass.EnableDSVWritingForce = true;
 	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };

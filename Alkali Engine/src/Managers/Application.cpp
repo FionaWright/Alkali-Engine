@@ -197,6 +197,8 @@ void Application::AssignScene(Scene* scene)
     m_updateClock.Reset();
     m_renderClock.Reset();
 
+    ResourceTracker::ClearShaderList();
+
     LoadManager::StartLoading(m_d3dClass.get(), SettingsManager::ms_DX12.Async.ThreadCount);    
 
     if (!scene->m_ContentLoaded)
@@ -247,6 +249,9 @@ void Application::TryHotReloadShaders()
     auto& shaders = ResourceTracker::GetShaders();
     for (auto& it : shaders)
     {
+        if (!it.second->IsInitialised())
+            continue;
+
         it.second->TryHotReload(m_d3dClass->GetDevice());
     }
 }

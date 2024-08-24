@@ -417,7 +417,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		for (auto& it : batchList)
 		{
 			it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
-			it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+			//it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
 		}
 
 		PIXEndEvent(cmdList.Get());		
