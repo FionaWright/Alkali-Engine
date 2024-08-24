@@ -108,7 +108,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 
 		ms_viewDepthMat = AssetFactory::CreateMaterial();
 		vector<UINT> cbvFrameSizesView = { sizeof(DepthViewCB) };
-		ms_viewDepthMat->AddCBVs(d3d, cmdList, cbvFrameSizesView, true, "ShadowView");
+		ms_viewDepthMat->AddCBVs(d3d, cmdList, cbvFrameSizesView, false, "ShadowView");
 		ms_viewDepthMat->AddDynamicSRVs("Shadow View", 1);
 
 		auto modelPlane = AssetFactory::CreateModel("Plane.model", cmdList);
@@ -120,9 +120,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		dvCB.Resolution = XMFLOAT2(SettingsManager::ms_Window.ScreenWidth, SettingsManager::ms_Window.ScreenHeight);
 		dvCB.MaxValue = 1;
 		dvCB.MinValue = 0.2f;
-
-		for (int i = 0; i < BACK_BUFFER_COUNT; i++)
-			ms_viewDepthMat->SetCBV_PerFrame(0, &dvCB, sizeof(DepthViewCB), i);
+		ms_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB));
 
 		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
 		ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
@@ -433,8 +431,14 @@ float ShadowManager::GetPCFSampleRange(int sampleCount)
 	}
 }
 
-void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex)
+void ShadowManager::RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex, const XMFLOAT2 screenReso)
 {
+	DepthViewCB dvCB;
+	dvCB.Resolution = screenReso;
+	dvCB.MaxValue = 1;
+	dvCB.MinValue = 0.2f;
+	ms_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB), backBufferIndex);
+
 	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr); // Disable DSV
 
 	cmdList->SetGraphicsRootSignature(ms_viewRootSig->GetRootSigResource());
