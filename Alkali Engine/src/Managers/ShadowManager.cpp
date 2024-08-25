@@ -357,7 +357,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 	cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
-	ro.UseShadowMapMat = true;
+	ro.UseDepthMaterial = true;
 	ro.CullAgainstBounds = SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds;
 	ro.MaxBasis = Abs(ms_maxBasis);
 	ro.ForwardBasis = ms_forwardBasis;
@@ -372,7 +372,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 
 		XMMATRIX p = ms_projMatrices[i];
 
-		ro.CascadeIndex = i;
+		ro.DepthMatIndex = i;
 		ro.BoundsWidth = ms_cascadeInfos[i].Width;
 		ro.BoundsHeight = ms_cascadeInfos[i].Height;
 		ro.BoundsNear = ms_cascadeInfos[i].Near;

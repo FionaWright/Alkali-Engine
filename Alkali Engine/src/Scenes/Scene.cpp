@@ -410,14 +410,13 @@ void Scene::OnRender(TimeEventArgs& e)
 		cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
 		RenderOverride ro = { m_depthPrepassShader.get(), m_depthPrepassRootSig.get() };
-		ro.UseShadowMapMat = true;
-		ro.CascadeIndex = MAX_SHADOW_MAP_CASCADES; // Change
+		ro.UseDepthMaterial = true;
+		ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES; // Change
 
 		Shader* lastSetShader = nullptr;
 		for (auto& it : batchList)
 		{
 			it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
-			//it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
 		}
 
 		PIXEndEvent(cmdList.Get());		

@@ -43,7 +43,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (!m_model->IsLoaded())
 		return; // Replace with cube model until loaded
 
-	if (!m_enabled || (renderOverride && renderOverride->UseShadowMapMat && !m_isOccluder))
+	if (!m_enabled || (renderOverride && renderOverride->UseDepthMaterial && !m_isOccluder))
 		return;	
 
 	if (!m_shader->IsInitialised())
@@ -59,7 +59,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (requireCPUGPUSync)
 		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);	
 
-	while (renderOverride && renderOverride->UseShadowMapMat && m_shadowMapMats.size() <= renderOverride->CascadeIndex)
+	while (renderOverride && renderOverride->UseDepthMaterial && m_shadowMapMats.size() <= renderOverride->DepthMatIndex)
 	{
 		auto mat = AssetFactory::CreateMaterial();
 		vector<UINT> sizes = { sizeof(MatricesCB) };
@@ -90,8 +90,8 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		throw std::exception("Matrices not given");
 
 	Material* matUsed = m_material.get();
-	if (renderOverride && renderOverride->UseShadowMapMat)
-		matUsed = m_shadowMapMats[renderOverride->CascadeIndex].get();
+	if (renderOverride && renderOverride->UseDepthMaterial)
+		matUsed = m_shadowMapMats[renderOverride->DepthMatIndex].get();
 
 	Model* sphereModel = nullptr;	
 	if (Scene::IsSphereModeOn(&sphereModel))

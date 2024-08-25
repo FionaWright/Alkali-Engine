@@ -134,6 +134,7 @@ bool SceneBistro::LoadContent()
 	m_camera->SetRotation(0.0f, static_cast<float>(PI), 0.0f);
 
 	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0.2f, -0.9f, -0.3f);
+	m_BackgroundColor = XMFLOAT4(0, 0, 0, 1);
 
 	return true;
 }

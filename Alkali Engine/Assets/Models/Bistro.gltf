@@ -15004,7 +15004,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":false,
+			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -15025,7 +15025,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":false,
+			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
@@ -16070,7 +16070,7 @@
 		},
 		{
 			"alphaMode":"BLEND",
-			"doubleSided":false,
+			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularTexture":{
