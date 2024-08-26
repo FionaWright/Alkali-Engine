@@ -135,6 +135,7 @@ bool Scene::LoadContent()
 
 	ShaderArgs args = { L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine->GetRootSigResource() };
 	args.Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+	args.ForceCompFuncLE = true;
 	m_shaderLine = AssetFactory::CreateShader(args, true);
 
 	{
