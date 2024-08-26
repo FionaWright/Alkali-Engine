@@ -98,10 +98,12 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	bool disableDepthWrite = (m_args.DisableDSVWriting || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader)) && !m_args.EnableDSVWritingForce;
 	depthStencilDesc.DepthWriteMask = disableDepthWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
 
-	if (disableDepthWrite)
-		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL; // !
+	if (disableDepthWrite && !m_args.ForceCompFuncLE)
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+	else if (m_args.ForceCompFuncLE)
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	else
-		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; // !
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 
 	bool disableStencil = m_args.DisableStencil || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader);
 	depthStencilDesc.StencilEnable = disableStencil ? FALSE : TRUE;

@@ -166,6 +166,7 @@ bool SceneTest::LoadContent()
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.hlsl", L"Skybox_PS.hlsl", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;
+	argsSkybox.ForceCompFuncLE = true;
 	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox);
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
