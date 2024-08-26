@@ -376,21 +376,24 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 
 	cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+	BatchArgs batchArgs = { ms_viewMatrix, ms_projMatrices[0] };
+	batchArgs.BackBufferIndex = backBufferIndex;
+
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
 	ro.UseDepthMaterial = true;
 	ro.CullAgainstBounds = SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds;
 	ro.MaxBasis = Abs(ms_maxBasis);
 	ro.ForwardBasis = ms_forwardBasis;	
-
-	XMMATRIX v = ms_viewMatrix;
+	batchArgs.pOverride = &ro;
 
 	Shader* lastSetShader = nullptr;
+	batchArgs.ppLastUsedShader = &lastSetShader;
 
 	for (int i = 0; i < SettingsManager::ms_Dynamic.Shadow.CascadeCount; i++)
 	{
 		cmdList->RSSetViewports(1, &ms_viewports[i]);				
 
-		XMMATRIX p = ms_projMatrices[i];
+		batchArgs.ProjMatrix = ms_projMatrices[i];
 
 		ro.DepthMatIndex = i;
 		ro.BoundsWidth = ms_cascadeInfos[i].Width;
@@ -405,7 +408,8 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 			ro.RootSigOverride = ms_depthRootSig.get();
 
 			ro.AddSRVToDepthMat = false;
-			it.second->Render(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro, nullptr, &lastSetShader);
+			it.second->Render(d3d, cmdList, batchArgs);
+			it.second->RenderTrans(d3d, cmdList, batchArgs);
 
 			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 			{
@@ -413,9 +417,9 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 				ro.RootSigOverride = ms_depthATRootSig.get();
 
 				ro.AddSRVToDepthMat = true;
-			}			
+			}				
 
-			it.second->RenderTrans(d3d, cmdList, backBufferIndex, v, p, nullptr, &ro, nullptr, &lastSetShader);
+			it.second->RenderAT(d3d, cmdList, batchArgs);
 		}
 	}
 

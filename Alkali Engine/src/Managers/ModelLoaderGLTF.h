@@ -50,7 +50,7 @@ struct GLTFLoadArgs
 
 	UINT DefaultBatchIndex = 0;
 	UINT DefaultShaderIndex = 0;
-	UINT DefaultShaderTransIndex = 1;
+	UINT DefaultShaderATIndex = 1;
 
 	vector<string> CullingWhiteList;
 	vector<GLTFLoadOverride> Overrides;

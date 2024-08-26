@@ -26,8 +26,6 @@ GameObject::GameObject(string name)
 	, m_shader(nullptr)
 	, m_Name(name)
 	, m_material(nullptr)
-	, m_orthographic(false)
-	, m_isTransparent(false)
 {
 }
 
@@ -268,6 +266,11 @@ void GameObject::ForceSetTransparent(bool trans)
 	m_isTransparent = trans;
 }
 
+void GameObject::ForceSetAT(bool at)
+{
+	m_isAT = at;
+}
+
 XMMATRIX GameObject::TransformToWorldMatrix(const Transform& transform) 
 {
 	XMMATRIX T = XMMatrixTranslation(transform.Position.x, transform.Position.y, transform.Position.z);
@@ -332,7 +335,12 @@ bool* GameObject::GetEnabledPtr()
 
 bool GameObject::IsTransparent() const
 {
-	return m_material->GetHasAlpha() || m_isTransparent;
+	return m_isTransparent;
+}
+
+bool GameObject::IsAT() const
+{
+	return m_material->GetHasAlpha() || m_isAT;
 }
 
 bool GameObject::IsOrthographic() const

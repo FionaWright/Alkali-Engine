@@ -166,6 +166,7 @@ struct DynamicSettings
 	bool ShaderCompilerOptimizationEnabled = true;
 	UINT ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 	bool TransparentGOEnabled = true;
+	bool ATGoEnabled = true;
 
 	bool DepthPrePassEnabled = true;	
 

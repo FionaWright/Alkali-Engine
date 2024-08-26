@@ -260,7 +260,7 @@ bool Scene::LoadContent()
 			depthArgs.ps = L"Depth_PS.hlsl";
 			depthArgs.NoPS = false;
 			depthArgs.NoRTV = true;
-			depthArgs.CullNone = true; // !
+			depthArgs.CullNone = true;
 			depthArgs.RootSig = m_depthPrepassAlphaTestRS->GetRootSigResource();
 			//m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, true, L" - PrepassAT");
 			m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, false, L" - PrepassAT");
@@ -432,6 +432,10 @@ void Scene::OnRender(TimeEventArgs& e)
 	if (m_viewDepthMat)
 		m_viewDepthMat->SetCBV_PerDraw(0, &m_depthViewCB, sizeof(DepthViewCB), backBufferIndex);
 
+	BatchArgs batchArgs = { m_viewMatrix, m_projectionMatrix };
+	batchArgs.BackBufferIndex = backBufferIndex;
+	batchArgs.pFrustum = &m_frustum;
+
 	if (SettingsManager::ms_Dynamic.DepthPrePassEnabled)
 	{
 		PIXBeginEvent(cmdList.Get(), COLOR_BLACK, "Depth Pre-Pass");
@@ -440,35 +444,53 @@ void Scene::OnRender(TimeEventArgs& e)
 		RenderOverride ro = { m_depthPrepassShader.get(), m_depthPrepassRootSig.get() };
 		ro.UseDepthMaterial = true;
 		ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES;			
+		batchArgs.pOverride = &ro;
 
 		Shader* lastSetShader = nullptr;
+		batchArgs.ppLastUsedShader = &lastSetShader;
 		for (auto& it : batchList)
 		{
-			it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+			it.second->Render(m_d3dClass, cmdList.Get(), batchArgs);
+
 			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 			{
 				ro.ShaderOverride = m_depthPrepassAlphaTestShader.get();
 				ro.RootSigOverride = m_depthPrepassAlphaTestRS.get();
 				ro.AddSRVToDepthMat = true;
-				it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+				it.second->RenderAT(m_d3dClass, cmdList.Get(), batchArgs);
 			}				
 		}
 
+		batchArgs.pOverride = nullptr;
+		batchArgs.ppLastUsedShader = nullptr;
 		PIXEndEvent(cmdList.Get());		
 	}
 	
 	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);	
 
 	bool requireCPUGPUSync = false;
+	batchArgs.pRequireCPUGPUSync = &requireCPUGPUSync;
 
 	PIXBeginEvent(cmdList.Get(), COLOR_GREEN, "Opaque Pass");	
 	for (auto& it : batchList)
 	{
 		PIXBeginEvent(cmdList.Get(), COLOR_GREEN, it.second->m_Name.c_str());
-		it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+		it.second->Render(m_d3dClass, cmdList.Get(), batchArgs);
 		PIXEndEvent(cmdList.Get());
 	}		
 	PIXEndEvent(cmdList.Get());
+
+	if (SettingsManager::ms_Dynamic.ATGoEnabled)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_DARKGREEN, "Alpha Test Pass");
+		for (auto& it : batchList)
+		{
+			PIXBeginEvent(cmdList.Get(), COLOR_DARKGREEN, it.second->m_Name.c_str());
+			it.second->RenderAT(m_d3dClass, cmdList.Get(), batchArgs);
+			PIXEndEvent(cmdList.Get());
+		}
+		PIXEndEvent(cmdList.Get());
+	}
 
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
 	{
@@ -483,7 +505,7 @@ void Scene::OnRender(TimeEventArgs& e)
 		for (auto& it : batchList)
 		{
 			PIXBeginEvent(cmdList.Get(), COLOR_LIME, it.second->m_Name.c_str());
-			it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, nullptr, &requireCPUGPUSync);
+			it.second->RenderTrans(m_d3dClass, cmdList.Get(), batchArgs);
 			PIXEndEvent(cmdList.Get());
 		}
 		PIXEndEvent(cmdList.Get());
