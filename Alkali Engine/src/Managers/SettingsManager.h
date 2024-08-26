@@ -157,16 +157,17 @@ struct DynamicSettings
 	bool WireframeMode = false;
 	bool CullBackFaceEnabled = true;
 
-	bool FrustumCullingEnabled = true;
-	bool DebugLinesEnabled = true;
+	bool FrustumCullingEnabled = true;	
 	bool AlwaysShowFrustumDebugLines = false;
-	bool FreezeFrustum = false;
-	bool GUIEnabled = true;
+	bool FreezeFrustum = false;	
 
 	bool ShaderCompilerOptimizationEnabled = true;
 	UINT ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+	bool DebugLinesEnabled = false;
 	bool TransparentGOEnabled = true;
 	bool ATGoEnabled = true;
+	bool GUIEnabled = true;
 
 	bool DepthPrePassEnabled = true;	
 
