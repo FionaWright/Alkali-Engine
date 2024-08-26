@@ -198,12 +198,12 @@ bool Scene::LoadContent()
 	m_viewDepthRootSig = std::make_shared<RootSig>();
 	m_viewDepthRootSig->Init("Depth Buffer Root Sig", m_viewDepthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
-	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
+	vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepthView =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepth, m_viewDepthRootSig->GetRootSigResource() };
+	ShaderArgs argsDepth = { L"DepthBuffer_VS.cso", L"DepthBuffer_PS.cso", inputLayoutDepthView, m_viewDepthRootSig->GetRootSigResource() };
 	argsDepth.CullNone = true;
 	argsDepth.DisableDSV = true;
 	argsDepth.DisableStencil = true;
@@ -226,6 +226,12 @@ bool Scene::LoadContent()
 
 	if (!m_depthPrepassShader)
 	{
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDepth =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
 		RootParamInfo depthRPI;
 		depthRPI.NumCBV_PerDraw = 1;
 		depthRPI.ParamIndexCBV_PerDraw = 0;
@@ -233,13 +239,32 @@ bool Scene::LoadContent()
 		m_depthPrepassRootSig = std::make_shared<RootSig>();
 		m_depthPrepassRootSig->Init("Depth RS", depthRPI);
 
-		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
+		//ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
+		//depthArgs.NoPS = true;
+		//depthArgs.IsDepthShader = true;
+		//m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, true, L" - Prepass");
+
+		ShaderArgs depthArgs = { L"Depth_VS.hlsl", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
 		depthArgs.NoPS = true;
-		depthArgs.CullNone = true;
-		depthArgs.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		depthArgs.IsDepthShader = true;
-		depthArgs.DepthBias = 100.0f;
-		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, true);
+		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, false, L" - Prepass");
+
+		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
+		{
+			depthRPI.NumSRV = 1;
+			depthRPI.ParamIndexSRV = 1;
+			m_depthPrepassAlphaTestRS = std::make_shared<RootSig>();
+			m_depthPrepassAlphaTestRS->Init("Depth AT RS", depthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
+
+			//depthArgs.ps = L"Depth_PS.cso";
+			depthArgs.ps = L"Depth_PS.hlsl";
+			depthArgs.NoPS = false;
+			depthArgs.NoRTV = true;
+			depthArgs.CullNone = true; // !
+			depthArgs.RootSig = m_depthPrepassAlphaTestRS->GetRootSigResource();
+			//m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, true, L" - PrepassAT");
+			m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, false, L" - PrepassAT");
+		}		
 	}
 
 	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
@@ -318,6 +343,9 @@ void Scene::OnUpdate(TimeEventArgs& e)
 	float screenWidth = static_cast<float>(m_pWindow->GetClientWidth());
 	float screenHeight = static_cast<float>(m_pWindow->GetClientHeight());
 	m_depthViewCB.Resolution = XMFLOAT2(screenWidth, screenHeight);
+
+	if (InputManager::IsKeyDown(KeyCode::G))
+		SettingsManager::ms_Dynamic.GUIEnabled = !SettingsManager::ms_Dynamic.GUIEnabled;
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
@@ -411,12 +439,19 @@ void Scene::OnRender(TimeEventArgs& e)
 
 		RenderOverride ro = { m_depthPrepassShader.get(), m_depthPrepassRootSig.get() };
 		ro.UseDepthMaterial = true;
-		ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES; // Change
+		ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES;			
 
 		Shader* lastSetShader = nullptr;
 		for (auto& it : batchList)
 		{
 			it.second->Render(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
+			{
+				ro.ShaderOverride = m_depthPrepassAlphaTestShader.get();
+				ro.RootSigOverride = m_depthPrepassAlphaTestRS.get();
+				ro.AddSRVToDepthMat = true;
+				it.second->RenderTrans(m_d3dClass, cmdList.Get(), backBufferIndex, m_viewMatrix, m_projectionMatrix, &m_frustum, &ro, nullptr, &lastSetShader);
+			}				
 		}
 
 		PIXEndEvent(cmdList.Get());		
@@ -435,10 +470,12 @@ void Scene::OnRender(TimeEventArgs& e)
 	}		
 	PIXEndEvent(cmdList.Get());
 
-	PIXBeginEvent(cmdList.Get(), COLOR_CYAN, "Line Pass");
 	if (SettingsManager::ms_Dynamic.DebugLinesEnabled)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_CYAN, "Line Pass");
 		RenderDebugLines(cmdList.Get(), rtvHandle, dsvHandle, backBufferIndex);
-	PIXEndEvent(cmdList.Get());
+		PIXEndEvent(cmdList.Get());
+	}	
 
 	if (SettingsManager::ms_Dynamic.TransparentGOEnabled)
 	{
@@ -483,9 +520,12 @@ void Scene::OnRender(TimeEventArgs& e)
 		PIXEndEvent(cmdList.Get());
 	}
 
-	PIXBeginEvent(cmdList.Get(), COLOR_PURPLE, "GUI Pass");
-	ImGUIManager::Render(cmdList.Get());	
-	PIXEndEvent(cmdList.Get());
+	if (SettingsManager::ms_Dynamic.GUIEnabled)
+	{
+		PIXBeginEvent(cmdList.Get(), COLOR_PURPLE, "GUI Pass");
+		ImGUIManager::Render(cmdList.Get());
+		PIXEndEvent(cmdList.Get());
+	}	
 
 	UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	Present(cmdList.Get(), cmdQueue); 
@@ -611,19 +651,19 @@ void Scene::SetDSVForSize(int width, int height)
 	optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(optimizedClearValue.Format, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+	auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(optimizedClearValue.Format, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);	
 
 	hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearValue, IID_PPV_ARGS(&m_depthBufferResource));
 	ThrowIfFailed(hr);
 
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-	dsv.Format = optimizedClearValue.Format;
-	dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsv.Texture2D.MipSlice = 0;
-	dsv.Flags = D3D12_DSV_FLAG_NONE;
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = optimizedClearValue.Format;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE heapStartHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CreateDepthStencilView(m_depthBufferResource.Get(), &dsv, heapStartHandle);
+	device->CreateDepthStencilView(m_depthBufferResource.Get(), &dsvDesc, heapStartHandle);	
 
 	if (m_viewDepthMat)
 	{

@@ -75,7 +75,7 @@ Application::Application(HINSTANCE hInst)
     auto cubeScene = std::make_shared<SceneCube>(L"Cube Scene", m_mainWindow.get());
     InitScene(cubeScene);
 
-    AssignScene(testScene.get());
+    AssignScene(cubeScene.get());
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)

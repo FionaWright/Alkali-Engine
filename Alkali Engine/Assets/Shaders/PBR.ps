@@ -105,7 +105,7 @@ float4 main(V_OUT input) : SV_Target
 {    
     float4 tex = g_texture.Sample(g_sampler, input.UV);                
     float alpha = tex.a > MatPropCB.AlphaCutoff;
-    clip(alpha - 0.5f);
+    //clip(alpha - 0.5f);
 
     tex.rgb = pow(tex.rgb, 2.2f);    
 

@@ -32,7 +32,12 @@ void Camera::SetSpeed(float speed)
 
 void Camera::SetRotation(float x, float y, float z)
 {
-	GameObject::SetRotation(x, y, z);
+	SetRotationRadians(x * DEG_TO_RAD, y * DEG_TO_RAD, z * DEG_TO_RAD);
+}
+
+void Camera::SetRotationRadians(float x, float y, float z)
+{
+	GameObject::SetRotationRadians(x, y, z);
 	m_pitch = x;
 	m_yaw = y;
 
@@ -47,6 +52,12 @@ void Camera::SetRotation(float x, float y, float z)
 
 	XMVECTOR right = XMVector3Rotate(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rot);
 	XMStoreFloat3(&m_rightVector, right);
+}
+
+void Camera::SetTransform(const Transform& t)
+{
+	//SetRotationRadians(t.Rotation.x, t.Rotation.y, t.Rotation.z);
+	GameObject::SetTransform(t);
 }
 
 void Camera::Update(TimeEventArgs& e)

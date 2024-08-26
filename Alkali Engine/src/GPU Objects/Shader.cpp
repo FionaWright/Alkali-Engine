@@ -47,14 +47,12 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 
 		m_lastVSTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
 		m_lastPSTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
-
-		if (vBlob == nullptr || pBlob == nullptr)
-			return;
 	}
 
+	bool noRTV = m_args.NoRTV || m_args.NoPS;
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-	rtvFormats.NumRenderTargets = m_args.NoPS ? 0 : 1;
-	if (!m_args.NoPS)
+	rtvFormats.NumRenderTargets = noRTV ? 0 : 1;
+	if (!noRTV)
 		rtvFormats.RTFormats[0] = m_args.RTVFormat;
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
@@ -101,9 +99,9 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	depthStencilDesc.DepthWriteMask = disableDepthWrite ? D3D12_DEPTH_WRITE_MASK_ZERO : D3D12_DEPTH_WRITE_MASK_ALL;
 
 	if (disableDepthWrite)
-		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL; // !
 	else
-		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; // !
 
 	bool disableStencil = m_args.DisableStencil || (SettingsManager::ms_Dynamic.DepthPrePassEnabled && !m_args.IsDepthShader);
 	depthStencilDesc.StencilEnable = disableStencil ? FALSE : TRUE;
@@ -194,9 +192,10 @@ ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR tar
 	ComPtr<ID3DBlob> shaderBlob;
 	ComPtr<ID3DBlob> errorBlob;
 
-	UINT optimizationFlag = SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled ? D3DCOMPILE_OPTIMIZATION_LEVEL3 : D3DCOMPILE_SKIP_OPTIMIZATION;
+	UINT optimizationFlag = SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled ? SettingsManager::ms_Dynamic.ShaderOptimizationLevelFlag : D3DCOMPILE_SKIP_OPTIMIZATION;
 	UINT warningsFlag = SettingsManager::ms_DX12.ShaderCompilationWarningsAsErrors ? D3DCOMPILE_WARNINGS_ARE_ERRORS : 0;
-	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | optimizationFlag | warningsFlag;
+	UINT ieeeFlag = SettingsManager::ms_DX12.ShaderCompilationIEEEStrict ? D3DCOMPILE_IEEE_STRICTNESS : 0;
+	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | optimizationFlag | warningsFlag | ieeeFlag;
 	UINT effectFlags = 0; // Does nothing as of 2024
 
 #ifdef _DEBUG

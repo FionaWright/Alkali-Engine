@@ -18,6 +18,7 @@ struct RenderOverride
 	bool UseDepthMaterial = false;
 	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
 	int DepthMatIndex = -1;
+	bool AddSRVToDepthMat = false;
 
 	XMFLOAT3 Origin = XMFLOAT3_ZERO;
 	XMFLOAT3 MaxBasis = XMFLOAT3_ZERO;

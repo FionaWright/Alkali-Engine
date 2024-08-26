@@ -148,10 +148,11 @@ bool SceneTest::LoadContent()
 	};
 
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
+	//argsPBR.EnableDSVWritingForce = true; // Dbg
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
-	argsPBR.EnableDSVWritingForce = true;
+	argsPBR.EnableDSVWritingForce = !SettingsManager::ms_DX12.DepthAlphaTestEnabled;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
 	ShaderArgs argsGlass = { L"GlassPBR.vs", L"GlassPBR.ps", inputLayoutPBR, rootSigGlass->GetRootSigResource() };
@@ -159,9 +160,13 @@ bool SceneTest::LoadContent()
 	argsGlass.EnableDSVWritingForce = true;
 	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
 
-	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
+	/*ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;
-	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);*/
+
+	ShaderArgs argsSkybox = { L"Skybox_VS.hlsl", L"Skybox_PS.hlsl", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
+	argsSkybox.DisableDSVWriting = true;
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox);
 
 	Scene::AddDebugLine(XMFLOAT3(-999, 0, 0), XMFLOAT3(999, 0, 0), XMFLOAT3(1, 0, 0));
 	Scene::AddDebugLine(XMFLOAT3(0, -999, 0), XMFLOAT3(0, 999, 0), XMFLOAT3(0, 1, 0));
@@ -279,7 +284,8 @@ void SceneTest::OnUpdate(TimeEventArgs& e)
 		SettingsManager::ms_Dynamic.VSyncEnabled = !SettingsManager::ms_Dynamic.VSyncEnabled;
 	}
 
-	m_goSkybox->SetPosition(m_camera->GetWorldPosition());
+	if (m_goSkybox)
+		m_goSkybox->SetPosition(m_camera->GetWorldPosition());
 }
 
 void SceneTest::OnRender(TimeEventArgs& e)

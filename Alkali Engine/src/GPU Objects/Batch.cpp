@@ -63,10 +63,14 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 
 	cmdList->SetGraphicsRootSignature(rootSig->GetRootSigResource());
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	RootSig* lastSetRootSig = nullptr;	
 
 	Shader* lastSetShaderPtr = nullptr;
 	if (!lastSetShader)
 		lastSetShader = &lastSetShaderPtr;
+
+	bool frustumCullingOn = SettingsManager::ms_Dynamic.FrustumCullingEnabled && frustum;
 
 	for (int i = 0; i < list.size(); i++)
 	{
@@ -80,8 +84,11 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		float frustumNear = renderOverride ? renderOverride->FrustumNearPercent : 0.0f;
 		float frustumFar = renderOverride ? renderOverride->FrustumFarPercent: 1.0f;
 
-		if (!SettingsManager::ms_Dynamic.FrustumCullingEnabled || list[i].IsOrthographic() || !frustum || frustum->CheckSphere(pos, radius, frustumNear, frustumFar))
-			list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), backBufferIndex, requireCPUGPUSync, &matrices, renderOverride, lastSetShader);
+		bool failedFrustumCull = frustumCullingOn && !frustum->CheckSphere(pos, radius, frustumNear, frustumFar);
+		if (failedFrustumCull && !list[i].IsOrthographic())
+			continue;
+
+		list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), backBufferIndex, requireCPUGPUSync, &matrices, renderOverride, lastSetShader);
 	}
 }
 
