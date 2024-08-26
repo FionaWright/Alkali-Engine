@@ -468,17 +468,21 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	nodeName = id + "::" + nodeName;
 
 	bool alphaRequirementMet = SettingsManager::ms_Misc.RequireAlphaTextureForDoubleSided ? material->GetHasAlpha() : true;
-	bool isTransparent = alphaRequirementMet || useGlassSRVs || mat.doubleSided;
+	bool isAT = alphaRequirementMet || mat.doubleSided;
 
 	if (shaderIndex == -1)
-		shaderIndex = isTransparent ? args.DefaultShaderTransIndex : args.DefaultShaderIndex;
+		shaderIndex = isAT ? args.DefaultShaderATIndex : args.DefaultShaderIndex;
 	if (batchIndex == -1)
 		batchIndex = args.DefaultBatchIndex;
 
 	auto& shaderUsed = args.Shaders[shaderIndex];
 	GameObject go(nodeName, model, shaderUsed, material);
 	go.SetTransform(args.Transform);
-	go.ForceSetTransparent(isTransparent);
+
+	if (useGlassSRVs)
+		go.ForceSetTransparent(true);
+	else
+		go.ForceSetAT(isAT);
 
 	args.Batches[batchIndex]->AddGameObject(go);
 }

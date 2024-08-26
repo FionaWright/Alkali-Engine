@@ -54,6 +54,7 @@ public:
 
 	void UpdateWorldMatrix(bool considerCentroid = true);	
 	void ForceSetTransparent(bool trans);
+	void ForceSetAT(bool at);
 
 	size_t GetModelVertexCount() const;
 	size_t GetModelIndexCount() const;
@@ -66,6 +67,7 @@ public:
 	bool* GetEnabledPtr();
 
 	bool IsTransparent() const;
+	bool IsAT() const;
 	bool IsOrthographic() const;
 
 	string m_Name;
@@ -83,8 +85,9 @@ protected:
 
 	XMMATRIX m_worldMatrix;
 
-	bool m_orthographic;
-	bool m_isTransparent;
+	bool m_orthographic = false;
+	bool m_isTransparent = false;
+	bool m_isAT = false;
 	bool m_isOccluder = true;
 	bool m_enabled = true;
 };

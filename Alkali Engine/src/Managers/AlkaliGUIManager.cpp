@@ -147,6 +147,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Show Bounding Spheres", &SettingsManager::ms_Dynamic.BoundingSphereMode);
 
 				ImGui::Checkbox("Transparents Enabled", &SettingsManager::ms_Dynamic.TransparentGOEnabled);
+				ImGui::Checkbox("AT GOs Enabled", &SettingsManager::ms_Dynamic.ATGoEnabled);
 
 				float prePassChanged = ImGui::Checkbox("Depth Pre-Pass", &SettingsManager::ms_Dynamic.DepthPrePassEnabled);
 
@@ -726,14 +727,13 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			for (auto& it : batchList)
 			{
 				for (auto& it2 : it.second->GetOpaques())
-				{
 					it2.SetEnabled(true);
-				}
 
 				for (auto& it2 : it.second->GetTrans())
-				{
 					it2.SetEnabled(true);
-				}
+
+				for (auto& it2 : it.second->GetATs())
+					it2.SetEnabled(true);
 			}
 		}
 
@@ -742,14 +742,13 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			for (auto& it : batchList)
 			{
 				for (auto& it2 : it.second->GetOpaques())
-				{
 					it2.SetEnabled(false);
-				}
 
 				for (auto& it2 : it.second->GetTrans())
-				{
 					it2.SetEnabled(false);
-				}
+
+				for (auto& it2 : it.second->GetATs())
+					it2.SetEnabled(false);
 			}
 		}
 
@@ -766,6 +765,15 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 					if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 					{
 						RenderGameObjectGUI(&opaques[i], i);
+					}
+				}
+
+				auto& atGOs = it.second->GetATs();
+				for (int i = 0; i < atGOs.size(); i++)
+				{
+					if (ImGui::CollapsingHeader(atGOs[i].m_Name.c_str()))
+					{
+						RenderGameObjectGUI(&atGOs[i], i);
 					}
 				}
 
@@ -805,6 +813,24 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 							if (ImGui::CollapsingHeader(opaques[i].m_Name.c_str()))
 							{
 								RenderGameObjectGUI(&opaques[i], i);
+							}
+						}
+
+						ImGui::Spacing();
+						ImGui::Unindent(IM_GUI_INDENTATION);
+					}
+
+					auto& ats = it.second->GetATs();
+					tag = "Alpha Tested (" + std::to_string(ats.size()) + ")##" + it.first;
+					if (ImGui::CollapsingHeader(tag.c_str()))
+					{
+						ImGui::Indent(IM_GUI_INDENTATION);
+
+						for (int i = 0; i < ats.size(); i++)
+						{
+							if (ImGui::CollapsingHeader(ats[i].m_Name.c_str()))
+							{
+								RenderGameObjectGUI(&ats[i], i);
 							}
 						}
 

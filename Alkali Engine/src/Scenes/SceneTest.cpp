@@ -158,6 +158,7 @@ bool SceneTest::LoadContent()
 	ShaderArgs argsGlass = { L"GlassPBR.vs", L"GlassPBR.ps", inputLayoutPBR, rootSigGlass->GetRootSigResource() };
 	argsGlass.CullNone = true;
 	argsGlass.EnableDSVWritingForce = true;
+	argsGlass.ForceCompFuncLE = true;
 	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
 
 	/*ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
@@ -236,7 +237,7 @@ bool SceneTest::LoadContent()
 		float randY = Rand01() * 2 - 1;
 		float randZ = Rand01() * 2 - 1;		
 
-		auto bubble = batchGlass->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderGlass, matBubble, false, true);
+		auto bubble = batchGlass->CreateGameObject("Bubble #" + std::to_string(i), modelSphere, shaderGlass, matBubble, false, false, true);
 		bubble->SetPosition(20 * randX, 10 * randY, 20 * randZ);
 	}
 

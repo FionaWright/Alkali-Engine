@@ -20,6 +20,12 @@ void Batch::Init(string name, shared_ptr<RootSig> pRootSig)
 
 GameObject* Batch::AddGameObject(GameObject go)
 {
+	if (go.IsAT())
+	{
+		m_goListAT.push_back(go);
+		return &m_goListAT[m_goListAT.size() - 1];
+	}
+
 	if (go.IsTransparent())
 	{
 		m_goListTrans.push_back(go);		
@@ -30,11 +36,13 @@ GameObject* Batch::AddGameObject(GameObject go)
 	return &m_goList[m_goList.size() - 1];
 }
 
-GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthoGraphic, bool forceTransparent)
+GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthoGraphic, bool forceAT, bool forceTransparent)
 {
 	GameObject go(name, pModel, pShader, pMaterial, orthoGraphic);
 	if (forceTransparent)
 		go.ForceSetTransparent(true);
+	else if (forceAT)
+		go.ForceSetAT(true);
 
 	return AddGameObject(go);
 }
@@ -55,11 +63,11 @@ bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius)
 	return false;
 }
 
-void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, bool* requireCPUGPUSync, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, Shader** lastSetShader)
+void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, ID3D12GraphicsCommandList2* cmdList, BatchArgs& args)
 {
 	MatricesCB matrices;
-	matrices.V = view;
-	matrices.P = proj;
+	matrices.V = args.ViewMatrix;
+	matrices.P = args.ProjMatrix;
 
 	cmdList->SetGraphicsRootSignature(rootSig->GetRootSigResource());
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -67,10 +75,10 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 	RootSig* lastSetRootSig = nullptr;	
 
 	Shader* lastSetShaderPtr = nullptr;
-	if (!lastSetShader)
-		lastSetShader = &lastSetShaderPtr;
+	if (!args.ppLastUsedShader)
+		args.ppLastUsedShader = &lastSetShaderPtr;
 
-	bool frustumCullingOn = SettingsManager::ms_Dynamic.FrustumCullingEnabled && frustum;
+	bool frustumCullingOn = SettingsManager::ms_Dynamic.FrustumCullingEnabled && args.pFrustum;
 
 	for (int i = 0; i < list.size(); i++)
 	{
@@ -78,50 +86,76 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
 
-		if (renderOverride && renderOverride->CullAgainstBounds && !CheckWithinBounds(renderOverride, pos, radius))
+		if (args.pOverride && args.pOverride->CullAgainstBounds && !CheckWithinBounds(args.pOverride, pos, radius))
 			continue;
 
-		float frustumNear = renderOverride ? renderOverride->FrustumNearPercent : 0.0f;
-		float frustumFar = renderOverride ? renderOverride->FrustumFarPercent: 1.0f;
+		float frustumNear = args.pOverride ? args.pOverride->FrustumNearPercent : 0.0f;
+		float frustumFar = args.pOverride ? args.pOverride->FrustumFarPercent: 1.0f;
 
-		bool failedFrustumCull = frustumCullingOn && !frustum->CheckSphere(pos, radius, frustumNear, frustumFar);
+		bool failedFrustumCull = frustumCullingOn && !args.pFrustum->CheckSphere(pos, radius, frustumNear, frustumFar);
 		if (failedFrustumCull && !list[i].IsOrthographic())
 			continue;
 
-		list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), backBufferIndex, requireCPUGPUSync, &matrices, renderOverride, lastSetShader);
+		list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), args.BackBufferIndex, args.pRequireCPUGPUSync, &matrices, args.pOverride, args.ppLastUsedShader);
 	}
 }
 
-void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync, Shader** lastSetShader)
+void Batch::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, BatchArgs& args)
 {
-	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goList, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride, lastSetShader);
+	RootSig* rootSig = args.pOverride && args.pOverride->RootSigOverride ? args.pOverride->RootSigOverride : m_rootSig.get();
+	RenderFromList(d3d, m_goList, rootSig, cmdList, args);
 }
 
-void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, const int& backBufferIndex, XMMATRIX& view, XMMATRIX& proj, Frustum* frustum, RenderOverride* renderOverride, bool* requireCPUGPUSync, Shader** lastSetShader)
+void Batch::RenderAT(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, BatchArgs& args)
 {
-	RootSig* rootSig = renderOverride && renderOverride->RootSigOverride ? renderOverride->RootSigOverride : m_rootSig.get();
-	RenderFromList(d3d, m_goListTrans, rootSig, cmdList, backBufferIndex, requireCPUGPUSync, view, proj, frustum, renderOverride, lastSetShader);
+	if (!SettingsManager::ms_Dynamic.ATGoEnabled)
+		return;
+
+	RootSig* rootSig = args.pOverride && args.pOverride->RootSigOverride ? args.pOverride->RootSigOverride : m_rootSig.get();
+	RenderFromList(d3d, m_goListAT, rootSig, cmdList, args);
+}
+
+void Batch::RenderTrans(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, BatchArgs& args)
+{
+	if (!SettingsManager::ms_Dynamic.TransparentGOEnabled)
+		return;
+
+	RootSig* rootSig = args.pOverride && args.pOverride->RootSigOverride ? args.pOverride->RootSigOverride : m_rootSig.get();
+	RenderFromList(d3d, m_goListTrans, rootSig, cmdList, args);
 }
 
 void Batch::SortObjects(const XMFLOAT3& camPos) 
 {
-	std::sort(m_goList.begin(), m_goList.end(), [&camPos](const GameObject& a, const GameObject& b) {
+	auto sortNearToFar = [&camPos](const GameObject& a, const GameObject& b) {
 		float distSqA = SqDist(a.GetWorldPosition(), camPos);
 		float distSqB = SqDist(b.GetWorldPosition(), camPos);
 		return distSqA < distSqB;
-	});
+	};
 
-	std::sort(m_goListTrans.begin(), m_goListTrans.end(), [&camPos](const GameObject& a, const GameObject& b) {
+	auto sortFarToNear = [&camPos](const GameObject& a, const GameObject& b) {
 		float distSqA = SqDist(a.GetWorldPosition(), camPos);
 		float distSqB = SqDist(b.GetWorldPosition(), camPos);
 		return distSqA > distSqB;
-	});
+	};
+
+	std::sort(m_goList.begin(), m_goList.end(), sortNearToFar);
+
+	std::sort(m_goListTrans.begin(), m_goListTrans.end(), sortFarToNear);
+
+	if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
+		std::sort(m_goListAT.begin(), m_goListAT.end(), sortNearToFar);
+	else
+		std::sort(m_goListAT.begin(), m_goListAT.end(), sortFarToNear);
 }
 
 vector<GameObject>& Batch::GetOpaques()
 {
 	return m_goList;
+}
+
+vector<GameObject>& Batch::GetATs()
+{
+	return m_goListAT;
 }
 
 vector<GameObject>& Batch::GetTrans()
