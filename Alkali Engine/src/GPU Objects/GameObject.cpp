@@ -56,20 +56,40 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		return;
 	}		
 
+	bool materialCorrectState = m_material->EnsureCorrectSRVState(cmdListDirect);
 	if (requireCPUGPUSync)
-		*requireCPUGPUSync |= !m_material->EnsureCorrectSRVState(cmdListDirect);	
+		*requireCPUGPUSync |= !materialCorrectState;
 
-	while (renderOverride && renderOverride->UseDepthMaterial && m_shadowMapMats.size() <= renderOverride->DepthMatIndex)
+	if (renderOverride && renderOverride->UseDepthMaterial)
 	{
-		auto mat = AssetFactory::CreateMaterial();
-		vector<UINT> sizes = { sizeof(MatricesCB) };
-		mat->AddCBVs(d3d, cmdListDirect, sizes, false);
-		m_shadowMapMats.push_back(mat);
+		if (m_shadowMapMats.size() <= renderOverride->DepthMatIndex)
+			m_shadowMapMats.resize(renderOverride->DepthMatIndex + 1);
+
+		if (!m_shadowMapMats.at(renderOverride->DepthMatIndex))
+		{
+			auto mat = AssetFactory::CreateMaterial();
+			vector<UINT> sizes = { sizeof(MatricesCB) };
+			mat->AddCBVs(d3d, cmdListDirect, sizes, false);
+
+			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled && renderOverride->AddSRVToDepthMat && m_material->GetTextures().size() > 0)
+			{
+				mat->AddSRVs(d3d, { m_material->GetTextures().at(0) });
+			}
+
+			m_shadowMapMats[renderOverride->DepthMatIndex] = mat;
+		}
+		if (!materialCorrectState)
+			return;
 	}
 
 	Shader* usedShader = m_shader.get();
 	if (renderOverride && renderOverride->ShaderOverride)
-		usedShader = renderOverride->ShaderOverride;	
+	{
+		if (!renderOverride->ShaderOverride->IsInitialised())
+			return;
+
+		usedShader = renderOverride->ShaderOverride;
+	}		
 
 	if (!lastSetShader || usedShader != *lastSetShader)
 	{
@@ -128,7 +148,7 @@ Transform GameObject::GetTransform() const
 	return m_transform;
 }
 
-void GameObject::SetTransform(Transform t)
+void GameObject::SetTransform(const Transform& t)
 {
 	m_transform = t;
 	UpdateWorldMatrix();

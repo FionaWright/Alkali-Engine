@@ -32,12 +32,12 @@ public:
 	void RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform = nullptr, Material* materialOverride = nullptr);
 
 	Transform GetTransform() const;
-	void SetTransform(Transform t);
+	virtual void SetTransform(const Transform& t);
 
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3 xyz);
 	virtual void SetRotation(float x, float y, float z);
-	void SetRotationRadians(float x, float y, float z);
+	virtual void SetRotationRadians(float x, float y, float z);
 	void SetRotation(XMFLOAT3 xyz);
 	void SetScale(float x);
 	void SetScale(float x, float y, float z);

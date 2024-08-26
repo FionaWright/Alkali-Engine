@@ -23,6 +23,7 @@ struct ShaderArgs
 	bool IsDepthShader = false;
 	bool DisableStencil = false;
 	bool NoPS = false;
+	bool NoRTV = false;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	DXGI_FORMAT RTVFormat = SettingsManager::ms_DX12.RTVFormat;
 	DXGI_FORMAT DSVFormat = DXGI_FORMAT_D32_FLOAT;
@@ -53,6 +54,7 @@ struct ShaderArgs
 		IsDepthShader = other.IsDepthShader;
 		DepthBias = other.DepthBias;
 		EnableDSVWritingForce = other.EnableDSVWritingForce;
+		NoRTV = other.NoRTV;
 
 		return *this;
 	}

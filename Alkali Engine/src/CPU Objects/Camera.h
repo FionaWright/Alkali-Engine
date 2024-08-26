@@ -20,6 +20,8 @@ public:
 	void SetSpeed(float speed);
 
 	void SetRotation(float x, float y, float z) override;
+	void SetRotationRadians(float x, float y, float z) override;
+	void SetTransform(const Transform& t) override;
 
 	void Update(TimeEventArgs& e);	
 

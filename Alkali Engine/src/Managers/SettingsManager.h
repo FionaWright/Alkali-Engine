@@ -47,6 +47,9 @@ struct DX12Settings
 	const AsyncLoadingSettings Async;
 
 	bool ShaderCompilationWarningsAsErrors = false;
+	bool ShaderCompilationIEEEStrict = false;
+
+	bool DepthAlphaTestEnabled = true;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -158,10 +161,13 @@ struct DynamicSettings
 	bool DebugLinesEnabled = true;
 	bool AlwaysShowFrustumDebugLines = false;
 	bool FreezeFrustum = false;
+	bool GUIEnabled = true;
 
 	bool ShaderCompilerOptimizationEnabled = true;
+	UINT ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 	bool TransparentGOEnabled = true;
-	bool DepthPrePassEnabled = true;
+
+	bool DepthPrePassEnabled = true;	
 
 	bool HeapDebugViewEnabled = false;
 	bool VisualiseDSVEnabled = false;

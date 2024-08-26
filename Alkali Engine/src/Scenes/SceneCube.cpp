@@ -40,6 +40,9 @@ bool SceneCube::LoadContent()
 		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
+	//ShaderArgs argsShrimple = { L"Shrimple_VS.cso", L"Shrimple_PS.cso", inputLayoutPBR, rootSigShrimple->GetRootSigResource() };
+	//shared_ptr<Shader> shaderShrimple = AssetFactory::CreateShader(argsShrimple, true);
+
 	ShaderArgs argsShrimple = { L"Shrimple_VS.hlsl", L"Shrimple_PS.hlsl", inputLayoutPBR, rootSigShrimple->GetRootSigResource() };
 	shared_ptr<Shader> shaderShrimple = AssetFactory::CreateShader(argsShrimple);
 
@@ -49,7 +52,7 @@ bool SceneCube::LoadContent()
 	shared_ptr<Material> mat = AssetFactory::CreateMaterial();
 	mat->AddCBVs(m_d3dClass, cmdListDirect.Get(), cbvSizesDraw, false);
 
-	shared_ptr<Model> modelCube = AssetFactory::CreateModel("Cube.model");
+	shared_ptr<Model> modelCube = AssetFactory::CreateModel("Madeline.model");
 
 	auto go = batchPBR->CreateGameObject("Cube", modelCube, shaderShrimple, mat);
 	go->SetPosition(0, 0, 5);

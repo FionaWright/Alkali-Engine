@@ -25,8 +25,7 @@ V_OUT main(V_IN input)
 {
     V_OUT o;
 
-    float4 pos = float4(input.Position, 1.0f);
-    
+    float4 pos = float4(input.Position, 1.0f);    
     float4 worldPos = mul(MatricesCB.M, pos);
     o.Position = mul(mul(MatricesCB.P, MatricesCB.V), worldPos);
     

@@ -114,7 +114,6 @@ void Texture::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, str
         m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         TextureLoader::CreateMipMaps(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
-        return;
     }
 }
 
@@ -167,11 +166,7 @@ void Texture::InitCubeMap(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDire
         m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         TextureLoader::CreateMipMapsCubemap(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
-        //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
-        return;
     }
-
-    //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, string filePath, bool flipUpsideDown)
@@ -201,11 +196,8 @@ void Texture::InitCubeMapHDR(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListD
         m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         TextureLoader::CreateMipMapsCubemap(d3d, cmdListDirect, m_textureResource.Get(), m_textureDesc);
-        //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, SettingsManager::ms_DX12.SRVFormat);
         return;
     }
-
-    //ResourceManager::TransitionResource(cmdListDirect, m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, SettingsManager::ms_DX12.SRVFormat);
 }
 
 void Texture::InitCubeMapUAV_Empty(D3DClass* d3d)

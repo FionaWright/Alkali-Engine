@@ -154,6 +154,26 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Shader Optimization", &SettingsManager::ms_Dynamic.ShaderCompilerOptimizationEnabled);
 
+				FixWidthOnNext("Optimization Level");
+				ImGui::Text("Optimization Level");
+
+				ImGui::Indent(IM_GUI_INDENTATION);
+
+				static int opt = 3;
+				if (ImGui::RadioButton("0", &opt, 0) && opt == 0)
+					SettingsManager::ms_Dynamic.ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL0;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("1", &opt, 1) && opt == 1)
+					SettingsManager::ms_Dynamic.ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL1;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("2", &opt, 2) && opt == 2)
+					SettingsManager::ms_Dynamic.ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL2;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("3", &opt, 3) && opt == 3)
+					SettingsManager::ms_Dynamic.ShaderOptimizationLevelFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+				ImGui::Unindent(IM_GUI_INDENTATION);
+
 				if (wireframeChanged || cullChanged || prePassChanged || ImGui::Button("Recompile Shaders"))
 				{
 					d3d->Flush();
