@@ -40,6 +40,8 @@ public:
     void DestroyScenes();
 
     double GetFPS();
+    double GetFPS_2();
+    double GetFPS_3();
     unordered_map<wstring, shared_ptr<Scene>>& GetSceneMap();
 
 private:        
@@ -60,8 +62,8 @@ private:
 
     static wstring ms_exeDirectoryPath;
 
-    double m_fps;
-    double m_fpsTimeSinceUpdate;
-    unsigned int m_fpsFramesSinceUpdate;
+    double m_fps, m_fps2, m_fps3;
+    double m_fpsTimeSinceUpdate, m_fpsTimeSinceUpdate2, m_fpsTimeSinceUpdate3;
+    unsigned int m_fpsFramesSinceUpdate, m_fpsFramesSinceUpdate2, m_fpsFramesSinceUpdate3;
     int m_hotReloadCounter = 0;
 };

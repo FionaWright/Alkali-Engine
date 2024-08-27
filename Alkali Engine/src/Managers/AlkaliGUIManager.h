@@ -40,5 +40,6 @@ private:
 
 	static vector<string> ms_errorLog, ms_asyncLog;
 	static std::shared_mutex ms_asyncLogMutex;
+	static vector<float> ms_fpsQueue;
 };
 

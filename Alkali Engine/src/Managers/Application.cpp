@@ -129,7 +129,11 @@ int Application::Run()
 void Application::CalculateFPS(double deltaTime) 
 {
     m_fpsTimeSinceUpdate += deltaTime;
+    m_fpsTimeSinceUpdate2 += deltaTime;
+    m_fpsTimeSinceUpdate3 += deltaTime;
     m_fpsFramesSinceUpdate++;
+    m_fpsFramesSinceUpdate2++;
+    m_fpsFramesSinceUpdate3++;
 
     if (m_fpsTimeSinceUpdate > 0.1)
     {
@@ -137,6 +141,22 @@ void Application::CalculateFPS(double deltaTime)
 
         m_fpsFramesSinceUpdate = 0;
         m_fpsTimeSinceUpdate = 0.0;
+    }
+
+    if (m_fpsTimeSinceUpdate2 > 0.5)
+    {
+        m_fps2 = m_fpsFramesSinceUpdate2 / m_fpsTimeSinceUpdate2;
+
+        m_fpsFramesSinceUpdate2 = 0;
+        m_fpsTimeSinceUpdate2 = 0.0;
+    }
+
+    if (m_fpsTimeSinceUpdate3 > 1.0)
+    {
+        m_fps3 = m_fpsFramesSinceUpdate3 / m_fpsTimeSinceUpdate3;
+
+        m_fpsFramesSinceUpdate3 = 0;
+        m_fpsTimeSinceUpdate3 = 0.0;
     }
 }
 
@@ -237,6 +257,16 @@ void Application::DestroyScenes()
 double Application::GetFPS()
 {
     return m_fps;
+}
+
+double Application::GetFPS_2()
+{
+    return m_fps2;
+}
+
+double Application::GetFPS_3()
+{
+    return m_fps3;
 }
 
 unordered_map<wstring, shared_ptr<Scene>>& Application::GetSceneMap()
