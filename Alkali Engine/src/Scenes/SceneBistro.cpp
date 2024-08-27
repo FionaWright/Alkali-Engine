@@ -104,12 +104,13 @@ bool SceneBistro::LoadContent()
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
-	argsPBR.EnableDSVWritingForce = true;
+	argsPBR.EnableDSVWritingForce = !SettingsManager::ms_DX12.DepthAlphaTestEnabled;
 	shared_ptr<Shader> shaderPBRCullOff = AssetFactory::CreateShader(argsPBR);
 
-	ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
+	ShaderArgs argsSkybox = { L"Skybox_VS.hlsl", L"Skybox_PS.hlsl", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;
-	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);
+	argsSkybox.ForceCompFuncLE = true;
+	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox);
 
 	shared_ptr<Batch> batchPBR = AssetFactory::CreateBatch(rootSigPBR);
 	shared_ptr<Batch> batchSkybox = AssetFactory::CreateBatch(rootSigSkybox);
