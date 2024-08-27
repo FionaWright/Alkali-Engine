@@ -47,7 +47,7 @@ bool SceneTest::LoadContent()
 	shared_ptr<Texture> earthDayTex = AssetFactory::CreateTexture("EarthDay.png", cmdListDirect.Get());
 	shared_ptr<Texture> transTex = AssetFactory::CreateTexture("Transparent.png", cmdListDirect.Get());
 	shared_ptr<Texture> earthNormalTex = AssetFactory::CreateTexture("EarthNormal.png", cmdListDirect.Get(), false, true);
-	shared_ptr<Texture> defaultNormalTex = AssetFactory::CreateTexture("DefaultNormal.png", cmdListDirect.Get(), false, true);
+	shared_ptr<Texture> defaultNormalTex = AssetFactory::CreateTexture("DefaultNormal.tga", cmdListDirect.Get(), false, true);
 	shared_ptr<Texture> defaultSpecTex = AssetFactory::CreateTexture("DefaultSpecular.png", cmdListDirect.Get());
 	shared_ptr<Texture> whiteTex = AssetFactory::CreateTexture("WhitePOT.png", cmdListDirect.Get());
 	shared_ptr<Texture> gradientTex = AssetFactory::CreateTexture("Gradient.png", cmdListDirect.Get());
