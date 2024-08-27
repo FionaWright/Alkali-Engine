@@ -13,6 +13,7 @@
 
 vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog;
 std::shared_mutex AlkaliGUIManager::ms_asyncLogMutex;
+vector<float> AlkaliGUIManager::ms_fpsQueue;
 
 void AlkaliGUIManager::FixWidthOnNext(const char* label) 
 {
@@ -24,16 +25,50 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 	ImGui::SeparatorText("Stats");
 	ImGui::Indent(IM_GUI_INDENTATION);
 
-	string fpsTxt = "FPS: " + std::to_string(app->GetFPS());
+	float fps = app->GetFPS();
+	string fpsTxt = "FPS (Over 10ms): " + std::to_string(fps);
 	ImGui::Text(fpsTxt.c_str());
 
-	XMFLOAT2 mousePos = InputManager::GetMousePos();
-	string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
-	ImGui::Text(mouseTxt.c_str());
+	float fps5 = app->GetFPS_2();
+	string fpsTxt5 = "FPS (Over 50ms): " + std::to_string(fps5);
+	ImGui::Text(fpsTxt5.c_str());
 
-	XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
-	string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
-	ImGui::Text(mouseDeltaTxt.c_str());
+	string fpsTxt10 = "FPS (Over 100ms): " + std::to_string(app->GetFPS_3());
+	ImGui::Text(fpsTxt10.c_str());
+
+	if (ms_fpsQueue.size() == 0 || fps != ms_fpsQueue.at(ms_fpsQueue.size() - 1))
+	{
+		ms_fpsQueue.push_back(fps);
+		if (ms_fpsQueue.size() > 300)
+			ms_fpsQueue.erase(ms_fpsQueue.begin());
+	}	
+
+	if (ImGui::TreeNode("FPS Plot"))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		ImGui::PlotLines("", ms_fpsQueue.data(), ms_fpsQueue.size(), 0, nullptr, 0, 3.4028235E38F, ImVec2(0, 150));
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+		ImGui::TreePop();
+	}	
+
+	if (ImGui::TreeNode("Input Stats"))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		XMFLOAT2 mousePos = InputManager::GetMousePos();
+		string mouseTxt = "Mouse: (" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
+		ImGui::Text(mouseTxt.c_str());
+
+		XMFLOAT2 mousePosDelta = InputManager::GetMousePosDelta();
+		string mouseDeltaTxt = "Mouse delta: (" + std::to_string(mousePosDelta.x) + ", " + std::to_string(mousePosDelta.y) + ")";
+		ImGui::Text(mouseDeltaTxt.c_str());
+
+		ImGui::Spacing();
+		ImGui::Unindent(IM_GUI_INDENTATION);
+		ImGui::TreePop();
+	}
 
 	ImGui::Spacing();
 	ImGui::Unindent(IM_GUI_INDENTATION);
