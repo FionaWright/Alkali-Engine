@@ -94,6 +94,9 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 
 void AlkaliGUIManager::LogErrorMessage(string msg)
 {
+	if (msg.size() == 0)
+		return;
+
 	ms_errorLog.push_back(msg);
 }
 
