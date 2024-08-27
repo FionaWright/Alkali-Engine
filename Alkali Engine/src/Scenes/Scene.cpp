@@ -447,6 +447,12 @@ void Scene::OnRender(TimeEventArgs& e)
 		ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES;			
 		batchArgs.pOverride = &ro;
 
+		if (SettingsManager::ms_Dynamic.BoundingSphereMode)
+		{
+			ro.ModelOverride = ms_sphereModel.get();
+			ro.ModifyTransformToCentroid = true;
+		}
+
 		Shader* lastSetShader = nullptr;
 		batchArgs.ppLastUsedShader = &lastSetShader;
 		for (auto& it : batchList)
@@ -471,6 +477,14 @@ void Scene::OnRender(TimeEventArgs& e)
 
 	bool requireCPUGPUSync = false;
 	batchArgs.pRequireCPUGPUSync = &requireCPUGPUSync;
+
+	RenderOverride ro;
+	if (SettingsManager::ms_Dynamic.BoundingSphereMode)
+	{
+		batchArgs.pOverride = &ro;
+		batchArgs.pOverride->ModelOverride = ms_sphereModel.get();
+		batchArgs.pOverride->ModifyTransformToCentroid = true;
+	}
 
 	PIXBeginEvent(cmdList.Get(), COLOR_GREEN, "Opaque Pass");	
 	for (auto& it : batchList)
@@ -569,15 +583,6 @@ void Scene::OnResize(ResizeEventArgs& e)
 
 void Scene::OnWindowDestroy()
 {
-}
-
-bool Scene::IsSphereModeOn(Model** model)
-{
-	if (!SettingsManager::ms_Dynamic.BoundingSphereMode)
-		return false;
-
-	*model = ms_sphereModel.get();
-	return true;
 }
 
 void Scene::StaticShutdown()

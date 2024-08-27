@@ -43,7 +43,6 @@ public:
     virtual void OnResize(ResizeEventArgs& e);
     virtual void OnWindowDestroy();
 
-    static bool IsSphereModeOn(Model** model);
     static void StaticShutdown();
 
     Window* GetWindow();

@@ -39,7 +39,7 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		throw std::exception("Missing components");
 
 	if (!m_model->IsLoaded())
-		return; // Replace with cube model until loaded
+		return;
 
 	if (!m_enabled || (renderOverride && renderOverride->UseDepthMaterial && !m_isOccluder))
 		return;	
@@ -111,8 +111,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	if (renderOverride && renderOverride->UseDepthMaterial)
 		matUsed = m_shadowMapMats[renderOverride->DepthMatIndex].get();
 
-	Model* sphereModel = nullptr;	
-	if (Scene::IsSphereModeOn(&sphereModel))
+	Model* usedModel = m_model.get();
+	if (renderOverride && renderOverride->ModelOverride)
+		usedModel = renderOverride->ModelOverride;
+
+	if (renderOverride && renderOverride->ModifyTransformToCentroid)
 	{		
 		Transform modifiedTransform = m_transform;
 		XMFLOAT3 centroidScaled = Mult(m_transform.Scale, m_model->GetCentroid());
@@ -120,11 +123,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, sphereModel, &modifiedTransform, matUsed);
+		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, usedModel, &modifiedTransform, matUsed);
 		return;
 	}
 
-	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, m_model.get(), nullptr, matUsed);
+	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, usedModel, nullptr, matUsed);
 }
 
 void GameObject::RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
