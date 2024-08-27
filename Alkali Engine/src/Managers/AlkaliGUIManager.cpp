@@ -53,6 +53,18 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 		ImGui::TreePop();
 	}	
 
+	if (ImGui::TreeNode("Present Wait Plot"))
+	{
+		ImGui::Indent(IM_GUI_INDENTATION);
+
+		vector<float>& times = scene->GetPresentWaitTimes();
+
+		ImGui::PlotLines("", times.data(), times.size(), 0, nullptr, 0, 3.4028235E38F, ImVec2(0, 150));
+
+		ImGui::Unindent(IM_GUI_INDENTATION);
+		ImGui::TreePop();
+	}
+
 	if (ImGui::TreeNode("Input Stats"))
 	{
 		ImGui::Indent(IM_GUI_INDENTATION);
