@@ -48,6 +48,7 @@ public:
     Window* GetWindow();
     PerFrameCBuffers_PBR& GetPerFrameCBuffers();
     Camera* GetCamera();
+    vector<float>& GetPresentWaitTimes();
 
     wstring m_Name;
     bool m_ContentLoaded = false;
@@ -108,6 +109,10 @@ private:
 
     DepthViewCB m_depthViewCB = {};
     bool m_depthViewChanged = false;
+
+    int m_presentWaitCounter = 0;
+    vector<float> m_averagingWaitTimes;
+    vector<float> m_presentWaitTimes;
 
     static shared_ptr<Material> ms_shadowMapMat;
     static shared_ptr<Material> ms_perFramePBRMat;

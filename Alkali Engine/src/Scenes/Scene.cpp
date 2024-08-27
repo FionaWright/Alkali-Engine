@@ -606,6 +606,11 @@ Camera* Scene::GetCamera()
 	return m_camera.get();
 }
 
+vector<float>& Scene::GetPresentWaitTimes()
+{
+	return m_presentWaitTimes;
+}
+
 void Scene::ClearBackBuffer(ID3D12GraphicsCommandList2* cmdList)
 {
 	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
@@ -644,12 +649,30 @@ void Scene::Present(ID3D12GraphicsCommandList2* cmdList, CommandQueue* cmdQueue)
 	auto startTimeProfiler = std::chrono::high_resolution_clock::now();
 
 	cmdQueue->WaitForFenceValue(m_FenceValues.at(nextBackBufferIndex));
+	
+	std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
+
+	m_presentWaitCounter++;
+	m_averagingWaitTimes.push_back(timeTaken.count());
+	if (m_presentWaitCounter > 30)
+	{
+		m_presentWaitCounter = 0;
+
+		float average = 0;
+		for (int i = 0; i < m_averagingWaitTimes.size(); i++)
+			average += m_averagingWaitTimes[i];
+		average /= m_averagingWaitTimes.size();
+		m_averagingWaitTimes.clear();
+
+		m_presentWaitTimes.push_back(average);
+		if (m_presentWaitTimes.size() > 1000)
+			m_presentWaitTimes.erase(m_presentWaitTimes.begin());
+	}	
 
 	if (SettingsManager::ms_Dynamic.DebugFramePresentInfo)
-	{
-		std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
+	{		
 		wstring output = L"Time spent waiting for fence was " + std::to_wstring(timeTaken.count()) + L" ms\n";
-		OutputDebugString(output.c_str());
+		OutputDebugString(output.c_str());		
 	}	
 }
 
