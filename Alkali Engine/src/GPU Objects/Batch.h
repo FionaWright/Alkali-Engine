@@ -13,12 +13,16 @@ class GameObject;
 
 struct RenderOverride
 {
-	Shader* ShaderOverride;
-	RootSig* RootSigOverride;
+	Shader* ShaderOverride = nullptr;
+	RootSig* RootSigOverride = nullptr;
+	Model* ModelOverride = nullptr;
+
 	bool UseDepthMaterial = false;
 	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
 	int DepthMatIndex = -1;
 	bool AddSRVToDepthMat = false;
+
+	bool ModifyTransformToCentroid = false;
 
 	XMFLOAT3 Origin = XMFLOAT3_ZERO;
 	XMFLOAT3 MaxBasis = XMFLOAT3_ZERO;
