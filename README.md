@@ -11,8 +11,8 @@ Here are some notable accomplishments I've done so far:
   -Dear ImGui support  
   -Hot reloading for shaders  
   -Cubemap or Equirectangular Skyboxes  
-  -Asynchronous Loading
-  -Depth Prepass w/ Alpha Testing
+  -Asynchronous Loading  
+  -Depth Prepass w/ Alpha Testing  
 
 Controls:  
   -Use the mouse to move the camera around  
