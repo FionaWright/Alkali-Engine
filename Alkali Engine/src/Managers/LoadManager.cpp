@@ -160,7 +160,7 @@ void LoadManager::LoadHighestPriority(int threadID)
 		ms_shaderQueue.pop();
 		lockShader.unlock();
 
-		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found shader (" + wstringToString(shaderArgs.Args.vs) + ")");
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found shader (" + wstringToString(shaderArgs.Args.VS) + ")");
 
 		LoadShader(shaderArgs, threadID);
 		return;
@@ -370,7 +370,7 @@ bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, b
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Shader pushed to queue: " + wstringToString(shaderArgs.vs));
+	AlkaliGUIManager::LogAsyncMessage("Shader pushed to queue: " + wstringToString(shaderArgs.VS));
 
 	AsyncShaderArgs args;
 	args.pShader = pShader;

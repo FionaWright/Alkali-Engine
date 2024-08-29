@@ -18,6 +18,17 @@ struct MatricesLineCB
 	XMMATRIX VP;
 };
 
+struct MatricesMV_VCB
+{
+    XMMATRIX M;
+    XMMATRIX V;
+};
+
+struct MatricesMV_GCB
+{
+    XMMATRIX P[4];
+};
+
 struct CameraCB
 {
     XMFLOAT3 CameraPosition;

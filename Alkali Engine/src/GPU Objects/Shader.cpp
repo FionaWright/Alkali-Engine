@@ -7,8 +7,15 @@ void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
 	m_args = args;
 
-	m_VSName = g_dirPath + args.vs;
-	m_PSName = g_dirPath + args.ps;
+	m_VSName = g_dirPath + args.VS;
+	if (!args.PS.empty())
+		m_PSName = g_dirPath + args.PS;
+	if (!args.GS.empty())
+		m_GSName = g_dirPath + args.GS;
+	if (!args.HS.empty())
+		m_HSName = g_dirPath + args.HS;
+	if (!args.DS.empty())
+		m_DSName = g_dirPath + args.DS;
 
 	Compile(device);
 }
@@ -19,8 +26,15 @@ void Shader::InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args)
 
 	m_preCompiled = true;
 
-	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + args.vs;
-	m_PSName = Application::GetEXEDirectoryPath() + L"\\" + args.ps;
+	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + args.VS;
+	if (!args.PS.empty())
+		m_PSName = Application::GetEXEDirectoryPath() + L"\\" + args.PS;
+	if (!args.GS.empty())
+		m_GSName = Application::GetEXEDirectoryPath() + L"\\" + args.GS;
+	if (!args.HS.empty())
+		m_HSName = Application::GetEXEDirectoryPath() + L"\\" + args.HS;
+	if (!args.DS.empty())
+		m_DSName = Application::GetEXEDirectoryPath() + L"\\" + args.DS;
 
 	Compile(device);
 }
@@ -31,25 +45,37 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 
 	ComPtr<ID3DBlob> vBlob;
 	ComPtr<ID3DBlob> pBlob;
+	ComPtr<ID3DBlob> gBlob;
 
 	if (m_preCompiled)
 	{
 		vBlob = ReadPreCompiledShader(m_VSName.c_str());
 
-		if (!m_args.NoPS)
+		if (!m_PSName.empty())
 			pBlob = ReadPreCompiledShader(m_PSName.c_str());
+
+		if (!m_GSName.empty())
+			gBlob = ReadPreCompiledShader(m_GSName.c_str());
 	}
 	else
 	{
 		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1", exitOnFail);
-		if (!m_args.NoPS)
-			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1", exitOnFail);
-
 		m_lastVSTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
-		m_lastPSTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+
+		if (!m_PSName.empty())
+		{
+			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1", exitOnFail);
+			m_lastPSTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+		}			
+
+		if (!m_GSName.empty())
+		{
+			gBlob = CompileShader(m_GSName.c_str(), "main", "gs_5_1", exitOnFail);
+			m_lastGSTime = std::filesystem::last_write_time(m_GSName).time_since_epoch();
+		}					
 	}
 
-	bool noRTV = m_args.NoRTV || m_args.NoPS;
+	bool noRTV = m_args.NoRTV || m_PSName.empty();
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
 	rtvFormats.NumRenderTargets = noRTV ? 0 : 1;
 	if (!noRTV)
@@ -131,6 +157,7 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
 		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
 		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+		CD3DX12_PIPELINE_STATE_STREAM_GS GS;
 		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC Blend;
 		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL DepthStencil;
@@ -142,8 +169,10 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	psoStream.InputLayout = { m_args.InputLayout.data(), inputLayoutCount };
 	psoStream.PrimitiveTopologyType = m_args.Topology;
 	psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
-	if (!m_args.NoPS)
+	if (pBlob)
 		psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
+	if (gBlob)
+		psoStream.GS = CD3DX12_SHADER_BYTECODE(gBlob.Get());
 	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
@@ -167,9 +196,20 @@ void Shader::TryHotReload(ID3D12Device2* device)
 		return;
 
 	auto vsTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
-	auto psTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+	bool hotReload = (vsTime - m_lastVSTime).count() > 1;
 
-	bool hotReload = (vsTime - m_lastVSTime).count() > 1 || (psTime - m_lastPSTime).count() > 1;
+	if (!m_PSName.empty())
+	{
+		auto psTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
+		hotReload |= (psTime - m_lastPSTime).count() > 1;
+	}		
+
+	if (!m_GSName.empty())
+	{
+		auto gsTime = std::filesystem::last_write_time(m_GSName).time_since_epoch();
+		hotReload |= (gsTime - m_lastGSTime).count() > 1;
+	}	
+
 	if (hotReload)
 		Compile(device, true);
 }

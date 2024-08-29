@@ -11,9 +11,10 @@ const wstring g_dirPath = L"Assets/Shaders/";
 
 struct ShaderArgs
 {
-	wstring vs, ps;
+	wstring VS = L"", PS = L"";
 	vector<D3D12_INPUT_ELEMENT_DESC> InputLayout;
 	ID3D12RootSignature* RootSig = nullptr;
+	wstring GS = L"", HS = L"", DS = L"";
 
 	bool CullNone = false;
 	bool CullFront = false;
@@ -22,7 +23,6 @@ struct ShaderArgs
 	bool EnableDSVWritingForce = false;
 	bool IsDepthShader = false;
 	bool DisableStencil = false;
-	bool NoPS = false;
 	bool NoRTV = false;
 	bool ForceCompFuncLE = false;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -32,13 +32,13 @@ struct ShaderArgs
 	float SlopeScaleDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
 	float DepthBias = 0.0f;
 
-	ShaderArgs& operator=(const ShaderArgs& other)
+	/*ShaderArgs& operator=(const ShaderArgs& other)
 	{
 		if (this == &other)
 			return *this;
 
-		vs = other.vs;
-		ps = other.ps;
+		VS = other.VS;
+		PS = other.PS;
 		InputLayout = other.InputLayout; 
 		RootSig = other.RootSig;
 
@@ -59,7 +59,7 @@ struct ShaderArgs
 		ForceCompFuncLE = other.ForceCompFuncLE;
 
 		return *this;
-	}
+	}*/
 };
 
 class Shader
@@ -76,7 +76,7 @@ public:
 	bool IsPreCompiled() const;
 	bool IsInitialised() const;
 
-	wstring m_VSName, m_PSName, m_HSName, m_DSName;
+	wstring m_VSName, m_PSName, m_HSName, m_DSName, m_GSName;
 
 protected:
 	ComPtr<ID3DBlob> CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail);
@@ -86,7 +86,7 @@ protected:
 private:
 	ComPtr<ID3D12PipelineState> m_pso = nullptr;
 
-	std::chrono::system_clock::duration m_lastVSTime, m_lastPSTime;
+	std::chrono::system_clock::duration m_lastVSTime, m_lastPSTime, m_lastGSTime;
 
 	bool m_preCompiled = false;
 	ShaderArgs m_args;
