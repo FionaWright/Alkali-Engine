@@ -268,6 +268,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
 				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
 				ImGui::Spacing();
+				ImGui::Checkbox("Multi Viewport", &SettingsManager::ms_Dynamic.Shadow.MultiViewport);
+				ImGui::Spacing();
 
 				FixWidthOnNext("Cascade Count");
 				ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);

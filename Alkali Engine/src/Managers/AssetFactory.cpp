@@ -119,7 +119,7 @@ shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12Gr
 shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool precompiled, wstring idAppend)
 {
 	shared_ptr<Shader> shader;
-	wstring id = args.vs + L" - " + args.ps;
+	wstring id = args.VS + L" - " + args.PS + L" - " + args.GS;
 	if (args.CullNone)
 		id += L" --CullOff";
 	id += idAppend;

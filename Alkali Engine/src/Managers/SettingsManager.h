@@ -49,7 +49,7 @@ struct DX12Settings
 	bool ShaderCompilationWarningsAsErrors = false;
 	bool ShaderCompilationIEEEStrict = false;
 
-	bool DepthAlphaTestEnabled = true;
+	bool DepthAlphaTestEnabled = false;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -133,6 +133,7 @@ struct ShadowDynamicSettings
 	bool BoundToScene = false;
 	bool UseBoundingSpheres = true;
 	bool CullAgainstBounds = true;
+	bool MultiViewport = true;
 
 	bool ShowDebugBounds = false;
 

@@ -42,7 +42,7 @@ public:
 	static void CalculateNearFarPercents();
 
 	static void CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 lightDir, Frustum& frustum);
-	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex);
+	static void Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex);	
 	static void RenderDebugView(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, const int& backBufferIndex, const XMFLOAT2 screenReso);
 
 	static void SetDebugLines(vector<DebugLine*>& debugLines);
@@ -54,6 +54,8 @@ public:
 	static float GetPCFSampleRange(int sampleCount);
 
 private:
+	static void RenderSingleViewport(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex);
+	static void RenderMultiViewport(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex);
 	static void CalculateSceneBounds(BoundsArgs args, const XMFLOAT3& eyePos, float& width, float& height, float& nearDist, float& farDist);
 
 	static CascadeInfo ms_cascadeInfos[MAX_SHADOW_MAP_CASCADES];
@@ -71,9 +73,9 @@ private:
 	static D3D12_RESOURCE_STATES ms_currentDSVState;
 
 	static std::unique_ptr<GameObject> ms_viewGO;
-	static shared_ptr<Shader> ms_depthShader, ms_depthATShader;
-	static shared_ptr<RootSig> ms_depthRootSig, ms_depthATRootSig;
-	static shared_ptr<Material> ms_viewDepthMat;
+	static shared_ptr<Shader> ms_depthShader, ms_depthATShader, ms_depthShaderMV;
+	static shared_ptr<RootSig> ms_depthRootSig, ms_depthATRootSig, ms_depthRootSigMV;
+	static shared_ptr<Material> ms_viewDepthMat, ms_depthMVMat;
 	static shared_ptr<RootSig> ms_viewRootSig;
 
 	static D3D12_VIEWPORT ms_viewports[MAX_SHADOW_MAP_CASCADES];

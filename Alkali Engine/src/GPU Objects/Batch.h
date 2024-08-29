@@ -23,6 +23,8 @@ struct RenderOverride
 	bool AddSRVToDepthMat = false;
 
 	bool ModifyTransformToCentroid = false;
+	bool SetMatricesMV_V = false;
+	bool SetMatricesMV_G = false;
 
 	XMFLOAT3 Origin = XMFLOAT3_ZERO;
 	XMFLOAT3 MaxBasis = XMFLOAT3_ZERO;

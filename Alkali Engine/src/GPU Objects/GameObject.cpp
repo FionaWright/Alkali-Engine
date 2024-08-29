@@ -66,8 +66,13 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		if (!m_shadowMapMats.at(renderOverride->DepthMatIndex))
 		{
 			auto mat = AssetFactory::CreateMaterial();
-			vector<UINT> sizes = { sizeof(MatricesCB) };
+			vector<UINT> sizes = { sizeof(MatricesCB) };			
 			mat->AddCBVs(d3d, cmdListDirect, sizes, false);
+
+			if (renderOverride->SetMatricesMV_G)
+			{
+				mat->AddCBVs(d3d, cmdListDirect, { sizeof(MatricesMV_GCB) }, true, "MGCB");
+			}
 
 			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled && renderOverride->AddSRVToDepthMat && m_material->GetTextures().size() > 0)
 			{
@@ -123,25 +128,27 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		modifiedTransform.Scale = Mult(XMFLOAT3_ONE, m_model->GetSphereRadius() * maxScale);
 		modifiedTransform.Position = Add(m_transform.Position, centroidScaled);
 
-		RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, usedModel, &modifiedTransform, matUsed);
-		return;
+		matrices->M = TransformToWorldMatrix(modifiedTransform);
 	}
-
-	RenderModel(cmdListDirect, rpi, backBufferIndex, matrices, usedModel, nullptr, matUsed);
-}
-
-void GameObject::RenderModel(ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, MatricesCB* matrices, Model* model, Transform* transform, Material* material)
-{
-	if (transform)
-		matrices->M = TransformToWorldMatrix(*transform);
 	else
+	{
 		matrices->M = m_worldMatrix;
-	matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, matrices->M));
-	material->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB), backBufferIndex);
+	}		
 
-	material->AssignMaterial(cmdListDirect, rpi, backBufferIndex);
+	if (renderOverride && renderOverride->SetMatricesMV_V)
+	{
+		matrices->InverseTransposeM = matrices->V;
+		matUsed->SetCBV_PerDraw(0, matrices, sizeof(MatricesMV_VCB), backBufferIndex);
+	}		
+	else
+	{
+		matrices->InverseTransposeM = XMMatrixTranspose(XMMatrixInverse(nullptr, matrices->M));
+		matUsed->SetCBV_PerDraw(0, matrices, sizeof(MatricesCB), backBufferIndex);
+	}	
 
-	model->Render(cmdListDirect);
+	matUsed->AssignMaterial(cmdListDirect, rpi, backBufferIndex);
+
+	usedModel->Render(cmdListDirect);
 }
 
 Transform GameObject::GetTransform() const

@@ -240,13 +240,7 @@ bool Scene::LoadContent()
 		m_depthPrepassRootSig = std::make_shared<RootSig>();
 		m_depthPrepassRootSig->Init("Depth RS", depthRPI);
 
-		//ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
-		//depthArgs.NoPS = true;
-		//depthArgs.IsDepthShader = true;
-		//m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, true, L" - Prepass");
-
 		ShaderArgs depthArgs = { L"Depth_VS.hlsl", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
-		depthArgs.NoPS = true;
 		depthArgs.IsDepthShader = true;
 		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, false, L" - Prepass");
 
@@ -257,13 +251,10 @@ bool Scene::LoadContent()
 			m_depthPrepassAlphaTestRS = std::make_shared<RootSig>();
 			m_depthPrepassAlphaTestRS->Init("Depth AT RS", depthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
-			//depthArgs.ps = L"Depth_PS.cso";
-			depthArgs.ps = L"Depth_PS.hlsl";
-			depthArgs.NoPS = false;
+			depthArgs.PS = L"Depth_PS.hlsl";
 			depthArgs.NoRTV = true;
 			depthArgs.CullNone = true;
 			depthArgs.RootSig = m_depthPrepassAlphaTestRS->GetRootSigResource();
-			//m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, true, L" - PrepassAT");
 			m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, false, L" - PrepassAT");
 		}		
 	}
@@ -405,7 +396,13 @@ void Scene::OnRender(TimeEventArgs& e)
 	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
 	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	cmdList->RSSetScissorRects(1, &m_scissorRect);
+	if (SettingsManager::ms_Dynamic.Shadow.MultiViewport)
+	{
+		D3D12_RECT rects[4] = { m_scissorRect, m_scissorRect , m_scissorRect , m_scissorRect };
+		cmdList->RSSetScissorRects(SettingsManager::ms_Dynamic.Shadow.CascadeCount, rects);
+	}
+	else
+		cmdList->RSSetScissorRects(1, &m_scissorRect);
 
 	if (m_shadowMapCounter >= SettingsManager::ms_Dynamic.Shadow.TimeSlice && SettingsManager::ms_Dynamic.Shadow.Enabled)
 	{
