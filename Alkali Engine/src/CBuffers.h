@@ -29,6 +29,11 @@ struct MatricesMV_GCB
     XMMATRIX P[4];
 };
 
+struct CullFlagsCB
+{
+    UINT Flags;
+};
+
 struct CameraCB
 {
     XMFLOAT3 CameraPosition;

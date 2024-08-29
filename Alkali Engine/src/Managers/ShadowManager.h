@@ -73,8 +73,8 @@ private:
 	static D3D12_RESOURCE_STATES ms_currentDSVState;
 
 	static std::unique_ptr<GameObject> ms_viewGO;
-	static shared_ptr<Shader> ms_depthShader, ms_depthATShader, ms_depthShaderMV;
-	static shared_ptr<RootSig> ms_depthRootSig, ms_depthATRootSig, ms_depthRootSigMV;
+	static shared_ptr<Shader> ms_depthShader, ms_depthATShader, ms_depthShaderMV, ms_depthShaderMVAT;
+	static shared_ptr<RootSig> ms_depthRootSig, ms_depthATRootSig, ms_depthRootSigMV, ms_depthRootSigMVAT;
 	static shared_ptr<Material> ms_viewDepthMat, ms_depthMVMat;
 	static shared_ptr<RootSig> ms_viewRootSig;
 

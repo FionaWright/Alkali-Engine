@@ -2,6 +2,7 @@
 #include "Batch.h"
 #include "CBuffers.h"
 #include "Utils.h"
+#include "ShadowManager.h"
 
 Batch::Batch()
 	: m_Name("Uninitialised")
@@ -47,17 +48,17 @@ GameObject* Batch::CreateGameObject(string name, shared_ptr<Model> pModel, share
 	return AddGameObject(go);
 }
 
-bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius)
+bool CheckWithinBounds(RenderOverride* ro, XMFLOAT3 pos, float radius, int index)
 {
 	pos = Subtract(pos, ro->Origin);
 
 	XMFLOAT3 forward = Mult(pos, ro->ForwardBasis);
-	if (forward.z - radius < ro->BoundsNear || forward.z + radius > ro->BoundsFar)
+	if (forward.z - radius < ro->CullBoundsInfo[index].Near || forward.z + radius > ro->CullBoundsInfo[index].Far)
 		return false;
 
 	XMFLOAT3 pMin = Add(Abs(pos), Mult(ro->MaxBasis, -radius));
 
-	if (pMin.x * 2 <= ro->BoundsWidth || pMin.y * 2 <= ro->BoundsHeight)
+	if (pMin.x * 2 <= ro->CullBoundsInfo[index].Width || pMin.y * 2 <= ro->CullBoundsInfo[index].Height) // This might be too lenient, should be && right? Doesn't seem to work
 		return true;
 
 	return false;
@@ -86,7 +87,7 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		float radius;
 		list[i].GetBoundingSphere(pos, radius);
 
-		if (args.pOverride && args.pOverride->CullAgainstBounds && !CheckWithinBounds(args.pOverride, pos, radius))
+		if (args.pOverride && args.pOverride->CullBoundsInfo && args.pOverride->CullBoundsIndex != -1 && !CheckWithinBounds(args.pOverride, pos, radius, args.pOverride->CullBoundsIndex))
 			continue;
 
 		float frustumNear = args.pOverride ? args.pOverride->FrustumNearPercent : 0.0f;
@@ -96,7 +97,17 @@ void RenderFromList(D3DClass* d3d, vector<GameObject>& list, RootSig* rootSig, I
 		if (failedFrustumCull && !list[i].IsOrthographic())
 			continue;
 
-		list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), args.BackBufferIndex, args.pRequireCPUGPUSync, &matrices, args.pOverride, args.ppLastUsedShader);
+		UINT cullFlags = 0;
+		if (args.pOverride && args.pOverride->CullBoundsInfo && args.pOverride->IsDepthMultiViewport)
+		{
+			for (int v = 0; v < SettingsManager::ms_Dynamic.Shadow.CascadeCount; v++)
+			{
+				if (CheckWithinBounds(args.pOverride, pos, radius, v))
+					cullFlags |= 1 << v;
+			}
+		}
+
+		list[i].Render(d3d, cmdList, rootSig->GetRootParamInfo(), args.BackBufferIndex, args.pRequireCPUGPUSync, &matrices, args.pOverride, args.ppLastUsedShader, cullFlags);
 	}
 }
 

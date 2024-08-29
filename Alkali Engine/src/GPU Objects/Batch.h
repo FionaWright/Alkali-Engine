@@ -10,6 +10,7 @@
 using std::vector;
 
 class GameObject;
+struct CascadeInfo;
 
 struct RenderOverride
 {
@@ -23,14 +24,14 @@ struct RenderOverride
 	bool AddSRVToDepthMat = false;
 
 	bool ModifyTransformToCentroid = false;
-	bool SetMatricesMV_V = false;
-	bool SetMatricesMV_G = false;
+	bool IsDepthMultiViewport = false;
 
 	XMFLOAT3 Origin = XMFLOAT3_ZERO;
 	XMFLOAT3 MaxBasis = XMFLOAT3_ZERO;
 	XMFLOAT3 ForwardBasis = XMFLOAT3_ZERO;
-	bool CullAgainstBounds = false;
-	float BoundsWidth = 0, BoundsHeight = 0, BoundsNear = 0, BoundsFar = 0;
+
+	int CullBoundsIndex = -1;
+	CascadeInfo* CullBoundsInfo = nullptr;
 };
 
 struct BatchArgs

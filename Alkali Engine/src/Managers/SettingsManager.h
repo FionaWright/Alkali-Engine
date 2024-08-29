@@ -49,7 +49,7 @@ struct DX12Settings
 	bool ShaderCompilationWarningsAsErrors = false;
 	bool ShaderCompilationIEEEStrict = false;
 
-	bool DepthAlphaTestEnabled = false;
+	bool DepthAlphaTestEnabled = true;
 
 	DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

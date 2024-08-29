@@ -20,11 +20,20 @@ struct MatricesMV_G
 };
 ConstantBuffer<MatricesMV_G> MatricesCB : register(b0, FRAME_SPACE);
 
+struct CullFlags
+{
+    uint Flags;
+};
+ConstantBuffer<CullFlags> CullFlagsCB : register(b1, DRAW_SPACE);
+
 [maxvertexcount(4 * 3)] // 4 Viewports, 3 Vertices per Triangle?
 void main(triangle V_OUT input[3], inout TriangleStream<G_OUT> triStream)
 {
     for (uint vp = 0; vp < 4; vp++)
     {
+        if (!(CullFlagsCB.Flags & 1 << vp))
+            continue;
+        
         G_OUT o[3];
         
         for (uint i = 0; i < 3; i++)
