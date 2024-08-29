@@ -20,8 +20,8 @@ ComPtr<ID3D12Resource> ShadowManager::ms_shadowMapResource;
 D3D12_RESOURCE_STATES ShadowManager::ms_currentDSVState;
 
 std::unique_ptr<GameObject> ShadowManager::ms_viewGO;
-shared_ptr<Shader> ShadowManager::ms_depthShader, ShadowManager::ms_depthATShader, ShadowManager::ms_depthShaderMV;
-shared_ptr<RootSig> ShadowManager::ms_depthRootSig, ShadowManager::ms_depthATRootSig, ShadowManager::ms_depthRootSigMV;
+shared_ptr<Shader> ShadowManager::ms_depthShader, ShadowManager::ms_depthATShader, ShadowManager::ms_depthShaderMV, ShadowManager::ms_depthShaderMVAT;
+shared_ptr<RootSig> ShadowManager::ms_depthRootSig, ShadowManager::ms_depthATRootSig, ShadowManager::ms_depthRootSigMV, ShadowManager::ms_depthRootSigMVAT;
 shared_ptr<Material> ShadowManager::ms_viewDepthMat, ShadowManager::ms_depthMVMat;
 shared_ptr<RootSig> ShadowManager::ms_viewRootSig;
 
@@ -152,7 +152,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 			depthRPI.NumSRV = 1;
 			depthRPI.ParamIndexSRV = 1;
 			ms_depthATRootSig = std::make_shared<RootSig>();
-			ms_depthATRootSig->Init("Depth RS", depthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
+			ms_depthATRootSig->Init("Depth AT RS", depthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
 
 			depthArgs.PS = L"Depth_PS.cso";
 			depthArgs.NoRTV = true;
@@ -164,7 +164,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 	if (!ms_depthShaderMV)
 	{
 		RootParamInfo depthRPI;
-		depthRPI.NumCBV_PerDraw = 1;
+		depthRPI.NumCBV_PerDraw = 2;
 		depthRPI.NumCBV_PerFrame = 1;
 		depthRPI.ParamIndexCBV_PerDraw = 0;
 		depthRPI.ParamIndexCBV_PerFrame = 1;
@@ -176,7 +176,20 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		depthArgs.IsDepthShader = true;
-		ms_depthShaderMV = AssetFactory::CreateShader(depthArgs, true, L" - Shadow");
+		ms_depthShaderMV = AssetFactory::CreateShader(depthArgs, true, L" - ShadowMV");
+
+		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
+		{
+			depthRPI.NumSRV = 1;
+			depthRPI.ParamIndexSRV = 2;
+			ms_depthRootSigMVAT = std::make_shared<RootSig>();
+			ms_depthRootSigMVAT->Init("DepthMV AT RS", depthRPI, &SettingsManager::ms_DX12.DefaultSamplerDesc, 1);
+
+			depthArgs.PS = L"Depth_PS.cso";
+			depthArgs.NoRTV = true;
+			depthArgs.RootSig = ms_depthRootSigMVAT->GetRootSigResource();
+			ms_depthShaderMVAT = AssetFactory::CreateShader(depthArgs, true, L" - ShadowMVAT");
+		}
 	}
 	
 	if (!ms_depthMVMat)
@@ -197,6 +210,13 @@ void ShadowManager::Shutdown()
 	ms_dsvHeap.Reset();
 	ms_depthRootSig.reset();
 	ms_depthShader.reset();
+	ms_depthATShader.reset();
+	ms_depthATRootSig.reset();
+	ms_depthMVMat.reset();
+	ms_depthRootSigMV.reset();
+	ms_depthShaderMV.reset();
+	ms_depthRootSigMVAT.reset();
+	ms_depthShaderMVAT.reset();
 	ms_viewGO.reset();
 	ms_viewDepthMat.reset();
 	ms_viewRootSig.reset();
@@ -414,7 +434,7 @@ void ShadowManager::RenderSingleViewport(D3DClass* d3d, ID3D12GraphicsCommandLis
 
 	RenderOverride ro = { ms_depthShader.get(), ms_depthRootSig.get() };
 	ro.UseDepthMaterial = true;
-	ro.CullAgainstBounds = SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds;
+	ro.CullBoundsInfo = ms_cascadeInfos;
 	ro.MaxBasis = Abs(ms_maxBasis);
 	ro.ForwardBasis = ms_forwardBasis;
 	ro.Origin = ms_eyePos;
@@ -430,10 +450,7 @@ void ShadowManager::RenderSingleViewport(D3DClass* d3d, ID3D12GraphicsCommandLis
 		batchArgs.ProjMatrix = ms_projMatrices[i];
 
 		ro.DepthMatIndex = i; // Bad system
-		ro.BoundsWidth = ms_cascadeInfos[i].Width;
-		ro.BoundsHeight = ms_cascadeInfos[i].Height;
-		ro.BoundsNear = ms_cascadeInfos[i].Near;
-		ro.BoundsFar = ms_cascadeInfos[i].Far;		
+		ro.CullBoundsIndex = i;	
 
 		for (auto& it : batchList)
 		{
@@ -459,35 +476,27 @@ void ShadowManager::RenderSingleViewport(D3DClass* d3d, ID3D12GraphicsCommandLis
 
 void ShadowManager::RenderMultiViewport(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, unordered_map<string, shared_ptr<Batch>>& batchList, Frustum& frustum, const int& backBufferIndex)
 {
-	assert(!SettingsManager::ms_DX12.DepthAlphaTestEnabled);
-
 	XMMATRIX p = XMMatrixIdentity();
 	BatchArgs batchArgs = { ms_viewMatrix, p };
 	batchArgs.BackBufferIndex = backBufferIndex;
 
 	RenderOverride ro = { ms_depthShaderMV.get(), ms_depthRootSigMV.get() };
 	ro.UseDepthMaterial = true;
-	//ro.CullAgainstBounds = SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds;
+	ro.CullBoundsInfo = ms_cascadeInfos;
 	ro.MaxBasis = Abs(ms_maxBasis);
 	ro.ForwardBasis = ms_forwardBasis;	
-	ro.SetMatricesMV_G = true;	
-	ro.SetMatricesMV_V = true;
-	batchArgs.pOverride = &ro;
-
-	MatricesMV_GCB projMatricesCB = { ms_projMatrices[0], ms_projMatrices[1], ms_projMatrices[2], ms_projMatrices[3] };
-	ms_depthMVMat->SetCBV_PerFrame(0, &projMatricesCB, sizeof(MatricesMV_GCB));
+	ro.IsDepthMultiViewport = true;	
+	ro.Origin = ms_eyePos;
+	ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES + 1;
+	batchArgs.pOverride = &ro;	
 
 	Shader* lastSetShader = nullptr;
 	batchArgs.ppLastUsedShader = &lastSetShader;
 
-	cmdList->RSSetViewports(SettingsManager::ms_Dynamic.Shadow.CascadeCount, &ms_viewports[0]);
+	MatricesMV_GCB projMatricesCB = { ms_projMatrices[0], ms_projMatrices[1], ms_projMatrices[2], ms_projMatrices[3] };
+	ms_depthMVMat->SetCBV_PerFrame(0, &projMatricesCB, sizeof(MatricesMV_GCB));
 
-	ro.DepthMatIndex = MAX_SHADOW_MAP_CASCADES + 1;
-	//ro.BoundsWidth = ms_cascadeInfos[i].Width;
-	//ro.BoundsHeight = ms_cascadeInfos[i].Height;
-	//ro.BoundsNear = ms_cascadeInfos[i].Near;
-	//ro.BoundsFar = ms_cascadeInfos[i].Far;
-	ro.Origin = ms_eyePos;	
+	cmdList->RSSetViewports(SettingsManager::ms_Dynamic.Shadow.CascadeCount, &ms_viewports[0]);
 
 	for (auto& it : batchList)
 	{
@@ -500,8 +509,8 @@ void ShadowManager::RenderMultiViewport(D3DClass* d3d, ID3D12GraphicsCommandList
 
 		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 		{
-			ro.ShaderOverride = ms_depthATShader.get();
-			ro.RootSigOverride = ms_depthATRootSig.get();
+			ro.ShaderOverride = ms_depthShaderMVAT.get();
+			ro.RootSigOverride = ms_depthRootSigMVAT.get();
 
 			ro.AddSRVToDepthMat = true;
 		}

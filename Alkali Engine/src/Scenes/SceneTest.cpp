@@ -244,6 +244,8 @@ bool SceneTest::LoadContent()
 	m_camera->SetPosition(16, 6, -5);
 	m_camera->SetRotation(0, -90, 0);
 
+	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(-0.3651f, -0.447f, -0.8165f));
+
 	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
 	cmdQueueDirect->WaitForFenceValue(fenceValue);
 

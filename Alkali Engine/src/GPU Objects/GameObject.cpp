@@ -33,7 +33,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride, Shader** lastSetShader)
+void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect, const RootParamInfo& rpi, const int& backBufferIndex, bool* requireCPUGPUSync, MatricesCB* matrices, RenderOverride* renderOverride, Shader** lastSetShader, UINT cullFlags)
 {
 	if (!m_model || (!m_shader && !renderOverride->ShaderOverride))
 		throw std::exception("Missing components");
@@ -66,13 +66,15 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		if (!m_shadowMapMats.at(renderOverride->DepthMatIndex))
 		{
 			auto mat = AssetFactory::CreateMaterial();
-			vector<UINT> sizes = { sizeof(MatricesCB) };			
-			mat->AddCBVs(d3d, cmdListDirect, sizes, false);
+			vector<UINT> sizes = { sizeof(MatricesCB) };						
 
-			if (renderOverride->SetMatricesMV_G)
+			if (renderOverride->IsDepthMultiViewport)
 			{
 				mat->AddCBVs(d3d, cmdListDirect, { sizeof(MatricesMV_GCB) }, true, "MGCB");
+				sizes.push_back(sizeof(CullFlagsCB));
 			}
+
+			mat->AddCBVs(d3d, cmdListDirect, sizes, false);
 
 			if (SettingsManager::ms_DX12.DepthAlphaTestEnabled && renderOverride->AddSRVToDepthMat && m_material->GetTextures().size() > 0)
 			{
@@ -135,10 +137,11 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		matrices->M = m_worldMatrix;
 	}		
 
-	if (renderOverride && renderOverride->SetMatricesMV_V)
+	if (renderOverride && renderOverride->IsDepthMultiViewport)
 	{
 		matrices->InverseTransposeM = matrices->V;
 		matUsed->SetCBV_PerDraw(0, matrices, sizeof(MatricesMV_VCB), backBufferIndex);
+		matUsed->SetCBV_PerDraw(1, &cullFlags, sizeof(CullFlagsCB), backBufferIndex);
 	}		
 	else
 	{
