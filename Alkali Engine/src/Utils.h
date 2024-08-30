@@ -64,6 +64,14 @@ float Rand01();
 
 float Rand(float min, float max);
 
+uint32_t PackColor(XMFLOAT4 color);
+
+uint32_t PackColor(XMFLOAT3 color);
+
+XMFLOAT4 UnpackColor4(uint32_t color);
+
+XMFLOAT3 UnpackColor3(uint32_t color);
+
 template <typename T>
 bool Contains(vector<T>& v, T& obj)
 {

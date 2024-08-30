@@ -4,6 +4,8 @@
 
 using std::wstring;
 
+#define PACK_COLORS 1
+
 //=============Constants==============
 
 constexpr float IM_GUI_INDENTATION = 16;
@@ -13,6 +15,8 @@ constexpr D3D12_MESSAGE_SEVERITY SEVERITIES[] = { D3D12_MESSAGE_SEVERITY_INFO };
 constexpr int BACK_BUFFER_COUNT = 3;
 
 constexpr int MAX_SHADOW_MAP_CASCADES = 4;
+
+constexpr int POISSON_DISC_COUNT = 8;
 
 //====================================
 
@@ -182,7 +186,7 @@ struct DynamicSettings
 	ShadowDynamicSettings Shadow;
 
 	bool BatchSortingEnabled = true;
-	bool AllowBinTex = true;		
+	bool AllowBinTex = true;			
 
 	bool ShowImGuiDemoWindow = false;
 

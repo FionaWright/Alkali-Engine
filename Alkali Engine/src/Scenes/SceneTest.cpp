@@ -211,7 +211,11 @@ bool SceneTest::LoadContent()
 	MaterialPropertiesCB matPropBubble;
 	ThinFilmCB thinFilmBubble;
 	matPropBubble.Roughness = 0.2f;
+#if PACK_COLORS
+	matPropBubble.BaseColorFactor = PackColor(XMFLOAT3(0.0118f, 0.0118f, 0.0118f));
+#else
 	matPropBubble.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
+#endif
 	thinFilmBubble.ThicknessMax = 600.0f;
     thinFilmBubble.ThicknessMin = 400.0f;
 	thinFilmBubble.n0 = 1.0f;	

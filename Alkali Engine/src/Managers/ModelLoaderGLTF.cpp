@@ -436,15 +436,20 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	material->AddDynamicSRVs("Shadow Map", 1);
 
 	MaterialPropertiesCB matProperties;
+#if PACK_COLORS
+	if (useGlassSRVs)
+		matProperties.BaseColorFactor = PackColor(XMFLOAT3(0.0118f, 0.0118f, 0.0118f));
+	else
+		matProperties.BaseColorFactor = PackColor(XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z()));
+#else
 	if (useGlassSRVs)
 		matProperties.BaseColorFactor = XMFLOAT3(0.0118f, 0.0118f, 0.0118f);
 	else
 		matProperties.BaseColorFactor = XMFLOAT3(mat.pbrData.baseColorFactor.x(), mat.pbrData.baseColorFactor.y(), mat.pbrData.baseColorFactor.z());
+#endif
 
 	matProperties.Roughness = Approx(mat.pbrData.roughnessFactor, 0.552786410f) ? 1.0f : mat.pbrData.roughnessFactor;
 	matProperties.AlphaCutoff = mat.alphaCutoff;
-	matProperties.Dispersion = mat.dispersion;
-	matProperties.IOR = mat.ior;
 	matProperties.Metallic = mat.pbrData.metallicFactor;
 
 	ThinFilmCB thinFilm;

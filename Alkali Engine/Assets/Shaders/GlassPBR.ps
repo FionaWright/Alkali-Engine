@@ -1,8 +1,13 @@
+// Future variants
 #define BUMP_2_CHANNEL 1
+#define PACK_COLORS 1
+#define SHADOW_ENABLED 1
+#define INDIRECT_ENABLED 1
 
 #define PI 3.141592654f
 
 #define CASCADES 4
+#define POISSON_DISC_COUNT 8
 
 #define DRAW_SPACE space0
 #define FRAME_SPACE space1
@@ -25,15 +30,21 @@ struct V_OUT
 };
 
 struct DirectionalLight
-{
-    float3 AmbientColor;
+{       
+    float3 LightDirection;
+    float SpecularPower;
+    
+#if PACK_COLORS
+    uint LightColor;
+    uint AmbientColor;
+    float2 p;
+#else
+    float3 LightColor;    
     float p1;
 
-    float3 LightDirection;
+    float3 AmbientColor;
     float p2;
-
-    float3 LightColor;
-    float SpecularPower;
+#endif
 };
 ConstantBuffer<DirectionalLight> DirLightCB : register(b1, FRAME_SPACE);
 
@@ -50,7 +61,7 @@ struct ShadowMapPixel
     float CascadeCount;
     float p;
 
-    float4 PoissonDisc[16];
+    float4 PoissonDisc[POISSON_DISC_COUNT];
 };
 ConstantBuffer<ShadowMapPixel> ShadowPixelCB : register(b3, FRAME_SPACE);
 
@@ -61,14 +72,16 @@ struct EnvMap
 ConstantBuffer<EnvMap> EnvMapCB : register(b4, FRAME_SPACE);
 
 struct MaterialProperties
-{
-    float3 BaseColorFactor;
-    float Roughness;    
-
+{    
     float AlphaCutoff;
-    float IOR;
-    float Dispersion;
     float Metallic;
+    float Roughness;   
+#if PACK_COLORS
+    uint BaseColorFactor;
+#else
+    float p;    
+    float3 BaseColorFactor;    
+#endif
 };
 ConstantBuffer<MaterialProperties> MatPropCB : register(b1, DRAW_SPACE);
 
@@ -103,6 +116,16 @@ float D_GGX(float NdH, float roughness);
 float G_Smith(float NdL, float NdV, float roughness);
 float3 F_ThinFilm(float NdV, float thickness);
 
+float4 UnpackColor4(uint color)
+{
+    return float4((color & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 24) & 0xFF) / 255.0f);
+}
+
+float3 UnpackColor3(uint color)
+{
+    return float3((color & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f);
+}
+
 float4 main(V_OUT input) : SV_Target
 {    
     float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
@@ -120,11 +143,13 @@ float4 main(V_OUT input) : SV_Target
 
     float shadowFactor = 0;
     int i = 0;
+    float poissonMultiplier = min(POISSON_DISC_COUNT, ShadowPixelCB.PCFSampleCount);
     for (float y = -ShadowPixelCB.PCFSampleRange; y <= ShadowPixelCB.PCFSampleRange; y++)
         for (float x = -ShadowPixelCB.PCFSampleRange; x <= ShadowPixelCB.PCFSampleRange; x++)
         {
-            int poissonIndex = (i * blueNoise * ShadowPixelCB.PCFSampleCount) % ShadowPixelCB.PCFSampleCount;
-            float2 coord = shadowCoords.xy + (float2(x, y) * ShadowPixelCB.PoissonDisc[poissonIndex].xy) * ShadowPixelCB.TexelSize;
+            int poissonIndex = (i * blueNoise * poissonMultiplier) % poissonMultiplier;
+            float2 poissonSample = i & 1 ? ShadowPixelCB.PoissonDisc[poissonIndex].xy : ShadowPixelCB.PoissonDisc[poissonIndex].zw;
+            float2 coord = shadowCoords.xy + (float2(x, y) * poissonSample) * ShadowPixelCB.TexelSize;
             float shadowMapDepth = g_shadowMap.Sample(g_sampler, coord).r;
 
             //return float4(shadowMapDepth, shadowMapDepth, shadowMapDepth * (fCascadeIndex / CASCADES), 1);
@@ -169,6 +194,14 @@ float4 main(V_OUT input) : SV_Target
 
     float3 irradiance = g_irradiance.SampleLevel(g_sampler, N, 0).rgb;   
 
+#if PACK_COLORS
+    float3 baseColor = UnpackColor3(MatPropCB.BaseColorFactor);
+    float3 lightColor = UnpackColor3(DirLightCB.LightColor);
+#else
+    float3 baseColor = MatPropCB.BaseColorFactor;
+    float3 lightColor = DirLightCB.LightColor;
+#endif
+
     //==============================================================        
 
     float D = D_GGX(NdH, roughness);    
@@ -184,9 +217,9 @@ float4 main(V_OUT input) : SV_Target
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g) * kS;
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
-    float3 specular = specularDFG * DirLightCB.LightColor;
+    float3 specular = specularDFG * lightColor;
 
-    float3 Lo = MatPropCB.BaseColorFactor * kD * NdL + (specular + indirectSpecular);
+    float3 Lo = baseColor * kD * NdL + (specular + indirectSpecular);
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, max(Lo.r, max(Lo.g, Lo.b)));
