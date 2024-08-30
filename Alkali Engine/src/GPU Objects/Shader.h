@@ -31,42 +31,12 @@ struct ShaderArgs
 
 	float SlopeScaleDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
 	float DepthBias = 0.0f;
-
-	/*ShaderArgs& operator=(const ShaderArgs& other)
-	{
-		if (this == &other)
-			return *this;
-
-		VS = other.VS;
-		PS = other.PS;
-		InputLayout = other.InputLayout; 
-		RootSig = other.RootSig;
-
-		CullNone = other.CullNone;
-		CullFront = other.CullFront;
-		DisableDSV = other.DisableDSV;
-		DisableDSVWriting = other.DisableDSVWriting;
-		Topology = other.Topology;
-		RTVFormat = other.RTVFormat;
-		NoPS = other.NoPS;
-		SlopeScaleDepthBias = other.SlopeScaleDepthBias;
-		DSVFormat = other.DSVFormat;
-		DisableStencil = other.DisableStencil;
-		IsDepthShader = other.IsDepthShader;
-		DepthBias = other.DepthBias;
-		EnableDSVWritingForce = other.EnableDSVWritingForce;
-		NoRTV = other.NoRTV;
-		ForceCompFuncLE = other.ForceCompFuncLE;
-
-		return *this;
-	}*/
 };
 
 class Shader
 {
 public:
 	void Init(ID3D12Device2* device, const ShaderArgs& args);
-	void InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args);
 
 	void Compile(ID3D12Device2* device, bool exitOnFail = false);
 	void TryHotReload(ID3D12Device2* device);

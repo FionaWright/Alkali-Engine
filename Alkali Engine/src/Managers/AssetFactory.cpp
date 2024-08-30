@@ -116,7 +116,7 @@ shared_ptr<Texture> AssetFactory::CreateIrradianceMap(Texture* cubemap, ID3D12Gr
 	return irradianceTex;
 }
 
-shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool precompiled, wstring idAppend)
+shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, wstring idAppend)
 {
 	shared_ptr<Shader> shader;
 	wstring id = args.VS + L" - " + args.PS + L" - " + args.GS;
@@ -126,13 +126,10 @@ shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, bool preco
 
 	if (!ResourceTracker::TryGetShader(id, shader))
 	{
-		if (SettingsManager::ms_DX12.Async.Enabled && SettingsManager::ms_DX12.Async.LoadShaders && LoadManager::TryPushShader(shader.get(), args, precompiled))
+		if (SettingsManager::ms_DX12.Async.Enabled && SettingsManager::ms_DX12.Async.LoadShaders && LoadManager::TryPushShader(shader.get(), args))
 			return shader;
 
-		if (precompiled)
-			shader->InitPreCompiled(ms_d3d->GetDevice(), args);
-		else
-			shader->Init(ms_d3d->GetDevice(), args);
+		shader->Init(ms_d3d->GetDevice(), args);
 	}
 	return shader;
 }
@@ -197,7 +194,7 @@ void AssetFactory::InstantiateObjects(string modelName, int count, const XMFLOAT
 
 	ShaderArgs args = { L"Shrimple_VS.cso", L"Shrimple_PS.cso", inputLayout, rootSig->GetRootSigResource() };
 
-	shared_ptr<Shader> shader = AssetFactory::CreateShader(args, true);
+	shared_ptr<Shader> shader = AssetFactory::CreateShader(args);
 
 	shared_ptr<Batch> batch = AssetFactory::CreateBatch(rootSig);
 

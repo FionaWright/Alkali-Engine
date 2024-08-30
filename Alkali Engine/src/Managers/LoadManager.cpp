@@ -362,7 +362,7 @@ bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Textur
 	return true;
 }
 
-bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, bool isPreCompiled)
+bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs)
 {
 	if (!ms_loadingActive)
 	{
@@ -375,7 +375,6 @@ bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, b
 	AsyncShaderArgs args;
 	args.pShader = pShader;
 	args.Args = shaderArgs;
-	args.IsPreCompiled = isPreCompiled;
 
 	std::unique_lock<std::mutex> lock(ms_mutexShaderQueue);
 	ms_shaderQueue.push(args);
@@ -467,10 +466,7 @@ void LoadManager::LoadShader(AsyncShaderArgs args, int threadID)
 	if (ms_fullShutdownActive)
 		return;
 
-	if (args.IsPreCompiled)
-		args.pShader->InitPreCompiled(ms_d3dClass->GetDevice(), args.Args);
-	else
-		args.pShader->Init(ms_d3dClass->GetDevice(), args.Args);
+	args.pShader->Init(ms_d3dClass->GetDevice(), args.Args);
 }
 
 bool LoadManager::AllQueuesFlushed()

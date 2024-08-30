@@ -47,7 +47,6 @@ struct AsyncShaderArgs
 {
 	Shader* pShader;
 	ShaderArgs Args;
-	bool IsPreCompiled = false;
 };
 
 struct ThreadData
@@ -85,7 +84,7 @@ public:
 	static bool TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown = false, bool isNormalMap = false, bool disableMips = false);
 	static bool TryPushCubemap(Texture* pTex, string filePath, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
 	static bool TryPushCubemap(Texture* pTex, vector<string> filePaths, Texture* pIrradiance = nullptr, bool flipUpsideDown = false);
-	static bool TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs, bool isPreCompiled);
+	static bool TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs);
 
 private:
 	static void LoadLoop(int threadID);
