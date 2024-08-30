@@ -131,8 +131,10 @@ float3 UnpackColor3(uint color)
 float4 main(V_OUT input) : SV_Target
 {    
     float4 tex = g_texture.Sample(g_sampler, input.UV);                
-    //float alpha = tex.a > MatPropCB.AlphaCutoff;
-    //clip(alpha - 0.5f);
+#ifdef MAIN_PASS_ALPHA_TEST
+    float alpha = tex.a > MatPropCB.AlphaCutoff;
+    clip(alpha - 0.5f);
+#endif
 
     tex.rgb = pow(tex.rgb, 2.2f);    
 

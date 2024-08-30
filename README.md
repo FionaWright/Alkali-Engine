@@ -13,6 +13,7 @@ Here are some notable accomplishments I've done so far:
   -Cubemap or Equirectangular Skyboxes  
   -Asynchronous Loading  
   -Depth Prepass w/ Alpha Testing  
+  -Shader Permutations  
 
 Controls:  
   -Use the mouse to move the camera around  

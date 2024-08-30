@@ -255,7 +255,14 @@ ComPtr<ID3D12PipelineState> Shader::GetPSO(const vector<string>& permutations)
 	if (m_preCompiled)
 		return m_psos.at(0);
 
-	size_t hash = HashStrVector(permutations);
+	vector<string> existingPerms;
+	for (int i = 0; i < permutations.size(); i++)
+	{
+		if (std::find(m_args.Permutations.begin(), m_args.Permutations.end(), permutations[i]) != m_args.Permutations.end())
+			existingPerms.push_back(permutations[i]);
+	}
+
+	size_t hash = HashStrVector(existingPerms);
 	if (!m_permutationMap.contains(hash))
 		return m_psos.at(0);
 
