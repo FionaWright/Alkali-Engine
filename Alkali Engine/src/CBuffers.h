@@ -64,7 +64,7 @@ struct MaterialPropertiesCB
     float Metallic = 0.5f;
     float Roughness = 0.5f;
 #if PACK_COLORS
-    uint32_t BaseColorFactor;
+    uint32_t BaseColorFactor = 0xFFFFFFFFu;
 #else
     float p;
     XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;     
