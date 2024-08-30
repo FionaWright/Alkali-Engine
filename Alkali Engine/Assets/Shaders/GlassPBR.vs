@@ -23,7 +23,9 @@ struct V_OUT
     float3 ViewDirection : TEXCOORD1;    
     float ViewDepth : TEXCOORD2;
 
+#ifdef SHADOW_ENABLED
     float4 ShadowMapCoords[CASCADES] : TEXCOORD3;
+#endif
 };
 
 struct Matrices
@@ -68,6 +70,7 @@ V_OUT main(V_IN input)
     o.ViewDirection = CameraCB.CameraPosition.xyz - worldPos.xyz;
     o.ViewDirection = normalize(o.ViewDirection);
 
+#ifdef SHADOW_ENABLED
     for (int i = 0; i < ShadowCB.CascadeCount; i++)
     {
         float4 biasedPos = float4(worldPos.xyz + o.Normal * ShadowCB.NormalBias, worldPos.w);
@@ -75,6 +78,7 @@ V_OUT main(V_IN input)
         o.ShadowMapCoords[i].xyz = shadowPos.xyz / shadowPos.w;
         o.ShadowMapCoords[i].xy = o.ShadowMapCoords[i].xy * 0.5f + 0.5f;
     }
+#endif
 
     o.ViewDepth = mul(MatricesCB.V, worldPos).z;
 

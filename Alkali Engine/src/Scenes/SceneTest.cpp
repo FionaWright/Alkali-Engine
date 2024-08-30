@@ -148,7 +148,8 @@ bool SceneTest::LoadContent()
 	};
 
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
-	//argsPBR.EnableDSVWritingForce = true; // Dbg
+	argsPBR.Permutations.push_back("SHADOW_ENABLED");
+	argsPBR.Permutations.push_back("INDIRECT_ENABLED");
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
@@ -159,11 +160,9 @@ bool SceneTest::LoadContent()
 	argsGlass.CullNone = true;
 	argsGlass.EnableDSVWritingForce = true;
 	argsGlass.ForceCompFuncLE = true;
+	argsGlass.Permutations.push_back("SHADOW_ENABLED");
+	argsGlass.Permutations.push_back("INDIRECT_ENABLED");
 	shared_ptr<Shader> shaderGlass = AssetFactory::CreateShader(argsGlass);
-
-	/*ShaderArgs argsSkybox = { L"Skybox_VS.cso", L"Skybox_PS.cso", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
-	argsSkybox.DisableDSVWriting = true;
-	shared_ptr<Shader> shaderSkybox = AssetFactory::CreateShader(argsSkybox, true);*/
 
 	ShaderArgs argsSkybox = { L"Skybox_VS.hlsl", L"Skybox_PS.hlsl", inputLayoutSkybox, rootSigSkybox->GetRootSigResource() };
 	argsSkybox.DisableDSVWriting = true;

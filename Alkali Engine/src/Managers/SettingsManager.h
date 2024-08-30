@@ -173,6 +173,7 @@ struct DynamicSettings
 	bool TransparentGOEnabled = true;
 	bool ATGoEnabled = true;
 	bool GUIEnabled = true;
+	bool IndirectSpecularEnabled = true;
 
 	bool DepthPrePassEnabled = true;	
 

@@ -1,8 +1,6 @@
 // Future variants
 #define BUMP_2_CHANNEL 1
 #define PACK_COLORS 1
-#define SHADOW_ENABLED 1
-#define INDIRECT_ENABLED 1
 
 #define PI 3.141592654f
 
@@ -30,7 +28,9 @@ struct V_OUT
     float3 ViewDirection : TEXCOORD1;
     float ViewDepth : TEXCOORD2;
 
+#ifdef SHADOW_ENABLED
     float4 ShadowMapCoords[CASCADES] : TEXCOORD3;
+#endif
 };
 
 struct DirectionalLight
@@ -136,6 +136,7 @@ float4 main(V_OUT input) : SV_Target
 
     tex.rgb = pow(tex.rgb, 2.2f);    
 
+#ifdef SHADOW_ENABLED
     float blueNoise = saturate(g_blueNoise.Sample(g_sampler, input.UV).r);
 
     float4 cascadeComparison = (input.ViewDepth > ShadowPixelCB.CascadeDistances);
@@ -163,7 +164,10 @@ float4 main(V_OUT input) : SV_Target
             shadowFactor += pixelDepth < shadowMapDepth;   
             i++;
         }
-    shadowFactor /= i;      
+    shadowFactor /= i;    
+#else
+    float shadowFactor = 1;
+#endif
 
 #if BUMP_2_CHANNEL
     float2 bump = g_normalMap.Sample(g_sampler, input.UV).rg;
@@ -216,11 +220,13 @@ float4 main(V_OUT input) : SV_Target
     float kS = max(0, F);
     float kD = (1.0f - kS);
 
+#ifdef INDIRECT_ENABLED
     float3 envReflections = g_envMap.SampleLevel(g_sampler, R, roughness * EnvMapCB.EnvMapMipLevels).rgb;
     envReflections = pow(envReflections, 2.2f);
     float2 brdfInt = g_brdfIntMap.SampleLevel(g_samplerClamp, saturate(float2(max(NdV, 0), roughness)), 0).rg;
     float3 indirectSpecular = envReflections * (F * brdfInt.r + brdfInt.g) * kS;
     indirectSpecular = max(0, indirectSpecular);
+#endif
 
     float3 specularDFG = (D * F * G) / max(0.001f, 4.0f * NdV);
     float3 specular = specularDFG * lightColor;
@@ -231,7 +237,10 @@ float4 main(V_OUT input) : SV_Target
 
     float3 ambient = irradiance * kD * albedo * ambientColor;
 
-    float3 Lo = diffuse + specular + ambient + indirectSpecular;
+    float3 Lo = diffuse + specular + ambient;
+#ifdef INDIRECT_ENABLED
+    Lo += indirectSpecular;
+#endif
 
     Lo = pow(Lo, 1.0f / 2.2f);    
     return float4(Lo, 1);

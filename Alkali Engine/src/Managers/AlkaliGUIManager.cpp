@@ -198,6 +198,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Checkbox("Transparents Enabled", &SettingsManager::ms_Dynamic.TransparentGOEnabled);
 				ImGui::Checkbox("AT GOs Enabled", &SettingsManager::ms_Dynamic.ATGoEnabled);
+				ImGui::Checkbox("Indirect Specular Enabled", &SettingsManager::ms_Dynamic.IndirectSpecularEnabled);
 
 				float prePassChanged = ImGui::Checkbox("Depth Pre-Pass", &SettingsManager::ms_Dynamic.DepthPrePassEnabled);
 

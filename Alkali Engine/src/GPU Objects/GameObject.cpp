@@ -98,7 +98,13 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 
 	if (!lastSetShader || usedShader != *lastSetShader)
 	{
-		cmdListDirect->SetPipelineState(usedShader->GetPSO().Get());
+		vector<string> permutations;
+		if (SettingsManager::ms_Dynamic.Shadow.Enabled)
+			permutations.push_back("SHADOW_ENABLED");
+		if (SettingsManager::ms_Dynamic.IndirectSpecularEnabled)
+			permutations.push_back("INDIRECT_ENABLED");
+
+		cmdListDirect->SetPipelineState(usedShader->GetPSO(permutations).Get());
 
 		if (lastSetShader)
 			*lastSetShader = usedShader;
