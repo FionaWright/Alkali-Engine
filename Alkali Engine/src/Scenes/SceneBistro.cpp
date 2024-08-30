@@ -101,6 +101,9 @@ bool SceneBistro::LoadContent()
 	};
 
 	ShaderArgs argsPBR = { L"PBR.vs", L"PBR.ps", inputLayoutPBR, rootSigPBR->GetRootSigResource() };
+	argsPBR.Permutations.push_back("SHADOW_ENABLED");
+	argsPBR.Permutations.push_back("INDIRECT_ENABLED");
+	argsPBR.Permutations.push_back("MAIN_PASS_ALPHA_TEST");
 	shared_ptr<Shader> shaderPBR = AssetFactory::CreateShader(argsPBR);
 
 	argsPBR.CullNone = true;
