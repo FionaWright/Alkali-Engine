@@ -103,6 +103,8 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 			permutations.push_back("SHADOW_ENABLED");
 		if (SettingsManager::ms_Dynamic.IndirectSpecularEnabled)
 			permutations.push_back("INDIRECT_ENABLED");
+		if (!SettingsManager::ms_Dynamic.DepthPrePassEnabled)
+			permutations.push_back("MAIN_PASS_ALPHA_TEST");
 
 		cmdListDirect->SetPipelineState(usedShader->GetPSO(permutations).Get());
 
