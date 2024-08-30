@@ -384,12 +384,25 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 			FixWidthOnNext("Direction");
 			ImGui::InputFloat3("Direction", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDirection));
-			scene->GetPerFrameCBuffers().DirectionalLight.LightDirection = Normalize(scene->GetPerFrameCBuffers().DirectionalLight.LightDirection);
+			scene->GetPerFrameCBuffers().DirectionalLight.LightDirection = Normalize(scene->GetPerFrameCBuffers().DirectionalLight.LightDirection);			
+			
+#if PACK_COLORS
+			XMFLOAT3 ambCol = UnpackColor3(scene->GetPerFrameCBuffers().DirectionalLight.AmbientColor);			
+			FixWidthOnNext("Ambient Colour");
+			if (ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&ambCol)))
+				scene->GetPerFrameCBuffers().DirectionalLight.AmbientColor = PackColor(ambCol);
 
+			XMFLOAT3 lightCol = UnpackColor3(scene->GetPerFrameCBuffers().DirectionalLight.LightColor);
 			FixWidthOnNext("Light Colour");
-			ImGui::ColorEdit4("Light Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightDiffuse));
+			if (ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&lightCol)))
+				scene->GetPerFrameCBuffers().DirectionalLight.LightColor = PackColor(lightCol);
+#else
 			FixWidthOnNext("Ambient Colour");
 			ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.AmbientColor));
+
+			FixWidthOnNext("Light Colour");
+			ImGui::ColorEdit4("Light Colour", reinterpret_cast<float*>(&scene->GetPerFrameCBuffers().DirectionalLight.LightColor));
+#endif
 
 			FixWidthOnNext("Specular Power");
 			ImGui::InputFloat("Specular Power", &scene->GetPerFrameCBuffers().DirectionalLight.SpecularPower);
@@ -588,17 +601,23 @@ void AlkaliGUIManager::RenderMatGUI(Material* mat)
 		ImGui::Indent(IM_GUI_INDENTATION);
 
 		FixWidthOnNext("Base Color");
+#if PACK_COLORS
+		XMFLOAT3 color = UnpackColor3(matProp.BaseColorFactor);
+		if (ImGui::ColorEdit3("Base Color", reinterpret_cast<float*>(&color)))
+		{
+			matProp.BaseColorFactor = PackColor(color);
+			changed = true;
+		}			
+#else
 		changed |= ImGui::ColorEdit3("Base Color", reinterpret_cast<float*>(&matProp.BaseColorFactor));
+#endif
+
 		FixWidthOnNext("Roughness");
 		changed |= ImGui::SliderFloat("Roughness", reinterpret_cast<float*>(&matProp.Roughness), 0, 1);
 		FixWidthOnNext("Metalness");
 		changed |= ImGui::SliderFloat("Metalness", reinterpret_cast<float*>(&matProp.Metallic), 0, 1);
 		FixWidthOnNext("Alpha Cutoff");
 		changed |= ImGui::SliderFloat("Alpha Cutoff", reinterpret_cast<float*>(&matProp.AlphaCutoff), 0, 1);
-		FixWidthOnNext("Dispersion");
-		changed |= ImGui::InputFloat("Dispersion", reinterpret_cast<float*>(&matProp.Dispersion));
-		FixWidthOnNext("IOR");
-		changed |= ImGui::InputFloat("IOR", reinterpret_cast<float*>(&matProp.IOR));
 
 		ImGui::Unindent(IM_GUI_INDENTATION);
 

@@ -42,8 +42,14 @@ bool Scene::Init(D3DClass* pD3DClass)
 	int height = m_pWindow->GetClientHeight();
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
+#if PACK_COLORS
+	m_perFrameCBuffers.DirectionalLight.AmbientColor = PackColor(Mult(XMFLOAT3_ONE, 0.12f));
+	m_perFrameCBuffers.DirectionalLight.LightColor = PackColor(XMFLOAT3(1, 1, 1));
+#else
 	m_perFrameCBuffers.DirectionalLight.AmbientColor = Mult(XMFLOAT3_ONE, 0.12f);
-	m_perFrameCBuffers.DirectionalLight.LightDiffuse = XMFLOAT3(1, 1, 1);
+	m_perFrameCBuffers.DirectionalLight.LightColor = XMFLOAT3(1, 1, 1);
+#endif
+	
 	m_perFrameCBuffers.DirectionalLight.LightDirection = Normalize(XMFLOAT3(0.5f, -0.5f, 0.5f));
 	m_perFrameCBuffers.DirectionalLight.SpecularPower = 32.0f;
 
@@ -52,22 +58,19 @@ bool Scene::Init(D3DClass* pD3DClass)
 	m_perFrameCBuffers.ShadowMapPixel.ShadowWidthPercent = 1.0f / float(MAX_SHADOW_MAP_CASCADES);
 	m_perFrameCBuffers.ShadowMapPixel.TexelSize = XMFLOAT2(1.0f / SettingsManager::ms_Misc.ShadowMapResoWidth, 1.0f / SettingsManager::ms_Misc.ShadowMapResoHeight);
 
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[0] = XMFLOAT4(-0.94201624f, -0.39906216f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[1] = XMFLOAT4(0.94558609f, -0.76890725f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[2] = XMFLOAT4(-0.094184101f, -0.92938870f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[3] = XMFLOAT4(0.34495938f, 0.29387760f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[4] = XMFLOAT4(-0.91588581f, 0.45771432f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[5] = XMFLOAT4(-0.81544232f, -0.87912464f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[6] = XMFLOAT4(-0.38277543f, 0.27676845f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[7] = XMFLOAT4(0.97484398f, 0.75648379f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[8] = XMFLOAT4(0.44323325f, -0.97511554f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[9] = XMFLOAT4(0.53742981f, -0.47373420f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[10] = XMFLOAT4(-0.26496911f, 0.34436442f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[11] = XMFLOAT4(0.79197514f, 0.19090188f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[12] = XMFLOAT4(-0.24188840f, 0.99706507f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[13] = XMFLOAT4(-0.81409955f, 0.91437590f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[14] = XMFLOAT4(0.19984126f, 0.78641367f, NAN, NAN);
-	m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[15] = XMFLOAT4(0.14383161f, -0.14100790f, NAN, NAN);	
+	XMFLOAT4 poissonDiscSamples[8] = {
+		XMFLOAT4(-0.94201624f, -0.39906216f, 0.94558609f, -0.76890725f),
+		XMFLOAT4(-0.094184101f, -0.92938870f, 0.34495938f, 0.29387760f),
+		XMFLOAT4(-0.91588581f, 0.45771432f, -0.81544232f, -0.87912464f),
+		XMFLOAT4(0.97484398f, 0.75648379f, 0.44323325f, -0.97511554f),
+		XMFLOAT4(-0.38277543f, 0.27676845f, 0.53742981f, -0.47373420f),
+		XMFLOAT4(-0.26496911f, 0.34436442f, 0.79197514f, 0.19090188f),
+		XMFLOAT4(-0.24188840f, 0.99706507f, -0.81409955f, 0.91437590f),
+		XMFLOAT4(0.19984126f, 0.78641367f, 0.14383161f, -0.14100790f),
+	};
+
+	for (int i = 0; i < POISSON_DISC_COUNT; i++)
+		m_perFrameCBuffers.ShadowMapPixel.PoissonDisc[i] = poissonDiscSamples[i];
 
 	if (m_dsvEnabled)
 		SetDSVForSize(width, height);

@@ -41,26 +41,34 @@ struct CameraCB
 };
 
 struct DirectionalLightCB
-{
-    XMFLOAT3 AmbientColor;
+{   
+    XMFLOAT3 LightDirection;    
+    float SpecularPower;
+    
+#if PACK_COLORS    
+    uint32_t LightColor;
+    uint32_t AmbientColor;
+    XMFLOAT2 p;
+#else
+    XMFLOAT3 LightColor;
     float p1;
 
-    XMFLOAT3 LightDirection;
+    XMFLOAT3 AmbientColor;
     float p2;
-
-    XMFLOAT3 LightDiffuse;
-    float SpecularPower;
+#endif
 };
 
 struct MaterialPropertiesCB
 {
-    XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;
-    float Roughness = 0.5f;
-
     float AlphaCutoff = 0.9f;
-    float IOR = 1.5f;
-    float Dispersion = 0.0f;
     float Metallic = 0.5f;
+    float Roughness = 0.5f;
+#if PACK_COLORS
+    uint32_t BaseColorFactor;
+#else
+    float p;
+    XMFLOAT3 BaseColorFactor = XMFLOAT3_ONE;     
+#endif
 };
 
 struct ThinFilmCB
@@ -108,7 +116,7 @@ struct ShadowMapPixelCB
     float CascadeCount;
     float p;
 
-    XMFLOAT4 PoissonDisc[16];
+    XMFLOAT4 PoissonDisc[POISSON_DISC_COUNT];
 };
 
 struct DepthViewCB

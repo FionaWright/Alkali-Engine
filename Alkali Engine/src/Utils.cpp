@@ -185,3 +185,32 @@ float Rand(float min, float max)
 {
     return min + (max - min) * Rand01();
 }
+
+uint32_t PackColor(XMFLOAT4 color)
+{
+    uint32_t r = (uint32_t)(color.x * 255.0f) & 0xFF;
+    uint32_t g = (uint32_t)(color.y * 255.0f) & 0xFF;
+    uint32_t b = (uint32_t)(color.z * 255.0f) & 0xFF;
+    uint32_t a = (uint32_t)(color.w * 255.0f) & 0xFF;
+
+    return (a << 24) | (b << 16) | (g << 8) | r;
+}
+
+uint32_t PackColor(XMFLOAT3 color)
+{
+    uint32_t r = (uint32_t)(color.x * 255.0f) & 0xFF;
+    uint32_t g = (uint32_t)(color.y * 255.0f) & 0xFF;
+    uint32_t b = (uint32_t)(color.z * 255.0f) & 0xFF;
+
+    return (b << 16) | (g << 8) | r;
+}
+
+XMFLOAT4 UnpackColor4(uint32_t color)
+{
+    return XMFLOAT4((color & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 24) & 0xFF) / 255.0f);
+}
+
+XMFLOAT3 UnpackColor3(uint32_t color)
+{
+    return XMFLOAT3((color & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f);
+}
