@@ -104,7 +104,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		viewArgs.CullNone = true;
 		viewArgs.DisableDSV = true;
 		viewArgs.DisableStencil = true;
-		auto viewDepthShader = AssetFactory::CreateShader(viewArgs, true);
+		auto viewDepthShader = AssetFactory::CreateShader(viewArgs);
 
 		ms_viewDepthMat = AssetFactory::CreateMaterial();
 		vector<UINT> cbvFrameSizesView = { sizeof(DepthViewCB) };
@@ -145,7 +145,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		depthArgs.IsDepthShader = true;
-		ms_depthShader = AssetFactory::CreateShader(depthArgs, true, L" - Shadow");
+		ms_depthShader = AssetFactory::CreateShader(depthArgs, L" - Shadow");
 
 		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 		{
@@ -157,7 +157,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 			depthArgs.PS = L"Depth_PS.cso";
 			depthArgs.NoRTV = true;
 			depthArgs.RootSig = ms_depthATRootSig->GetRootSigResource();
-			ms_depthATShader = AssetFactory::CreateShader(depthArgs, true, L" - ShadowAT");
+			ms_depthATShader = AssetFactory::CreateShader(depthArgs, L" - ShadowAT");
 		}		
 	}
 
@@ -176,7 +176,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
 		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		depthArgs.IsDepthShader = true;
-		ms_depthShaderMV = AssetFactory::CreateShader(depthArgs, true, L" - ShadowMV");
+		ms_depthShaderMV = AssetFactory::CreateShader(depthArgs, L" - ShadowMV");
 
 		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 		{
@@ -188,7 +188,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 			depthArgs.PS = L"Depth_PS.cso";
 			depthArgs.NoRTV = true;
 			depthArgs.RootSig = ms_depthRootSigMVAT->GetRootSigResource();
-			ms_depthShaderMVAT = AssetFactory::CreateShader(depthArgs, true, L" - ShadowMVAT");
+			ms_depthShaderMVAT = AssetFactory::CreateShader(depthArgs, L" - ShadowMVAT");
 		}
 	}
 	

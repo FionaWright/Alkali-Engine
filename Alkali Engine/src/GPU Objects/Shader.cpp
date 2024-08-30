@@ -7,34 +7,20 @@ void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
 	m_args = args;
 
-	m_VSName = g_dirPath + args.VS;
+	int dotIndex = args.VS.find_last_of('.');
+	m_preCompiled = args.VS.substr(dotIndex + 1, args.VS.size() - 1 - dotIndex) == L"cso";
+
+	wstring fileLocation = m_preCompiled ? Application::GetEXEDirectoryPath() + L"\\" : g_dirPath;
+
+	m_VSName = fileLocation + args.VS;
 	if (!args.PS.empty())
-		m_PSName = g_dirPath + args.PS;
+		m_PSName = fileLocation + args.PS;
 	if (!args.GS.empty())
-		m_GSName = g_dirPath + args.GS;
+		m_GSName = fileLocation + args.GS;
 	if (!args.HS.empty())
-		m_HSName = g_dirPath + args.HS;
+		m_HSName = fileLocation + args.HS;
 	if (!args.DS.empty())
-		m_DSName = g_dirPath + args.DS;
-
-	Compile(device);
-}
-
-void Shader::InitPreCompiled(ID3D12Device2* device, const ShaderArgs& args)
-{
-	m_args = args;
-
-	m_preCompiled = true;
-
-	m_VSName = Application::GetEXEDirectoryPath() + L"\\" + args.VS;
-	if (!args.PS.empty())
-		m_PSName = Application::GetEXEDirectoryPath() + L"\\" + args.PS;
-	if (!args.GS.empty())
-		m_GSName = Application::GetEXEDirectoryPath() + L"\\" + args.GS;
-	if (!args.HS.empty())
-		m_HSName = Application::GetEXEDirectoryPath() + L"\\" + args.HS;
-	if (!args.DS.empty())
-		m_DSName = Application::GetEXEDirectoryPath() + L"\\" + args.DS;
+		m_DSName = fileLocation + args.DS;
 
 	Compile(device);
 }

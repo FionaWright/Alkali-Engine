@@ -19,7 +19,7 @@ public:
     static shared_ptr<Texture> CreateCubemapHDR(string path, ID3D12GraphicsCommandList2* cmdList = nullptr, shared_ptr<Texture> irradianceTex = nullptr, bool flipUpsideDown = false);
     static shared_ptr<Texture> CreateCubemap(vector<string> paths, ID3D12GraphicsCommandList2* cmdList = nullptr, shared_ptr<Texture> irradianceTex = nullptr, bool flipUpsideDown = false);
     static shared_ptr<Texture> CreateIrradianceMap(Texture* cubemap, ID3D12GraphicsCommandList2* cmdList);
-    static shared_ptr<Shader> CreateShader(const ShaderArgs& args, bool precompiled = false, wstring idAppend = L"");
+    static shared_ptr<Shader> CreateShader(const ShaderArgs& args, wstring idAppend = L"");
     static shared_ptr<Batch> CreateBatch(shared_ptr<RootSig> rootSig);
     static shared_ptr<Material> CreateMaterial();
 

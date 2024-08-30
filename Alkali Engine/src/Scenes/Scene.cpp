@@ -139,7 +139,7 @@ bool Scene::LoadContent()
 	ShaderArgs args = { L"Line_VS.cso", L"Line_PS.cso", inputLayout, m_rootSigLine->GetRootSigResource() };
 	args.Topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 	args.ForceCompFuncLE = true;
-	m_shaderLine = AssetFactory::CreateShader(args, true);
+	m_shaderLine = AssetFactory::CreateShader(args);
 
 	{
 		vector<UINT> cbvSizesDraw = { sizeof(MatricesLineCB) };
@@ -211,7 +211,7 @@ bool Scene::LoadContent()
 	argsDepth.CullNone = true;
 	argsDepth.DisableDSV = true;
 	argsDepth.DisableStencil = true;
-	m_viewDepthShader = AssetFactory::CreateShader(argsDepth, true);
+	m_viewDepthShader = AssetFactory::CreateShader(argsDepth);
 
 	vector<UINT> viewCBVFrame = { sizeof(DepthViewCB) };
 
@@ -245,7 +245,7 @@ bool Scene::LoadContent()
 
 		ShaderArgs depthArgs = { L"Depth_VS.hlsl", L"", inputLayoutDepth, m_depthPrepassRootSig->GetRootSigResource() };
 		depthArgs.IsDepthShader = true;
-		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, false, L" - Prepass");
+		m_depthPrepassShader = AssetFactory::CreateShader(depthArgs, L" - Prepass");
 
 		if (SettingsManager::ms_DX12.DepthAlphaTestEnabled)
 		{
@@ -258,7 +258,7 @@ bool Scene::LoadContent()
 			depthArgs.NoRTV = true;
 			depthArgs.CullNone = true;
 			depthArgs.RootSig = m_depthPrepassAlphaTestRS->GetRootSigResource();
-			m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, false, L" - PrepassAT");
+			m_depthPrepassAlphaTestShader = AssetFactory::CreateShader(depthArgs, L" - PrepassAT");
 		}		
 	}
 
