@@ -29,36 +29,30 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 {
 	HRESULT hr;
 
-	ComPtr<ID3DBlob> vBlob;
-	ComPtr<ID3DBlob> pBlob;
-	ComPtr<ID3DBlob> gBlob;
+	vector<ComPtr<ID3DBlob>> vBlobs;
+	vector<ComPtr<ID3DBlob>> pBlobs;
+	vector<ComPtr<ID3DBlob>> gBlobs;
+	vector<size_t> hashes;
 
 	if (m_preCompiled)
 	{
-		vBlob = ReadPreCompiledShader(m_VSName.c_str());
+		vBlobs.push_back(ReadPreCompiledShader(m_VSName.c_str()));
 
 		if (!m_PSName.empty())
-			pBlob = ReadPreCompiledShader(m_PSName.c_str());
+			pBlobs.push_back(ReadPreCompiledShader(m_PSName.c_str()));
 
 		if (!m_GSName.empty())
-			gBlob = ReadPreCompiledShader(m_GSName.c_str());
+			gBlobs.push_back(ReadPreCompiledShader(m_GSName.c_str()));
 	}
 	else
 	{
-		vBlob = CompileShader(m_VSName.c_str(), "main", "vs_5_1", exitOnFail);
+		CompileAllPermutations(vBlobs, pBlobs, gBlobs, hashes, exitOnFail);
+
 		m_lastVSTime = std::filesystem::last_write_time(m_VSName).time_since_epoch();
-
 		if (!m_PSName.empty())
-		{
-			pBlob = CompileShader(m_PSName.c_str(), "main", "ps_5_1", exitOnFail);
 			m_lastPSTime = std::filesystem::last_write_time(m_PSName).time_since_epoch();
-		}			
-
 		if (!m_GSName.empty())
-		{
-			gBlob = CompileShader(m_GSName.c_str(), "main", "gs_5_1", exitOnFail);
 			m_lastGSTime = std::filesystem::last_write_time(m_GSName).time_since_epoch();
-		}					
 	}
 
 	bool noRTV = m_args.NoRTV || m_PSName.empty();
@@ -154,26 +148,77 @@ void Shader::Compile(ID3D12Device2* device, bool exitOnFail)
 	psoStream.pRootSignature = m_args.RootSig;
 	psoStream.InputLayout = { m_args.InputLayout.data(), inputLayoutCount };
 	psoStream.PrimitiveTopologyType = m_args.Topology;
-	psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlob.Get());
-	if (pBlob)
-		psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlob.Get());
-	if (gBlob)
-		psoStream.GS = CD3DX12_SHADER_BYTECODE(gBlob.Get());
 	psoStream.Blend = CD3DX12_BLEND_DESC(blendDesc);
 	psoStream.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 	psoStream.DepthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 	psoStream.DSVFormat = m_args.DSVFormat;
 	psoStream.RTVFormats = rtvFormats;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };
+	m_psos.clear();
 
-	if (m_pso)
-		m_pso.Reset();
+	for (size_t i = 0; i < vBlobs.size(); i++)
+	{
+		psoStream.VS = CD3DX12_SHADER_BYTECODE(vBlobs[i].Get());
+		if (pBlobs.size() > 0)
+			psoStream.PS = CD3DX12_SHADER_BYTECODE(pBlobs[i].Get());
+		if (gBlobs.size() > 0)
+			psoStream.GS = CD3DX12_SHADER_BYTECODE(gBlobs[i].Get());
 
-	hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso));
-	ThrowIfFailed(hr);
+		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &psoStream };
+
+		ComPtr<ID3D12PipelineState> pso;
+		hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pso));
+		ThrowIfFailed(hr);
+
+		m_psos.push_back(pso);
+		if (!m_preCompiled)
+			m_permutationMap.emplace(hashes[i], i);
+	}
 
 	m_initialised = true;
+}
+
+size_t HashStrVector(const vector<string>& vec) {
+	size_t seed = 0;
+	std::hash<string> hasher;
+
+	for (const auto& str : vec)
+		seed ^= hasher(str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+	return seed;
+}
+
+void Shader::CompileAllPermutations(vector<ComPtr<ID3DBlob>>& vBlobs, vector<ComPtr<ID3DBlob>>& pBlobs, vector<ComPtr<ID3DBlob>>& gBlobs, vector<size_t>& hashes, bool exitOnFail) 
+{
+	size_t n = m_args.Permutations.size();
+
+	assert(n <= 64 && "You cannot have more than 64 permutations");
+
+	uint64_t combinations = pow(2, n);
+
+	for (uint64_t bitPattern = 0; bitPattern < combinations; bitPattern++)
+	{
+		vector<D3D_SHADER_MACRO> macros;
+		vector<string> strVector;
+		for (size_t bit = 0; bit < n; bit++)
+		{
+			if ((bitPattern >> bit) & 1)
+			{
+				macros.push_back({ m_args.Permutations[bit].c_str(), "1" });
+				strVector.push_back(m_args.Permutations[bit]);
+			}				
+		}
+		macros.push_back({ NULL, NULL }); // Null terminated array
+		hashes.push_back(HashStrVector(strVector));
+
+		vBlobs.push_back(CompileShader(m_VSName.c_str(), "main", "vs_5_1", exitOnFail, macros.data()));
+
+		if (!m_PSName.empty())
+			pBlobs.push_back(CompileShader(m_PSName.c_str(), "main", "ps_5_1", exitOnFail, macros.data()));
+
+		if (!m_GSName.empty())
+			gBlobs.push_back(CompileShader(m_GSName.c_str(), "main", "gs_5_1", exitOnFail, macros.data()));
+	}
 }
 
 void Shader::TryHotReload(ID3D12Device2* device)
@@ -202,7 +247,32 @@ void Shader::TryHotReload(ID3D12Device2* device)
 
 ComPtr<ID3D12PipelineState> Shader::GetPSO()
 {
-	return m_pso;
+	return m_psos.at(0);
+}
+
+ComPtr<ID3D12PipelineState> Shader::GetPSO(const vector<string>& permutations)
+{
+	if (m_preCompiled)
+		return m_psos.at(0);
+
+	size_t hash = HashStrVector(permutations);
+	if (!m_permutationMap.contains(hash))
+		return m_psos.at(0);
+
+	size_t index = m_permutationMap.at(hash);
+	return m_psos.at(index);
+}
+
+ComPtr<ID3D12PipelineState> Shader::GetPSO(const size_t& permHash)
+{
+	if (m_preCompiled)
+		return m_psos.at(0);
+
+	if (!m_permutationMap.contains(permHash))
+		return m_psos.at(0);
+
+	size_t index = m_permutationMap.at(permHash);
+	return m_psos.at(index);
 }
 
 bool Shader::IsPreCompiled() const
@@ -212,10 +282,10 @@ bool Shader::IsPreCompiled() const
 
 bool Shader::IsInitialised() const
 {
-	return m_initialised && m_pso;
+	return m_initialised && m_psos.size() > 0;
 }
 
-ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail)
+ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR target, bool exitOnFail, D3D_SHADER_MACRO* permutations)
 {
 	ComPtr<ID3DBlob> shaderBlob;
 	ComPtr<ID3DBlob> errorBlob;
@@ -230,7 +300,7 @@ ComPtr<ID3DBlob> Shader::CompileShader(LPCWSTR path, LPCSTR mainName, LPCSTR tar
 	compileFlags |= D3DCOMPILE_DEBUG;
 #endif
 
-	HRESULT hr = D3DCompileFromFile(path, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, mainName, target, compileFlags, effectFlags, &shaderBlob, &errorBlob);
+	HRESULT hr = D3DCompileFromFile(path, permutations, D3D_COMPILE_STANDARD_FILE_INCLUDE, mainName, target, compileFlags, effectFlags, &shaderBlob, &errorBlob);
 
 	if (FAILED(hr))
 	{
