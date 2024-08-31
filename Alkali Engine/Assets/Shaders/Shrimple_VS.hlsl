@@ -30,6 +30,10 @@ V_OUT main(V_IN input)
     float4 worldPos = mul(MatricesCB.M, pos);
     o.Position = mul(mul(MatricesCB.P, MatricesCB.V), worldPos);
     
+#ifdef MAX_DEPTH
+    o.Position.z = o.Position.w;
+#endif
+    
     o.Normal = normalize(mul((float3x3) MatricesCB.InverseTransposeM, input.Normal));
 
     return o;

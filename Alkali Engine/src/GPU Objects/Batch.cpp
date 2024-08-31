@@ -178,3 +178,8 @@ RootParamInfo& Batch::GetRoomParamInfo()
 {
 	return m_rootSig->GetRootParamInfo();
 }
+
+RootSig* Batch::GetRootSig() const
+{
+	return m_rootSig.get();
+}

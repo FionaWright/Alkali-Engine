@@ -175,7 +175,7 @@ struct DynamicSettings
 	bool GUIEnabled = true;
 	bool IndirectSpecularEnabled = true;
 
-	bool DepthPrePassEnabled = true;	
+	bool DepthPrePassEnabled = false;	// Disabled for shader complexity mode
 
 	bool HeapDebugViewEnabled = false;
 	bool VisualiseDSVEnabled = false;
@@ -183,6 +183,7 @@ struct DynamicSettings
 	bool MipMapDebugMode = false;
 	bool VisualiseShadowMap = false;
 	bool DebugFramePresentInfo = false;
+	bool ShaderComplexityMode = false;
 
 	ShadowDynamicSettings Shadow;
 

@@ -19,6 +19,7 @@ struct RenderOverride
 	Model* ModelOverride = nullptr;
 
 	bool UseDepthMaterial = false;
+	bool UseComplexityMaterial = false;
 	float FrustumNearPercent = 0.0f, FrustumFarPercent = 1.0f;
 	int DepthMatIndex = -1;
 	bool AddSRVToDepthMat = false;
@@ -66,6 +67,7 @@ public:
 	vector<GameObject>& GetATs();
 	vector<GameObject>& GetTrans();
 	RootParamInfo& GetRoomParamInfo();
+	RootSig* GetRootSig() const;
 
 	string m_Name;
 

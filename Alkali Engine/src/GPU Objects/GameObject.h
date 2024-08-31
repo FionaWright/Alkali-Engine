@@ -43,6 +43,7 @@ public:
 
 	void SetOccluderState(bool enabled);
 	void SetEnabled(bool enabled);
+	void SetIsSkybox(bool isSkybox);
 
 	void AddPosition(float x, float y, float z);
 	void AddPosition(XMFLOAT3 xyz);
@@ -78,6 +79,7 @@ protected:
 	shared_ptr<Material> m_material;
 
 	vector<shared_ptr<Material>> m_shadowMapMats;
+	shared_ptr<Material> m_matComplexity;
 
 	Transform m_transform;
 
@@ -88,5 +90,6 @@ protected:
 	bool m_isAT = false;
 	bool m_isOccluder = true;
 	bool m_enabled = true;
+	bool m_isSkybox = false;
 };
 
