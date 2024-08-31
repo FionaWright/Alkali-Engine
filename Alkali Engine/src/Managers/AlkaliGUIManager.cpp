@@ -10,6 +10,7 @@
 #include "Application.h"
 #include "AssetFactory.h"
 #include <ShadowManager.h>
+#include <ShaderComplexityManager.h>
 
 vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog;
 std::shared_mutex AlkaliGUIManager::ms_asyncLogMutex;
@@ -206,9 +207,14 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
 					ImGui::EndDisabled();
 
-				needRecompile |= ImGui::Checkbox("Shader Complexity Mode", &SettingsManager::ms_Dynamic.ShaderComplexityMode);
-				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+				ImGui::Checkbox("Shader Complexity Mode", &SettingsManager::ms_Dynamic.ShaderComplexityMode);
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode && SettingsManager::ms_Dynamic.DepthPrePassEnabled)
+				{
 					SettingsManager::ms_Dynamic.DepthPrePassEnabled = false;
+					needRecompile = true;
+				}				
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode && ImGui::Button("Reset Complexity Table"))
+					ShaderComplexityManager::ResetComplexityTable();
 
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
 
@@ -238,7 +244,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				{
 					d3d->Flush();
 					ResourceTracker::RecompileAllShaders(d3d->GetDevice());
-				}					
+				}								
 				
 				if (visualiseShadow)
 					ImGui::BeginDisabled(true);

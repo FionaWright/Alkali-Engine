@@ -160,3 +160,9 @@ float ShaderComplexityManager::GetCostOfShader(Shader* shader)
 		return 0.0f;
 	return ms_complexityTable.at(shader);
 }
+
+void ShaderComplexityManager::ResetComplexityTable()
+{
+	ms_complexityTable.clear();
+	ms_rollingMeanFrameCount = 0;
+}

@@ -14,6 +14,7 @@ public:
 	static void Init(Model* model);
 	static void CalculateComplexityTable(D3DClass* d3d, int backBufferIndex, const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect, const D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle, const D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle, ID3D12Resource* backBufferResource);
 	static float GetCostOfShader(Shader* shader);
+	static void ResetComplexityTable();
 
 private:
 	static unordered_map<Shader*, float> ms_complexityTable;
