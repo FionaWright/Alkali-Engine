@@ -207,14 +207,20 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
 					ImGui::EndDisabled();
 
-				ImGui::Checkbox("Shader Complexity Mode", &SettingsManager::ms_Dynamic.ShaderComplexityMode);
-				if (SettingsManager::ms_Dynamic.ShaderComplexityMode && SettingsManager::ms_Dynamic.DepthPrePassEnabled)
+				ImGui::Checkbox("Shader Complexity Mode", &SettingsManager::ms_Dynamic.ShaderComplexityMode);				
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
 				{
-					SettingsManager::ms_Dynamic.DepthPrePassEnabled = false;
-					needRecompile = true;
-				}				
-				if (SettingsManager::ms_Dynamic.ShaderComplexityMode && ImGui::Button("Reset Complexity Table"))
-					ShaderComplexityManager::ResetComplexityTable();
+					bool needReset = ImGui::Checkbox("Shader Complexity GO Multiplier", &SettingsManager::ms_Dynamic.ShaderComplexityGoCountMultiplierEnabled);
+					needReset |= ImGui::Button("Reset Complexity Table");
+					if (needReset)
+						ShaderComplexityManager::ResetComplexityTable();
+
+					if (SettingsManager::ms_Dynamic.DepthPrePassEnabled)
+					{
+						SettingsManager::ms_Dynamic.DepthPrePassEnabled = false;
+						needRecompile = true;
+					}
+				}
 
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
 
