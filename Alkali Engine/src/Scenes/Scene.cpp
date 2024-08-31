@@ -10,6 +10,7 @@
 #include "AssetFactory.h"
 #include "ShadowManager.h"
 #include <LoadManager.h>
+#include <ShaderComplexityManager.h>
 
 shared_ptr<Model> Scene::ms_sphereModel;
 shared_ptr<Material> Scene::ms_perFramePBRMat;
@@ -95,6 +96,8 @@ bool Scene::LoadContent()
 		auto fenceValue = cmdQueueCopy->ExecuteCommandList(cmdListCopy);
 		cmdQueueCopy->WaitForFenceValue(fenceValue);
 	}
+
+	ShaderComplexityManager::Init(modelPlane.get());
 
 	CommandQueue* cmdQueueDirect = nullptr;
 	cmdQueueDirect = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -262,6 +265,27 @@ bool Scene::LoadContent()
 		}		
 	}
 
+	if (!m_shaderComplexity)
+	{
+		vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutComplex =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
+
+		RootParamInfo rpiComplex;
+		rpiComplex.NumCBV_PerDraw = 2;
+		rpiComplex.ParamIndexCBV_PerDraw = 0;
+
+		m_rootSigComplexity = std::make_shared<RootSig>();
+		m_rootSigComplexity->Init("Complexity RS", rpiComplex);
+
+		ShaderArgs argsComplex = { L"Shrimple_VS.hlsl", L"Complexity_PS.hlsl", inputLayoutComplex, m_rootSigComplexity->GetRootSigResource() };
+		argsComplex.Permutations.push_back("MAX_DEPTH");
+		argsComplex.ForceCompFuncLE = true;
+		m_shaderComplexity = AssetFactory::CreateShader(argsComplex);
+	}
+
 	auto fenceValue = cmdQueueDirect->ExecuteCommandList(cmdListDirect);
 	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
@@ -389,6 +413,14 @@ void Scene::OnRender(TimeEventArgs& e)
 	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	int backBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 
+	D3D12_RESOURCE_STATES backBufferCurState = D3D12_RESOURCE_STATE_PRESENT;
+
+	if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+	{		
+		ShaderComplexityManager::CalculateComplexityTable(m_d3dClass, backBufferIndex, m_viewport, m_scissorRect, rtvHandle, dsvHandle, backBuffer);
+		backBufferCurState = D3D12_RESOURCE_STATE_RENDER_TARGET;		
+	}	
+
 	CommandQueue* cmdQueue = nullptr;
 	cmdQueue = m_d3dClass->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto cmdList = cmdQueue->GetAvailableCommandList();
@@ -419,7 +451,11 @@ void Scene::OnRender(TimeEventArgs& e)
 		m_shadowMapCounter++;	
 
 	cmdList->RSSetViewports(1, &m_viewport);
-	ClearBackBuffer(cmdList.Get());
+
+	if (backBufferCurState != D3D12_RESOURCE_STATE_RENDER_TARGET)
+		ResourceManager::TransitionResource(cmdList.Get(), backBuffer, backBufferCurState, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	ClearBackBuffer(cmdList.Get());	
 
 	if (ms_perFramePBRMat)
 	{
@@ -484,6 +520,13 @@ void Scene::OnRender(TimeEventArgs& e)
 		batchArgs.pOverride = &ro;
 		batchArgs.pOverride->ModelOverride = ms_sphereModel.get();
 		batchArgs.pOverride->ModifyTransformToCentroid = true;
+	}
+	else if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+	{
+		batchArgs.pOverride = &ro;
+		batchArgs.pOverride->ShaderOverride = m_shaderComplexity.get();
+		batchArgs.pOverride->RootSigOverride = m_rootSigComplexity.get();
+		batchArgs.pOverride->UseComplexityMaterial = true;
 	}
 
 	PIXBeginEvent(cmdList.Get(), COLOR_GREEN, "Opaque Pass");	
@@ -613,11 +656,8 @@ vector<float>& Scene::GetPresentWaitTimes()
 
 void Scene::ClearBackBuffer(ID3D12GraphicsCommandList2* cmdList)
 {
-	auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 	auto rtv = m_pWindow->GetCurrentRenderTargetView();
-	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	ResourceManager::TransitionResource(cmdList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();	
 
 	cmdList->ClearRenderTargetView(rtv, reinterpret_cast<FLOAT*>(&m_BackgroundColor), 0, nullptr);
 	ClearDepth(cmdList, dsv);

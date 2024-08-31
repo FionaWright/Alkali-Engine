@@ -98,9 +98,10 @@ private:
 
     array<uint64_t, BACK_BUFFER_COUNT> m_FenceValues = {};    
 
-    shared_ptr<RootSig> m_rootSigLine, m_viewDepthRootSig, m_depthPrepassRootSig, m_depthPrepassAlphaTestRS;
+    shared_ptr<RootSig> m_rootSigLine, m_viewDepthRootSig, m_depthPrepassRootSig, m_depthPrepassAlphaTestRS, m_rootSigComplexity;
     shared_ptr<Shader> m_shaderLine, m_viewDepthShader, m_depthPrepassShader, m_depthPrepassAlphaTestShader;
-    shared_ptr<Material> m_matLine;    
+    shared_ptr<Shader> m_shaderComplexity;
+    shared_ptr<Material> m_matLine;
     RootParamInfo m_rpiLine, m_viewDepthRPI;
 
     ComPtr<ID3D12Resource> m_depthBufferResource;

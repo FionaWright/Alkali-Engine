@@ -187,8 +187,8 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				FixWidthOnNext("Far Plane");
 				ImGui::InputFloat("Far Plane", &SettingsManager::ms_Dynamic.FarPlane);
 
-				bool wireframeChanged = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
-				bool cullChanged = ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullBackFaceEnabled);
+				bool needRecompile = ImGui::Checkbox("Wireframe", &SettingsManager::ms_Dynamic.WireframeMode);
+				needRecompile |= ImGui::Checkbox("Backface Culling", &SettingsManager::ms_Dynamic.CullBackFaceEnabled);
 
 				ImGui::Checkbox("Freeze Frustum Culling", &SettingsManager::ms_Dynamic.FreezeFrustum);
 
@@ -200,7 +200,15 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 				ImGui::Checkbox("AT GOs Enabled", &SettingsManager::ms_Dynamic.ATGoEnabled);
 				ImGui::Checkbox("Indirect Specular Enabled", &SettingsManager::ms_Dynamic.IndirectSpecularEnabled);
 
-				float prePassChanged = ImGui::Checkbox("Depth Pre-Pass", &SettingsManager::ms_Dynamic.DepthPrePassEnabled);
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+					ImGui::BeginDisabled(true);
+				needRecompile |= ImGui::Checkbox("Depth Pre-Pass", &SettingsManager::ms_Dynamic.DepthPrePassEnabled);
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+					ImGui::EndDisabled();
+
+				needRecompile |= ImGui::Checkbox("Shader Complexity Mode", &SettingsManager::ms_Dynamic.ShaderComplexityMode);
+				if (SettingsManager::ms_Dynamic.ShaderComplexityMode)
+					SettingsManager::ms_Dynamic.DepthPrePassEnabled = false;
 
 				ImGui::Checkbox("Force Sync CPU and GPU", &SettingsManager::ms_Dynamic.ForceSyncCPUGPU);
 
@@ -226,7 +234,7 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 
 				ImGui::Unindent(IM_GUI_INDENTATION);
 
-				if (wireframeChanged || cullChanged || prePassChanged || ImGui::Button("Recompile Shaders"))
+				if (needRecompile || ImGui::Button("Recompile Shaders"))
 				{
 					d3d->Flush();
 					ResourceTracker::RecompileAllShaders(d3d->GetDevice());

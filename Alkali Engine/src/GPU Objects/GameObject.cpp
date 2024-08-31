@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "Batch.h"
 #include "AssetFactory.h"
+#include "ShaderComplexityManager.h"
 
 GameObject::GameObject(string name, shared_ptr<Model> pModel, shared_ptr<Shader> pShader, shared_ptr<Material> pMaterial, bool orthographic)
 	: m_transform({})
@@ -86,6 +87,14 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 		if (!materialCorrectState)
 			return;
 	}
+	else if (renderOverride && renderOverride->UseComplexityMaterial && !m_matComplexity)
+	{
+		m_matComplexity = AssetFactory::CreateMaterial();
+		vector<UINT> sizes = { sizeof(MatricesCB), sizeof(CostValueCB) };
+		m_matComplexity->AddCBVs(d3d, cmdListDirect, sizes, false);
+		if (!materialCorrectState)
+			return;
+	}
 
 	Shader* usedShader = m_shader.get();
 	if (renderOverride && renderOverride->ShaderOverride)
@@ -105,6 +114,8 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 			permutations.push_back("INDIRECT_ENABLED");
 		if (!SettingsManager::ms_Dynamic.DepthPrePassEnabled)
 			permutations.push_back("MAIN_PASS_ALPHA_TEST");
+		if (m_isSkybox) // For shader complexity effect
+			permutations.push_back("MAX_DEPTH");
 
 		cmdListDirect->SetPipelineState(usedShader->GetPSO(permutations).Get());
 
@@ -125,6 +136,13 @@ void GameObject::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdListDirect
 	Material* matUsed = m_material.get();
 	if (renderOverride && renderOverride->UseDepthMaterial)
 		matUsed = m_shadowMapMats[renderOverride->DepthMatIndex].get();
+	else if (renderOverride && renderOverride->UseComplexityMaterial)
+	{
+		matUsed = m_matComplexity.get();
+		float shaderCost = ShaderComplexityManager::GetCostOfShader(m_shader.get());
+		CostValueCB cost = { shaderCost };
+		m_matComplexity->SetCBV_PerDraw(1, &cost, sizeof(CostValueCB));
+	}		
 
 	Model* usedModel = m_model.get();
 	if (renderOverride && renderOverride->ModelOverride)
@@ -233,6 +251,11 @@ void GameObject::SetOccluderState(bool enabled)
 void GameObject::SetEnabled(bool enabled)
 {
 	m_enabled = enabled;
+}
+
+void GameObject::SetIsSkybox(bool isSkybox)
+{
+	m_isSkybox = isSkybox;
 }
 
 void GameObject::AddPosition(float x, float y, float z)

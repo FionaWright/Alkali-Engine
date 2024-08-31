@@ -207,6 +207,7 @@ bool SceneTest::LoadContent()
 	m_goSkybox = batchSkybox->CreateGameObject("Skybox", modelInvertedCube, shaderSkybox, matSkybox);
 	m_goSkybox->SetScale(20);
 	m_goSkybox->SetOccluderState(false);
+	m_goSkybox->SetIsSkybox(true);
 
 	MaterialPropertiesCB matPropBubble;
 	ThinFilmCB thinFilmBubble;

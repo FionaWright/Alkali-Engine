@@ -225,6 +225,7 @@
     <ClCompile Include="src\Managers\ResourceManager.cpp" />
     <ClCompile Include="src\Managers\ResourceTracker.cpp" />
     <ClCompile Include="src\Managers\SettingsManager.cpp" />
+    <ClCompile Include="src\Managers\ShaderComplexityManager.cpp" />
     <ClCompile Include="src\Managers\ShadowManager.cpp" />
     <ClCompile Include="src\Managers\TextureLoader.cpp" />
     <ClCompile Include="src\Managers\WindowManager.cpp" />
@@ -294,6 +295,7 @@
     <ClInclude Include="src\Managers\ResourceManager.h" />
     <ClInclude Include="src\Managers\ResourceTracker.h" />
     <ClInclude Include="src\Managers\SettingsManager.h" />
+    <ClInclude Include="src\Managers\ShaderComplexityManager.h" />
     <ClInclude Include="src\Managers\ShadowManager.h" />
     <ClInclude Include="src\Managers\TextureLoader.h" />
     <ClInclude Include="src\Managers\WindowManager.h" />
@@ -315,6 +317,10 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Async_PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Complexity_PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>

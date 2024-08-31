@@ -244,6 +244,9 @@
     <ClCompile Include="src\Scenes\SceneCube.cpp">
       <Filter>Source Files\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\Managers\ShaderComplexityManager.cpp">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets\Resources\resource.h">
@@ -438,6 +441,9 @@
     <ClInclude Include="src\Scenes\SceneCube.h">
       <Filter>Source Files\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="src\Managers\ShaderComplexityManager.h">
+      <Filter>Source Files\Managers\Asset Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Assets\Resources\Alkali Engine.rc">
@@ -517,6 +523,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Assets\Shaders\DepthMV_VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Complexity_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

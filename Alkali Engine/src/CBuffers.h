@@ -131,6 +131,12 @@ struct EnvMapCB
     UINT EnvMapMipLevels;
 };
 
+struct CostValueCB
+{
+    float Cost;
+    XMFLOAT3 p;
+};
+
 struct PerFrameCBuffers_PBR
 {
     CameraCB Camera;
