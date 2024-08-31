@@ -184,6 +184,7 @@ struct DynamicSettings
 	bool VisualiseShadowMap = false;
 	bool DebugFramePresentInfo = false;
 	bool ShaderComplexityMode = false;
+	bool ShaderComplexityGoCountMultiplierEnabled = false;
 
 	ShadowDynamicSettings Shadow;
 

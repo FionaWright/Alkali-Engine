@@ -35,6 +35,26 @@ Material* GetValidMaterial(const unordered_map<string, shared_ptr<Batch>>& batch
 	return nullptr;
 }
 
+uint32_t CountOfGOsWithShader(const unordered_map<string, shared_ptr<Batch>>& batches, Shader* shader)
+{
+	uint32_t count = 0;
+	for (auto& batchIT : batches)
+	{
+		for (auto& opaque : batchIT.second->GetOpaques())
+			if (opaque.GetShader() == shader)
+				count++;
+
+		for (auto& at : batchIT.second->GetATs())
+			if (at.GetShader() == shader)
+				count++;
+
+		for (auto& trans : batchIT.second->GetTrans())
+			if (trans.GetShader() == shader)
+				count++;
+	}
+	return count;
+}
+
 void ShaderComplexityManager::Init(Model* model)
 {
 	ms_model = model;
@@ -64,9 +84,7 @@ void ShaderComplexityManager::CalculateComplexityTable(D3DClass* d3d, int backBu
 	if (!SettingsManager::ms_Dynamic.DepthPrePassEnabled)
 		permutations.push_back("MAIN_PASS_ALPHA_TEST");
 
-	float rotationX = 90 * static_cast<float>(DEG_TO_RAD);
 	MatricesCB matrices;
-	//matrices.M = XMMatrixRotationRollPitchYaw(rotationX, 0, 0);
 	matrices.M = XMMatrixIdentity();
 	matrices.InverseTransposeM = XMMatrixIdentity();
 	matrices.V = XMMatrixIdentity();
@@ -126,12 +144,14 @@ void ShaderComplexityManager::CalculateComplexityTable(D3DClass* d3d, int backBu
 
 		std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
 		tempComplexityTable.emplace(it.second.get(), timeTaken.count());
+
+		if (SettingsManager::ms_Dynamic.ShaderComplexityGoCountMultiplierEnabled)
+			tempComplexityTable.at(it.second.get()) *= CountOfGOsWithShader(batches, it.second.get());
 	}
 
 	if (tempComplexityTable.size() == 0)
 		return;
 
-	// Normalise the costs
 	float totalCost = 0;
 	for (auto& it : tempComplexityTable)
 		totalCost += it.second;
