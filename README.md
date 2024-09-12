@@ -11,6 +11,7 @@ Here are some notable accomplishments I've done so far:
   -Dear ImGui support  
   -Hot reloading for shaders  
   -Cubemap or Equirectangular Skyboxes  
+  -Thin Film Interference (Bubbles/Glass)
   -Asynchronous Loading  
   -Depth Prepass w/ Alpha Testing  
   -Shader Permutations  
