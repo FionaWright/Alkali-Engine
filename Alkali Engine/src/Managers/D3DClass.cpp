@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "D3DClass.h"
 #include "ResourceManager.h"
+#include <AlkaliGUIManager.h>
 
 D3DClass::D3DClass()
 {
@@ -73,9 +74,13 @@ bool D3DClass::IsTearingSupported() const
 
 void D3DClass::Flush()
 {
+    AlkaliGUIManager::LogUntaggedMessage("Flushing GPU");
+
     m_directCommandQueue->Flush();
     m_computeCommandQueue->Flush();
     m_copyCommandQueue->Flush();
+
+    AlkaliGUIManager::LogUntaggedMessage("Flushing Finished");
 }
 
 UINT D3DClass::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const

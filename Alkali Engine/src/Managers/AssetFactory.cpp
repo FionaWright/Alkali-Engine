@@ -25,13 +25,14 @@ shared_ptr<Model> AssetFactory::CreateModel(string path, ID3D12GraphicsCommandLi
 			return model;
 
 		if (!cmdList)
-			throw std::exception("Attempted to load model synchronously without command list");
+			throw std::exception("Attempted to load model serially without command list");
 
 		bool success = model->Init(cmdList, path);
 		if (!success)
 			AlkaliGUIManager::LogErrorMessage("Failed to load model (path=\"" + path + "\")");
 		else
 			model->MarkLoaded();
+		AlkaliGUIManager::LogUntaggedMessage("Loaded model serially: " + path);
 	}
 
 	return model;
@@ -49,10 +50,11 @@ shared_ptr<Texture> AssetFactory::CreateTexture(string path, ID3D12GraphicsComma
 			return tex;
 
 		if (!cmdList)
-			throw std::exception("Attempted to load model synchronously without command list");
+			throw std::exception("Attempted to load model serially without command list");
 
 		tex->Init(ms_d3d, cmdList, path, flipUpsideDown, isNormalMap, disableMips);
 		tex->MarkLoaded();
+		AlkaliGUIManager::LogUntaggedMessage("Loaded tex serially: " + path);
 	}
 	return tex;
 }
@@ -66,10 +68,11 @@ shared_ptr<Texture> AssetFactory::CreateCubemapHDR(string path, ID3D12GraphicsCo
 			return tex;
 
 		if (!cmdList)
-			throw std::exception("Attempted to load model synchronously without command list");
+			throw std::exception("Attempted to load model serially without command list");
 
 		tex->InitCubeMapHDR(ms_d3d, cmdList, path, flipUpsideDown);
 		tex->MarkLoaded();
+		AlkaliGUIManager::LogUntaggedMessage("Loaded cubemap serially: " + path);
 	}
 
 	if (irradianceTex)
@@ -91,10 +94,11 @@ shared_ptr<Texture> AssetFactory::CreateCubemap(vector<string> paths, ID3D12Grap
 			return tex;
 
 		if (!cmdList)
-			throw std::exception("Attempted to load model synchronously without command list");
+			throw std::exception("Attempted to load model serially without command list");
 
 		tex->InitCubeMap(ms_d3d, cmdList, paths, flipUpsideDown);
 		tex->MarkLoaded();
+		AlkaliGUIManager::LogUntaggedMessage("Loaded cubemap serially: " + paths[0]);
 	}
 
 	if (irradianceTex)
@@ -130,6 +134,7 @@ shared_ptr<Shader> AssetFactory::CreateShader(const ShaderArgs& args, wstring id
 			return shader;
 
 		shader->Init(ms_d3d->GetDevice(), args);
+		AlkaliGUIManager::LogUntaggedMessage("Loaded shader serially: " + wstringToString(args.VS));
 	}
 	return shader;
 }

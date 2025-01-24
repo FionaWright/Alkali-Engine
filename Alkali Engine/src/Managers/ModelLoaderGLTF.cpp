@@ -350,7 +350,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		diffuseTexPath = "WhitePOT.png";
 
-	if (SettingsManager::ms_Misc.BistroLowQualityTexDiffuse && modelNameExtensionless == "Bistro")
+	if (SettingsManager::ms_Misc.BistroLowQualityTexDiffuseEnabled && modelNameExtensionless == "Bistro")
 	{
 		size_t hyphenIndex = diffuseTexPath.find_last_of('-');
 		string newDiffusePath = diffuseTexPath;
@@ -374,7 +374,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		normalTexPath = "DefaultNormal.tga";
 
-	if (SettingsManager::ms_Misc.BistroLowQualityTexNormal && modelNameExtensionless == "Bistro")
+	if (SettingsManager::ms_Misc.BistroLowQualityTexNormalEnabled && modelNameExtensionless == "Bistro")
 	{
 		size_t hyphenIndex = normalTexPath.find_last_of('-');
 		string newNormalPath = normalTexPath;

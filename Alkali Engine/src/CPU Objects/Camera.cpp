@@ -56,14 +56,37 @@ void Camera::SetRotationRadians(float x, float y, float z)
 
 void Camera::SetTransform(const Transform& t)
 {
-	//SetRotationRadians(t.Rotation.x, t.Rotation.y, t.Rotation.z);
 	GameObject::SetTransform(t);
+}
+
+void Camera::GetPitchYaw(float& pitch, float& yaw)
+{
+	pitch = m_pitch;
+	yaw = m_yaw;
+}
+
+void Camera::SetPitchYaw(float pitch, float yaw)
+{
+	m_pitch = pitch;
+	m_yaw = yaw;
+
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
+	rot = XMQuaternionNormalize(rot);
+
+	XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
+	XMStoreFloat3(&m_forwardVector, direction);
+
+	XMVECTOR up = XMVector3Rotate(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rot);
+	XMStoreFloat3(&m_upVector, up);
+
+	XMVECTOR right = XMVector3Rotate(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rot);
+	XMStoreFloat3(&m_rightVector, right);
 }
 
 void Camera::Update(TimeEventArgs& e)
 {
-	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
-		MoveFirstPerson(e);
+	if (m_currentMode == CameraMode::CAMERA_MODE_KEYBOARD)
+		MoveKeyboard(e);
 	else if (m_currentMode == CameraMode::CAMERA_MODE_SCROLL)
 		MoveScroll(e);
 
@@ -82,7 +105,7 @@ void Camera::Reset()
 	m_rightVector = XMFLOAT3(1,0,0);
 }
 
-void Camera::MoveFirstPerson(TimeEventArgs& e)
+void Camera::MoveKeyboard(TimeEventArgs& e)
 {
 	if (InputManager::IsKeyDown(KeyCode::R))
 	{
@@ -209,7 +232,7 @@ void Camera::MoveScroll(TimeEventArgs& e)
 
 XMMATRIX Camera::GetViewMatrix()
 {	
-	if (m_currentMode == CameraMode::CAMERA_MODE_FP)
+	if (m_currentMode == CameraMode::CAMERA_MODE_KEYBOARD)
 	{
 		XMFLOAT3 up = XMFLOAT3(0, 1, 0);
 		XMVECTOR upVector = XMLoadFloat3(&up);

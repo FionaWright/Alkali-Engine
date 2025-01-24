@@ -5,7 +5,7 @@
 
 enum CameraMode
 {
-	CAMERA_MODE_FP,
+	CAMERA_MODE_KEYBOARD,
 	CAMERA_MODE_SCROLL
 };
 
@@ -23,6 +23,9 @@ public:
 	void SetRotationRadians(float x, float y, float z) override;
 	void SetTransform(const Transform& t) override;
 
+	void GetPitchYaw(float& pitch, float& yaw);
+	void SetPitchYaw(float pitch, float yaw);
+
 	void Update(TimeEventArgs& e);	
 
 	void Reset();
@@ -33,7 +36,7 @@ public:
 	float& GetRotSpeedLVal();
 
 private:
-	void MoveFirstPerson(TimeEventArgs& e);
+	void MoveKeyboard(TimeEventArgs& e);
 	void MoveScroll(TimeEventArgs& e);
 
 	CameraMode m_currentMode;

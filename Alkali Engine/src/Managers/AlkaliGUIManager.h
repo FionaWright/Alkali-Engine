@@ -24,8 +24,10 @@ class AlkaliGUIManager
 public:
 	static void FixWidthOnNext(const char* label);
 	static void RenderGUI(D3DClass* d3d, Scene* scene, Application* app);
+	static void LogUntaggedMessage(string msg);
 	static void LogErrorMessage(string msg);
 	static void LogAsyncMessage(string msg);
+	static void EnableCombinedLog(bool state);
 
 private:
 	static void RenderGUISettings(D3DClass* d3d, Scene* scene);
@@ -38,8 +40,9 @@ private:
 	static void RenderGUICurrentScene(D3DClass* d3d, Scene* scene);
 	static void RenderGUISceneList(D3DClass* d3d, Scene* scene, Application* app);
 
-	static vector<string> ms_errorLog, ms_asyncLog;
+	static vector<string> ms_errorLog, ms_asyncLog, ms_combinedLog;
 	static std::shared_mutex ms_asyncLogMutex;
 	static vector<float> ms_fpsQueue;
+	static bool m_combinedLogEnabled;
 };
 

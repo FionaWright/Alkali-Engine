@@ -17,24 +17,25 @@ queue<AsyncModelArgs> LoadManager::ms_modelQueue;
 queue<AsyncTexArgs> LoadManager::ms_texQueue;
 queue<AsyncTexCubemapArgs> LoadManager::ms_texCubemapQueue;
 queue<AsyncShaderArgs> LoadManager::ms_shaderQueue;
-std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexShaderQueue;;
+std::mutex LoadManager::ms_mutexModelQueue, LoadManager::ms_mutexTexQueue, LoadManager::ms_mutexTexCubemapQueue, LoadManager::ms_mutexShaderQueue, LoadManager::ms_notifyMutex;
 std::mutex LoadManager::ms_mutexThreadDatas[8];
+std::condition_variable LoadManager::ms_conditionVariable;
 
 void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 {
 	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive)
 		return;
 
-	AlkaliGUIManager::LogAsyncMessage("====================================================");
+	AlkaliGUIManager::LogAsyncMessage("========================START=========================");
 
 	bool prevSceneThreadsActive = ms_loadingActive || ms_loadThreads.size() > 0;
 	if (prevSceneThreadsActive)
 	{
 		StopLoading();
-		AlkaliGUIManager::LogAsyncMessage("Closed existing threads");
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Closed existing threads");
 	}
 	
-	AlkaliGUIManager::LogAsyncMessage("Async Loading Begun");
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Async Loading Begun");
 
 	ms_d3dClass = d3d;
 	ms_numThreads = numThreads;
@@ -56,8 +57,14 @@ void LoadManager::StartLoading(D3DClass* d3d, int numThreads)
 		threadData->CmdListCompute = ms_computeQueue->GetAvailableCommandList();
 		ms_threadDatas.push_back(std::move(threadData));
 
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Created Thread Data " + std::to_string(i));
+
 		ms_loadThreads.emplace_back(std::jthread(LoadLoop, i));
+
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Activated Thread " + std::to_string(i));
 	}
+
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: All Threads Activated!");
 }
 
 void LoadManager::EnableStopOnFlush()
@@ -65,17 +72,19 @@ void LoadManager::EnableStopOnFlush()
 	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive)
 		return;
 
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Attempting to enable stop on flush");
 	ms_stopOnFlush = true;
-	AlkaliGUIManager::LogAsyncMessage("Stop on flush enabled");
+	ms_conditionVariable.notify_all();
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Stop on flush enabled");
 }
 
 void LoadManager::StopLoading()
 {
 	if (!SettingsManager::ms_DX12.Async.Enabled || ms_fullShutdownActive || !ms_loadingActive)
 		return;
-
+	
 	ms_loadingActive = false;	
-	AlkaliGUIManager::LogAsyncMessage("Loading stopping, Main thread paused until all threads exit");	
+	AlkaliGUIManager::LogAsyncMessage("Loading stopping, all threads should begin exiting");	
 }
 
 void LoadManager::FullShutdown()
@@ -87,10 +96,11 @@ void LoadManager::FullShutdown()
 	ms_stopOnFlush = false;
 
 	ms_loadingActive = false;
+	ms_conditionVariable.notify_all();
 	ms_loadThreads.clear();
 
 	ms_threadDatas.clear();
-	AlkaliGUIManager::LogAsyncMessage("Full Shutdown Completed");
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Full Shutdown Completed");
 }
 
 void LoadManager::LoadLoop(int threadID)
@@ -99,6 +109,14 @@ void LoadManager::LoadLoop(int threadID)
 
 	while (ms_loadingActive)
 	{
+		if (!ms_stopOnFlush)
+		{
+			AlkaliGUIManager::LogAsyncMessage("Thread waiting for signal: " + std::to_string(threadID));
+			std::unique_lock<std::mutex> lock(ms_notifyMutex);
+			ms_conditionVariable.wait(lock);
+			AlkaliGUIManager::LogAsyncMessage("Thread woken up by signal: " + std::to_string(threadID));
+		}		
+
 		if (ms_stopOnFlush && AllQueuesFlushed())
 		{
 			StopLoading();
@@ -110,7 +128,7 @@ void LoadManager::LoadLoop(int threadID)
 }
 
 void LoadManager::LoadHighestPriority(int threadID)
-{
+{	
 	std::unique_lock<std::mutex> lockModel(ms_mutexModelQueue);
 	if (ms_modelQueue.size() > 0)
 	{
@@ -121,6 +139,8 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found model (" + modelArgs.FilePath + ")");
 
 		LoadModel(modelArgs, threadID);
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " loaded model (" + modelArgs.FilePath + ")");
 		return;
 	}
 	lockModel.unlock();
@@ -135,6 +155,8 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found cubemap (" + texArgs.FilePath + ")");
 
 		LoadTexCubemap(texArgs, threadID);
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " loaded cubemap (" + texArgs.FilePath + ")");
 		return;
 	}
 	lockTexCubeMap.unlock();
@@ -149,6 +171,8 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found tex (" + texArgs.FilePath + ")");
 
 		LoadTex(texArgs, threadID);
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " loaded tex (" + texArgs.FilePath + ")");
 		return;
 	}
 	lockTex.unlock();
@@ -163,6 +187,8 @@ void LoadManager::LoadHighestPriority(int threadID)
 		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " found shader (" + wstringToString(shaderArgs.Args.VS) + ")");
 
 		LoadShader(shaderArgs, threadID);
+
+		AlkaliGUIManager::LogAsyncMessage("Thread " + std::to_string(threadID) + " loaded shader (" + wstringToString(shaderArgs.Args.VS) + ")");
 		return;
 	}
 	lockShader.unlock();
@@ -176,14 +202,15 @@ void LoadManager::ExecuteCPUWaitingLists()
 	if (!SettingsManager::ms_DX12.Async.Enabled)
 		return;
 
-	if (!ms_loadingActive && ms_loadThreads.size() > 0)
-	{
-		ms_loadThreads.clear();
-		AlkaliGUIManager::LogAsyncMessage("Main thread resuming, all threads exiting");
-	}
-
 	if (!SettingsManager::ms_DX12.Async.LogIgnoreInfoMessages)
-		AlkaliGUIManager::LogAsyncMessage("CPU waiting list executing");
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: CPU waiting list executing");
+
+	if (!ms_loadingActive && ms_loadThreads.size() > 0 && false)
+	{
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Clearing loading threads");
+		ms_loadThreads.clear();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Main thread resuming, all threads exited");
+	}
 
 	static int framesSinceExecute = 0;
 	framesSinceExecute++;
@@ -210,7 +237,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 
 			string strModelCount = std::to_string(gpuWaitingList.ModelList.size());
 			string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
-			AlkaliGUIManager::LogAsyncMessage("COPY CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
+			AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: COPY CPU waiting list cleared, " + strModelCount + " models put on GPU waiting list with fence " + strFenceVal);
 
 			framesSinceExecute = 0;
 			if (SettingsManager::ms_DX12.Async.DebugExecutionFrameSlice > 0)
@@ -230,7 +257,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 
 			string strTexCount = std::to_string(gpuWaitingList.TextureList.size());
 			string strFenceVal = std::to_string(gpuWaitingList.FenceValue);
-			AlkaliGUIManager::LogAsyncMessage("COMPUTE CPU waiting list cleared, " + strTexCount + " textures put on GPU waiting list with fence " + strFenceVal);
+			AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: COMPUTE CPU waiting list cleared, " + strTexCount + " textures put on GPU waiting list with fence " + strFenceVal);
 
 			framesSinceExecute = 0;
 			if (SettingsManager::ms_DX12.Async.DebugExecutionFrameSlice > 0)
@@ -246,7 +273,7 @@ void LoadManager::ExecuteCPUWaitingLists()
 		if (!queue->IsFenceComplete(ms_gpuWaitingLists.front().FenceValue))
 			return;
 
-		AlkaliGUIManager::LogAsyncMessage("GPU waiting list complete with fence " + std::to_string(ms_gpuWaitingLists.front().FenceValue));
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: GPU waiting list complete with fence " + std::to_string(ms_gpuWaitingLists.front().FenceValue));
 
 		for (auto mdl : ms_gpuWaitingLists.front().ModelList)
 			mdl->MarkLoaded();
@@ -266,14 +293,29 @@ bool LoadManager::TryPushModel(Model* pModel, string filePath)
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Model pushed to queue: " + filePath);
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Model pushed to queue: " + filePath);
 
 	AsyncModelArgs modelArg;
 	modelArg.pModel = pModel;
 	modelArg.FilePath = filePath;
+	
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_modelQueue.push(modelArg);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+		ms_modelQueue.push(modelArg);
+	}
+	
+	ms_conditionVariable.notify_one();
 
-	std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
-	ms_modelQueue.push(modelArg);
 	return true;
 }
 
@@ -285,7 +327,7 @@ bool LoadManager::TryPushModel(Model* pModel, Asset asset, size_t meshIndex, siz
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("GLTF Model pushed to queue");
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: GLTF Model pushed to queue");
 
 	AsyncModelArgs modelArg;
 	modelArg.pModel = pModel;
@@ -293,8 +335,23 @@ bool LoadManager::TryPushModel(Model* pModel, Asset asset, size_t meshIndex, siz
 	modelArg.MeshIndex = meshIndex;
 	modelArg.PrimitiveIndex = primitiveIndex;
 
-	std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
-	ms_modelQueue.push(modelArg);
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_modelQueue.push(modelArg);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexModelQueue);
+		ms_modelQueue.push(modelArg);
+	}
+
+	ms_conditionVariable.notify_one();
+
 	return true;
 }
 
@@ -306,7 +363,7 @@ bool LoadManager::TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Texture pushed to queue: " + filePath);
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Texture pushed to queue: " + filePath);
 
 	AsyncTexArgs texArgs;
 	texArgs.pTexture = pTex;
@@ -315,8 +372,23 @@ bool LoadManager::TryPushTex(Texture* pTex, string filePath, bool flipUpsideDown
 	texArgs.IsNormalMap = isNormalMap;
 	texArgs.DisableMips = disableMips;
 
-	std::unique_lock<std::mutex> lock(ms_mutexTexQueue);
-	ms_texQueue.push(texArgs);
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexTexQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_texQueue.push(texArgs);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexTexQueue);
+		ms_texQueue.push(texArgs);
+	}
+
+	ms_conditionVariable.notify_one();
+
 	return true;
 }
 
@@ -328,7 +400,7 @@ bool LoadManager::TryPushCubemap(Texture* pTex, string filePath, Texture* pIrrad
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Cubemap pushed to queue: " + filePath);
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Cubemap pushed to queue: " + filePath);
 
 	AsyncTexCubemapArgs texArgs;
 	texArgs.pCubemap = pTex;
@@ -336,8 +408,23 @@ bool LoadManager::TryPushCubemap(Texture* pTex, string filePath, Texture* pIrrad
 	texArgs.FilePath = filePath;
 	texArgs.FlipUpsideDown = flipUpsideDown;
 
-	std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
-	ms_texCubemapQueue.push(texArgs);
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_texCubemapQueue.push(texArgs);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+		ms_texCubemapQueue.push(texArgs);
+	}
+
+	ms_conditionVariable.notify_one();
+
 	return true;
 }
 
@@ -349,7 +436,7 @@ bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Textur
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Cubemap pushed to queue: " + filePaths.at(0));
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Cubemap pushed to queue: " + filePaths.at(0));
 
 	AsyncTexCubemapArgs texArgs;
 	texArgs.pCubemap = pTex;
@@ -357,8 +444,23 @@ bool LoadManager::TryPushCubemap(Texture* pTex, vector<string> filePaths, Textur
 	texArgs.FilePaths = filePaths;
 	texArgs.FlipUpsideDown = flipUpsideDown;
 
-	std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
-	ms_texCubemapQueue.push(texArgs);
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_texCubemapQueue.push(texArgs);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexTexCubemapQueue);
+		ms_texCubemapQueue.push(texArgs);
+	}
+
+	ms_conditionVariable.notify_one();
+
 	return true;
 }
 
@@ -370,14 +472,29 @@ bool LoadManager::TryPushShader(Shader* pShader, const ShaderArgs& shaderArgs)
 		return false; // Loads syncronously
 	}
 
-	AlkaliGUIManager::LogAsyncMessage("Shader pushed to queue: " + wstringToString(shaderArgs.VS));
+	AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Shader pushed to queue: " + wstringToString(shaderArgs.VS));
 
 	AsyncShaderArgs args;
 	args.pShader = pShader;
 	args.Args = shaderArgs;
 
-	std::unique_lock<std::mutex> lock(ms_mutexShaderQueue);
-	ms_shaderQueue.push(args);
+	if (SettingsManager::ms_DX12.Async.LogMainThreadMutexDelays)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		std::unique_lock<std::mutex> lock(ms_mutexShaderQueue);
+		auto finish = std::chrono::high_resolution_clock::now();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+		AlkaliGUIManager::LogAsyncMessage("MAIN THREAD: Waited " + std::to_string(millis) + "ms to get a mutex");
+		ms_shaderQueue.push(args);
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(ms_mutexShaderQueue);
+		ms_shaderQueue.push(args);
+	}
+
+	ms_conditionVariable.notify_one();
+
 	return true;
 }
 

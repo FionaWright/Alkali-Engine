@@ -17,6 +17,7 @@ using std::wstring;
 using std::shared_ptr;
 using std::unordered_map;
 using std::unique_ptr;
+using std::chrono::steady_clock;
 
 class Application
 {
@@ -43,6 +44,7 @@ public:
     double GetFPS_2();
     double GetFPS_3();
     unordered_map<wstring, shared_ptr<Scene>>& GetSceneMap();
+    static steady_clock::time_point GetTimePointStartOfProgram();
 
 private:        
     void TryHotReloadShaders();
@@ -60,10 +62,14 @@ private:
 
     unordered_map<wstring, shared_ptr<Scene>> m_sceneMap;
 
+    static steady_clock::time_point m_timePointFromStartOfProgram;
+
     static wstring ms_exeDirectoryPath;
 
     double m_fps, m_fps2, m_fps3;
     double m_fpsTimeSinceUpdate, m_fpsTimeSinceUpdate2, m_fpsTimeSinceUpdate3;
     unsigned int m_fpsFramesSinceUpdate, m_fpsFramesSinceUpdate2, m_fpsFramesSinceUpdate3;
     int m_hotReloadCounter = 0;
+
+    long m_totalFramesElapsed = 0;
 };

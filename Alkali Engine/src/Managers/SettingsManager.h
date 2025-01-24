@@ -31,10 +31,11 @@ struct AsyncLoadingSettings
 	bool LoadShaders = true;
 
 	bool LogEnabled = true;
-	bool LogIgnoreInfoMessages = true;
+	bool LogIgnoreInfoMessages = false;
 	bool PrintLogIntoConsole = false;
 	float DebugLoadingDelayMillis = 0;
 	int DebugExecutionFrameSlice = 0;
+	bool LogMainThreadMutexDelays = false;
 };
 
 struct DX12Settings
@@ -102,8 +103,8 @@ struct MiscSettings
 	int DefaultGlobalMipLevels = 1;
 	bool CubemapMipMapsEnabled = true;
 	bool RequireAlphaTextureForDoubleSided = true;
-	bool BistroLowQualityTexDiffuse = false;
-	bool BistroLowQualityTexNormal = true;
+	bool BistroLowQualityTexDiffuseEnabled = false;
+	bool BistroLowQualityTexNormalEnabled = true;
 
 	bool CentroidBasedWorldMatricesEnabled = false;
 	XMFLOAT3 MaxCameraPosition = XMFLOAT3(10000, 10000, 10000);
@@ -112,11 +113,14 @@ struct MiscSettings
 
 	bool ImGuiEnabled = true;
 	int HotReloadTimeSlice = 60;
+	bool LogAddTimeToMessages = true;
+	bool LogCombinedEnabled = true;
+	bool LogDisableCombinedAfter10Frames = true;
 
 	int ShadowMapResoWidth = 2048;
 	int ShadowMapResoHeight = 2048;
-	bool ShadowCullFront = false;
-	bool ShadowHDFormat = false;	
+	bool ShadowCullFrontEnabled = false;
+	bool ShadowHDFormatEnabled = false;	
 
 	float DebugLinesFarPlane = 2000.0f;
 
@@ -131,13 +135,13 @@ struct ShadowDynamicSettings
 	int CascadeCount = 4;
 
 	bool Enabled = true;
-	bool UpdatingBounds = true;
-	bool Rendering = true;	
+	bool UpdatingBoundsEnabled = true;
+	bool RenderingEnabled = true;	
 
-	bool BoundToScene = false;
+	bool BoundToSceneEnabled = false;
 	bool UseBoundingSpheres = true;
-	bool CullAgainstBounds = true;
-	bool MultiViewport = true;
+	bool CullAgainstBoundsEnabled = true;
+	bool MultiViewportEnabled = true;
 
 	bool ShowDebugBounds = false;
 
@@ -145,7 +149,7 @@ struct ShadowDynamicSettings
 	float BoundsBias = 5.0f;
 	int TimeSlice = 10;
 
-	bool AutoNearFarPercent = true;
+	bool AutoNearFarPercentEnabled = true;
 	float NearPercents[MAX_SHADOW_MAP_CASCADES];
 	float FarPercents[MAX_SHADOW_MAP_CASCADES];	
 };

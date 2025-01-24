@@ -135,7 +135,7 @@ bool SceneBistro::LoadContent()
 	cmdQueueDirect->WaitForFenceValue(fenceValue);
 
 	m_camera->SetPosition(13.9f, 4.3f, 8.0f);
-	m_camera->SetRotation(0.0f, static_cast<float>(PI), 0.0f);
+	m_camera->SetPitchYaw(0, 4);
 
 	m_perFrameCBuffers.DirectionalLight.LightDirection = XMFLOAT3(0.2f, -0.9f, -0.3f);
 	m_BackgroundColor = XMFLOAT4(0, 0, 0, 1);

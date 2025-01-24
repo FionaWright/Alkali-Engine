@@ -11,6 +11,7 @@
 #include "ShadowManager.h"
 #include <LoadManager.h>
 #include <ShaderComplexityManager.h>
+#include <AlkaliGUIManager.h>
 
 shared_ptr<Model> Scene::ms_sphereModel;
 shared_ptr<Material> Scene::ms_perFramePBRMat;
@@ -81,6 +82,8 @@ bool Scene::Init(D3DClass* pD3DClass)
 
 bool Scene::LoadContent()
 {
+	AlkaliGUIManager::LogUntaggedMessage("Loading Content for scene");
+
 	shared_ptr<Model> modelPlane;
 	{
 		CommandQueue* cmdQueueCopy = nullptr;
@@ -123,7 +126,7 @@ bool Scene::LoadContent()
 		ms_shadowMapMat = AssetFactory::CreateMaterial();
 		ms_shadowMapMat->AddDynamicSRVs("Shadow Map", 1);
 
-		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormatEnabled ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
 		ms_shadowMapMat->SetDynamicSRV(m_d3dClass, 0, format, ShadowManager::GetShadowMap());
 	}
 
@@ -294,6 +297,8 @@ bool Scene::LoadContent()
 
 void Scene::UnloadContent()
 {
+	AlkaliGUIManager::LogUntaggedMessage("Unloading Scene");
+
 	m_BackgroundColor = XMFLOAT4(0.4f, 0.6f, 0.9f, 1.0f);
 	ResourceTracker::ClearBatchList();
 	m_camera->Reset();
@@ -315,6 +320,8 @@ void Scene::UnloadContent()
 	{
 		ms_sphereModel.reset();
 	}
+
+	AlkaliGUIManager::LogUntaggedMessage("Unloading Scene Finished");
 }
 
 void Scene::Destroy()
@@ -431,7 +438,7 @@ void Scene::OnRender(TimeEventArgs& e)
 	ID3D12DescriptorHeap* ppHeaps[] = { globalHeap };
 	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	if (SettingsManager::ms_Dynamic.Shadow.MultiViewport)
+	if (SettingsManager::ms_Dynamic.Shadow.MultiViewportEnabled)
 	{
 		D3D12_RECT rects[4] = { m_scissorRect, m_scissorRect , m_scissorRect , m_scissorRect };
 		cmdList->RSSetScissorRects(SettingsManager::ms_Dynamic.Shadow.CascadeCount, rects);
@@ -721,6 +728,8 @@ void Scene::SetDSVForSize(int width, int height)
 	if (!m_dsvEnabled)
 		return;
 
+	AlkaliGUIManager::LogUntaggedMessage("Setting DSV Size");
+
 	HRESULT hr;
 
 	auto device = m_d3dClass->GetDevice();
@@ -760,6 +769,8 @@ void Scene::SetDSVForSize(int width, int height)
 	{
 		m_viewDepthMat->SetDynamicSRV(m_d3dClass, 0, DXGI_FORMAT_R32_FLOAT, m_depthBufferResource.Get());
 	}
+
+	AlkaliGUIManager::LogUntaggedMessage("Setting DSV Finished");
 }
 
 void Scene::SetDSVFlags(D3D12_DSV_FLAGS flags) 

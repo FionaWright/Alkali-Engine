@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include <iostream>
 #include <filesystem>
+#include <AlkaliGUIManager.h>
 
 void Shader::Init(ID3D12Device2* device, const ShaderArgs& args)
 {
@@ -242,7 +243,10 @@ void Shader::TryHotReload(ID3D12Device2* device)
 	}	
 
 	if (hotReload)
+	{
 		Compile(device, true);
+		AlkaliGUIManager::LogUntaggedMessage("Hot reloaded shader");
+	}
 }
 
 ComPtr<ID3D12PipelineState> Shader::GetPSO()
