@@ -30,6 +30,8 @@ struct AsyncLoadingSettings
 	bool DispatchIrradianceMaps = true;
 	bool LoadShaders = true;
 
+	bool AsyncGLTFLoadingEnabled = false;
+
 	bool LogEnabled = true;
 	bool LogIgnoreInfoMessages = false;
 	bool PrintLogIntoConsole = false;

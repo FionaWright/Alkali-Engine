@@ -15,6 +15,7 @@ namespace filesystem = std::filesystem;
 
 fastgltf::Parser ModelLoaderGLTF::ms_parser;
 bool ModelLoaderGLTF::ms_initialisedParser;
+std::mutex ModelLoaderGLTF::ms_batchAddMutex;
 
 constexpr bool RIGHT_HANDED_TO_LEFT = true;
 
@@ -429,12 +430,6 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		textures = { diffuseTex, normalTex, specTex, args.IrradianceMap, args.SkyboxTex, blueNoiseTex, brdfIntTex };
 
-	shared_ptr<Material> material = AssetFactory::CreateMaterial();
-	material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
-	material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
-	material->AddSRVs(d3d, textures);
-	material->AddDynamicSRVs("Shadow Map", 1);
-
 	MaterialPropertiesCB matProperties;
 #if PACK_COLORS
 	if (useGlassSRVs)
@@ -464,10 +459,18 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 		thinFilm.CalculateDelta();
 	}
 
+	std::unique_lock<std::mutex> lock(ms_batchAddMutex);
+	shared_ptr<Material> material = AssetFactory::CreateMaterial();
+	material->AddCBVs(d3d, cmdList, cbvSizesDraw, false);
+	material->AddCBVs(d3d, cmdList, cbvSizesFrame, true);
+	material->AddSRVs(d3d, textures);
+	material->AddDynamicSRVs("Shadow Map", 1);
+	lock.unlock();
+
 	material->SetCBV_PerDraw(1, &matProperties, sizeof(MaterialPropertiesCB));
 	material->SetCBV_PerDraw(2, &thinFilm, sizeof(ThinFilmCB));
 	material->AttachProperties(matProperties);
-	material->AttachThinFilm(thinFilm);
+	material->AttachThinFilm(thinFilm);	
 
 	string nodeName(node.name);
 	nodeName = id + "::" + nodeName;
@@ -489,6 +492,7 @@ void ModelLoaderGLTF::LoadPrimitive(D3DClass* d3d, ID3D12GraphicsCommandList2* c
 	else
 		go.ForceSetAT(isAT);
 
+	std::unique_lock<std::mutex> lock2(ms_batchAddMutex);
 	args.Batches[batchIndex]->AddGameObject(go);
 }
 
@@ -546,10 +550,15 @@ void ModelLoaderGLTF::LoadNode(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdLis
 	size_t meshIndex = node.meshIndex.value();
 	fastgltf::Mesh& mesh = (*asset)->meshes.at(meshIndex);
 
+	std::vector<std::jthread> threads;
+
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		std::string id = modelNameExtensionless + "::NODE(" + std::to_string(meshIndex) + ")::PRIMITIVE(" + std::to_string(i) + ")";
-		LoadPrimitive(d3d, cmdList, asset, mesh.primitives[i], modelNameExtensionless, node, args, id, meshIndex, i);
+		if (SettingsManager::ms_DX12.Async.AsyncGLTFLoadingEnabled)
+			threads.emplace_back(std::jthread(LoadPrimitive, d3d, cmdList, std::ref(asset), std::ref(mesh.primitives[i]), modelNameExtensionless, std::ref(node), args, id, meshIndex, i));
+		else
+			LoadPrimitive(d3d, cmdList, asset, mesh.primitives[i], modelNameExtensionless, node, args, id, meshIndex, i);
 	}
 }
 
