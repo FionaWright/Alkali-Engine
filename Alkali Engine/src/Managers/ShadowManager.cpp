@@ -57,7 +57,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		dsvDesc.Height = SettingsManager::ms_Misc.ShadowMapResoHeight;
 		dsvDesc.DepthOrArraySize = 1;
 		dsvDesc.MipLevels = 1;
-		dsvDesc.Format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
+		dsvDesc.Format = SettingsManager::ms_Misc.ShadowHDFormatEnabled ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		dsvDesc.SampleDesc.Count = 1;
 		dsvDesc.SampleDesc.Quality = 0;
 		dsvDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -122,7 +122,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		dvCB.MinValue = 0.2f;
 		ms_viewDepthMat->SetCBV_PerDraw(0, &dvCB, sizeof(DepthViewCB));
 
-		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
+		DXGI_FORMAT format = SettingsManager::ms_Misc.ShadowHDFormatEnabled ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM;
 		ms_viewDepthMat->SetDynamicSRV(d3d, 0, format, ms_shadowMapResource.Get());
 	}
 
@@ -142,8 +142,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		ms_depthRootSig->Init("Depth RS", depthRPI);
 
 		ShaderArgs depthArgs = { L"Depth_VS.cso", L"", inputLayoutDepth, ms_depthRootSig->GetRootSigResource() };
-		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
-		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
+		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFrontEnabled;
+		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormatEnabled ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		depthArgs.IsDepthShader = true;
 		ms_depthShader = AssetFactory::CreateShader(depthArgs, L" - Shadow");
 
@@ -173,8 +173,8 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 
 		ShaderArgs depthArgs = { L"DepthMV_VS.cso", L"", inputLayoutDepth, ms_depthRootSigMV->GetRootSigResource() };
 		depthArgs.GS = L"DepthMV_GS.cso";
-		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFront;
-		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormat ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
+		depthArgs.CullFront = SettingsManager::ms_Misc.ShadowCullFrontEnabled;
+		depthArgs.DSVFormat = SettingsManager::ms_Misc.ShadowHDFormatEnabled ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM;
 		depthArgs.IsDepthShader = true;
 		ms_depthShaderMV = AssetFactory::CreateShader(depthArgs, L" - ShadowMV");
 
@@ -198,7 +198,7 @@ void ShadowManager::Init(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, Fru
 		ms_depthMVMat->AddCBVs(d3d, cmdList, { sizeof(MatricesMV_GCB) }, true, "MGCB");
 	}	
 
-	if (!SettingsManager::ms_Dynamic.Shadow.UpdatingBounds)
+	if (!SettingsManager::ms_Dynamic.Shadow.UpdatingBoundsEnabled)
 	{
 		CalculateBoundsAndMatrices(XMFLOAT3_ZERO, XMFLOAT3(0, -1, 0), frustum);
 		UpdateDebugLines(d3d, XMFLOAT3_ZERO);
@@ -230,7 +230,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 	if (!ms_initialised)
 		return;
 
-	if (SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent)
+	if (SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercentEnabled)
 		CalculateNearFarPercents();
 
 	ms_eyePos = eyePos;
@@ -244,7 +244,7 @@ void ShadowManager::Update(D3DClass* d3d, XMFLOAT3 lightDir, Frustum& frustum, c
 
 	ms_viewMatrix = XMMatrixLookAtLH(eyeV, focusV, upV);
 
-	if (SettingsManager::ms_Dynamic.Shadow.UpdatingBounds)
+	if (SettingsManager::ms_Dynamic.Shadow.UpdatingBoundsEnabled)
 	{
 		CalculateBoundsAndMatrices(ms_eyePos, lightDir, frustum);
 		UpdateDebugLines(d3d, ms_eyePos);
@@ -319,7 +319,7 @@ void ShadowManager::CalculateBoundsAndMatrices(const XMFLOAT3& eyePos, XMFLOAT3 
 		ms_cascadeInfos[i].Width += SettingsManager::ms_Dynamic.Shadow.BoundsBias;
 		ms_cascadeInfos[i].Height += SettingsManager::ms_Dynamic.Shadow.BoundsBias;
 
-		if (SettingsManager::ms_Dynamic.Shadow.BoundToScene)
+		if (SettingsManager::ms_Dynamic.Shadow.BoundToSceneEnabled)
 		{
 			ms_cascadeInfos[i].Width = std::max(ms_cascadeInfos[i].Width, sceneWidth);
 			ms_cascadeInfos[i].Height = std::max(ms_cascadeInfos[i].Height, sceneHeight);
@@ -407,7 +407,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 	if (!ms_initialised)
 		return;
 
-	if (!SettingsManager::ms_Dynamic.Shadow.Rendering)
+	if (!SettingsManager::ms_Dynamic.Shadow.RenderingEnabled)
 		return;
 
 	if (ms_currentDSVState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
@@ -418,7 +418,7 @@ void ShadowManager::Render(D3DClass* d3d, ID3D12GraphicsCommandList2* cmdList, u
 
 	cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	if (SettingsManager::ms_Dynamic.Shadow.MultiViewport)
+	if (SettingsManager::ms_Dynamic.Shadow.MultiViewportEnabled)
 		RenderMultiViewport(d3d, cmdList, batchList, frustum, backBufferIndex);
 	else
 		RenderSingleViewport(d3d, cmdList, batchList, frustum, backBufferIndex);

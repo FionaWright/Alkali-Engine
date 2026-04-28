@@ -6,6 +6,7 @@ unordered_map<string, shared_ptr<Model>> ResourceTracker::ms_modelMap;
 unordered_map<string, shared_ptr<Shader>> ResourceTracker::ms_shaderMap;
 unordered_map<string, shared_ptr<Batch>> ResourceTracker::ms_batchMap;
 vector<shared_ptr<Material>> ResourceTracker::ms_matList;
+std::mutex ResourceTracker::ms_mutexModel, ResourceTracker::ms_texMutex, ResourceTracker::ms_mutexShader;
 
 void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 {
@@ -17,6 +18,8 @@ void ResourceTracker::AddTexture(string filePath, shared_ptr<Texture> tex)
 
 bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 {
+	std::unique_lock<std::mutex> lock(ms_texMutex);
+
 	if (!ms_textureMap.contains(filePath))
 	{
 		tex = std::make_shared<Texture>();
@@ -30,6 +33,8 @@ bool ResourceTracker::TryGetTexture(string filePath, shared_ptr<Texture>& tex)
 
 bool ResourceTracker::TryGetTexture(vector<string>& filepaths, shared_ptr<Texture>& tex)
 {
+	std::unique_lock<std::mutex> lock(ms_texMutex);
+
 	string id = "";
 	for (int i = 0; i < filepaths.size(); i++)
 	{
@@ -56,6 +61,8 @@ unordered_map<string, shared_ptr<Texture>>& ResourceTracker::GetTextures()
 
 void ResourceTracker::ClearTexList()
 {
+	std::unique_lock<std::mutex> lock(ms_texMutex);
+
 	ms_textureMap.clear();
 }
 
@@ -69,6 +76,8 @@ void ResourceTracker::AddModel(string filePath, shared_ptr<Model> model)
 
 bool ResourceTracker::TryGetModel(string filePath, shared_ptr<Model>& model)
 {
+	std::unique_lock<std::mutex> lock(ms_mutexModel);
+
 	if (SettingsManager::ms_DX12.DebugCubeModelOnly)
 		filePath = "Cube.model";
 
@@ -89,7 +98,7 @@ unordered_map<string, shared_ptr<Model>>& ResourceTracker::GetModels()
 }
 
 void ResourceTracker::AddShader(string filePath, shared_ptr<Shader> shader)
-{
+{	
 	if (ms_shaderMap.contains(filePath))
 		return;
 
@@ -98,6 +107,8 @@ void ResourceTracker::AddShader(string filePath, shared_ptr<Shader> shader)
 
 bool ResourceTracker::TryGetShader(string filePath, shared_ptr<Shader>& shader)
 {
+	std::unique_lock<std::mutex> lock(ms_mutexShader);
+
 	if (!ms_shaderMap.contains(filePath))
 	{
 		shader = std::make_shared<Shader>();

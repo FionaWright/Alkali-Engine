@@ -7,6 +7,7 @@
 #include "GameObject.h"
 #include "Batch.h"
 #include <vector>
+#include <mutex>
 
 using std::string;
 using std::unordered_map;
@@ -49,5 +50,6 @@ private:
 	static unordered_map<string, shared_ptr<Shader>> ms_shaderMap;
 	static unordered_map<string, shared_ptr<Batch>> ms_batchMap;
 	static vector<shared_ptr<Material>> ms_matList;
+	static std::mutex ms_mutexModel, ms_texMutex, ms_mutexShader;
 };
 

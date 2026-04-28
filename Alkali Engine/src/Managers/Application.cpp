@@ -21,12 +21,16 @@
 #include <LoadManager.h>
 
 wstring Application::ms_exeDirectoryPath;
+steady_clock::time_point Application::m_timePointFromStartOfProgram;
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
     , m_windowManager(std::make_unique<WindowManager>())
     , m_d3dClass(std::make_unique<D3DClass>())
 {
+    m_timePointFromStartOfProgram = std::chrono::high_resolution_clock::now();
+    AlkaliGUIManager::EnableCombinedLog(true);
+
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR path[MAX_PATH];
     if (GetModuleFileNameW(hModule, path, MAX_PATH) > 0)
@@ -75,13 +79,15 @@ Application::Application(HINSTANCE hInst)
     auto cubeScene = std::make_shared<SceneCube>(L"Cube Scene", m_mainWindow.get());
     InitScene(cubeScene);
 
-    AssignScene(testScene.get());
+    AssignScene(bistroScene.get());
 }
 
 void Application::InitScene(shared_ptr<Scene> scene)
 {
     if (!scene->Init(m_d3dClass.get()))
         throw new std::exception("Failed to initialise scene");
+
+    AlkaliGUIManager::LogUntaggedMessage("Scene Initialised: " + wstringToString(scene->m_Name));
 
     m_sceneMap.emplace(scene->m_Name, scene);
 }
@@ -91,15 +97,19 @@ int Application::Run()
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {
-        ImGUIManager::Begin();
+        AlkaliGUIManager::LogUntaggedMessage("Beginning Frame");
 
+        ImGUIManager::Begin();
         AlkaliGUIManager::RenderGUI(m_d3dClass.get(), m_currentScene, this);
+        AlkaliGUIManager::LogUntaggedMessage("Rendered GUI");
 
         if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
         }
+
+        AlkaliGUIManager::LogUntaggedMessage("Dealt with WIN Messages");
 
         m_updateClock.Tick();
         TimeEventArgs argsU = m_updateClock.GetTimeArgs();
@@ -109,6 +119,7 @@ int Application::Run()
         argsU.TotalTime *= SettingsManager::ms_Dynamic.UpdateTimeScale;
 
         m_mainWindow->OnUpdate(argsU);
+        AlkaliGUIManager::LogUntaggedMessage("Update Tick");
         InputManager::ProgressFrame();
 
         m_hotReloadCounter++;
@@ -120,7 +131,16 @@ int Application::Run()
                
         m_renderClock.Tick();
         TimeEventArgs args = m_renderClock.GetTimeArgs();
-        m_mainWindow->OnRender(args);        
+        m_mainWindow->OnRender(args);  
+
+        if (m_totalFramesElapsed == 10 && SettingsManager::ms_Misc.LogDisableCombinedAfter10Frames)
+        {
+            AlkaliGUIManager::LogUntaggedMessage("10 Frames Elapsed, Disabling Combined Log");
+            AlkaliGUIManager::EnableCombinedLog(false);
+        }
+
+        AlkaliGUIManager::LogUntaggedMessage("Frame Tick");
+        m_totalFramesElapsed++;
     }        
 
     return static_cast<int>(msg.wParam);
@@ -240,6 +260,9 @@ void Application::AssignScene(Scene* scene)
     std::chrono::duration<double, std::milli> timeTaken = std::chrono::high_resolution_clock::now() - startTimeProfiler;
     wstring output = L"Time taken to load " + m_currentScene->m_Name + L" was " + std::to_wstring(timeTaken.count()) + L" ms\n";
     OutputDebugStringW(output.c_str());
+
+    AlkaliGUIManager::LogUntaggedMessage("Scene Assigned: " + wstringToString(scene->m_Name));
+    AlkaliGUIManager::LogUntaggedMessage(wstringToString(output));
 }
 
 void Application::DestroyScenes() 
@@ -272,6 +295,11 @@ double Application::GetFPS_3()
 unordered_map<wstring, shared_ptr<Scene>>& Application::GetSceneMap()
 {
     return m_sceneMap;
+}
+
+steady_clock::time_point Application::GetTimePointStartOfProgram()
+{
+    return m_timePointFromStartOfProgram;
 }
 
 void Application::TryHotReloadShaders()

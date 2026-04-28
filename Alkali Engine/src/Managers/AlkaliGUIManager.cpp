@@ -12,9 +12,10 @@
 #include <ShadowManager.h>
 #include <ShaderComplexityManager.h>
 
-vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog;
+vector<string> AlkaliGUIManager::ms_errorLog, AlkaliGUIManager::ms_asyncLog, AlkaliGUIManager::ms_combinedLog;
 std::shared_mutex AlkaliGUIManager::ms_asyncLogMutex;
 vector<float> AlkaliGUIManager::ms_fpsQueue;
+bool AlkaliGUIManager::m_combinedLogEnabled;
 
 void AlkaliGUIManager::FixWidthOnNext(const char* label) 
 {
@@ -128,6 +129,26 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 			ImGui::TreePop();
 		}
 
+		string comMsg = "Combined Logs";
+		if (ms_combinedLog.size() > 0)
+			comMsg += " (!)";
+
+		if (ImGui::TreeNode(comMsg.c_str()))
+		{
+			ImGui::Indent(IM_GUI_INDENTATION);
+
+			for (size_t i = 0; i < ms_combinedLog.size(); i++)
+				ImGui::Text(ms_combinedLog[i].c_str());
+
+			if (ms_combinedLog.size() == 0)
+				ImGui::Text("None :)");
+
+			ImGui::Spacing();
+			ImGui::Unindent(IM_GUI_INDENTATION);
+
+			ImGui::TreePop();
+		}
+
 		ms_asyncLogMutex.unlock_shared();
 	}
 
@@ -140,18 +161,57 @@ void AlkaliGUIManager::RenderGUI(D3DClass* d3d, Scene* scene, Application* app)
 		ImGui::ShowDemoWindow();
 }
 
+void AlkaliGUIManager::LogUntaggedMessage(string msg)
+{
+	if (msg.size() == 0 || !m_combinedLogEnabled || !SettingsManager::ms_Misc.LogCombinedEnabled)
+		return;
+
+	if (SettingsManager::ms_Misc.LogAddTimeToMessages)
+	{
+		auto clkNow = std::chrono::high_resolution_clock::now();
+		auto clkStart = Application::GetTimePointStartOfProgram();
+		auto curNanos = std::chrono::duration_cast<std::chrono::milliseconds>(clkNow - clkStart).count();
+		msg = "Time:" + std::to_string(curNanos) + "ms : " + msg;
+	}
+
+	std::unique_lock<std::shared_mutex> lock(ms_asyncLogMutex);
+	ms_combinedLog.push_back("* " + msg);
+}
+
 void AlkaliGUIManager::LogErrorMessage(string msg)
 {
 	if (msg.size() == 0)
 		return;
 
+	if (SettingsManager::ms_Misc.LogAddTimeToMessages)
+	{
+		auto clkNow = std::chrono::high_resolution_clock::now();
+		auto clkStart = Application::GetTimePointStartOfProgram();
+		auto curNanos = std::chrono::duration_cast<std::chrono::milliseconds>(clkNow - clkStart).count();
+		msg = "Time:" + std::to_string(curNanos) + "ms : " + msg;
+	}
+
 	ms_errorLog.push_back(msg);
+
+	if (SettingsManager::ms_Misc.LogCombinedEnabled && m_combinedLogEnabled)
+		ms_combinedLog.push_back("E " + msg);
 }
 
 void AlkaliGUIManager::LogAsyncMessage(string msg)
 {
-	if (!SettingsManager::ms_DX12.Async.Enabled)
+	if (!SettingsManager::ms_DX12.Async.Enabled || !SettingsManager::ms_DX12.Async.LogEnabled)
 		return;
+
+	if (msg.size() == 0)
+		return;
+
+	if (SettingsManager::ms_Misc.LogAddTimeToMessages)
+	{
+		auto clkNow = std::chrono::high_resolution_clock::now();
+		auto clkStart = Application::GetTimePointStartOfProgram();
+		auto curNanos = std::chrono::duration_cast<std::chrono::milliseconds>(clkNow - clkStart).count();
+		msg = "Time:" + std::to_string(curNanos) + "ms : " + msg;
+	}
 
 	if (SettingsManager::ms_DX12.Async.PrintLogIntoConsole)
 	{
@@ -161,6 +221,14 @@ void AlkaliGUIManager::LogAsyncMessage(string msg)
 
 	std::unique_lock<std::shared_mutex> lock(ms_asyncLogMutex);
 	ms_asyncLog.push_back(msg);
+
+	if (SettingsManager::ms_Misc.LogCombinedEnabled && m_combinedLogEnabled)
+		ms_combinedLog.push_back("A " + msg);
+}
+
+void AlkaliGUIManager::EnableCombinedLog(bool state)
+{
+	m_combinedLogEnabled = state;
 }
 
 void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
@@ -282,20 +350,20 @@ void AlkaliGUIManager::RenderGUISettings(D3DClass* d3d, Scene* scene)
 			ImGui::Indent(IM_GUI_INDENTATION);
 			{
 				ImGui::Checkbox("Enabled", &SettingsManager::ms_Dynamic.Shadow.Enabled);
-				ImGui::Checkbox("Rendering", &SettingsManager::ms_Dynamic.Shadow.Rendering);
-				ImGui::Checkbox("Dynamic Bounds", &SettingsManager::ms_Dynamic.Shadow.UpdatingBounds);
+				ImGui::Checkbox("Rendering", &SettingsManager::ms_Dynamic.Shadow.RenderingEnabled);
+				ImGui::Checkbox("Dynamic Bounds", &SettingsManager::ms_Dynamic.Shadow.UpdatingBoundsEnabled);
 				ImGui::Spacing();
-				ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.Shadow.BoundToScene);
+				ImGui::Checkbox("Fit to scene and frusta", &SettingsManager::ms_Dynamic.Shadow.BoundToSceneEnabled);
 				ImGui::Checkbox("Use bounding spheres", &SettingsManager::ms_Dynamic.Shadow.UseBoundingSpheres);
-				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBounds);
+				ImGui::Checkbox("Cull Against Bounds", &SettingsManager::ms_Dynamic.Shadow.CullAgainstBoundsEnabled);
 				ImGui::Spacing();
-				ImGui::Checkbox("Multi Viewport", &SettingsManager::ms_Dynamic.Shadow.MultiViewport);
+				ImGui::Checkbox("Multi Viewport", &SettingsManager::ms_Dynamic.Shadow.MultiViewportEnabled);
 				ImGui::Spacing();
 
 				FixWidthOnNext("Cascade Count");
 				ImGui::InputInt("Cascade Count", &SettingsManager::ms_Dynamic.Shadow.CascadeCount);
 				FixWidthOnNext("Auto NearFar Percents");
-				ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercent);
+				ImGui::Checkbox("Auto NearFar Percents", &SettingsManager::ms_Dynamic.Shadow.AutoNearFarPercentEnabled);
 				FixWidthOnNext("Near Percents");
 				ImGui::InputFloat4("Near Percents", SettingsManager::ms_Dynamic.Shadow.NearPercents);
 				FixWidthOnNext("Far Percents");
@@ -758,7 +826,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			ImGui::SeparatorText("Camera Controls");
 			ImGui::Indent(IM_GUI_INDENTATION);
 
-			bool usingFP = scene->GetCamera()->GetMode() == CameraMode::CAMERA_MODE_FP;
+			bool usingFP = scene->GetCamera()->GetMode() == CameraMode::CAMERA_MODE_KEYBOARD;
 			if (!usingFP)
 				ImGui::BeginDisabled(true);
 
@@ -775,7 +843,7 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 
 			if (ImGui::Button("WASD Mode"))
 			{
-				scene->GetCamera()->SetMode(CameraMode::CAMERA_MODE_FP);
+				scene->GetCamera()->SetMode(CameraMode::CAMERA_MODE_KEYBOARD);
 			}
 
 			if (usingFP)
@@ -790,18 +858,23 @@ void AlkaliGUIManager::RenderGUICurrentScene(D3DClass* d3d, Scene* scene)
 			Transform camTrans = scene->GetCamera()->GetTransform();
 			float pPosCam[3] = { camTrans.Position.x, camTrans.Position.y, camTrans.Position.z };
 			ImGui::InputFloat3("Position##Camera", pPosCam);
-			float pRotCam[3] = { camTrans.Rotation.x, camTrans.Rotation.y, camTrans.Rotation.z };
-			ImGui::InputFloat3("Rotation##Camera", pRotCam);
 			camTrans.Position = XMFLOAT3(pPosCam[0], pPosCam[1], pPosCam[2]);
-			camTrans.Rotation = XMFLOAT3(pRotCam[0], pRotCam[1], pRotCam[2]);
+
+			float pitch = 0, yaw = 0;
+			scene->GetCamera()->GetPitchYaw(pitch, yaw);
+			float pRotCam[2] = { pitch, yaw };
+			ImGui::InputFloat2("Rotation##Camera", pRotCam);
+			pitch = pRotCam[0];
+			yaw = pRotCam[1];
 
 			if (ImGui::Button("Reset to Default"))
 			{
 				camTrans.Position = XMFLOAT3(0, 0, -10);
-				camTrans.Rotation = XMFLOAT3(0, 0, 0);
+				pitch = 0; yaw = 0;
 			}
 
 			scene->GetCamera()->SetTransform(camTrans);
+			scene->GetCamera()->SetPitchYaw(pitch, yaw);
 
 			ImGui::Unindent(IM_GUI_INDENTATION);
 		}

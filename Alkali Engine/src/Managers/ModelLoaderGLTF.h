@@ -73,5 +73,6 @@ public:
 private:
 	static fastgltf::Parser ms_parser;
 	static bool ms_initialisedParser;
+	static std::mutex ms_batchAddMutex;
 };
 

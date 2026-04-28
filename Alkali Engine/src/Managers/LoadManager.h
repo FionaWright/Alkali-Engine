@@ -109,7 +109,8 @@ private:
 	static queue<AsyncTexArgs> ms_texQueue;
 	static queue<AsyncTexCubemapArgs> ms_texCubemapQueue;
 	static queue<AsyncShaderArgs> ms_shaderQueue;
-	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexShaderQueue;
+	static std::mutex ms_mutexModelQueue, ms_mutexTexQueue, ms_mutexTexCubemapQueue, ms_mutexShaderQueue, ms_notifyMutex;
 	static std::mutex ms_mutexThreadDatas[8];
+	static std::condition_variable ms_conditionVariable;
 };
 
